@@ -18,6 +18,7 @@
 ## Safety
 
 - Track pending repository work in `TODO.md`.
+- Never run `git push` unless the user explicitly requests a push in the current conversation. A completed local commit is not permission to push.
 - Do not run `pulumi up`, apply Salt, decrypt secrets, mutate deployment state, or change DNS without explicit instruction.
 - Committed Pulumi `secure:` values and Age-encrypted pillar values are ciphertext configuration. Keep them tracked. Private keys and decrypted values do not belong in Git.
 - CI must not contact production services, decrypt secrets, run Salt remotely, or apply Pulumi.
