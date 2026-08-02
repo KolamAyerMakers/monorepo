@@ -1102,7 +1102,7 @@ def test_role_bot_installs_maker_guide_artifact() -> None:
             {"name": "/run/maker-guide"},
             {"user": "maker-guide"},
             {"group": "humans"},
-            {"mode": "0750"},
+            {"mode": "2750"},
             {
                 "require": [
                     {"file": "/etc/tmpfiles.d/maker-guide.conf"},

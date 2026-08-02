@@ -294,7 +294,7 @@ For multi-user setups, the directory and socket must be accessible to the config
 
 ```
 # /etc/tmpfiles.d/maker-guide.conf
-d /run/maker-guide 0750 maker-guide humans -
+d /run/maker-guide 2750 maker-guide humans -
 ```
 
 Prefer tmpfiles for this directory. If you create it from a systemd unit instead, run the setup command with root privileges, for example a `+`-prefixed `ExecStartPre`, or set `Group=humans` when `humans` is intentionally the daemon primary group.

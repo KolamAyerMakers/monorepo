@@ -55,6 +55,10 @@ pre-commit:
       glob: "infra/salt/**/*"
       run: make -C infra/salt check
 
+    ops.backup-restore:
+      glob: "infra/ops/**/*"
+      run: python3 infra/ops/test_lf_classroom_backup_restore.py
+
     website.build:
       glob: "website/**/*"
       run: pnpm --dir website build

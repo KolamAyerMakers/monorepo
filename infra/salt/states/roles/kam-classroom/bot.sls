@@ -508,7 +508,7 @@ roles::kam_classroom::bot::refresh_learner_routes:
     - group: root
     - mode: "0644"
     - contents: |
-        d /run/maker-guide 0750 {{ daemon_user }} {{ runtime_group }} -
+        d /run/maker-guide 2750 {{ daemon_user }} {{ runtime_group }} -
     - require:
       - user: roles::kam_classroom::bot::user
 
@@ -517,7 +517,7 @@ roles::kam_classroom::bot::create_directories:
     - name: /run/maker-guide
     - user: {{ daemon_user }}
     - group: {{ runtime_group }}
-    - mode: '0750'
+    - mode: '2750'
     - require:
       - file: /etc/tmpfiles.d/maker-guide.conf
       - user: roles::kam_classroom::bot::user

@@ -284,6 +284,22 @@ def forgejo_ownership() -> FileOwnership:
         raise RestoreError("cannot resolve git:git") from error
 
 
+def ergo_ownership() -> FileOwnership:
+    try:
+        return FileOwnership(
+            user_id=pwd.getpwnam("ergo").pw_uid,
+            group_id=grp.getgrnam("ergo").gr_gid,
+        )
+    except KeyError as error:
+        raise RestoreError("cannot resolve ergo:ergo") from error
+
+
+def repair_ergo_ownership(data_path: Path) -> None:
+    ownership = ergo_ownership()
+    for path in chain((data_path,), data_path.rglob("*")):
+        os.chown(path, ownership.user_id, ownership.group_id)
+
+
 def repair_forgejo_ownership(data_path: Path) -> None:
     ownership = forgejo_ownership()
     for path in chain((data_path,), data_path.rglob("*")):
@@ -376,7 +392,9 @@ def restore_backup(backup_directory: Path, configuration_path: Path) -> None:
                 shutil.rmtree(data_path, ignore_errors=True)
                 data_path.parent.mkdir(parents=True, exist_ok=True)
                 extract_archive(archive_path, data_path.parent)
-                if component == "forgejo":
+                if component == "ergo":
+                    repair_ergo_ownership(data_path)
+                elif component == "forgejo":
                     repair_forgejo_ownership(data_path)
     finally:
         shutil.rmtree(temporary_directory, ignore_errors=True)
