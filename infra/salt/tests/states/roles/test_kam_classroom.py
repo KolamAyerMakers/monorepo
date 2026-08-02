@@ -2359,6 +2359,7 @@ def test_role_openssh_policy_allows_registration_and_ssh_noob_passwords() -> Non
         "openssh-server": {
             "config": {
                 "PasswordAuthentication": "no",
+                "DebianBanner": "no",
                 "KbdInteractiveAuthentication": "no",
                 "ChallengeResponseAuthentication": "no",
                 "AllowUsers": None,

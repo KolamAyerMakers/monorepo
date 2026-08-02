@@ -1,6 +1,7 @@
 base:
   "*":
     - bootstrap
+    - apt
     - packages
     - openssh-server
     - pam-pwquality

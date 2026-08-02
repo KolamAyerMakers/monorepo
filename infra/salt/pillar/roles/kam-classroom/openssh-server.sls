@@ -12,6 +12,7 @@
 openssh-server:
   config:
     PasswordAuthentication: 'no'
+    DebianBanner: 'no'
     KbdInteractiveAuthentication: 'no'
     ChallengeResponseAuthentication: 'no'
     AllowUsers: null
