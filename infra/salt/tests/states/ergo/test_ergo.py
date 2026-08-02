@@ -376,6 +376,7 @@ def test_ergo_config_state_manages_private_irc_service() -> None:
                 {"group": "ergo"},
                 {"mode": "0750"},
                 {"makedirs": True},
+                {"recurse": ["user", "group"]},
                 {
                     "require": [
                         {"user": "ergo::user"},

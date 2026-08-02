@@ -104,6 +104,9 @@ ergo::data_directory:
     - group: {{ service.group }}
     - mode: '0750'
     - makedirs: true
+    - recurse:
+      - user
+      - group
     - require:
       - user: ergo::user
       - test: ergo::configuration::required_pillar
