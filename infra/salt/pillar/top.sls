@@ -7,6 +7,8 @@ base:
     - root
     - nftables
     - systemd-timesyncd
+    - unbound
+    - unbound_exporter
     - caddy
     - forgejo
     - lldap
@@ -17,4 +19,5 @@ base:
     - sssd
     - rsyslog
     - dns-nftsets
+    - github
     - roles
