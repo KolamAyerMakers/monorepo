@@ -1,0 +1,60 @@
+---
+import { getCollection, render } from "astro:content";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  const documentPath = (entry) => entry.filePath.replace("app/content/lf2607/", "");
+  const readmeByDirectory = new Map(
+    entries
+      .filter((entry) => documentPath(entry).endsWith("/README.md"))
+      .map((entry) => [documentPath(entry).replace(/\/README\.md$/, ""), entry]),
+  );
+  const directories = new Map();
+  for (const entry of entries) {
+    const segments = documentPath(entry).split("/");
+    for (let count = 1; count < segments.length; count += 1) {
+      const directory = segments.slice(0, count).join("/");
+      const children = directories.get(directory) ?? [];
+      children.push({ label: segments[count], slug: segments.slice(0, count + 1).join("/") });
+      directories.set(directory, children);
+    }
+  }
+  return [
+    ...entries.map((entry) => ({ params: { slug: documentPath(entry) }, props: { entry } })),
+    ...[...directories.entries()].map(([directory, children]) => {
+      const indexEntry = readmeByDirectory.get(directory);
+      return {
+        params: { slug: directory },
+        props: indexEntry
+          ? { entry: indexEntry }
+          : {
+              children: [...new Map(children.map((child) => [child.slug, child])).values()],
+              title: directory,
+            },
+      };
+    }),
+  ];
+}
+
+const { entry, children, title } = Astro.props;
+const rendered = entry ? await render(entry) : null;
+const routeSegments = (Astro.params.slug ?? "").split("/").filter(Boolean);
+const parentSegments = routeSegments.slice(0, routeSegments.at(-1) === "README.md" ? -2 : -1);
+const parentPath =
+  parentSegments.length === 1 && ["commands", "concepts", "quests"].includes(parentSegments[0] ?? "")
+    ? `${parentSegments[0]}/README.md`
+    : parentSegments.join("/");
+---
+
+<SiteLayout title={title ?? entry.filePath.replace("app/content/lf2607/", "")}>
+  <nav aria-label="Document navigation" class="document-navigation">
+    <a href={`/docs/${parentPath}${parentPath ? "/" : ""}`}>Up one level</a>
+    {parentSegments.length > 0 && <a href="/docs/">Course map</a>}
+  </nav>
+  {rendered ? <rendered.Content /> : <><h1>{title}</h1><ul class="document-list">{children.map((child) => <li><a href={`/docs/${child.slug}/`}>{child.label}</a></li>)}</ul></>}
+</SiteLayout>
+
+<style>
+  .document-navigation { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+</style>

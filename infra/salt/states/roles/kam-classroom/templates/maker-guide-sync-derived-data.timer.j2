@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync Maker Guide derived learner data every {{ on_unit_active }}
+
+[Timer]
+OnBootSec={{ on_boot }}
+OnUnitActiveSec={{ on_unit_active }}
+AccuracySec={{ accuracy }}
+
+[Install]
+WantedBy=timers.target

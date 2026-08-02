@@ -1,0 +1,60 @@
+min_version: 2.1.0
+
+pre-commit:
+  parallel: true
+  commands:
+    maker-guide.ruff-check:
+      glob: "maker-guide/**/*.{py,toml,lock}"
+      run: uv --directory maker-guide run ruff check
+
+    maker-guide.ruff-format:
+      glob: "maker-guide/**/*.{py,toml,lock}"
+      run: uv --directory maker-guide run ruff format --check
+
+    maker-guide.basedpyright:
+      glob: "maker-guide/**/*.{py,toml,lock}"
+      run: uv --directory maker-guide run basedpyright
+
+    maker-guide.pytest:
+      glob: "maker-guide/**/*.{py,toml,lock}"
+      run: uv --directory maker-guide run pytest
+
+    pulumi.classroom.ruff-check:
+      glob: "infra/pulumi/classroom/**/*.{py,toml,yaml,lock}"
+      run: uv --directory infra/pulumi/classroom run ruff check
+
+    pulumi.classroom.ruff-format:
+      glob: "infra/pulumi/classroom/**/*.{py,toml,yaml,lock}"
+      run: uv --directory infra/pulumi/classroom run ruff format --check
+
+    pulumi.classroom.basedpyright:
+      glob: "infra/pulumi/classroom/**/*.{py,toml,yaml,lock}"
+      run: uv --directory infra/pulumi/classroom run basedpyright
+
+    pulumi.classroom.pytest:
+      glob: "infra/pulumi/classroom/**/*.{py,toml,yaml,lock}"
+      run: uv --directory infra/pulumi/classroom run pytest
+
+    pulumi.website.ruff-check:
+      glob: "infra/pulumi/website/**/*.{py,toml,yaml,lock}"
+      run: uv --directory infra/pulumi/website run ruff check
+
+    pulumi.website.ruff-format:
+      glob: "infra/pulumi/website/**/*.{py,toml,yaml,lock}"
+      run: uv --directory infra/pulumi/website run ruff format --check
+
+    pulumi.website.basedpyright:
+      glob: "infra/pulumi/website/**/*.{py,toml,yaml,lock}"
+      run: uv --directory infra/pulumi/website run basedpyright
+
+    pulumi.website.pytest:
+      glob: "infra/pulumi/website/**/*.{py,toml,yaml,lock}"
+      run: test ! -d infra/pulumi/website/tests || uv --directory infra/pulumi/website run pytest
+
+    salt.check:
+      glob: "infra/salt/**/*"
+      run: make -C infra/salt check
+
+    website.build:
+      glob: "website/**/*"
+      run: pnpm --dir website build

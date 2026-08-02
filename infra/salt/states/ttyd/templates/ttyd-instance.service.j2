@@ -1,0 +1,43 @@
+[Unit]
+Description=ttyd web terminal ({{ instance_name }})
+Documentation=https://github.com/tsl0922/ttyd
+After=network-online.target ssh.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ run_user }}
+Group={{ run_group }}
+WorkingDirectory={{ service.home }}
+Environment=HOME={{ service.home }}
+ExecStart=/usr/local/bin/ttyd{% if server.get('socket') %} --interface {{ server.socket }} --socket-owner {{ server.socket_owner }}{% else %} --interface {{ server.host }} --port {{ server.port }}{% endif %}{% if index %} --index {{ index }}{% endif %}{% if auth_header %} --auth-header {{ auth_header }}{% endif %}{% for client_option in client_options %} --client-option {{ client_option | tojson }}{% endfor %} --writable {{ command }}
+Restart=on-failure
+RestartSec=5s
+RuntimeDirectory=ttyd-{{ instance_name }}
+RuntimeDirectoryMode=0755
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp={{ private_tmp | lower }}
+ProtectHome={{ protect_home | lower }}
+ProtectSystem=strict
+ReadWritePaths={{ read_write_paths | join(' ') }}
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock={{ service.protect_clock | lower }}
+ProtectKernelLogs={{ service.protect_kernel_logs | lower }}
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+RestrictRealtime={{ service.restrict_realtime | lower }}
+LockPersonality=true
+SystemCallArchitectures={{ service.system_call_architectures }}
+{% if run_user == 'root' %}
+CapabilityBoundingSet=CAP_CHOWN CAP_FOWNER CAP_SETGID CAP_SETUID
+AmbientCapabilities=CAP_CHOWN CAP_FOWNER CAP_SETGID CAP_SETUID
+{% else %}
+CapabilityBoundingSet=
+AmbientCapabilities=
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

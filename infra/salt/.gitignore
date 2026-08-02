@@ -1,0 +1,7 @@
+/run/
+/states/_modules/*.py.*.py
+/.salt-runner/
+/.~lock*
+**/.~lock*
+/states/roles/kam-classroom/files/maker-guide/
+/.worktrees/

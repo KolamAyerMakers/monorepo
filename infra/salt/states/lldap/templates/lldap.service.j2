@@ -1,0 +1,30 @@
+[Unit]
+Description=LLDAP
+Documentation=https://github.com/lldap/lldap
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ service.user }}
+Group={{ service.group }}
+WorkingDirectory={{ paths.data_directory }}
+Environment=USER={{ service.user }}
+Environment=HOME={{ service.home }}
+EnvironmentFile={{ paths.secret_environment_file }}
+ExecStart=/usr/local/bin/lldap run --config-file {{ paths.configuration_file }}
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ paths.data_directory }}
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

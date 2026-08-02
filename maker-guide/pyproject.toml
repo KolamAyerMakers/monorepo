@@ -1,0 +1,98 @@
+[project]
+name = "maker-guide"
+version = "0.1.0"
+description = "Teaching automation and learner support system for Kolam Ayer Makers"
+readme = "README.md"
+authors = [
+    { name = "Philippe Muller", email = "pmuller+github@kolamayermakers.org" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.18.4",
+    "openrouter>=0.9.1",
+    "rich>=14.2.0",
+    "typer>=0.20.0",
+]
+
+[project.scripts]
+maker-guide-bot = "maker_guide.cli.bot:main"
+maker-guide-bash-hook = "maker_guide.cli.hook:main"
+maker-guide-build-personal-website = "maker_guide.cli.bootstrap_personal_website:main"
+maker-guide-build-docs = "maker_guide.cli.build_docs:main"
+maker-guide-calendar = "maker_guide.cli.calendar:main"
+maker-guide-check-doc-links = "maker_guide.cli.check_doc_links:app"
+maker-guide-create-learner = "maker_guide.cli.create_learner:main"
+maker-guide-db = "maker_guide.cli.db:main"
+maker-guide-export-audit = "maker_guide.cli.export_audit:app"
+guide = "maker_guide.cli.help:main"
+maker-guide-help = "maker_guide.cli.help:main"
+maker-guide-initialize-learner = "maker_guide.cli.initialize_learner:app"
+maker-guide-grant-group = "maker_guide.unix_group_helpers:main_grant_group"
+maker-guide-prune-llm-audit = "maker_guide.cli.prune_llm_audit:app"
+maker-guide-prune-observations = "maker_guide.cli.prune_observations:app"
+maker-guide-progress = "maker_guide.cli.progress:app"
+maker-guide-ops = "maker_guide.cli.ops:app"
+maker-guide-registration = "maker_guide.cli.registration:main"
+maker-guide-render-learner-routes = "maker_guide.cli.render_learner_routes:app"
+maker-guide-register = "maker_guide.registration.cli:main"
+maker-guide-revoke-group = "maker_guide.unix_group_helpers:main_revoke_group"
+maker-guide-sync-derived-data = "maker_guide.cli.sync_derived_data:app"
+maker-guide-sync-groups = "maker_guide.cli.sync_groups:app"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.31.4",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.12.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.3,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "-m 'not integration'"
+markers = ["integration: requires external tools and dependency installation"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "D203",
+    "D213",
+    "D107",
+    "EM101",
+    "EM102",
+    "FBT001",
+    "FBT003",
+    "INP001",
+    "PLR2004",
+    "S311",
+    "TC001",
+    "TC003",
+    "TRY003",
+    "TRY004",
+    "TRY400",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S106", "S603", "S604"]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+reportAny = "error"
+reportExplicitAny = "error"
+reportIgnoreCommentWithoutRule = "error"
+reportImplicitOverride = "error"
+reportImplicitStringConcatenation = "error"
+reportMissingTypeStubs = "error"
+reportUninitializedInstanceVariable = "error"

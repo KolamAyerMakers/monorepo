@@ -1,0 +1,157 @@
+theme: auto
+
+server:
+  address: tcp://{{ server.host }}:{{ server.port }}{{ server.path }}
+
+log:
+  level: info
+
+authentication_backend:
+  refresh_interval: 5m
+  password_reset:
+    disable: {{ authentication_backend.password_reset_disable | yaml }}
+  password_change:
+    disable: {{ authentication_backend.password_change_disable | yaml }}
+  ldap:
+    implementation: {{ authentication_backend.ldap.implementation | yaml }}
+    address: {{ authentication_backend.ldap.address | yaml }}
+    base_dn: {{ authentication_backend.ldap.base_dn | yaml }}
+    user: {{ authentication_backend.ldap.user | yaml }}
+
+access_control:
+  default_policy: {{ access_control.default_policy | yaml }}
+{% if access_control.get('rules') %}
+  rules:
+{% for rule in access_control.rules %}
+    - domain: {{ rule.domain | yaml }}
+      policy: {{ rule.policy | yaml }}
+{% if rule.get('subject') %}
+      subject: {{ rule.subject | yaml }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if regulation %}
+regulation:
+  modes:
+{% for mode in regulation.modes %}
+    - {{ mode | yaml }}
+{% endfor %}
+  max_retries: {{ regulation.max_retries | yaml }}
+  find_time: {{ regulation.find_time | yaml }}
+  ban_time: {{ regulation.ban_time | yaml }}
+
+{% endif -%}
+{% set session_cookies = session.get('cookies') %}
+{% if not session_cookies %}
+{%   set session_cookies = [{
+    'domain': session.cookie_domain,
+    'authelia_url': server.url,
+    'default_redirection_url': session.get('default_redirection_url'),
+}] %}
+{% endif %}{# if not session_cookies #}
+session:
+  name: authelia_session
+  same_site: lax
+  cookies:
+{% for cookie in session_cookies %}
+    - domain: {{ cookie.domain | yaml }}
+      authelia_url: {{ cookie.authelia_url | yaml }}
+{%   if cookie.get('default_redirection_url') %}
+      default_redirection_url: {{ cookie.default_redirection_url | yaml }}
+{%   endif %}{# if cookie.get('default_redirection_url') #}
+{% endfor %}{# for cookie in session_cookies #}
+
+storage:
+  local:
+    path: {{ storage.local_path | yaml }}
+
+notifier:
+  disable_startup_check: false
+  filesystem:
+    filename: {{ notifier.filesystem_path | yaml }}
+{% set oidc_clients = identity_providers.get('oidc', {}).get('clients', []) %}
+{% if oidc_clients %}
+
+identity_providers:
+  oidc:
+{% set oidc = identity_providers.get('oidc', {}) %}
+{% if oidc.get('minimum_parameter_entropy') is not none %}
+    minimum_parameter_entropy: {{ oidc.minimum_parameter_entropy | yaml }}
+{% endif %}
+{% if oidc.get('enforce_pkce') %}
+    enforce_pkce: {{ oidc.enforce_pkce | yaml }}
+{% endif %}
+{% if oidc.get('cors') %}
+    cors:
+{% if oidc.cors.get('endpoints') %}
+      endpoints:
+{% for endpoint in oidc.cors.endpoints %}
+        - {{ endpoint | yaml }}
+{% endfor %}
+{% endif %}
+{% if oidc.cors.get('allowed_origins') %}
+      allowed_origins:
+{% for allowed_origin in oidc.cors.allowed_origins %}
+        - {{ allowed_origin | yaml }}
+{% endfor %}
+{% endif %}
+{% if oidc.cors.get('allowed_origins_from_client_redirect_uris') is not none %}
+      allowed_origins_from_client_redirect_uris: {{ oidc.cors.allowed_origins_from_client_redirect_uris | yaml }}
+{% endif %}
+{% endif %}
+{% if oidc.get('authorization_policies') %}
+    authorization_policies:
+{% for policy_name, policy in oidc.authorization_policies.items() %}
+      {{ policy_name }}:
+        default_policy: {{ policy.default_policy | yaml }}
+        rules:
+{% for rule in policy.get('rules', []) %}
+          - policy: {{ rule.policy | yaml }}
+            subject: {{ rule.subject | yaml }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+    jwks:
+      - key_id: forgejo
+        use: sig
+        algorithm: RS256
+        key: |
+          {{ '{{' }} fileContent "{{ paths.oidc_jwks_private_key_file }}" | nindent 10 {{ '}}' }}
+    clients:
+{% for client in oidc_clients %}
+      - client_id: {{ client.client_id | yaml }}
+        client_name: {{ client.client_name | yaml }}
+{% if client.get('client_secret') %}
+        client_secret: {{ client.client_secret | yaml }}
+{% endif %}
+        public: {{ client.public | yaml }}
+        authorization_policy: {{ client.authorization_policy | yaml }}
+        consent_mode: {{ client.consent_mode | yaml }}
+        pre_configured_consent_duration: {{ client.pre_configured_consent_duration | yaml }}
+        require_pkce: {{ client.require_pkce | yaml }}
+        pkce_challenge_method: {{ client.pkce_challenge_method | yaml }}
+        redirect_uris:
+{% for redirect_uri in client.redirect_uris %}
+          - {{ redirect_uri | yaml }}
+{% endfor %}
+        scopes:
+{% for scope in client.scopes %}
+          - {{ scope | yaml }}
+{% endfor %}
+        response_types:
+{% for response_type in client.response_types %}
+          - {{ response_type | yaml }}
+{% endfor %}
+        grant_types:
+{% for grant_type in client.grant_types %}
+          - {{ grant_type | yaml }}
+{% endfor %}
+        access_token_signed_response_alg: {{ client.access_token_signed_response_alg | yaml }}
+        userinfo_signed_response_alg: {{ client.userinfo_signed_response_alg | yaml }}
+        token_endpoint_auth_method: {{ client.token_endpoint_auth_method | yaml }}
+{% if client.get('introspection_endpoint_auth_method') %}
+        introspection_endpoint_auth_method: {{ client.introspection_endpoint_auth_method | yaml }}
+{% endif %}
+{% endfor %}
+{% endif %}

@@ -1,0 +1,64 @@
+#!/bin/sh
+set -eu
+
+wait_seconds=0
+check_only=0
+if [ "${1:-}" = "--check" ]; then
+    check_only=1
+    shift
+elif [ "${1:-}" = "--wait-seconds" ]; then
+    wait_seconds="$2"
+    shift 2
+fi
+
+domain="${1:-}"
+[ "$domain" = "{{ server.name }}" ] || exit "$check_only"
+
+caddy_certificates_root="${CADDY_CERTIFICATES_ROOT:-/var/lib/caddy/.local/share/caddy/certificates}"
+destination_certificate="{{ paths.certificate_file }}"
+destination_key="{{ paths.certificate_key_file }}"
+
+find_source_files() {
+    for source_directory in "$caddy_certificates_root"/*/"$domain"; do
+        source_certificate="$source_directory/$domain.crt"
+        source_key="$source_directory/$domain.key"
+        if [ -s "$source_certificate" ] && [ -s "$source_key" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+elapsed_seconds=0
+while ! find_source_files; do
+    if [ "$elapsed_seconds" -ge "$wait_seconds" ]; then
+        exit "$check_only"
+    fi
+    sleep 2
+    elapsed_seconds=$((elapsed_seconds + 2))
+done
+
+if [ "$check_only" -eq 1 ]; then
+    cmp -s "$source_certificate" "$destination_certificate" && cmp -s "$source_key" "$destination_key"
+    exit $?
+fi
+
+temporary_directory="$(mktemp -d)"
+trap 'rm -rf "$temporary_directory"' EXIT
+
+install -m 0640 -o {{ service.user }} -g {{ service.group }} "$source_certificate" "$temporary_directory/fullchain.pem"
+install -m 0640 -o {{ service.user }} -g {{ service.group }} "$source_key" "$temporary_directory/privkey.pem"
+
+changed=0
+if ! cmp -s "$temporary_directory/fullchain.pem" "$destination_certificate"; then
+    install -m 0640 -o {{ service.user }} -g {{ service.group }} "$temporary_directory/fullchain.pem" "$destination_certificate"
+    changed=1
+fi
+if ! cmp -s "$temporary_directory/privkey.pem" "$destination_key"; then
+    install -m 0640 -o {{ service.user }} -g {{ service.group }} "$temporary_directory/privkey.pem" "$destination_key"
+    changed=1
+fi
+
+if [ "$changed" -eq 1 ] && systemctl is-active --quiet ergo.service; then
+    systemctl reload ergo.service
+fi

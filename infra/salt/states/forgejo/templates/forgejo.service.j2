@@ -1,0 +1,29 @@
+[Unit]
+Description=Forgejo
+Documentation=https://forgejo.org/docs/latest/admin/installation/binary/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ service.user }}
+Group={{ service.group }}
+WorkingDirectory={{ paths.data_directory }}
+ExecStart=/usr/local/bin/forgejo web --config {{ paths.configuration_file }} --work-path {{ paths.data_directory }}
+Restart=on-failure
+RestartSec=5s
+Environment=USER={{ service.user }}
+Environment=HOME={{ service.home }}
+ReadWritePaths={{ paths.configuration_directory }} {{ paths.data_directory }} {{ paths.log_directory }} {{ paths.ssh_directory }}
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+ldap_host = "{{ ldap.host }}"
+ldap_port = {{ ldap.port }}
+http_host = "{{ http.host }}"
+http_port = {{ http.port }}
+http_url = "{{ http.url }}"
+ldap_base_dn = "{{ ldap.base_dn }}"
+ldap_user_dn = "{{ ldap.user_dn }}"
+ldap_user_email = "{{ ldap.user_email }}"
+database_url = "sqlite://{{ paths.data_directory }}/users.db?mode=rwc"
+key_file = ""
+assets_path = "{{ paths.assets_directory }}"
+
+[healthcheck_options]
+http_host = "{{ http.host }}"
+ldap_host = "{{ ldap.host }}"

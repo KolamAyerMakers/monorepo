@@ -1,0 +1,8 @@
+[Unit]
+Description=Create a local classroom backup
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/systemctl stop maker-guide-bot.service ergo.service lldap.service authelia.service forgejo.service
+ExecStart=/usr/local/sbin/classroom-backup --full --exclude-homes
+ExecStopPost=/usr/bin/systemctl start maker-guide-bot.service ergo.service lldap.service authelia.service forgejo.service

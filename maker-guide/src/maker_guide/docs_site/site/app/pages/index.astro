@@ -1,0 +1,27 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+import rankings from "../rankings.json";
+import siteData from "../site-data.json";
+---
+
+<SiteLayout>
+  {siteData.current_session ? <><h2>Current session</h2><p><strong>{siteData.current_session.title}</strong>, {siteData.current_session.date}</p><ul class="document-list">{siteData.current_session.materials.map((material) => <li><a href={material.path}>{material.title}</a></li>)}</ul><p><a href="/docs/">All course material</a></p></> : <p>Course material will be published when the first session begins.</p>}
+  <h2>Services</h2>
+  <ul class="document-list">
+    {siteData.registration_open && <li><a href="/register/">Registration</a></li>}
+    <li><a href="/ssh/">SSH</a></li>
+    <li><a href="/irc/">IRC</a></li>
+    <li><a href="/git/">Git</a></li>
+  </ul>
+  {rankings.length >= 2 && <><h2>Rankings</h2>{siteData.current_session && <p><a href="/docs/guides/scoring.md">How scoring and ranking work</a></p>}<table class="ranking-table"><thead><tr><th>Rank</th><th>Student</th><th>Score</th></tr></thead><tbody>{rankings.map((student) => <tr><td>{student.rank}</td><td><a href={`/~${student.handle}/`}>{student.handle}</a></td><td>{student.score}</td></tr>)}</tbody></table><small class="rankings-updated">Last update: {siteData.rankings_updated_at}</small></>}
+</SiteLayout>
+
+<style>
+  .ranking-table { border-collapse: collapse; width: 100%; }
+  .ranking-table th { color: var(--muted-color); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .ranking-table th, .ranking-table td { border-bottom: 1px solid var(--border-color); padding: .75rem .5rem; text-align: left; }
+  .ranking-table th:first-child, .ranking-table th:last-child, .ranking-table td:first-child, .ranking-table td:last-child { text-align: right; }
+  .ranking-table th:first-child, .ranking-table td:first-child { padding-left: 0; width: 3rem; }
+  .ranking-table th:last-child, .ranking-table td:last-child { padding-right: 0; width: 4rem; }
+  .rankings-updated { color: var(--muted-color); display: block; margin-top: .5rem; }
+</style>

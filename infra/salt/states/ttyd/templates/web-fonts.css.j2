@@ -1,0 +1,16 @@
+{% for font in fonts %}
+@font-face {
+    font-family: '{{ font.family }}';
+    src: url('{{ asset_route }}/fonts/{{ font.name }}') format('{{ font.format }}');
+    font-weight: {{ font.weight }};
+    font-style: {{ font.style }};
+    font-display: block;
+}
+
+{% endfor %}{# font #}
+{% if fonts %}
+.xterm,
+.xterm * {
+    font-family: '{{ fonts[0].family }}', monospace !important;
+}
+{% endif %}{# if fonts #}

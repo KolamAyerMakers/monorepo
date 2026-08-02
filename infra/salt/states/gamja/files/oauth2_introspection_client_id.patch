@@ -1,0 +1,19 @@
+--- ./lib/oauth2.js
++++ ./lib/oauth2.js
+@@ -131,10 +131,15 @@
+ }
+ 
+ export async function introspectToken({ serverMetadata, token, clientId, clientSecret }) {
++	let requestData = { token };
++	if (!clientSecret) {
++		requestData["client_id"] = clientId;
++	}
++
+ 	let resp = await fetch(serverMetadata.introspection_endpoint, {
+ 		method: "POST",
+ 		headers: buildPostHeaders(clientId, clientSecret),
+-		body: formatQueryString({ token }),
++		body: formatQueryString(requestData),
+ 	});
+ 	if (!resp.ok) {
+ 		throw new Error(`HTTP error: ${resp.status} ${resp.statusText}`);

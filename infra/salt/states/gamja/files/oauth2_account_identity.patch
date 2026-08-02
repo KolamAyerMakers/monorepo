@@ -1,0 +1,14 @@
+--- ./components/app.js
++++ ./components/app.js
+@@ -370,8 +370,10 @@
+ 
+ 			connectParams.saslOauthBearer = saslOauthBearer;
+ 
+-			if (saslOauthBearer.username && !connectParams.nick) {
++			if (saslOauthBearer.username) {
+ 				connectParams.nick = saslOauthBearer.username;
++				connectParams.username = saslOauthBearer.username;
++				connectParams.realname = saslOauthBearer.username;
+ 			}
+ 		}
+ 

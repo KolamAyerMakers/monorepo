@@ -1,0 +1,15 @@
+{% set sssd = sssd if sssd is defined else salt['pillar.get']('sssd', {}) -%}
+[sssd]
+config_file_version = 2
+services = {{ sssd.services | join(', ') }}
+domains = {{ sssd.domains.keys() | join(', ') }}
+
+[nss]
+filter_users = {{ sssd.nss.filter_users | join(', ') }}
+filter_groups = {{ sssd.nss.filter_groups | join(', ') }}
+
+[pam]
+offline_failed_login_attempts = {{ sssd.pam.offline_failed_login_attempts }}
+offline_failed_login_delay = {{ sssd.pam.offline_failed_login_delay }}
+
+[ssh]

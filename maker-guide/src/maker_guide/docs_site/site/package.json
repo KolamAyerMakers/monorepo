@@ -1,0 +1,11 @@
+{
+  "name": "kolam-classroom-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build"
+  },
+  "devDependencies": {
+    "astro": "7.1.5"
+  }
+}

@@ -1,0 +1,2 @@
+include:
+  - mcfly.package

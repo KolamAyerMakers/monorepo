@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 022
+
+artifact_directory=$1
+artifact_label=$2
+project_directory=$(pwd)
+temporary_directory=$(mktemp -d "${artifact_directory}/build.XXXXXX")
+artifact_path="${artifact_directory}/maker-guide.${artifact_label}.tar.gz"
+temporary_artifact_path="${artifact_path}.next"
+
+cleanup() {
+    rm -rf "${temporary_directory}"
+    rm -f "${temporary_artifact_path}"
+}
+trap cleanup EXIT
+
+uv cache clean maker-guide
+uv venv --relocatable --python 3.13 "${temporary_directory}/venv"
+UV_PROJECT_ENVIRONMENT="${temporary_directory}/venv" \
+    uv sync --locked --no-dev --no-editable --link-mode copy --project "${project_directory}"
+chmod -R go-w "${temporary_directory}/venv"
+tar \
+    --create \
+    --gzip \
+    --file "${temporary_artifact_path}" \
+    --owner=0 \
+    --group=0 \
+    --numeric-owner \
+    -C "${temporary_directory}/venv" \
+    .
+mv -f "${temporary_artifact_path}" "${artifact_path}"
+
+for previous_artifact_path in "${artifact_directory}"/maker-guide.*.tar.gz; do
+    [ "${previous_artifact_path}" = "${artifact_path}" ] || rm -f "${previous_artifact_path}"
+done

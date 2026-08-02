@@ -1,0 +1,1 @@
+"""Typed curriculum catalog package."""

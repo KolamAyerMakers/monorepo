@@ -1,0 +1,7 @@
+config:
+  kam-website:cloudflareAccountId: 11df27489df0a87ad0108ded43ecf9bc
+  kam-website:projectName: kolam-ayer-makers
+  kam-website:productionBranch: main
+  kam-website:customDomain: kolamayermakers.org
+  cloudflare:apiToken:
+    secure: AAABAJ2rqgciI0SijT/FmESwVxFAQ/sS1OJYqggiUs7x8Imbd9LcRR8m+zUAs9jngvRy3hynusJJ762yCAr0kLoKrGbThrNBlQ1hZSFajYn3psgaXQ==

@@ -1,0 +1,2 @@
+include:
+  - fd.package

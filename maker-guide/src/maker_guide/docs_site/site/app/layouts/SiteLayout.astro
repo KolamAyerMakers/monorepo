@@ -1,0 +1,54 @@
+---
+import "../styles/site.css";
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>{title ? `${title} | ` : ""}Linux Foundations | Kolam Ayer Makers</title>
+    <script is:inline>
+      (() => {
+        const storedTheme = localStorage.getItem("theme");
+        if (storedTheme === "light" || storedTheme === "dark") document.documentElement.dataset.theme = storedTheme;
+      })();
+    </script>
+  </head>
+  <body>
+    <main class="site-shell">
+      <header class="masthead">
+        <a aria-label="Kolam Ayer Makers" class="brand" href="/">
+          <img alt="Kolam Ayer Makers" class="brand-logo-light" src="/kolam-ayer-makers.png" />
+          <img alt="" aria-hidden="true" class="brand-logo-dark" src="/kolam-ayer-makers-dark.png" />
+          <strong>Linux Foundations</strong>
+        </a>
+        <button aria-label="Toggle color theme" class="theme-toggle" type="button"></button>
+      </header>
+      <article><slot /></article>
+    </main>
+    <script is:inline>
+      (() => {
+        const themeButton = document.querySelector(".theme-toggle");
+        const systemDarkTheme = window.matchMedia("(prefers-color-scheme: dark)");
+        const currentTheme = () => document.documentElement.dataset.theme || (systemDarkTheme.matches ? "dark" : "light");
+        themeButton?.addEventListener("click", () => {
+          const nextTheme = currentTheme() === "dark" ? "light" : "dark";
+          document.documentElement.dataset.theme = nextTheme;
+          localStorage.setItem("theme", nextTheme);
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style>
+  .brand strong { font-size: 1.45rem; letter-spacing: -.03em; }
+  :global(h1) { font-size: clamp(2.25rem, 5vw, 3.5rem); letter-spacing: -.05em; line-height: 1; margin: 0 0 1.5rem; }
+  :global(.course > h1) { display: none; }
+  :global(.document-list) { columns: 2; list-style: none; padding: 0; }
+  :global(.document-list li) { break-inside: avoid; }
+  @media (max-width: 36rem) { :global(.document-list) { columns: 1; } }
+</style>

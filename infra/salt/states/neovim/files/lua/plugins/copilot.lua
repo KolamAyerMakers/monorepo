@@ -1,0 +1,42 @@
+require("copilot").setup({
+	suggestion = {
+		enabled = true,
+		auto_trigger = true,
+		keymap = {
+			accept = "<Tab>",
+			accept_word = "<C-Right>",
+			accept_line = "<C-Down>",
+			next = "<M-]>",
+			prev = "<M-[>",
+			dismiss = "<C-]>",
+		},
+	},
+	panel = { enabled = false },
+	filetypes = {
+		c = true,
+		cmake = true,
+		cpp = true,
+		css = true,
+		dockerfile = true,
+		go = true,
+		html = true,
+		htmldjango = true,
+		javascript = true,
+		lua = true,
+		markdown = true,
+		python = true,
+		rust = true,
+		sh = true,
+		sls = true,
+		sql = true,
+		terraform = true,
+		toml = true,
+		typescript = true,
+		yaml = true,
+		-- sensitive filetypes
+		json = false,
+		pass = false,
+		-- disable for all other filetypes
+		["*"] = false,
+	},
+})

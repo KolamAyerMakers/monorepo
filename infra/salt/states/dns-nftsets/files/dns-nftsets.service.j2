@@ -1,0 +1,15 @@
+[Unit]
+Description=Refresh DNS-backed nftables sets
+After=network-online.target nftables.service unbound.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart={{ script_path }} --configuration {{ configuration_path }}
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK

@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+temporary_routes_file=$(/usr/bin/mktemp {{ learner_routes_file }}.XXXXXX)
+backup_routes_file=$(/usr/bin/mktemp {{ learner_routes_file }}.backup.XXXXXX)
+cleanup() {
+    /usr/bin/rm -f "$temporary_routes_file" "$backup_routes_file"
+}
+trap cleanup EXIT
+
+/usr/local/bin/maker-guide-render-learner-routes --database {{ database_path }} --domain {{ domain }} > "$temporary_routes_file"
+/usr/bin/cp --preserve=mode,ownership {{ learner_routes_file }} "$backup_routes_file"
+/usr/bin/chmod 0644 "$temporary_routes_file"
+/usr/bin/mv -f "$temporary_routes_file" {{ learner_routes_file }}
+if /usr/bin/caddy validate --config {{ configuration_file }}; then
+    /usr/bin/systemctl reload caddy
+else
+    /usr/bin/mv -f "$backup_routes_file" {{ learner_routes_file }}
+    exit 1
+fi

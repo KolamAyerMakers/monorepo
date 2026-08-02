@@ -1,0 +1,6 @@
+name: kam-website
+description: Cloudflare Pages project for the Kolam Ayer Makers public website
+runtime:
+  name: python
+  options:
+    virtualenv: .venv

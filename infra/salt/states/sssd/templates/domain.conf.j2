@@ -1,0 +1,8 @@
+{% set domain = domain if domain is defined else salt['pillar.get']('sssd:domains:' ~ domain_name, {}) -%}
+[domain/{{ domain_name }}]
+{% for key, value in domain.get('options', {}).items() -%}
+{{ key }} = {{ value }}
+{% endfor -%}
+{% for key, pillar_key in domain.get('secret_options', {}).items() -%}
+{{ key }} = {{ salt['pillar.get'](pillar_key) | trim }}
+{% endfor -%}

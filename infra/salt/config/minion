@@ -1,0 +1,15 @@
+failhard: true
+root_dir: run
+local: true
+file_client: local
+file_roots:
+  base:
+    - ./states
+module_dirs:
+  - ./states/_modules
+  - ./states/_states
+pillar_roots:
+  base:
+    - ./pillar
+pillar_merge_lists: true
+# vim: ft=yaml

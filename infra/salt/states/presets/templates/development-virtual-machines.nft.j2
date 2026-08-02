@@ -1,0 +1,22 @@
+# Managed by Salt — development virtual machine firewall rules
+#
+# Libvirt's iptables-nft compatibility chains accept and masquerade virbr-dev,
+# but the Salt-managed inet forward chain still sees those packets. Keep the
+# development bridge allowed in the native nftables policy as well.
+
+table inet filter {
+    counter fwd_development_virtual_machines {}
+
+    chain forward {
+        iifname "virbr-dev" ip saddr 192.168.123.0/24 oifname != "virbr-dev" counter name "fwd_development_virtual_machines" accept comment "development virtual machine egress"
+    }
+}
+
+table inet nat {
+    counter nat_development_virtual_machines {}
+
+    chain postrouting {
+        type nat hook postrouting priority 99; policy accept;
+        ip saddr 192.168.123.0/24 oifname != "virbr-dev" counter name "nat_development_virtual_machines" masquerade comment "development virtual machine egress"
+    }
+}

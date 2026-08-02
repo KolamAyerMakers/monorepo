@@ -1,0 +1,15 @@
+{% set sssd = sssd if sssd is defined else salt['pillar.get']('sssd', {}) -%}
+passwd:         {{ sssd.nsswitch.passwd }}
+group:          {{ sssd.nsswitch.group }}
+shadow:         {{ sssd.nsswitch.shadow }}
+gshadow:        {{ sssd.nsswitch.gshadow }}
+
+hosts:          {{ sssd.nsswitch.hosts }}
+networks:       {{ sssd.nsswitch.networks }}
+
+protocols:      {{ sssd.nsswitch.protocols }}
+services:       {{ sssd.nsswitch.services }}
+ethers:         {{ sssd.nsswitch.ethers }}
+rpc:            {{ sssd.nsswitch.rpc }}
+
+netgroup:       {{ sssd.nsswitch.netgroup }}

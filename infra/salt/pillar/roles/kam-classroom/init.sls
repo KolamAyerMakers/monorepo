@@ -1,0 +1,18 @@
+include:
+  - roles.kam-classroom.domain
+  - roles.kam-classroom.bot
+  - roles.kam-classroom.backup
+  - roles.kam-classroom.caddy
+  - roles.kam-classroom.openssh-server
+  - roles.kam-classroom.forgejo
+  - roles.kam-classroom.identity
+  - roles.kam-classroom.nodejs
+  - roles.kam-classroom.npm
+  - roles.kam-classroom.lldap
+  - roles.kam-classroom.authelia
+  - roles.kam-classroom.sssd
+  - roles.kam-classroom.irc
+  - roles.kam-classroom.ttyd
+  - roles.kam-classroom.home-quotas
+  - roles.kam-classroom.systemd
+  - unbound.local-system-resolver

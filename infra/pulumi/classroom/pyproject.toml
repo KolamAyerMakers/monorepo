@@ -1,0 +1,57 @@
+[project]
+name = "classroom-upcloud"
+version = "0.1.0"
+description = "Pulumi Python project for Kolam Ayer Makers classroom UpCloud provisioning"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "pulumi>=3.165.0,<4.0.0",
+  "pulumi-cloudflare>=6.17.0,<7.0.0",
+  "pulumi-upcloud>=0.12.2,<0.13.0",
+]
+
+[dependency-groups]
+dev = [
+  "basedpyright>=1.31.0,<2.0.0",
+  "pytest>=8.4.0,<9.0.0",
+  "ruff>=0.11.0,<1.0.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "I",
+  "UP",
+  "B",
+  "SIM",
+]
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+extraPaths = ["."]
+venvPath = "."
+venv = ".venv"
+reportMissingModuleSource = false
+reportPrivateUsage = false
+reportUnknownArgumentType = false
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+reportUnusedCallResult = false
+include = [
+  "__main__.py",
+  "configuration.py",
+  "network_interfaces.py",
+  "upcloud_ip_address.py",
+  "tests",
+]

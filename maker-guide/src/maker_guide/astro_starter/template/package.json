@@ -1,0 +1,13 @@
+{
+  "name": "kolam-learner-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "maker-guide-build-personal-website --sync && node scripts/build.mjs",
+    "dev": "astro dev",
+    "test": "node --test scripts/*.test.mjs"
+  },
+  "devDependencies": {
+    "astro": "7.1.5"
+  }
+}

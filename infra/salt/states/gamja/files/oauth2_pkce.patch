@@ -1,0 +1,138 @@
+--- ./components/app.js
++++ ./components/app.js
+@@ -362,7 +362,7 @@
+ 
+ 			let saslOauthBearer;
+ 			try {
+-				saslOauthBearer = await this.exchangeOauth2Code(queryParams.code);
++				saslOauthBearer = await this.exchangeOauth2Code(queryParams.code, queryParams.state);
+ 			} catch (err) {
+ 				this.showError(err);
+ 				return;
+@@ -403,7 +403,7 @@
+ 			return;
+ 		}
+ 
+-		oauth2.redirectAuthorize({
++		await oauth2.redirectAuthorize({
+ 			serverMetadata,
+ 			clientId: this.config.oauth2.client_id,
+ 			redirectUri: window.location.toString(),
+@@ -411,17 +411,20 @@
+ 		});
+ 	}
+ 
+-	async exchangeOauth2Code(code) {
++	async exchangeOauth2Code(code, state) {
+ 		let serverMetadata = await oauth2.fetchServerMetadata(this.config.oauth2.url);
+ 
+ 		let redirectUri = new URL(window.location.toString());
+ 		redirectUri.searchParams.delete("code");
+ 		redirectUri.searchParams.delete("state");
++		redirectUri.searchParams.delete("iss");
++		redirectUri.searchParams.delete("scope");
+ 
+ 		let data = await oauth2.exchangeCode({
+ 			serverMetadata,
+ 			redirectUri: redirectUri.toString(),
+ 			code,
++			state,
+ 			clientId: this.config.oauth2.client_id,
+ 			clientSecret: this.config.oauth2.client_secret,
+ 		});
+
+--- ./lib/oauth2.js
++++ ./lib/oauth2.js
+@@ -1,3 +1,27 @@
++function base64url(buffer) {
++	let bytes = new Uint8Array(buffer);
++	let binary = "";
++	for (let byte of bytes) {
++		binary += String.fromCharCode(byte);
++	}
++	return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
++}
++
++function randomBase64url(size) {
++	let bytes = new Uint8Array(size);
++	crypto.getRandomValues(bytes);
++	return base64url(bytes);
++}
++
++async function sha256Base64url(value) {
++	let data = new TextEncoder().encode(value);
++	return base64url(await crypto.subtle.digest("SHA-256", data));
++}
++
++function verifierStorageKey(state) {
++	return "gamja.oauth2.code_verifier." + state;
++}
++
+ function formatQueryString(params) {
+ 	let l = [];
+ 	for (let k in params) {
+@@ -38,7 +62,11 @@
+ 	return data;
+ }
+ 
+-export function redirectAuthorize({ serverMetadata, clientId, redirectUri, scope }) {
++export async function redirectAuthorize({ serverMetadata, clientId, redirectUri, scope }) {
++	let state = randomBase64url(32);
++	let codeVerifier = randomBase64url(64);
++	sessionStorage.setItem(verifierStorageKey(state), codeVerifier);
++
+ 	// TODO: move fragment to query string in redirect_uri
+ 	// TODO: use the state param to prevent cross-site request
+ 	// forgery
+@@ -46,6 +74,9 @@
+ 		"response_type": "code",
+ 		"client_id": clientId,
+ 		"redirect_uri": redirectUri,
++		"state": state,
++		"code_challenge": await sha256Base64url(codeVerifier),
++		"code_challenge_method": "S256",
+ 	};
+ 	if (scope) {
+ 		params.scope = scope;
+@@ -64,12 +95,23 @@
+ 	return headers;
+ }
+ 
+-export async function exchangeCode({ serverMetadata, redirectUri, code, clientId, clientSecret }) {
++export async function exchangeCode({ serverMetadata, redirectUri, code, state, clientId, clientSecret }) {
+ 	let data = {
+ 		"grant_type": "authorization_code",
+ 		code,
+ 		"redirect_uri": redirectUri,
+ 	};
++	if (state) {
++		let storageKey = verifierStorageKey(state);
++		let codeVerifier = sessionStorage.getItem(storageKey);
++		sessionStorage.removeItem(storageKey);
++		if (!codeVerifier) {
++			throw new Error("Missing OAuth 2.0 PKCE verifier");
++		}
++		data["code_verifier"] = codeVerifier;
++	} else {
++		throw new Error("Missing OAuth 2.0 state");
++	}
+ 	if (!clientSecret) {
+ 		data["client_id"] = clientId;
+ 	}
+@@ -89,10 +131,15 @@
+ }
+ 
+ export async function introspectToken({ serverMetadata, token, clientId, clientSecret }) {
++	let requestData = { token };
++	if (!clientSecret) {
++		requestData["client_id"] = clientId;
++	}
++
+ 	let resp = await fetch(serverMetadata.introspection_endpoint, {
+ 		method: "POST",
+ 		headers: buildPostHeaders(clientId, clientSecret),
+-		body: formatQueryString({ token }),
++		body: formatQueryString(requestData),
+ 	});
+ 	if (!resp.ok) {
+ 		throw new Error(`HTTP error: ${resp.status} ${resp.statusText}`);

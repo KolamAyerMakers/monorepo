@@ -1,0 +1,26 @@
+{%- for host, host_configuration in config.items() %}
+{%   if host != '*' %}
+Host {{ host }}
+{%     for key, value in host_configuration.items() %}
+    {{ key }} {{ value }}
+{%     endfor %}
+{%   endif %}
+{% endfor %}
+
+Host *
+    ForwardX11 no
+    StrictHostKeyChecking accept-new
+{% if enable_session_multiplexing %}
+    ControlMaster auto
+    ControlPath ~/.ssh/controlmasters/%r@%h:%p
+    ControlPersist 1m
+{% else %}
+    ControlMaster no
+    ControlPath none
+    ControlPersist no
+{% endif %}
+{% for key, value in config.get('*', {}).items() %}
+    {{ key }} {{ value }}
+{% endfor %}
+
+# vi: ft=sshconfig

@@ -1,0 +1,25 @@
+# systemd-timesyncd egress
+table inet filter {
+    counter output_systemd_timesyncd_ntp {}
+
+    set {{ firewall.set_v4 }} {
+        type ipv4_addr
+        flags timeout
+        timeout {{ set_timeout }}
+    }
+
+    set {{ firewall.set_v6 }} {
+        type ipv6_addr
+        flags timeout
+        timeout {{ set_timeout }}
+    }
+
+    chain output {
+        meta skuid {{ service.user }} ip daddr @{{ firewall.set_v4 }} udp dport {{ firewall.port }} \
+            counter name "output_systemd_timesyncd_ntp" accept \
+            comment "systemd-timesyncd ntp"
+        meta skuid {{ service.user }} ip6 daddr @{{ firewall.set_v6 }} udp dport {{ firewall.port }} \
+            counter name "output_systemd_timesyncd_ntp" accept \
+            comment "systemd-timesyncd ntp"
+    }
+}

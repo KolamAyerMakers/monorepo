@@ -1,0 +1,29 @@
+config:
+  classroom:hostname: lf-dev
+  classroom:title: lf-dev
+  classroom:zone: sg-sin1
+  classroom:plan: STARTER-1xCPU-2GB
+  # UpCloud Debian 13 server template UUID
+  classroom:serverTemplateStorage: 01000000-0000-4000-8000-000020080100
+  classroom:diskGiB: "10"
+  classroom:metadata: "true"
+  classroom:firewall: "false"
+  classroom:sourceIpFiltering: "true"
+  classroom:timezone: UTC
+  classroom:bootOrder: disk
+  classroom:nicModel: virtio
+  classroom:videoModel: vga
+  classroom:sshPublicKeyNames:
+    - yubikey_25_939_134
+    - salt_ssh
+  classroom:loginUser: root
+  classroom:ipv4ReverseDnsHostname: lf-dev.kolamayermakers.org
+  classroom:cloudflareAccountId: 11df27489df0a87ad0108ded43ecf9bc
+  classroom:cloudflareZoneName: kolamayermakers.org
+  classroom:canonicalDnsRecordName: lf-dev.kolamayermakers.org
+  classroom:dnsRecordTtl: "1"
+  classroom:dnsRecordProxied: "false"
+  upcloud:token:
+    secure: AAABAEtTBPT54wRX7gj0IytsCYw9GA1CPt9pkouaj93wI73sFjc88MHGK8Rp4j2X2NMmTTlepJaC1lVBegox
+  cloudflare:apiToken:
+    secure: AAABAPNyLACVNWyAHgl3Sp1APZx7O77/xouDYYn5TyFhm1lysEsnT8YLQUHrk7xGOfFpyFq5FyfbE/w4eJt20+LANcK9r6do+hwjavUTVaQLs9pgiA==

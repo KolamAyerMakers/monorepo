@@ -1,0 +1,13 @@
+{
+  "name": "kolam-makers-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build",
+    "dev": "astro dev",
+    "preview": "astro preview"
+  },
+  "devDependencies": {
+    "astro": "^5.13.0"
+  }
+}

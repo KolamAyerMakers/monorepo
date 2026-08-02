@@ -1,0 +1,11 @@
+[Unit]
+Description=Apply user filesystem quotas
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/apply-user-quotas --configuration /etc/quotas/user-quotas.json
+
+[Install]
+WantedBy=multi-user.target

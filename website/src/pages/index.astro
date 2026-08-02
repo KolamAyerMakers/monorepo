@@ -1,0 +1,201 @@
+---
+import Motto from "../components/Motto.astro";
+
+const accessKey = "8f7a9e79-9816-41a9-aef8-d3650003913b";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta
+      name="description"
+      content="Kolam Ayer Makers is a free, volunteer-run maker group at Kolam Ayer CC in Singapore. Build Linux skills, make things, and share what you learn."
+    />
+    <title>Kolam Ayer Makers | Build. Break. Repeat.</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Kolam Ayer Makers home" style="text-decoration: none">
+        <img src="/kolam-makers-logo.png" alt="Kolam Ayer Makers" />
+        <Motto compact />
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#class">Linux Foundations</a>
+        <a href="#next">What's next</a>
+        <a href="#contact">Get involved</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-heading">
+        <p class="terminal-line"><span>kolam-ayer</span>:<b>~</b>$ make something</p>
+        <h1 id="hero-heading">A neighbourhood<br /><em>for people who make.</em></h1>
+        <p class="hero-copy">
+          Kolam Ayer Makers is a free, volunteer-run maker group at Kolam Ayer Community Club,
+          Singapore. We gather to take things apart, learn useful skills, and make the next
+          thing a little more interesting.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="#contact">Join the next build <span aria-hidden="true">-&gt;</span></a>
+          <a class="button" href="#class">See the first class</a>
+        </div>
+      </section>
+
+      <section class="manifesto" aria-label="Our approach">
+        <p>Make room for curiosity.</p>
+        <p>Share the good tools.</p>
+        <p>Leave with something working.</p>
+      </section>
+
+      <section class="course" id="class" aria-labelledby="class-heading">
+        <div class="section-intro">
+          <p class="eyebrow">01 / booting now</p>
+          <h2 id="class-heading">Linux Foundations</h2>
+          <p>
+            Our first class is a hands-on starting point for people who want to understand the
+            computer in front of them, instead of merely tapping the shiny parts.
+          </p>
+        </div>
+        <div class="course-grid">
+          <article class="terminal-card">
+            <p class="prompt">student@laptop:~$ <span>learn --by-doing</span></p>
+            <h3>Not another slide deck.</h3>
+            <p>
+              Linux Foundations is for complete beginners, curious teenagers, and anyone ready
+              to become less afraid of a terminal. Bring a laptop. Expect to type commands,
+              break small things safely, ask questions, and fix them together.
+            </p>
+            <ul>
+              <li>Navigate files and folders with confidence</li>
+              <li>Use the shell as a practical everyday tool</li>
+              <li>Meet coding, automation, servers, and open source</li>
+              <li>Build a base for robotics and creative tech projects</li>
+            </ul>
+            <p class="small-print">No prior experience. No fees. No gatekeeping.</p>
+            <a class="button primary" href="#contact">I want in <span aria-hidden="true">-&gt;</span></a>
+          </article>
+          <figure class="poster">
+            <img
+              src="/linux-foundations-poster.png"
+              alt="Linux Foundations: Master the Linux CLI, a free Kolam Ayer Makers class"
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="next" id="next" aria-labelledby="next-heading">
+        <div>
+          <p class="eyebrow">02 / compiling ideas</p>
+          <h2 id="next-heading">The roadmap is deliberately messy.</h2>
+          <p>
+            Linux is the first tool on the bench, not the only one. As the group grows, we want
+            to run practical sessions in electronics, AI, robotics, homelabs, automation, and
+            anything else worth learning with other humans in the room.
+          </p>
+        </div>
+        <ul class="roadmap" aria-label="Future topics">
+          <li><span>01</span> Electronics: lights, sensors, solder, and mistakes</li>
+          <li><span>02</span> AI: learn what it can do, then make it useful</li>
+          <li><span>03</span> Robotics: code that moves in the real world</li>
+          <li><span>04</span> Your weirdly specific idea: pitch it</li>
+        </ul>
+      </section>
+
+      <section class="contact" id="contact" aria-labelledby="contact-heading">
+        <div class="contact-copy">
+          <p class="eyebrow">03 / open a channel</p>
+          <h2 id="contact-heading">This gets better when you show up.</h2>
+          <p>
+            Want to join a class? Volunteer a skill, a pair of hands, or a half-finished project?
+            Want to fork the idea and run a free maker class in your own CC? Seriously, please do.
+            We would love to compare notes.
+          </p>
+          <p class="contact-note">Tell us what you are into. There is no wrong entry point.</p>
+        </div>
+        <form action="https://api.web3forms.com/submit" method="POST">
+          <input type="hidden" name="access_key" value={accessKey} />
+          <input type="hidden" name="subject" value="Kolam Ayer Makers website enquiry" />
+          <input type="checkbox" name="botcheck" class="honeypot" tabindex="-1" autocomplete="off" />
+          <label>
+            Your name
+            <input name="name" autocomplete="name" required />
+          </label>
+          <label>
+            Your email
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+          <label>
+            What are you building?
+            <textarea name="message" rows="5" required placeholder="I want to join... / I can help with... / Our CC could..."></textarea>
+          </label>
+          <button class="button primary" type="submit">Send transmission <span aria-hidden="true">-&gt;</span></button>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <Motto />
+      <p>Made in Singapore &lt;3</p>
+    </footer>
+
+    <style>
+      :root { color-scheme: dark; --ink: #e8e8dd; --muted: #9ca49d; --lime: #c5f414; --teal: #00e0d0; --orange: #ff725c; --panel: #111613; --line: #2b3b35; --black: #090c0a; }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { background: var(--black); color: var(--ink); font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; margin: 0; line-height: 1.55; }
+      body::before { background-image: linear-gradient(rgba(0, 224, 208, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 224, 208, .035) 1px, transparent 1px); background-size: 32px 32px; content: ""; inset: 0; pointer-events: none; position: fixed; z-index: -1; }
+      a { color: inherit; }
+      .site-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; margin: auto; max-width: 1240px; padding: 1rem 2rem; }
+      .brand { display: flex; flex-direction: column; width: min(19rem, 36vw); }
+      .brand img { display: block; height: auto; width: 100%; }
+      nav { display: flex; gap: clamp(.75rem, 2.5vw, 2rem); }
+      nav a { color: var(--muted); font-size: .95rem; text-decoration: none; text-transform: uppercase; }
+      nav a:hover, nav a:focus-visible { color: var(--lime); }
+      main { margin: auto; max-width: 1240px; }
+      section { padding: clamp(4.5rem, 10vw, 9rem) 2rem; }
+      .hero { max-width: 900px; min-height: 0; padding-bottom: clamp(4rem, 8vw, 6rem); padding-top: clamp(1.5rem, 3vw, 2.5rem); }
+      .terminal-line { color: var(--teal); font-size: .8rem; letter-spacing: .06em; }
+      .eyebrow { color: var(--teal); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+      .prompt { color: var(--teal); font-size: .8rem; letter-spacing: .06em; }
+      .terminal-line span, .prompt span { color: var(--lime); }
+      .terminal-line b { color: var(--orange); }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: clamp(2.4rem, 4.5vw, 4rem); font-weight: 900; letter-spacing: -.05em; line-height: .87; margin: 1.1rem 0 1.5rem; text-transform: uppercase; }
+      h1 em { color: var(--lime); font-style: normal; }
+      h2 { font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: clamp(2.8rem, 6vw, 5.5rem); letter-spacing: -.035em; line-height: .92; margin-bottom: 1.5rem; text-transform: uppercase; }
+      h3 { font-size: 1.6rem; line-height: 1.1; }
+      .hero-copy, .section-intro > p, .next > div > p, .contact-copy > p { color: var(--muted); font-size: clamp(1rem, 2vw, 1.2rem); max-width: 45rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 1rem; margin: 2.5rem 0 4rem; }
+      .button { border: 1px solid var(--teal); color: var(--teal); display: inline-block; font: inherit; font-size: .85rem; padding: .9rem 1rem; text-decoration: none; text-transform: uppercase; }
+      .button:hover, .button:focus-visible { background: var(--teal); color: var(--black); }
+      .button.primary { background: var(--lime); border-color: var(--lime); color: var(--black); cursor: pointer; font-weight: bold; }
+      .button.primary:hover, .button.primary:focus-visible { background: var(--orange); border-color: var(--orange); }
+      .manifesto { background: var(--lime); color: var(--black); display: grid; font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: clamp(1.35rem, 2.5vw, 2.1rem); grid-template-columns: repeat(3, 1fr); letter-spacing: -.03em; line-height: 1; padding-bottom: 1.8rem; padding-top: 1.8rem; text-transform: uppercase; }
+      .manifesto p { margin: 0; }
+      .course, .next, .contact { border-bottom: 1px solid var(--line); }
+      .course-grid { align-items: start; display: grid; gap: clamp(2rem, 5vw, 5rem); grid-template-columns: minmax(0, 1fr) minmax(280px, .75fr); margin-top: 3rem; }
+      .terminal-card { background: var(--panel); border: 1px solid var(--line); padding: clamp(1.5rem, 4vw, 3rem); }
+      .terminal-card p:not(.prompt), .terminal-card li { color: var(--muted); }
+      .terminal-card ul { padding-left: 1.25rem; }
+      .terminal-card li::marker { color: var(--lime); }
+      .small-print { color: var(--teal) !important; font-size: .8rem; margin-top: 2rem; }
+      .poster { border: 1px solid var(--line); margin: 0; padding: .75rem; }
+      .poster img { display: block; height: auto; width: 100%; }
+      .next { display: grid; gap: 3rem; grid-template-columns: 1fr 1fr; }
+      .roadmap { border-top: 1px solid var(--line); list-style: none; margin: 0; padding: 0; }
+      .roadmap li { border-bottom: 1px solid var(--line); padding: 1.25rem 0; }
+      .roadmap span { color: var(--orange); display: inline-block; margin-right: 1rem; }
+      .contact { display: grid; gap: clamp(3rem, 8vw, 8rem); grid-template-columns: 1fr 1fr; }
+      .contact-note { color: var(--teal) !important; }
+      form { background: var(--panel); border: 1px solid var(--line); padding: clamp(1.5rem, 4vw, 3rem); }
+      label { color: var(--muted); display: block; font-size: .8rem; margin-bottom: 1.25rem; text-transform: uppercase; }
+      input, textarea { background: var(--black); border: 1px solid var(--line); border-radius: 0; color: var(--ink); display: block; font: inherit; margin-top: .5rem; padding: .75rem; resize: vertical; width: 100%; }
+      input:focus, textarea:focus { border-color: var(--teal); outline: 1px solid var(--teal); }
+      .honeypot { display: none; }
+      footer { color: var(--muted); display: flex; font-size: .75rem; justify-content: space-between; margin: auto; max-width: 1240px; padding: 2rem; text-transform: uppercase; }
+      @media (max-width: 700px) { .site-header { padding: .75rem 1rem; } nav { gap: .75rem; } nav a { font-size: .62rem; } section { padding-left: 1rem; padding-right: 1rem; } .manifesto, .next, .contact, .course-grid { grid-template-columns: 1fr; } .manifesto { gap: .75rem; } footer { display: block; padding: 1.5rem 1rem; } }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+---
+const { compact = false } = Astro.props;
+---
+
+<p class:list={["motto", { compact }]}><span style="color: var(--lime)">&gt;_</span> <span style="color: #f5c400">Build.</span> <span style="color: var(--teal)">Break.</span> <span style="color: var(--lime)">Repeat.</span></p>
+
+<style>
+  .motto { font-weight: bold; margin: 0; text-transform: none; white-space: nowrap; }
+  .compact { font-size: .7rem; text-align: center; width: 100%; }
+</style>

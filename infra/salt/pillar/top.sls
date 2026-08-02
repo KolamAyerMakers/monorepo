@@ -1,0 +1,35 @@
+base:
+  "*":
+    - bootstrap
+    - packages
+    - users
+    - openssh-server
+    - openssh-client
+    - pam-pwquality
+    - root
+    - nftables
+    - dhcp-client
+    - systemd-timesyncd
+    - claude-code
+    - unbound
+    - unbound_exporter
+    - kea_exporter
+    - blocky
+    - victorialogs
+    - caddy
+    - forgejo
+    - lldap
+    - authelia
+    - ergo
+    - gamja
+    - ttyd
+    - sssd
+    - rsyslog
+    - dns-nftsets
+    - github
+    - udp46
+    - presets
+    - hosts
+    - os
+    - os_family
+    - roles

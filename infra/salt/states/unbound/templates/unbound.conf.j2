@@ -1,0 +1,58 @@
+# Managed by Salt — do not edit manually
+{% set listen_address = salt['pillar.get']('unbound:listen_address') %}
+{% set port = salt['pillar.get']('unbound:port') %}
+{% set auto_trust_anchor_file = salt['pillar.get']('unbound:auto_trust_anchor_file') %}
+{% set root_hints = salt['pillar.get']('unbound:root_hints') %}
+{% set local_zone_files = salt['pillar.get']('unbound:local_zone_files', []) %}
+{% set forward_zones = salt['pillar.get']('unbound:forward_zones', []) %}
+server:
+    interface: {{ listen_address }}
+    port: {{ port }}
+
+    do-ip4: yes
+    do-ip6: no
+    do-udp: yes
+    do-tcp: yes
+
+    # DNSSEC validation
+    auto-trust-anchor-file: "{{ auto_trust_anchor_file }}"
+{% if root_hints %}
+    root-hints: {{ root_hints }}
+{% endif %}{# if root_hints #}
+
+    # Security
+    hide-identity: yes
+    hide-version: yes
+    harden-glue: yes
+    harden-dnssec-stripped: yes
+    use-caps-for-id: yes
+
+    # Privacy
+    qname-minimisation: yes
+
+    # Performance
+    prefetch: yes
+    num-threads: 2
+
+    # Statistics for Prometheus monitoring
+    extended-statistics: yes
+    statistics-interval: 0
+    statistics-cumulative: no
+{% if local_zone_files %}
+
+include: "/etc/unbound/unbound.conf.d/*.conf"
+{% endif %}{# if local_zone_files #}
+
+remote-control:
+    control-enable: yes
+    control-interface: 127.0.0.1
+    control-port: 8953
+    control-use-cert: no
+{% for forward_zone in forward_zones %}
+
+forward-zone:
+    name: "{{ forward_zone.name }}"
+{%   for address in forward_zone.addresses %}
+    forward-addr: {{ address }}
+{%   endfor %}
+{% endfor %}

@@ -1,0 +1,226 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+add_newline = false
+
+[azure]
+disabled = true
+
+[cobol]
+disabled = true
+
+[bun]
+disabled = true
+
+[buf]
+disabled = true
+
+[c]
+format = "[$symbol($version(-$name))]($style) "
+symbol = "C"
+version_format = "${raw}"
+
+[character]
+success_symbol = "[\\$](green)"
+error_symbol = "[\\$](red)"
+
+[cmake]
+#format = "[$symbol($version)]($style) "
+format = "[$symbol]($style) "
+symbol = "△"
+version_format = "${raw}"
+
+[cmd_duration]
+show_milliseconds = true
+format = "[$duration]($style) "
+
+[conda]
+format = "[$symbol$environment]($style) "
+symbol = "🅒 "
+style = "bright-black"
+
+[crystal]
+disabled = true
+
+[daml]
+disabled = true
+
+[dart]
+disabled = true
+
+[deno]
+disabled = true
+
+[directory]
+truncation_symbol = "…/"
+read_only = " "
+style = "bright-cyan"
+
+[docker_context]
+symbol = ""
+format = "[$symbol$context]($style) "
+
+[dotnet]
+disabled = true
+
+[elixir]
+disabled = true
+
+[elm]
+disabled = true
+
+[env_var]
+disabled = true
+
+[erlang]
+disabled = true
+
+[gcloud]
+format = '[$symbol$account(@$domain)(\($region\))]($style) '
+symbol = ":"
+disabled = true
+
+[git_branch]
+format = "[$symbol$branch(:$remote_branch)]($style) "
+symbol = ""
+
+[golang]
+#format = "[$symbol($version)]($style) "
+format = "[$symbol]($style) "
+symbol = ""
+version_format = "${raw}"
+style = "bright-black"
+
+[haskell]
+disabled = true
+
+[hostname]
+ssh_only = true
+ssh_symbol = ""
+format = "[$ssh_symbol$hostname]($style) "
+style = "dimmed green"
+
+[java]
+format = "[${symbol}(${version})]($style) "
+version_format = "${raw}"
+symbol = ""
+style = "bright-black"
+
+[julia]
+disabled = true
+
+[kotlin]
+disabled = true
+
+[lua]
+#format = "[$symbol($version)]($style) "
+format = "[$symbol]($style) "
+version_format = "${raw}"
+symbol = ""
+style = "bright-black"
+
+[meson]
+disabled = true
+
+[hg_branch]
+disabled = true
+
+[nim]
+disabled = true
+
+[nodejs]
+symbol = ""
+version_format = "${raw}"
+#format = "[$symbol($version)]($style) "
+format = "[$symbol]($style) "
+style = "bright-black"
+
+[ocaml]
+disabled = true
+
+[openstack]
+disabled = true
+
+[package]
+disabled = true
+format = "[$symbol$version]($style) "
+symbol = "📦"
+version_format = "${raw}"
+
+[perl]
+disabled = true
+
+[php]
+disabled = true
+
+[pulumi]
+format = "[$symbol($username@)$stack]($style) "
+version_format = "${raw}"
+symbol = ":"
+
+[purescript]
+disabled = true
+
+[python]
+#format = '[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style) '
+format = '[${symbol}${pyenv_prefix}(\($virtualenv\))]($style) '
+version_format = "${raw}"
+symbol = ""
+style = "bright-black"
+
+[rlang]
+disabled = true
+
+[raku]
+disabled = true
+
+[red]
+disabled = true
+
+[ruby]
+#format = "[$symbol($version)]($style) "
+format = "[$symbol]($style) "
+symbol = ""
+version_format = "${raw}"
+style = "bright-black"
+
+[rust]
+#format = "[$symbol($version)]($style) "
+format = "[$symbol]($style) "
+symbol = ""
+version_format = "${raw}"
+style = "bright-black"
+
+[scala]
+disabled = true
+
+[spack]
+disabled = true
+
+[status]
+disabled = false
+pipestatus = true
+
+[swift]
+disabled = true
+
+[terraform]
+format = "[$symbol$workspace]($style) "
+version_format = "${raw}"
+symbol = "💠"
+style = "bright-black"
+
+[username]
+disabled = true
+format = "[$user]($style) "
+style_user = "dimmed blue"
+
+[vagrant]
+disabled = true
+
+[vlang]
+disabled = true
+
+[vcsh]
+disabled = true
+
+[zig]
+disabled = true

@@ -1,0 +1,165 @@
+network:
+    name: {{ network.name | yaml }}
+
+server:
+    name: {{ server.name | yaml }}
+    listeners:
+        {{ listeners.irc.address | yaml }}:
+            tls:
+                cert: {{ paths.certificate_file | yaml }}
+                key: {{ paths.certificate_key_file | yaml }}
+            proxy: false
+            min-tls-version: 1.2
+        {{ listeners.websocket.address | yaml }}:
+            websocket: true
+    websockets:
+        allowed-origins:
+{% set websocket_origins = server.get('websocket_origins') or [server.websocket_origin] %}
+{% for websocket_origin in websocket_origins %}
+            - {{ websocket_origin | yaml }}
+{% endfor %}
+    motd: {{ paths.motd_file | yaml }}
+    enforce-utf8: true
+    lookup-hostnames: {{ server.get('lookup_hostnames', false) | yaml }}
+    forward-confirm-hostnames: {{ server.get('forward_confirm_hostnames', true) | yaml }}
+    proxy-allowed-from:
+{% for source in server.get('proxy_allowed_from', []) %}
+        - {{ source | yaml }}
+{% endfor %}
+{% set ip_cloaking = server.get('ip_cloaking', {}) %}
+    ip-cloaking:
+        enabled: {{ ip_cloaking.get('enabled', true) | yaml }}
+        enabled-for-always-on: {{ ip_cloaking.get('enabled_for_always_on', true) | yaml }}
+        netname: {{ ip_cloaking.get('netname', 'irc') | yaml }}
+        cidr-len-ipv4: {{ ip_cloaking.get('cidr_len_ipv4', 32) | yaml }}
+        cidr-len-ipv6: {{ ip_cloaking.get('cidr_len_ipv6', 64) | yaml }}
+        num-bits: {{ ip_cloaking.get('num_bits', 64) | yaml }}
+    check-ident: false
+    coerce-ident: '~u'
+    max-sendq: 96KB
+
+accounts:
+    authentication-enabled: true
+{% set login_throttling = accounts.get('login_throttling', {}) %}
+    login-throttling:
+        enabled: {{ login_throttling.enabled | yaml }}
+        duration: {{ login_throttling.duration | yaml }}
+        max-attempts: {{ login_throttling.max_attempts | yaml }}
+    registration:
+        enabled: false
+        allow-before-connect: false
+    skip-server-password: true
+    login-via-pass-command: false
+    require-sasl:
+        enabled: true
+        exempted: []
+    nick-reservation:
+        enabled: true
+        additional-nick-limit: 0
+        method: strict
+        allow-custom-enforcement: false
+        guest-nickname-format: "Guest-*"
+        force-guest-format: false
+        force-nick-equals-account: true
+        forbid-anonymous-nick-changes: true
+    multiclient:
+        enabled: true
+        allowed-by-default: true
+        always-on: "opt-in"
+        auto-away: "opt-in"
+    auth-script:
+        enabled: true
+        command: {{ paths.auth_script_file | yaml }}
+        args:
+            - "--ldap-uri"
+            - {{ auth.ldap_uri | yaml }}
+            - "--base-dn"
+            - {{ auth.base_dn | yaml }}
+{% set allowed_groups = auth.get('allowed_groups') or [auth.required_group] %}
+{% for group_name in allowed_groups %}
+            - "--allowed-group"
+            - {{ group_name | yaml }}
+{% endfor %}
+        autocreate: true
+        timeout: 9s
+        kill-timeout: 1s
+        max-concurrency: 64
+    oauth2:
+        enabled: {{ oauth2.enabled | yaml }}
+        autocreate: {{ oauth2.autocreate | yaml }}
+        auth-script: false
+        introspection-url: {{ oauth2.introspection_url | yaml }}
+        introspection-timeout: {{ oauth2.introspection_timeout | yaml }}
+{% if oauth2.get('client_id') %}
+        client-id: {{ oauth2.client_id | yaml }}
+        client-secret: {{ oauth2.get('client_secret', '') | yaml }}
+{% endif %}
+
+channels:
+    default-modes: +ntC
+    operator-only-creation: true
+    registration:
+        enabled: false
+        operator-only: true
+    auto-join:
+{% for channel in channels.get('auto_join', []) %}
+        - {{ channel | yaml }}
+{% endfor %}
+
+logging:
+    -
+        method: stderr
+        type: "* -userinput -useroutput"
+        level: info
+
+datastore:
+    path: {{ paths.data_directory ~ '/ircd.db' | yaml }}
+    autoupgrade: true
+
+languages:
+    enabled: true
+    default: en
+    path: /opt/packages/ergo/languages
+
+limits:
+    nicklen: 32
+    identlen: 20
+    realnamelen: 150
+    channellen: 64
+    awaylen: 390
+    kicklen: 390
+    topiclen: 390
+    monitor-entries: 100
+    whowas-entries: 100
+    chan-list-modes: 100
+    registration-messages: 1024
+    multiline:
+        max-bytes: 4096
+        max-lines: 100
+    fakelag:
+        enabled: true
+        window: 1s
+        burst-limit: 5
+        messages-per-window: 2
+        cooldown: 2s
+        command-budgets:
+            CHATHISTORY: 16
+            MARKREAD: 16
+            MONITOR: 1
+            WHO: 4
+            WEBPUSH: 1
+
+history:
+    enabled: true
+    channel-length: 2048
+    client-length: 256
+    autoresize-window: 3d
+    autoreplay-on-join: 0
+    chathistory-maxmessages: 1000
+    znc-maxmessages: 2048
+    restrictions:
+        expire-time: 1w
+        query-cutoff: none
+        grace-period: 1h
+    persistent:
+        enabled: false

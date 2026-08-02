@@ -1,0 +1,15 @@
+[Unit]
+Description=Build Maker Guide classroom documentation
+After=maker-guide-bot.service
+
+[Service]
+Type=oneshot
+User={{ daemon_user }}
+Group={{ runtime_group }}
+SupplementaryGroups={{ daemon_group }}
+ExecStart=/usr/local/bin/maker-guide-build-docs --config {{ config_path }} --makers-root {{ makers_root }} --output {{ docs_site_output }}
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths={{ docs_site_directory }} /var/lib/maker-guide

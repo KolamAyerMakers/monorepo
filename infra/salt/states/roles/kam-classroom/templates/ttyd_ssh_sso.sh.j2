@@ -1,0 +1,45 @@
+#!/bin/sh
+set -eu
+
+if [ -z "${TTYD_USER:-}" ]; then
+    printf 'Missing Authelia identity. Reload {{ web_ssh_url }} and sign in again.\n' >&2
+    exit 1
+fi
+
+login_host="${1:-}"
+if [ -z "$login_host" ]; then
+    login_host="$(hostname -f 2>/dev/null || hostname)"
+fi
+
+case "$login_host" in
+    *[!A-Za-z0-9._-]*)
+        printf 'Invalid login host: %s\n' "$login_host" >&2
+        exit 1
+        ;;
+esac
+
+case "$TTYD_USER" in
+    *[!A-Za-z0-9._-]*)
+        printf 'Invalid Authelia username: %s\n' "$TTYD_USER" >&2
+        exit 1
+        ;;
+esac
+
+if ! getent passwd "$TTYD_USER" >/dev/null; then
+    printf 'No local account for Authelia user: %s\n' "$TTYD_USER" >&2
+    exit 1
+fi
+
+if ! id -nG "$TTYD_USER" | tr ' ' '\n' | grep -Fxq linux-foundations; then
+    printf 'Web SSH recovery is available only to Linux Foundations course members.\n' >&2
+    printf 'Use SSH directly: ssh %s@%s\n' "$TTYD_USER" "$login_host" >&2
+    exit 1
+fi
+
+printf '\033]0;%s@%s\007' "$TTYD_USER" "$login_host"
+
+if [ -d /etc/update-motd.d ]; then
+    /usr/bin/run-parts --lsbsysinit /etc/update-motd.d || true
+fi
+
+exec /usr/sbin/runuser --login "$TTYD_USER"

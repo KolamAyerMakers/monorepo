@@ -1,0 +1,14 @@
+{
+  "server": {
+    "url": {{ server.websocket_url | tojson }},
+    "auth": {{ server.auth | tojson }},
+    "autoconnect": {{ server.autoconnect | tojson }},
+    "autojoin": {{ server.autojoin | tojson }},
+    "ping": {{ server.ping | tojson }}
+  },
+  "oauth2": {
+    "url": {{ oauth2.url | tojson }},
+    "client_id": {{ oauth2.client_id | tojson }},
+    "scope": {{ oauth2.scope | tojson }}
+  }
+}

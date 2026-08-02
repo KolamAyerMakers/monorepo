@@ -1,0 +1,21 @@
+[Unit]
+Description=Maker Guide bot daemon
+After=network-online.target lldap.service ergo.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ daemon_user }}
+Group={{ runtime_group }}
+SupplementaryGroups={{ daemon_group }}
+ExecStart=/usr/local/bin/maker-guide-bot --config {{ config_path }}
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/run/maker-guide /var/lib/maker-guide
+
+[Install]
+WantedBy=multi-user.target

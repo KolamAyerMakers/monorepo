@@ -1,0 +1,15 @@
+dist/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.basedpyright/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.sqlite3
+*.jsonl
+/telemetry/
+/config.toml
+*.sock
+/dist/venv/

@@ -1,0 +1,47 @@
+_starship_prompt_config_directory="${XDG_CONFIG_HOME:-$HOME/.config}"
+_starship_prompt_profile_file="${_starship_prompt_config_directory}/starship/profile"
+
+_starship_prompt_profile() {
+    if [ -r "$_starship_prompt_profile_file" ]; then
+        sed -n '1p' "$_starship_prompt_profile_file"
+    else
+        printf '%s\n' default
+    fi
+}
+
+_starship_prompt_config() {
+    case "$1" in
+        ''|default)
+            printf '%s\n' "$_starship_prompt_config_directory/starship.toml"
+            ;;
+        minimal)
+            printf '%s\n' "$_starship_prompt_config_directory/starship-minimal.toml"
+            ;;
+        classic)
+            printf '%s\n' "$_starship_prompt_config_directory/starship-classic.toml"
+            ;;
+        *)
+            printf 'unknown starship prompt profile: %s\n' "$1" >&2
+            printf 'available profiles: default, minimal, classic\n' >&2
+            return 2
+            ;;
+    esac
+}
+
+starship-prompt() {
+    local profile="${1:-}"
+    local profile_configuration
+
+    if [ -z "$profile" ]; then
+        _starship_prompt_profile
+        return
+    fi
+
+    profile_configuration="$(_starship_prompt_config "$profile")" || return
+    mkdir -p "${_starship_prompt_config_directory}/starship"
+    printf '%s\n' "$profile" > "$_starship_prompt_profile_file"
+    export STARSHIP_CONFIG="$profile_configuration"
+}
+
+export STARSHIP_CONFIG="$(_starship_prompt_config "$(_starship_prompt_profile)")"
+eval "$(starship init bash)"

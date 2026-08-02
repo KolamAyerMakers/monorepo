@@ -1,0 +1,17 @@
+# The following grains are used when running the Salt minion locally (salt-call)
+# We only run it locally on laptops. Other machines are managed using salt-ssh.
+roles:
+- laptop
+- hypervisor
+network_source: tardis-dev
+hypervisor_network:
+  wan_bridge:
+    address: 10.200.0.1
+    cidr: 10.200.0.0/24
+    ipv6_address: fd42:200:0:1::1
+    ipv6_cidr: fd42:200:0:1::/64
+    dhcp_range_start: 10.200.0.100
+    dhcp_range_end: 10.200.0.200
+    dhcp6_range_start: fd42:200:0:1::100
+    dhcp6_range_end: fd42:200:0:1::1ff
+  management_address: 10.200.20.254

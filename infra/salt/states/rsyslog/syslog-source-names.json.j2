@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "nomatch": "",
+  "type": "string",
+  "table": [
+{% for ipv4_address, device_name in source_name_map.items() | sort %}
+    {"index": "{{ ipv4_address }}", "value": "{{ device_name }}"}{% if not loop.last %},{% endif %}{{ "\n" -}}
+{% endfor %}
+  ]
+}

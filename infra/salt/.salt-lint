@@ -1,0 +1,21 @@
+rules:
+  204:
+    # SSH public keys, age ciphertexts, and literal upstream configuration
+    # values can be inherently long single-line values.
+    ignore: |
+      pillar/root.sls
+      pillar/roles/home-firewall/ddclient.sls
+      pillar/roles/kam-classroom/lldap.sls
+      pillar/roles/kam-classroom/bot.sls
+      pillar/roles/kam-classroom/ttyd.sls
+      pillar/roles/kam-classroom/authelia.sls
+      pillar/roles/kam-classroom/forgejo.sls
+      pillar/roles/kam-classroom/identity.sls
+      pillar/roles/home-firewall/wireguard.sls
+      pillar/hosts/tardis.sls
+      pillar/hosts/void.sls
+      pillar/weechat.sls
+  206:
+    # WeeChat uses ${...} expressions that can end in }} and are not Jinja.
+    ignore: |
+      pillar/weechat.sls

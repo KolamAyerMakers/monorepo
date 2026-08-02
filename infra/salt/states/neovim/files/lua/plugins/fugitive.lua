@@ -1,0 +1,5 @@
+vim.keymap.set("n", "<leader>g", ":Git<CR>", { desc = "Open vim-fugitive (awesome [g]it UI!)" })
+vim.keymap.set("n", "<leader>GC", ":Ggrep '<<<<<<< '<CR>:copen<CR>", { desc = "[G]it [C]onflicts" })
+vim.keymap.set("n", "<leader>GD", ":GDelete<CR>", { desc = "[G]it [D]elete current file" })
+vim.keymap.set("n", "<leader>GR", ":GRename ", { desc = "[G]it [R]ename current file" })
+vim.keymap.set("n", "<leader>Gg", ":Ggrep ", { desc = "[G]it [g]rep" })

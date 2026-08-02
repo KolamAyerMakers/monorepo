@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+configuration_file=/etc/classroom-backup.conf
+backup_root=
+retention_days=14
+retention_days_set=false
+full_backup=false
+exclude_homes=false
+selected_components=()
+
+usage() {
+  cat <<'EOF'
+Usage: classroom-backup [OPTION]...
+
+Create a local classroom backup. With no component option, backs up everything.
+
+  --full                 Back up all configured classroom data
+  --maker-guide          Back up Maker Guide SQLite and configuration
+  --ergo                 Back up Ergo data
+  --lldap                Back up LLDAP data
+  --authelia             Back up Authelia data
+  --forgejo              Back up Forgejo data
+  --homes                Back up learner homes
+  --exclude-homes        Omit homes from a full backup
+  --config FILE          Read source paths from FILE
+  --output DIRECTORY     Store backups in DIRECTORY
+  --keep-days DAYS       Remove completed backups older than DAYS
+  --help                 Show this help
+EOF
+}
+
+fail() {
+  printf 'classroom-backup: %s\n' "$*" >&2
+  exit 1
+}
+
+require_value() {
+  [[ $# -eq 2 && -n $2 ]] || fail "$1 requires a value"
+}
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --full) full_backup=true ;;
+    --maker-guide|--ergo|--lldap|--authelia|--forgejo|--homes) selected_components+=("${1#--}") ;;
+    --exclude-homes) exclude_homes=true ;;
+    --config)
+      require_value "$1" "${2:-}"
+      configuration_file=$2
+      shift
+      ;;
+    --output)
+      require_value "$1" "${2:-}"
+      backup_root=$2
+      shift
+      ;;
+    --keep-days)
+      require_value "$1" "${2:-}"
+      retention_days=$2
+      retention_days_set=true
+      shift
+      ;;
+    --help)
+      usage
+      exit 0
+      ;;
+    *) fail "unknown option: $1" ;;
+  esac
+  shift
+done
+
+[[ -r $configuration_file ]] || fail "cannot read $configuration_file"
+# shellcheck source=/dev/null
+source "$configuration_file"
+
+backup_root=${backup_root:-${BACKUP_ROOT:-}}
+if [[ $retention_days_set == false ]]; then
+  retention_days=${RETENTION_DAYS:-$retention_days}
+fi
+[[ -n $backup_root ]] || fail 'BACKUP_ROOT is not configured'
+[[ $retention_days =~ ^[0-9]+$ ]] || fail 'retention days must be a non-negative integer'
+
+if [[ $full_backup == true ]]; then
+  [[ ${#selected_components[@]} -eq 0 ]] || fail '--full cannot be combined with component options'
+  selected_components=(maker-guide ergo lldap authelia forgejo homes)
+elif [[ ${#selected_components[@]} -eq 0 ]]; then
+  selected_components=(maker-guide ergo lldap authelia forgejo homes)
+fi
+
+if [[ $exclude_homes == true ]]; then
+  [[ $full_backup == true ]] || fail '--exclude-homes requires --full'
+  selected_components=(maker-guide ergo lldap authelia forgejo)
+fi
+
+require_path() {
+  [[ -e $2 ]] || fail "$1 path does not exist: $2"
+}
+
+copy_directory() {
+  local component=$1
+  local source_path=$2
+  local archive_path=$3
+  shift 3
+  require_path "$component" "$source_path"
+  tar --create --gzip --file "$archive_path" --directory "$(dirname "$source_path")" "$@" "$(basename "$source_path")"
+}
+
+umask 077
+mkdir -p "$backup_root"
+staging_directory=$(mktemp -d "$backup_root/.in-progress.XXXXXXXX")
+trap 'rm -rf "$staging_directory"' EXIT
+
+for component in "${selected_components[@]}"; do
+  case $component in
+    maker-guide)
+      require_path 'Maker Guide database' "${MAKER_GUIDE_DATABASE:-}"
+      require_path 'Maker Guide configuration' "${MAKER_GUIDE_CONFIG:-}"
+      sqlite3 "$MAKER_GUIDE_DATABASE" ".backup '$staging_directory/state.db'"
+      cp --preserve=mode "$MAKER_GUIDE_CONFIG" "$staging_directory/config.toml"
+      tar --create --gzip --file "$staging_directory/maker-guide.tar.gz" --directory "$staging_directory" state.db config.toml
+      rm "$staging_directory/state.db" "$staging_directory/config.toml"
+      ;;
+    ergo)
+      copy_directory ergo "${ERGO_DATA:-}" "$staging_directory/ergo.tar.gz"
+      ;;
+    lldap)
+      copy_directory lldap "${LLDAP_DATA:-}" "$staging_directory/lldap.tar.gz"
+      ;;
+    authelia)
+      copy_directory authelia "${AUTHELIA_DATA:-}" "$staging_directory/authelia.tar.gz"
+      ;;
+    forgejo)
+      copy_directory forgejo "${FORGEJO_DATA:-}" "$staging_directory/forgejo.tar.gz"
+      ;;
+    homes)
+      copy_directory homes "${HOMES_DATA:-}" "$staging_directory/homes.tar.gz" --exclude='*/.cache' --exclude='*/.npm' --exclude='*/.shiv'
+      ;;
+  esac
+done
+
+printf 'created_at=%s\n' "$(date --iso-8601=seconds)" >"$staging_directory/manifest"
+printf 'components=%s\n' "${selected_components[*]}" >>"$staging_directory/manifest"
+touch "$staging_directory/.classroom-backup"
+backup_directory=$(mktemp -d "$backup_root/$(date --utc +%Y%m%dT%H%M%SZ).XXXXXXXX")
+rmdir "$backup_directory"
+mv "$staging_directory" "$backup_directory"
+ln -sfnT "$(basename "$backup_directory")" "$backup_root/latest"
+trap - EXIT
+
+while IFS= read -r -d '' backup_marker; do
+  rm -rf -- "${backup_marker%/.classroom-backup}"
+done < <(find "$backup_root" -mindepth 2 -maxdepth 2 -type f -name .classroom-backup -mtime "+$retention_days" -print0)
+printf '%s\n' "$backup_directory"

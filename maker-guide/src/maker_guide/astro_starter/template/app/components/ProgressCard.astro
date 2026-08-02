@@ -1,0 +1,62 @@
+---
+import { learnerProgress } from "../lib/site.mjs";
+
+const progress = learnerProgress();
+const tier = progress.tier === "Not available yet"
+  ? progress.tier
+  : progress.tier.replace(/\b\w/g, (letter) => letter.toUpperCase());
+const rank = progress.rank === "Not available yet" ? progress.rank : `#${progress.rank}`;
+const achievementCount = progress.quests.completed.length + progress.objectives.completed.length;
+const completedMilestoneCount = achievementCount + progress.sessions.reached.length;
+const milestoneCount = progress.quests.total + progress.objectives.total + progress.sessions.reached.length + progress.sessions.remaining.length;
+---
+
+<aside aria-label={`${progress.handle}'s Linux Foundations progress`} class="progress-card">
+  <div class="progress-heading">
+    <p>{progress.handle}'s progress</p>
+    <span>{tier}</span>
+  </div>
+  <dl>
+    <div class="score"><dt>Score</dt><dd>{progress.score}</dd></div>
+    <div><dt>Achieved</dt><dd>{achievementCount} steps</dd></div>
+    <div><dt>Sessions reached</dt><dd>{progress.sessions.reached.length}</dd></div>
+    <div><dt>Cohort rank</dt><dd>{rank}</dd></div>
+  </dl>
+  {milestoneCount > 0 && <div class="quest-completion">
+    <span>{completedMilestoneCount} of {milestoneCount} milestones reached</span>
+    <progress aria-label="Milestones reached" max={milestoneCount} value={completedMilestoneCount}></progress>
+  </div>}
+  <div class="quest-progress">
+    <details>
+      <summary>Achieved: {achievementCount}</summary>
+      <ul>
+        {progress.quests.completed.map((quest) => <li><a href={`https://lf2607.kolamayermakers.org/docs/${quest.documentation_path}`}>{quest.title}</a></li>)}
+        {progress.objectives.completed.map((objective) => <li><a href={`https://lf2607.kolamayermakers.org/docs/${objective.documentation_path}`}>{objective.title}</a></li>)}
+      </ul>
+    </details>
+  </div>
+</aside>
+
+<style>
+  .progress-card { background: #123f40; box-shadow: 7px 7px 0 #b5d86a; color: #f7f0df; margin: 0 0 3.25rem; max-width: 43rem; padding: 1.15rem 1.3rem 1.3rem; }
+  .progress-heading { align-items: center; border-bottom: 1px solid rgba(247, 240, 223, .32); display: flex; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: .65rem; }
+  .progress-heading p { font-size: .75rem; font-weight: 800; letter-spacing: .1em; margin: 0; text-transform: uppercase; }
+  .progress-heading span { background: #b5d86a; color: #123f40; font-size: .72rem; font-weight: 800; padding: .2rem .45rem; text-transform: uppercase; }
+  dl { display: grid; gap: 1rem; grid-template-columns: 1.4fr 1fr 1fr 1fr; margin: 0; }
+  dt { color: #acd1c7; font-size: .73rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  dd { font-size: 1.45rem; font-weight: 750; letter-spacing: -.04em; margin: .1rem 0 0; }
+  .score dd { color: #f78a45; font-size: 2.65rem; line-height: .9; }
+  .quest-completion { margin-top: 1.25rem; }
+  .quest-completion span { display: block; font-size: .8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  progress { accent-color: #f78a45; display: block; height: .65rem; margin-top: .45rem; width: 100%; }
+  .quest-progress { border-top: 1px solid rgba(247, 240, 223, .32); margin-top: 1.25rem; padding-top: .7rem; }
+  details + details { margin-top: .6rem; }
+  summary { cursor: pointer; font-size: .8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  ul { margin: .45rem 0 0; padding-left: 1.15rem; }
+  li { margin-top: .25rem; }
+  a { color: #b5d86a; }
+  @media (max-width: 32rem) {
+    dl { grid-template-columns: 1fr 1fr; }
+    .score { grid-column: span 2; }
+  }
+</style>

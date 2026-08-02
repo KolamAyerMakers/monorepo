@@ -1,0 +1,8 @@
+# Managed by Salt.
+[Time]
+{% if configuration.get('ntp') %}
+NTP={{ configuration.ntp | join(' ') }}
+{% endif %}
+{% if configuration.get('fallback_ntp') is not none %}
+FallbackNTP={{ configuration.fallback_ntp | join(' ') }}
+{% endif %}

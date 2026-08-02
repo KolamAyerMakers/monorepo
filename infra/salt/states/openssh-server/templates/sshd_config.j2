@@ -1,0 +1,28 @@
+{% set match_blocks = config.get('Match', []) -%}
+{% for key, value in config.items() -%}
+{% if key != 'Match' -%}
+{% if value is not none -%}
+{% if value is sequence and value is not string -%}
+{% for item in value -%}
+{{ key }} {{ item }}
+{% endfor -%}
+{% else -%}
+{{ key }} {{ value }}
+{% endif -%}
+{% endif -%}
+{% endif -%}
+{% endfor -%}
+{% for match_block in match_blocks -%}
+Match {{ match_block.condition }}
+{% for key, value in match_block.options.items() -%}
+{% if value is not none -%}
+{% if value is sequence and value is not string -%}
+{% for item in value -%}
+{{ '    ' }}{{ key }} {{ item }}
+{% endfor -%}
+{% else -%}
+{{ '    ' }}{{ key }} {{ value }}
+{% endif -%}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}

@@ -1,0 +1,36 @@
+# Managed by Salt.
+$WorkDirectory {{ service.queue_spool_directory }}
+
+global(
+  localHostname="{{ forwarding.local_hostname }}"
+  preserveFQDN="on"
+)
+
+{% macro on_off(value) -%}
+{{ "on" if value else "off" }}
+{%- endmacro %}
+module(
+  load="imjournal"
+  StateFile="{{ imjournal.state_file }}"
+  PersistStateInterval="{{ imjournal.persist_state_interval }}"
+  IgnorePreviousMessages="{{ on_off(imjournal.ignore_previous_messages) }}"
+  FileCreateMode="{{ imjournal.file_create_mode }}"
+)
+{% if receiver.enabled %}
+
+module(load="imudp")
+input(type="imudp" port="{{ receiver.udp_listen_port }}")
+
+module(load="imtcp")
+input(type="imtcp" port="{{ receiver.tcp_listen_port }}")
+{% endif %}
+
+$RepeatedMsgReduction on
+
+$FileOwner {{ service.log_file_owner }}
+$FileGroup {{ service.log_file_group }}
+$FileCreateMode {{ service.log_file_create_mode }}
+$DirCreateMode {{ service.log_directory_create_mode }}
+$Umask {{ service.umask }}
+
+$IncludeConfig /etc/rsyslog.d/*.conf

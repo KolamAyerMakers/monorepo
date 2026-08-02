@@ -1,0 +1,11 @@
+--- ./components/app.js
++++ ./components/app.js
+@@ -417,6 +417,8 @@
+ 		let redirectUri = new URL(window.location.toString());
+ 		redirectUri.searchParams.delete("code");
+ 		redirectUri.searchParams.delete("state");
++		redirectUri.searchParams.delete("iss");
++		redirectUri.searchParams.delete("scope");
+ 
+ 		let data = await oauth2.exchangeCode({
+ 			serverMetadata,

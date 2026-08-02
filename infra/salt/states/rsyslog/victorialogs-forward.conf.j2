@@ -1,0 +1,82 @@
+# Managed by Salt.
+{% macro on_off(value) -%}
+{{ "on" if value else "off" }}
+{%- endmacro %}
+{% if forwarding.template == "VictorialogsSyslogProtocol23Format" %}
+lookup_table(
+  name="syslog_source_names"
+  file="{{ forwarding.source_name_map_file }}"
+  reloadOnHUP="on"
+)
+
+if lookup("syslog_source_names", $fromhost-ip) != "" and (
+  $hostname == "" or
+  $hostname == "-" or
+  $hostname == $fromhost-ip
+) then {
+  set $.victorialogs_hostname = lookup("syslog_source_names", $fromhost-ip);
+} else {
+  set $.victorialogs_hostname = $hostname;
+}
+
+if $.victorialogs_hostname == "" or $.victorialogs_hostname == "-" then {
+  set $.victorialogs_hostname = $fromhost-ip;
+}
+
+set $.victorialogs_structured_data = "[origin ip=\"" & $fromhost-ip & "\"]";
+
+if $app-name == "" then {
+  set $.victorialogs_app_name = "-";
+} else {
+  set $.victorialogs_app_name = $app-name;
+}
+
+if $procid == "" then {
+  set $.victorialogs_procid = "-";
+} else {
+  set $.victorialogs_procid = $procid;
+}
+
+if $msgid == "" then {
+  set $.victorialogs_msgid = "-";
+} else {
+  set $.victorialogs_msgid = $msgid;
+}
+
+template(name="VictorialogsSyslogProtocol23Format" type="list") {
+  constant(value="<")
+  property(name="pri")
+  constant(value=">1 ")
+  property(name="timereported" dateFormat="rfc3339")
+  constant(value=" ")
+  property(name="$.victorialogs_hostname")
+  constant(value=" ")
+  property(name="$.victorialogs_app_name")
+  constant(value=" ")
+  property(name="$.victorialogs_procid")
+  constant(value=" ")
+  property(name="$.victorialogs_msgid")
+  constant(value=" ")
+  property(name="$.victorialogs_structured_data")
+  property(name="msg" spIfNo1stSp="on")
+  property(name="msg" dropLastLf="on")
+  constant(value="\n")
+}
+
+{% endif %}
+action(
+  type="omfwd"
+  target="{{ forwarding.target }}"
+  port="{{ forwarding.port }}"
+  protocol="{{ forwarding.protocol }}"
+  template="{{ forwarding.template }}"
+  action.resumeRetryCount="-1"
+  queue.type="{{ queue.type }}"
+  queue.filename="{{ queue.filename }}"
+  queue.spoolDirectory="{{ service.queue_spool_directory }}"
+  queue.size="{{ queue.size }}"
+  queue.highWatermark="{{ queue.high_watermark }}"
+  queue.lowWatermark="{{ queue.low_watermark }}"
+  queue.maxDiskSpace="{{ queue.max_disk_space }}"
+  queue.saveOnShutdown="{{ on_off(queue.save_on_shutdown) }}"
+)

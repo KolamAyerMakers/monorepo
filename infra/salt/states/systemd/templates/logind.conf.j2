@@ -1,0 +1,6 @@
+{% for section, section_config in config.items() %}
+[{{ section }}]
+{% for key, value in section_config.items() %}
+{{ key }}={{ value }}
+{% endfor %}{# key, value #}
+{% endfor %}{# section, section_config #}

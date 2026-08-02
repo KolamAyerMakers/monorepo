@@ -1,0 +1,33 @@
+--- ./components/app.js
++++ ./components/app.js
+@@ -362,7 +362,7 @@
+ 
+ 			let saslOauthBearer;
+ 			try {
+-				saslOauthBearer = await this.exchangeOauth2Code(queryParams.code);
++				saslOauthBearer = await this.exchangeOauth2Code(queryParams.code, queryParams.state);
+ 			} catch (err) {
+ 				this.showError(err);
+ 				return;
+@@ -411,19 +411,18 @@
+ 		});
+ 	}
+ 
+-	async exchangeOauth2Code(code) {
++	async exchangeOauth2Code(code, state) {
+ 		let serverMetadata = await oauth2.fetchServerMetadata(this.config.oauth2.url);
+ 
+ 		let redirectUri = new URL(window.location.toString());
+ 		redirectUri.searchParams.delete("code");
+ 		redirectUri.searchParams.delete("state");
+ 
+-		let queryParams = new URLSearchParams(window.location.search);
+ 		let data = await oauth2.exchangeCode({
+ 			serverMetadata,
+ 			redirectUri: redirectUri.toString(),
+ 			code,
+-			state: queryParams.get("state"),
++			state,
+ 			clientId: this.config.oauth2.client_id,
+ 			clientSecret: this.config.oauth2.client_secret,
+ 		});

@@ -1,0 +1,39 @@
+# apt repository egress
+table inet filter {
+    counter output_apt_repositories {}
+{% for repository in repositories %}
+{% if repository.get('ipv4_set') %}
+
+    set {{ repository.ipv4_set }} {
+        type ipv4_addr
+        flags timeout
+        timeout {{ set_timeout }}
+    }
+{% endif %}
+{% if repository.get('ipv6_set') %}
+
+    set {{ repository.ipv6_set }} {
+        type ipv6_addr
+        flags timeout
+        timeout {{ set_timeout }}
+    }
+{% endif %}
+{% endfor %}
+
+    chain output {
+{% for repository in repositories %}
+{%   for repository_user in repository.users %}
+{%     if repository.get('ipv4_set') and repository.tcp_ports %}
+        meta skuid {{ repository_user }} ip daddr @{{ repository.ipv4_set }} tcp dport { {{ repository.tcp_ports | join(', ') }} } \
+            counter name "output_apt_repositories" accept \
+            comment "apt repository {{ repository.name }} {{ repository_user }}"
+{%     endif %}{# if repository.get('ipv4_set') and repository.tcp_ports #}
+{%     if repository.get('ipv6_set') and repository.tcp_ports %}
+        meta skuid {{ repository_user }} ip6 daddr @{{ repository.ipv6_set }} tcp dport { {{ repository.tcp_ports | join(', ') }} } \
+            counter name "output_apt_repositories" accept \
+            comment "apt repository {{ repository.name }} {{ repository_user }}"
+{%     endif %}{# if repository.get('ipv6_set') and repository.tcp_ports #}
+{%   endfor %}{# for repository_user in repository.users #}
+{% endfor %}{# for repository in repositories #}
+    }
+}

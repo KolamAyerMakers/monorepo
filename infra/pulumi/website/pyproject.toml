@@ -1,0 +1,29 @@
+[project]
+name = "kolam-makers-website-infrastructure"
+version = "0.1.0"
+description = "Cloudflare Pages infrastructure for the Kolam Makers public website"
+requires-python = ">=3.12"
+dependencies = [
+  "pulumi>=3.165.0,<4.0.0",
+  "pulumi-cloudflare>=6.17.0,<7.0.0",
+]
+
+[dependency-groups]
+dev = [
+  "basedpyright>=1.31.0,<2.0.0",
+  "pytest>=8.4.0,<9.0.0",
+  "ruff>=0.11.0,<1.0.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+reportMissingModuleSource = false

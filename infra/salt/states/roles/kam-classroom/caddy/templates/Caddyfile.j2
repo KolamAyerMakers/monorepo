@@ -1,0 +1,106 @@
+{
+    log {
+        output stderr
+    }
+{% if caddy.local_certs %}
+    local_certs
+{% endif %}
+}
+
+import {{ caddy.learner_routes_file }}
+
+{{ caddy.domain }} {
+    encode zstd gzip
+
+    @user_home_redirect path_regexp user_home_redirect ^/~[a-z][a-z0-9_-]*$
+    redir @user_home_redirect {http.request.uri.path}/?{http.request.uri.query} permanent
+
+    @user_home path_regexp user_home ^/~(?P<username>[a-z][a-z0-9_-]*)/(?P<path>.*)$
+    handle @user_home {
+        root * /home/{re.user_home.username}/public_html
+        rewrite * /{re.user_home.path}
+        file_server
+    }
+
+{% if forgejo_server.logout_redirect %}
+    handle {{ forgejo_server.logout_redirect }} {
+        redir {{ authelia_server.url }}logout 303
+    }
+
+{% endif %}
+    handle /git/user/logout {
+        reverse_proxy {{ forgejo_server.http_address }}:{{ forgejo_server.http_port }} {
+            @forgejo_logout_success status 200
+            handle_response @forgejo_logout_success {
+                copy_response_headers {
+                    include Set-Cookie
+                }
+                header Content-Type application/json
+                respond "{\"redirect\":\"{{ forgejo_server.logout_redirect }}\"}" 200
+            }
+        }
+    }
+
+    handle /git/* {
+        reverse_proxy {{ forgejo_server.http_address }}:{{ forgejo_server.http_port }}
+    }
+
+    handle_path /lldap/* {
+        reverse_proxy {{ lldap_http.host }}:{{ lldap_http.port }}
+    }
+
+    handle /auth/* {
+        reverse_proxy {{ authelia_server.host }}:{{ authelia_server.port }}
+    }
+
+    handle_path /register/* {
+        reverse_proxy {{ registration_ttyd_server.host }}:{{ registration_ttyd_server.port }}
+    }
+
+    handle /docs {
+        redir * /docs/ permanent
+    }
+
+    handle /docs/* {
+        root * {{ caddy.docs_site_directory }}
+        file_server
+    }
+
+    handle /ssh/* {
+    route {
+        request_header -X-WEBAUTH-USER
+        reverse_proxy {{ authelia_server.host }}:{{ authelia_server.port }} {
+            method GET
+            rewrite /auth/api/authz/forward-auth
+            header_up X-Forwarded-Method {method}
+            header_up X-Forwarded-Uri {uri}
+            @authorized status 2xx
+            handle_response @authorized {
+                request_header X-WEBAUTH-USER {rp.header.Remote-User}
+            }
+        }
+        handle_path {{ ttyd_web_assets.route }}/* {
+            root * {{ ttyd_web_assets.directory }}
+            file_server
+        }
+        uri strip_prefix /ssh
+        reverse_proxy {{ ssh_ttyd_server.upstream }}
+    }
+    }
+
+    handle_path /irc/* {
+        handle /webirc* {
+            reverse_proxy {{ ergo_listeners.websocket.address }}
+        }
+
+        handle {
+            root * {{ gamja_paths.web_root }}
+            file_server
+        }
+    }
+
+    handle {
+        root * {{ caddy.docs_site_directory }}
+        file_server
+    }
+}

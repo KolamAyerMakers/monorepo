@@ -1,0 +1,37 @@
+#!/bin/sh
+{% set package_egress = salt['pillar.get']('bootstrap:package_egress', {}) %}
+{% set enabled = package_egress.get('enabled', false) %}
+{% set users = package_egress.get('users', []) %}
+{% set nameservers = package_egress.get('nameservers', []) %}
+{% set dns_ports = package_egress.get('dns_ports', []) %}
+{% set http_ports = package_egress.get('http_ports', []) %}
+{% set manage_resolv_conf = salt['pillar.get']('unbound:manage_resolv_conf', false) %}
+set -eu
+
+if [ "{{ enabled | lower }}" != "true" ]; then
+  exit 0
+fi
+
+{% if manage_resolv_conf %}
+{
+  printf '%s\n' '# Managed by Salt during package bootstrap.'
+  printf '%s\n' '# Unbound replaces this file after local resolver startup.'
+{% for nameserver in nameservers %}
+  printf '%s\n' 'nameserver {{ nameserver }}'
+{% endfor %}
+} > /etc/resolv.conf
+
+{% endif %}
+if ! nft list chain inet filter output >/dev/null 2>&1; then
+  exit 0
+fi
+
+if nft list chain inet filter output | grep -Fq "temporary bootstrap package egress"; then
+  exit 0
+fi
+
+nft -f - <<'NFT'
+insert rule inet filter output position 0 meta skuid { {{ users | join(', ') }} } udp dport { {{ dns_ports | join(', ') }} } counter accept comment "temporary bootstrap package egress dns udp"
+insert rule inet filter output position 0 meta skuid { {{ users | join(', ') }} } tcp dport { {{ dns_ports | join(', ') }} } counter accept comment "temporary bootstrap package egress dns tcp"
+insert rule inet filter output position 0 meta skuid { {{ users | join(', ') }} } tcp dport { {{ http_ports | join(', ') }} } counter accept comment "temporary bootstrap package egress http"
+NFT

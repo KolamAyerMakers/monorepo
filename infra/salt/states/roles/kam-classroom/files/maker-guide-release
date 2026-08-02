@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 022
+
+artifact_directory=$1
+release_directory=$2
+action=$3
+
+shopt -s nullglob
+artifact_paths=("${artifact_directory}"/maker-guide.*.tar.gz)
+[ "${#artifact_paths[@]}" -eq 1 ]
+artifact_path=${artifact_paths[0]}
+release_name=$(basename "${artifact_path}" .tar.gz)
+release_path="${release_directory}/${release_name}"
+installation_directory="${release_directory}/.."
+current_path="${installation_directory}/current"
+previous_path="${installation_directory}/previous"
+desired_target="releases/${release_name}"
+pending_release_path="${installation_directory}/pending-release"
+registration_state_path=/etc/maker-guide/registration-open
+registration_backup_path="${installation_directory}/registration-open.before-release"
+
+case "${action}" in
+staged)
+    [ -d "${release_path}" ]
+    "${release_path}/bin/maker-guide-bot" --help >/dev/null
+    ;;
+stage)
+    temporary_path="${release_path}.next"
+    rm -rf "${temporary_path}"
+    mkdir "${temporary_path}"
+    tar \
+        --extract \
+        --gzip \
+        --file "${artifact_path}" \
+        --directory "${temporary_path}" \
+        --no-same-owner \
+        --no-same-permissions
+    chmod -R go-w "${temporary_path}"
+    ln -sf /usr/bin/python3.13 "${temporary_path}/bin/python"
+    printf 'home = /usr/bin\ninclude-system-site-packages = false\nversion = 3.13\n' > "${temporary_path}/pyvenv.cfg"
+    "${temporary_path}/bin/maker-guide-bot" --help >/dev/null
+    rm -rf "${release_path}"
+    mv -T "${temporary_path}" "${release_path}"
+    ;;
+stop)
+    registration_user=${4:-}
+    [ -n "${registration_user}" ]
+    if [ -e "${registration_state_path}" ]; then
+        if [ ! -e "${registration_backup_path}" ]; then
+            mv -T "${registration_state_path}" "${registration_backup_path}"
+        else
+            rm -f "${registration_state_path}"
+        fi
+    fi
+    if id "${registration_user}" >/dev/null 2>&1; then
+        pkill -u "${registration_user}" 2>/dev/null || [ "$?" -eq 1 ]
+    fi
+    for unit in \
+        maker-guide-sync-derived-data.timer \
+        maker-guide-build-docs.timer \
+        maker-guide-sync-derived-data.service \
+        maker-guide-build-docs.service \
+        maker-guide-bot.service; do
+        if systemctl cat "${unit}" >/dev/null 2>&1; then
+            systemctl stop "${unit}"
+        fi
+    done
+    ;;
+active)
+    [ "$(readlink "${current_path}" 2>/dev/null || true)" = "${desired_target}" ]
+    ;;
+pending)
+    [ "$(cat "${pending_release_path}" 2>/dev/null || true)" = "${release_name}" ]
+    ;;
+activate)
+    current_target=$(readlink "${current_path}" 2>/dev/null || true)
+    [ "${current_target}" = "${desired_target}" ] && exit 0
+    rm -f "${previous_path}.next" "${current_path}.next" "${pending_release_path}.next"
+    printf '%s\n' "${release_name}" > "${pending_release_path}.next"
+    mv -Tf "${pending_release_path}.next" "${pending_release_path}"
+    if [ -n "${current_target}" ]; then
+        ln -s "${current_target}" "${previous_path}.next"
+        mv -Tf "${previous_path}.next" "${previous_path}"
+    fi
+    ln -s "${desired_target}" "${current_path}.next"
+    mv -Tf "${current_path}.next" "${current_path}"
+    ;;
+restore-registration)
+    if [ -e "${registration_backup_path}" ]; then
+        mv -T "${registration_backup_path}" "${registration_state_path}"
+    fi
+    ;;
+complete)
+    rm -f "${pending_release_path}" "${pending_release_path}.next"
+    ;;
+prune)
+    current_target=$(readlink "${current_path}")
+    previous_target=$(readlink "${previous_path}" 2>/dev/null || true)
+    for release_path in "${release_directory}"/*; do
+        release_name=$(basename "${release_path}")
+        [ "releases/${release_name}" = "${current_target}" ] && continue
+        [ "releases/${release_name}" = "${previous_target}" ] && continue
+        rm -rf "${release_path}"
+    done
+    ;;
+*)
+    exit 2
+    ;;
+esac

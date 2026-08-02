@@ -1,0 +1,9 @@
+[Unit]
+Description=Build Maker Guide classroom documentation hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

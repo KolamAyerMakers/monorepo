@@ -1,0 +1,6 @@
+name: classroom
+description: UpCloud VM provisioning for the Kolam Ayer Makers classroom server
+runtime:
+  name: python
+  options:
+    virtualenv: .venv

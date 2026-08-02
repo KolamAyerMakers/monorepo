@@ -1,0 +1,136 @@
+---
+import { readFileSync } from "node:fs";
+import { userInfo } from "node:os";
+import { join } from "node:path";
+import ProgressCard from "../components/ProgressCard.astro";
+import Webring from "../components/Webring.astro";
+import { learnerProgress } from "../lib/site.mjs";
+import "../styles/site.css";
+import "../styles/student.css";
+
+const { homepage, title } = Astro.props;
+const learner = learnerProgress();
+const pointsLedger = Astro.props.pointsLedger === true;
+const thanks = (() => {
+  try {
+    return JSON.parse(readFileSync(join("/makers", userInfo().username, "thanks.json"), "utf8"));
+  } catch {
+    return [];
+  }
+})();
+const scoreEntries = (() => {
+  try {
+    return JSON.parse(readFileSync(join("/makers", learner.handle, "score-ledger.json"), "utf8"));
+  } catch {
+    return [];
+  }
+})();
+const event = (entry) => {
+  if (entry.related_type === "quest") {
+    return {
+      href: `https://lf2607.kolamayermakers.org/docs/quests/${entry.related_id}.md`,
+      label: `${entry.reason === "quest_completion_speed_bonus" ? "Quest completion speed bonus" : "Quest completed"}: ${entry.related_name}`,
+    };
+  }
+  if (entry.related_type === "session_objective") {
+    return {
+      href: `https://lf2607.kolamayermakers.org/docs/sessions/${entry.related_id.split(":")[0].replace(/^S(\d)$/, "S0$1")}/self-study.md/`,
+      label: `${entry.reason === "session_objective_speed_bonus" ? "Session objective speed bonus" : "Session objective completed"}: ${entry.related_name}`,
+    };
+  }
+  if (entry.related_type === "peer_thank" && entry.peer_thank_giver) {
+    return {
+      href: `/~${entry.peer_thank_giver}/`,
+      label: `Peer thank-you from ${entry.peer_thank_giver}`,
+      detail: entry.peer_thank_reason,
+    };
+  }
+  return { label: entry.reason === "peer_thank_received" ? "Peer thank-you received" : entry.reason };
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>{learner.handle} | Linux Foundations | Kolam Ayer Makers</title>
+    <script is:inline>
+      (() => {
+        const storedTheme = localStorage.getItem("theme");
+        if (storedTheme === "light" || storedTheme === "dark") document.documentElement.dataset.theme = storedTheme;
+      })();
+    </script>
+  </head>
+  <body>
+    <main class="site-shell">
+      <header class="masthead">
+        <a aria-label={`${learner.handle}'s homepage`} class="brand" href="./">
+          <img alt="Kolam Ayer Makers" class="brand-logo-light" src={`/~${learner.handle}/kolam-ayer-makers.png`} />
+          <img alt="" aria-hidden="true" class="brand-logo-dark" src={`/~${learner.handle}/kolam-ayer-makers-dark.png`} />
+          <span><strong>{learner.handle}</strong><small>Personal site</small></span>
+        </a>
+        <span class="masthead-actions"><span class="course-tag">Linux Foundations</span><button aria-label="Toggle color theme" class="theme-toggle" type="button"></button></span>
+       </header>
+       {homepage && <ProgressCard />}
+         {homepage && <p class="points-ledger-link"><a href="./points-ledger.html">View points ledger</a></p>}
+       {homepage && thanks.length > 0 && <section class="thanks" aria-label="Peer thank-yous">
+        <h2>Thank-yous</h2>
+        <p>Thank-yous recognize classmates who helped you learn.</p>
+        <ul>{thanks.map((thank) => <li><a href={`/~${thank.from}/`}>{thank.from}</a>: {thank.reason} <time datetime={thank.created_at}>{thank.created_at.replace("T", " ").replace("Z", " UTC")}</time></li>)}</ul>
+       </section>}
+       {pointsLedger && <section class="points-ledger">
+          <h1>Points ledger</h1>
+          <p><a href="https://lf2607.kolamayermakers.org/docs/guides/scoring.md">How scoring and ranking work</a></p>
+         {scoreEntries.length > 0 ? <table>
+           <thead><tr><th scope="col">Points</th><th scope="col">Event</th><th scope="col">When</th></tr></thead>
+            <tbody>{[...scoreEntries].reverse().map((entry) => {
+             const entryEvent = event(entry);
+              return <tr><td>+{entry.amount}</td><td>{entryEvent.href ? <a href={entryEvent.href}>{entryEvent.label}</a> : entryEvent.label}{entryEvent.detail && <small>{entryEvent.detail}</small>}</td><td><time datetime={entry.created_at}>{entry.created_at.replace("T", " ").replace("Z", " UTC")}</time></td></tr>;
+           })}</tbody>
+         </table> : <p>No points awarded yet.</p>}
+       </section>}
+       <article><slot /></article>
+      <Webring />
+    </main>
+    <script is:inline>
+      (() => {
+        const themeButton = document.querySelector(".theme-toggle");
+        const systemDarkTheme = window.matchMedia("(prefers-color-scheme: dark)");
+        const currentTheme = () => document.documentElement.dataset.theme || (systemDarkTheme.matches ? "dark" : "light");
+        themeButton?.addEventListener("click", () => {
+          const nextTheme = currentTheme() === "dark" ? "light" : "dark";
+          document.documentElement.dataset.theme = nextTheme;
+          localStorage.setItem("theme", nextTheme);
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style>
+  .brand strong, .brand small { display: block; }
+  .brand strong { font-size: 1.15rem; letter-spacing: -.03em; }
+  .brand small, .course-tag { color: var(--muted-color); font-size: .72rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .masthead-actions { align-items: center; display: flex; }
+  .course-tag { border: 1px solid var(--border-color); border-radius: 99rem; padding: .3rem .65rem; }
+  :global(article h1) { font-size: clamp(2.25rem, 8vw, 4.75rem); letter-spacing: -.065em; line-height: .98; margin: 0 0 1.5rem; }
+  :global(article p) { max-width: 40rem; }
+  .thanks { border-left: 4px solid #b5d86a; margin: 0 0 3.25rem; max-width: 43rem; padding: .25rem 0 .25rem 1rem; }
+  .thanks h2 { font-size: 1.2rem; margin: 0; }
+  .thanks p { color: var(--muted-color); font-size: .9rem; margin: .35rem 0 0; }
+  .thanks ul { margin: .6rem 0 0; padding-left: 1.15rem; }
+  .thanks li + li { margin-top: .45rem; }
+   .thanks time { color: var(--muted-color); font-size: .8rem; white-space: nowrap; }
+   .points-ledger-link { margin: -2.25rem 0 3.25rem; }
+   .points-ledger { max-width: 43rem; overflow-x: auto; }
+   .points-ledger table { border-collapse: collapse; width: 100%; }
+   .points-ledger th, .points-ledger td { border-bottom: 1px solid var(--border-color); padding: .65rem .4rem; text-align: left; }
+    .points-ledger th { color: var(--muted-color); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+    .points-ledger td:first-child { color: #d5571f; font-weight: 800; }
+    .points-ledger td small { color: var(--muted-color); display: block; font-size: .8rem; margin-top: .15rem; }
+   .points-ledger time { white-space: nowrap; }
+  @media (max-width: 36rem) {
+    .course-tag { display: none; }
+  }
+</style>

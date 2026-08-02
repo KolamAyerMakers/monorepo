@@ -1,0 +1,27 @@
+[Unit]
+Description=Prometheus Unbound Exporter
+Documentation=https://github.com/letsencrypt/unbound_exporter
+After=unbound.service
+
+[Service]
+Type=simple
+User=unbound_exporter
+Group=unbound_exporter
+ExecStart=/usr/bin/unbound_exporter -unbound.ca "" -unbound.cert "" -unbound.host "tcp://127.0.0.1:8953"
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20s
+SendSIGKILL=no
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

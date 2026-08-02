@@ -1,0 +1,31 @@
+[Unit]
+Description=Prometheus nftables Exporter
+Documentation=https://github.com/metal-stack/nftables-exporter
+After=network.target nftables.service
+
+[Service]
+Type=simple
+User=nftables_exporter
+Group=nftables_exporter
+ExecStart=/usr/local/bin/nftables_exporter --config=/etc/nftables_exporter.yaml
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20s
+SendSIGKILL=no
+
+# nft requires CAP_NET_ADMIN to read counter and ruleset data
+AmbientCapabilities=CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_ADMIN
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

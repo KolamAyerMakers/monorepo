@@ -1,0 +1,28 @@
+log_level = "INFO"
+
+[socket]
+path = {{ socket_path | tojson }}
+mode = 432
+allowed_group = {{ runtime_group | tojson }}
+
+[database]
+path = {{ database_path | tojson }}
+
+[irc]
+server = {{ irc_server | tojson }}
+port = 6697
+tls = true
+nickname = {{ irc_account | tojson }}
+username = {{ irc_account | tojson }}
+realname = "Kolam Ayer Makers Guide"
+channels = {{ irc_channels | tojson }}
+
+[irc.sasl]
+username = {{ irc_account | tojson }}
+password_file = {{ irc_password_file | tojson }}
+mechanism = "PLAIN"
+
+[llm_tutor]
+enabled = {{ llm_tutor_enabled | tojson }}
+provider = "openrouter"
+api_key_file = "/etc/maker-guide/secrets/openrouter-api-key"

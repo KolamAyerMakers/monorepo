@@ -1,0 +1,54 @@
+APP_NAME = {{ app_name }}
+RUN_USER = {{ service.user }}
+WORK_PATH = {{ paths.data_directory }}
+
+[database]
+DB_TYPE = sqlite3
+PATH = {{ paths.data_directory }}/data/forgejo.db
+
+[repository]
+ROOT = {{ paths.data_directory }}/data/forgejo-repositories
+
+[server]
+DOMAIN = {{ server.domain }}
+ROOT_URL = {{ server.root_url }}
+HTTP_ADDR = {{ server.http_address }}
+HTTP_PORT = {{ server.http_port }}
+DISABLE_SSH = false
+START_SSH_SERVER = false
+SSH_DOMAIN = {{ server.ssh_domain }}
+SSH_PORT = {{ server.ssh_port }}
+SSH_ROOT_PATH = {{ paths.ssh_directory }}
+LANDING_PAGE = {{ server.landing_page }}
+LFS_START_SERVER = true
+LFS_JWT_SECRET_URI = file:{{ paths.lfs_jwt_secret_file }}
+
+[log]
+MODE = console,file
+LEVEL = Info
+ROOT_PATH = {{ paths.log_directory }}
+
+[security]
+INSTALL_LOCK = true
+SECRET_KEY_URI = file:{{ paths.secret_key_file }}
+INTERNAL_TOKEN_URI = file:{{ paths.internal_token_file }}
+
+[service]
+DISABLE_REGISTRATION = {{ registration.disable_registration | string | lower }}
+ALLOW_ONLY_EXTERNAL_REGISTRATION = {{ registration.allow_only_external_registration | string | lower }}
+SHOW_REGISTRATION_BUTTON = {{ registration.show_registration_button | string | lower }}
+ENABLE_INTERNAL_SIGNIN = {{ registration.enable_internal_signin | string | lower }}
+REQUIRE_SIGNIN_VIEW = false
+
+[openid]
+ENABLE_OPENID_SIGNIN = {{ registration.openid_signin_enabled | string | lower }}
+ENABLE_OPENID_SIGNUP = {{ registration.openid_signup_enabled | string | lower }}
+WHITELISTED_URIS = {{ registration.openid_whitelisted_uris | join(',') }}
+
+[oauth2_client]
+ENABLE_AUTO_REGISTRATION = {{ oauth2_client.enable_auto_registration | string | lower }}
+ACCOUNT_LINKING = {{ oauth2_client.account_linking }}
+USERNAME = {{ oauth2_client.username }}
+
+[oauth2]
+JWT_SECRET_URI = file:{{ paths.oauth2_jwt_secret_file }}

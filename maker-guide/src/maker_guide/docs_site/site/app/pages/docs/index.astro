@@ -1,0 +1,17 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { getCollection, render } from "astro:content";
+
+const COURSE_README_PATH = "app/content/lf2607/README.md";
+
+const course = (await getCollection("docs")).find(
+  (entry) => entry.filePath === COURSE_README_PATH,
+);
+if (!course) throw new Error("course README is missing");
+const { Content } = await render(course);
+---
+
+<SiteLayout title="Documentation">
+  <h2>Course</h2>
+  <section class="course"><Content /></section>
+</SiteLayout>

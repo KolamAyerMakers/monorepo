@@ -1,0 +1,2 @@
+include:
+  - procs.package

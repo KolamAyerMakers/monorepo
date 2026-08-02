@@ -1,0 +1,15 @@
+[Unit]
+Description=Sync Maker Guide derived learner data
+After=maker-guide-bot.service
+
+[Service]
+Type=oneshot
+User={{ daemon_user }}
+Group={{ runtime_group }}
+SupplementaryGroups={{ daemon_group }}
+ExecStart=/usr/local/bin/maker-guide-sync-derived-data --config {{ config_path }} --makers-root {{ makers_root }} --documents-root {{ documents_root }}
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths={{ makers_root }} {{ documents_root }} /var/lib/maker-guide

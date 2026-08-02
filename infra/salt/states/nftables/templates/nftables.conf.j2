@@ -1,0 +1,122 @@
+#!/usr/sbin/nft -f
+# Managed by Salt — base nftables ruleset
+#
+# Default-deny foundation for all firewall rules. Service-specific rules
+# are loaded from /etc/nftables.d/*.nft via the include at the bottom.
+#
+# File loading order (alphabetical within the directory):
+#   05-*  DNS enforcement (prerouting redirect, DoT blocking)
+#   10-*  Firewall zone policy (inter-VLAN forwarding, NAT masquerade)
+#   40-*  Infrastructure (Open vSwitch bridge rules)
+#   50-*  Per-service rules (SSH, DNS, DHCP, Prometheus exporters)
+#
+# nftables merges rules into existing chains when multiple files declare
+# the same table/chain name, so each include file adds to the chains
+# defined here without replacing them.
+{%- set default_policies = salt['pillar.get']('nftables:default_policies', {}) %}
+{%- set input_policy = default_policies.get('input', 'drop') %}
+{%- set forward_policy = default_policies.get('forward', 'drop') %}
+{%- set output_policy = default_policies.get('output', 'drop') %}
+{%- set icmp_policy = salt['pillar.get']('nftables:icmp', {}) %}
+{%- set ipv4_echo_enabled = icmp_policy.get('ipv4_echo', true) %}
+{%- set ipv6_echo_enabled = icmp_policy.get('ipv6_echo', true) %}
+{%- set ipv6_control_enabled = icmp_policy.get('ipv6_control', true) %}
+
+flush ruleset
+
+table inet filter {
+    counter input_loopback {}
+    counter input_invalid_log {}
+    counter input_invalid {}
+    counter input_established {}
+    counter fwd_invalid_log {}
+    counter fwd_invalid {}
+    counter fwd_established {}
+    counter output_loopback {}
+    counter output_invalid_log {}
+    counter output_invalid {}
+    counter output_established {}
+{% if ipv4_echo_enabled %}
+    counter input_icmp_echo {}
+    counter output_icmp_echo {}
+{% endif %}
+{% if ipv6_echo_enabled or ipv6_control_enabled %}
+    counter input_icmpv6 {}
+    counter output_icmpv6 {}
+{% endif %}
+
+    chain input {
+        type filter hook input priority 0; policy {{ input_policy }};
+
+        # Loopback: allow all local inter-process communication
+        iif lo counter name "input_loopback" accept
+
+        # Drop invalid packets before stateful tracking (malformed,
+        # out-of-window TCP segments, etc.)
+        ct state invalid limit rate 10/second counter name "input_invalid_log" log prefix "nft-input-invalid-drop: "
+        ct state invalid counter name "input_invalid" drop
+
+        # Stateful: allow return traffic for connections we initiated or accepted
+        ct state established,related counter name "input_established" accept
+{% if ipv4_echo_enabled %}
+
+        # ICMP echo: useful for reachability checks.
+        icmp type echo-request counter name "input_icmp_echo" accept
+{% endif %}
+{% if ipv6_echo_enabled %}
+
+        # ICMPv6 echo: useful for reachability checks.
+        icmpv6 type echo-request counter name "input_icmpv6" accept
+{% endif %}
+{% if ipv6_control_enabled %}
+
+        # ICMPv6 control: required for neighbor discovery and path MTU discovery.
+        icmpv6 type { packet-too-big, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } counter name "input_icmpv6" accept
+{% endif %}
+    }
+
+    chain forward {
+        type filter hook forward priority 0; policy {{ forward_policy }};
+
+        # Drop invalid packets before stateful tracking
+        ct state invalid limit rate 10/second counter name "fwd_invalid_log" log prefix "nft-forward-invalid-drop: "
+        ct state invalid counter name "fwd_invalid" drop
+
+        # Stateful: allow return traffic for forwarded (routed) connections
+        ct state established,related counter name "fwd_established" accept
+
+        # All other forwarded traffic is dropped by default.
+        # Firewall-specific forwarding policy is added by /etc/nftables.d/10-firewall-forwarding.nft.
+    }
+
+    chain output {
+        type filter hook output priority 0; policy {{ output_policy }};
+
+        # Loopback: allow all local inter-process communication
+        oif lo counter name "output_loopback" accept
+
+        # Drop invalid packets before stateful tracking
+        ct state invalid limit rate 10/second counter name "output_invalid_log" log prefix "nft-output-invalid-drop: "
+        ct state invalid counter name "output_invalid" drop
+
+        # Stateful: allow return traffic for connections we accepted locally
+        ct state established,related counter name "output_established" accept
+{% if ipv4_echo_enabled %}
+
+        # ICMP echo: allow local diagnostics and replies.
+        icmp type { echo-request, echo-reply } counter name "output_icmp_echo" accept
+{% endif %}
+{% if ipv6_echo_enabled %}
+
+        # ICMPv6 echo: allow local diagnostics and replies.
+        icmpv6 type { echo-request, echo-reply } counter name "output_icmpv6" accept
+{% endif %}
+{% if ipv6_control_enabled %}
+
+        # ICMPv6 control: required for neighbor discovery and path MTU discovery.
+        icmpv6 type { packet-too-big, nd-router-solicit, nd-neighbor-solicit, nd-neighbor-advert } counter name "output_icmpv6" accept
+{% endif %}
+    }
+}
+
+include "/etc/nftables.d/*.nft"

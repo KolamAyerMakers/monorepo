@@ -1,0 +1,17 @@
+#!jinja|yaml|age
+
+{% from "roles/kam-classroom/domain_helpers.sls" import https_url, ldap_base_distinguished_name, public_hostname with context %}
+{% set lldap_data_directory = '/data/lldap' %}
+
+lldap:
+  paths:
+    data_directory: {{ lldap_data_directory }}
+  ldap:
+    base_dn: {{ ldap_base_distinguished_name }}
+  http:
+    domain: {{ public_hostname }}
+    url: {{ https_url('lldap') }}
+  secrets:
+    jwt_secret: ENC[age-identity,YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBpaVQvS0xLaXo4dmY4RnJnaVA0U3dMOWV5TGh0YnpEZkVjNi9iSk1KVzJJCm9kdmQwRnNHWVJyNm1uUHFPNU9Eb3k5alNtaVhvUkNQUVl2Unc1S21sUHcKLT4gTXQtZC1ncmVhc2UgPCEgPjw9XCBZdFlLWyBoO14lUQpxYkd2U3YxR0cyTkdjYXZRNmVsdWhVUVhnaytBa3VaM3dqRWxuNG5pTW4zc0RKVGwxdHhkQis4Y01qd1FJT2c5CkZWL1JMS29wTWRPOGxGcjlJdW8vbjEwCi0tLSBvMXpQTThjRHlkVk0zSjMxbjBTY08vSENLbTJ3c3E3alMybjhjTGNhSEQ0CrIElagZ4rxuIjneL21Oaf/N90tQrVT9P7zOq8X9f09ee1m9sz0rQpGbSW6W2Jqba//k4oINHmGcvkltRkBBwycOsunwc5Us+71cw8hDTgCo64V3FDVU01ftYznLRFQL1A==]
+    ldap_user_pass: ENC[age-identity,YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB4RGdXUHRPYmg5OWR2a2NhaG1sZEdjVm9wb2RBTkxaMFBadGtoNDZIQnhvCmtNaU16K3hEazhiMzBkYlRRdGQ3ckIzRTd3cGtsZnJLOFU3Ui8yb1hNZmsKLT4gSyx2bywtZ3JlYXNlIFdsRm1cVC0gIlUyQ3g8IC4rS2BKMSAmcnlNQ0w2Xwo0MURFVFhvUGtBCi0tLSBOSTZHQWJQQlFpbHlZejJGcGNFNkszdi9HRDhTOVFZUEl4UFc3cEZNQjlzCp9nrv7LBRImE07B9f2z8paSYOeJ49e/CiD0vGYMKGqDjv4j2n3seE0LvzyFXdlXHI+QwMolPVLLBfol7wvT7mrxrYw9XZFpFb/yF5cjoyzYM2GBu+HpjBb0ACa018iLqw==]
+    key_seed: ENC[age-identity,YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBVZVdmVUlpQS9RTUUzM01yOUlKc2NuT0QwL3FKTHVXMjdZK3BNWDI3ZVNZCkdEejdoUERackYxTTFiOWlIa2U3MGhneWhyQTVYS1BZcVhqTkc2KzgvNUUKLT4geTN9UHgtZ3JlYXNlCkRYald5ZFAxb1N5TUdDTGdMSEs3emkwSmdHTzFheVZLdWU5aGtlbnlleXFmRjhqY2NJUlE5Z0FXVDhzZndBCi0tLSBydGlLd1RPcHZKUzhpcjEzN3BJb05mSndFOGl2blNaRzE5VG9LNVBzNmc0Ch4JlalhDru3k5ZkdGF90pTp8jRBEAR4SQ+g9ejHV4ArI3QpjJnkmbOaDjky0muWT86sCZrAlA+MDzFuEfFPIMZizLhRT9SsE4Urz02WekW+rfFsIypXwhj47u9Q+axbJQ==]

@@ -1,0 +1,13 @@
+---
+import { webring } from "../lib/site.mjs";
+
+const links = webring();
+---
+
+{links && (
+  <nav aria-label="Kolam Ayer Makers webring" class="webring">
+    <a href={links.url(links.previous)} rel="prev">Previous</a>
+    <span>Kolam Ayer Makers webring</span>
+    <a href={links.url(links.next)} rel="next">Next</a>
+  </nav>
+)}

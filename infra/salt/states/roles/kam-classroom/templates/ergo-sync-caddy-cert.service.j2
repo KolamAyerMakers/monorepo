@@ -1,0 +1,7 @@
+[Unit]
+Description=Sync Caddy certificate for Ergo
+After=caddy.service
+
+[Service]
+Type=oneshot
+ExecStart={{ paths.cert_sync_script }} {{ server.name }}

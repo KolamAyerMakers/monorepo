@@ -1,0 +1,15 @@
+$if Bash
+    Space: magic-space
+    "\ea": "\C-e | awk "
+    "\eg": "\C-e | grep "
+    "\eh": "\C-e | head "
+    "\ej": "\C-e | jq "
+    "\el": "\C-e | less"
+    "\es": "\C-asudo \C-e"
+    "\et": "\C-e | tail "
+    "\ew": "\C-e | wc "
+$endif
+
+# Enable completion coloring
+set colored-completion-prefix on
+set colored-stats on
