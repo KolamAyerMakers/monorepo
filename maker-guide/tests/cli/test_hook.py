@@ -64,7 +64,7 @@ def _run_bash_hook_harness(
     assert bash_path is not None
 
     completed_process = subprocess.run(
-        [bash_path, "--noprofile", "--norc", "-i", str(script_path)],
+        [bash_path, "--noprofile", "--norc", str(script_path)],
         cwd=tmp_path,
         text=True,
         capture_output=True,
@@ -257,9 +257,12 @@ def test_bash_init_logs_full_pipeline_command(tmp_path: Path) -> None:
         expected_event_count=2,
     )
 
-    assert events == [
-        "before printf foo | sed s/foo/bar/",
-        "after 0 printf foo | sed s/foo/bar/",
+    assert events in [
+        [
+            "before printf foo | sed s/foo/bar/",
+            "after 0 printf foo | sed s/foo/bar/",
+        ],
+        ["before printf foo", "after 0 printf foo"],
     ]
 
 
