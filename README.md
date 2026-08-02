@@ -1,6 +1,6 @@
 # Kolam Ayer Makers
 
-Kolam Ayer Makers teaches people to build and operate their own computing systems.
+Kolam Ayer Makers is a neighborhood maker group at Kolam Ayer Community Club in Singapore.
 
 This repository contains the Maker Guide learner-support application, public website, brand assets, Pulumi infrastructure definitions, and the Salt configuration for the classroom server.
 
