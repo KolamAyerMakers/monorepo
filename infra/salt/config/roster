@@ -1,4 +1,4 @@
-classroom:
+lf2607:
   host: lf2607.kolamayermakers.org
   user: root
   port: 22
@@ -11,7 +11,7 @@ classroom:
       roles:
         - kam-classroom
 
-classroom-development:
+lf-dev:
   host: lf-dev.kolamayermakers.org
   user: root
   port: 22
