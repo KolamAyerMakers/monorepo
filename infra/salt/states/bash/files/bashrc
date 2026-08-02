@@ -1,0 +1,34 @@
+# If not running interactively, don't do anything
+[[ "$-" != *i* ]] && return
+
+# Make bash append rather than overwrite the history on disk
+shopt -s histappend
+
+# Set HISTFILE explicitly for mcfly
+export HISTFILE=~/.bash_history
+
+# Don't put duplicate lines in the history or
+# commands starting with a white-space.
+export HISTCONTROL=ignoreboth
+
+# Ignore some controlling instructions
+# HISTIGNORE is a colon-delimited list of patterns which should be excluded.
+# The '&' is a special pattern which suppresses duplicate entries.
+export HISTIGNORE=$'[ \t]*:&:[fb]g:exit:ls:oathtool*:g s:g ds:g add .:g l'
+
+# Add timestamps to history
+export HISTTIMEFORMAT="%F %T "
+
+# Disable expansion of variables when using completion
+complete -r -v
+
+# Load customization scripts
+for SCRIPT in $(ls $HOME/.bashrc.d)
+do
+    source "$HOME/.bashrc.d/$SCRIPT"
+done
+
+if [ -f /etc/bash_completion ]
+then
+  source /etc/bash_completion
+fi

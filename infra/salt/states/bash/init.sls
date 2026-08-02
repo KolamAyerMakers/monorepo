@@ -1,0 +1,3 @@
+include:
+  - users
+  - bash.dotfiles

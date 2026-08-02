@@ -54,6 +54,8 @@ DEFAULT_SSH_PORT = 22
 
 class _YamlModule(Protocol):
     def safe_load(self, value: str) -> object: ...
+
+
 SSH_OBSERVER_SCRIPT = r"""
 set +e
 cleanup() {

@@ -1,0 +1,2 @@
+include:
+  - delta.package
