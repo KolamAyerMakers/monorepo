@@ -11,6 +11,7 @@ This repository contains the Maker Guide learner-support application, public web
 - `branding/`: source brand assets and usage guide.
 - `infra/pulumi/`: explicit cloud infrastructure changes.
 - `infra/salt/`: classroom server configuration and deployment tooling.
+- `infra/ops/`: manual classroom recovery tooling.
 
 ## Development
 

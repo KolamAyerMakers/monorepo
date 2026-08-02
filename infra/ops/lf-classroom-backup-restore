@@ -1,0 +1,443 @@
+#!/usr/bin/env python3
+"""Restore a Salt-managed classroom backup to a target host.
+
+Salt manages the classroom backup script, configuration, and schedule. Run:
+
+    lf-classroom-backup-restore [--config FILE] BACKUP_SOURCE TARGET
+
+BACKUP_SOURCE can be a local directory or [user@]host:/path. Remote sources are
+copied directly to TARGET, so the source host must authenticate to TARGET.
+TARGET must permit passwordless sudo. Data paths are read from TARGET's
+/etc/classroom-backup.conf. Restore stops affected active services, replaces
+archived data, then restarts services in dependency order.
+"""
+
+from __future__ import annotations
+
+import grp
+import os
+import pwd
+import shlex
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+from collections.abc import Sequence
+from dataclasses import dataclass
+from itertools import chain
+from pathlib import Path
+
+COMPONENTS = frozenset({"maker-guide", "ergo", "lldap", "authelia", "forgejo", "homes"})
+STOP_ORDER = (
+    "maker-guide-sync-derived-data.timer",
+    "maker-guide-sync-derived-data.service",
+    "sssd.service",
+    "maker-guide-bot.service",
+    "forgejo.service",
+    "ergo.service",
+    "authelia.service",
+    "lldap.service",
+)
+START_ORDER = tuple(reversed(STOP_ORDER))
+SERVICE_COMPONENTS = {
+    "maker-guide": (
+        "maker-guide-bot.service",
+        "maker-guide-sync-derived-data.service",
+        "maker-guide-sync-derived-data.timer",
+    ),
+    "ergo": ("maker-guide-bot.service", "ergo.service"),
+    "lldap": (
+        "maker-guide-bot.service",
+        "lldap.service",
+        "sssd.service",
+        "maker-guide-sync-derived-data.service",
+        "maker-guide-sync-derived-data.timer",
+    ),
+    "authelia": ("authelia.service",),
+    "forgejo": ("forgejo.service",),
+    "homes": (),
+}
+CONFIGURATION_KEYS = {
+    "maker-guide": ("MAKER_GUIDE_DATABASE", "MAKER_GUIDE_CONFIG"),
+    "ergo": ("ERGO_DATA",),
+    "lldap": ("LLDAP_DATA",),
+    "authelia": ("AUTHELIA_DATA",),
+    "forgejo": ("FORGEJO_DATA",),
+    "homes": ("HOMES_DATA",),
+}
+
+
+class RestoreError(Exception):
+    """An invalid backup or restore configuration."""
+
+
+@dataclass(frozen=True, slots=True)
+class Arguments:
+    configuration_path: str
+    remote_mode: bool
+    backup_source: str
+    target: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class FileOwnership:
+    user_id: int
+    group_id: int
+
+
+def fail(message: str) -> None:
+    print(f"lf-classroom-backup-restore: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def parse_arguments(arguments: Sequence[str]) -> Arguments:
+    configuration_path = "/etc/classroom-backup.conf"
+    remote_mode = False
+    argument_index = 0
+    while argument_index < len(arguments) and arguments[argument_index].startswith(
+        "--"
+    ):
+        argument = arguments[argument_index]
+        if argument == "--help":
+            print(__doc__)
+            raise SystemExit(0)
+        if argument == "--remote":
+            remote_mode = True
+        elif argument == "--config":
+            argument_index += 1
+            if argument_index == len(arguments) or not arguments[argument_index]:
+                fail("--config requires a value")
+            configuration_path = arguments[argument_index]
+        else:
+            fail(f"unknown option: {argument}")
+        argument_index += 1
+
+    positional_arguments = arguments[argument_index:]
+    if remote_mode:
+        if len(positional_arguments) != 1:
+            fail("remote mode requires a backup directory")
+        return Arguments(
+            configuration_path=configuration_path,
+            remote_mode=True,
+            backup_source=positional_arguments[0],
+            target=None,
+        )
+    if len(positional_arguments) != 2:
+        fail("usage: lf-classroom-backup-restore [--config FILE] BACKUP_SOURCE TARGET")
+    return Arguments(
+        configuration_path=configuration_path,
+        remote_mode=False,
+        backup_source=positional_arguments[0],
+        target=positional_arguments[1],
+    )
+
+
+def run_command(command: list[str], input_bytes: bytes | None = None) -> None:
+    completed_process = subprocess.run(command, check=False, input=input_bytes)
+    completed_process.check_returncode()
+
+
+def command_output(command: list[str]) -> str:
+    completed_process = subprocess.run(
+        command, check=False, stdout=subprocess.PIPE, text=True
+    )
+    completed_process.check_returncode()
+    return completed_process.stdout
+
+
+def best_effort_command(command: list[str]) -> None:
+    return_code = subprocess.call(
+        command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+    if return_code != 0:
+        return
+
+
+def read_configuration(configuration_path: Path) -> dict[str, str]:
+    try:
+        configuration_lines = configuration_path.read_text().splitlines()
+    except OSError as error:
+        raise RestoreError(f"cannot read {configuration_path}") from error
+
+    configuration: dict[str, str] = {}
+    for configuration_line in configuration_lines:
+        stripped_line = configuration_line.strip()
+        if (
+            not stripped_line
+            or stripped_line.startswith("#")
+            or "=" not in stripped_line
+        ):
+            continue
+        key, raw_value = stripped_line.split("=", 1)
+        try:
+            values = shlex.split(raw_value, comments=True)
+        except ValueError as error:
+            raise RestoreError(f"invalid configuration value for {key}") from error
+        if len(values) == 1:
+            configuration[key] = values[0]
+    return configuration
+
+
+def read_components(backup_directory: Path) -> list[str]:
+    try:
+        manifest_lines = (backup_directory / "manifest").read_text().splitlines()
+    except OSError as error:
+        raise RestoreError("cannot read backup manifest") from error
+
+    component_line = next(
+        (
+            line.removeprefix("components=")
+            for line in reversed(manifest_lines)
+            if line.startswith("components=")
+        ),
+        "",
+    )
+    components = component_line.split()
+    if not components:
+        raise RestoreError("backup manifest has no components")
+    unknown_components = set(components) - COMPONENTS
+    if unknown_components:
+        raise RestoreError(
+            f"backup manifest has an unknown component: {unknown_components.pop()}"
+        )
+    return components
+
+
+def validate_archive(archive_path: Path, component: str) -> None:
+    try:
+        with tarfile.open(archive_path, "r:gz") as archive:
+            archive_members = archive.getmembers()
+    except (OSError, tarfile.TarError) as error:
+        raise RestoreError(
+            f"cannot read backup archive: {archive_path.name}"
+        ) from error
+
+    if not archive_members:
+        raise RestoreError("archive is empty")
+    for archive_member in archive_members:
+        if not archive_member.isfile() and not archive_member.isdir():
+            raise RestoreError(
+                f"archive contains an unsupported entry: {archive_member.name}"
+            )
+        member_path = Path(archive_member.name)
+        if member_path.is_absolute() or ".." in member_path.parts:
+            raise RestoreError(
+                f"archive contains an unsafe path: {archive_member.name}"
+            )
+        if component == "maker-guide":
+            if archive_member.name not in {"state.db", "config.toml"}:
+                raise RestoreError(
+                    f"archive contains an unexpected path: {archive_member.name}"
+                )
+        elif archive_member.name != component and not archive_member.name.startswith(
+            f"{component}/"
+        ):
+            raise RestoreError(
+                f"archive contains an unexpected path: {archive_member.name}"
+            )
+
+    if component == "maker-guide" and {member.name for member in archive_members} != {
+        "state.db",
+        "config.toml",
+    }:
+        raise RestoreError("Maker Guide archive is incomplete")
+
+
+def extract_archive(archive_path: Path, destination: Path) -> None:
+    try:
+        with tarfile.open(archive_path, "r:gz") as archive:
+            archive.extractall(destination, filter="fully_trusted", numeric_owner=True)
+    except (OSError, tarfile.TarError) as error:
+        raise RestoreError(
+            f"cannot extract backup archive: {archive_path.name}"
+        ) from error
+
+
+def configured_path(configuration: dict[str, str], key: str) -> Path:
+    try:
+        path = Path(configuration[key])
+    except KeyError as error:
+        raise RestoreError(f"{key} is not configured") from error
+    if not path.is_absolute() or path == Path("/"):
+        raise RestoreError(f"invalid restore path: {path}")
+    return path
+
+
+def maker_guide_ownership() -> FileOwnership:
+    try:
+        return FileOwnership(
+            user_id=pwd.getpwnam("maker-guide").pw_uid,
+            group_id=grp.getgrnam("mentors").gr_gid,
+        )
+    except KeyError as error:
+        raise RestoreError("cannot resolve maker-guide:mentors") from error
+
+
+def forgejo_ownership() -> FileOwnership:
+    try:
+        return FileOwnership(
+            user_id=pwd.getpwnam("git").pw_uid,
+            group_id=grp.getgrnam("git").gr_gid,
+        )
+    except KeyError as error:
+        raise RestoreError("cannot resolve git:git") from error
+
+
+def repair_forgejo_ownership(data_path: Path) -> None:
+    ownership = forgejo_ownership()
+    for path in chain((data_path,), data_path.rglob("*")):
+        os.chown(path, ownership.user_id, ownership.group_id)
+
+    secret_directory = data_path / "secrets"
+    if not secret_directory.is_dir():
+        return
+    os.chown(secret_directory, 0, ownership.group_id)
+    os.chmod(secret_directory, 0o770)
+    for path in secret_directory.rglob("*"):
+        os.chown(path, 0, ownership.group_id)
+        if path.is_file():
+            os.chmod(path, 0o640)
+
+
+def restart_services(active_services: set[str]) -> None:
+    for service in START_ORDER:
+        if service in active_services:
+            run_command(["systemctl", "start", service])
+            if service == "sssd.service":
+                run_command(["sss_cache", "-E"])
+
+
+def restore_backup(backup_directory: Path, configuration_path: Path) -> None:
+    if not backup_directory.is_dir():
+        raise RestoreError(f"backup directory does not exist: {backup_directory}")
+    if not (backup_directory / ".classroom-backup").is_file():
+        raise RestoreError("backup marker is missing")
+
+    configuration = read_configuration(configuration_path)
+    components = read_components(backup_directory)
+    for component in components:
+        archive_path = backup_directory / f"{component}.tar.gz"
+        if not archive_path.is_file():
+            raise RestoreError(f"backup archive is missing: {archive_path.name}")
+        validate_archive(archive_path, component)
+
+    restored_maker_guide_ownership = (
+        maker_guide_ownership() if "maker-guide" in components else None
+    )
+
+    affected_services = {
+        service for component in components for service in SERVICE_COMPONENTS[component]
+    }
+    active_services: set[str] = set()
+    for service in STOP_ORDER:
+        if (
+            service in affected_services
+            and subprocess.call(["systemctl", "is-active", "--quiet", service]) == 0
+        ):
+            run_command(["systemctl", "stop", service])
+            active_services.add(service)
+
+    temporary_directory = Path(
+        tempfile.mkdtemp(prefix=".restore.", dir=backup_directory)
+    )
+    try:
+        for component in components:
+            archive_path = backup_directory / f"{component}.tar.gz"
+            if component == "maker-guide":
+                extract_archive(archive_path, temporary_directory)
+                database_path = configured_path(configuration, "MAKER_GUIDE_DATABASE")
+                move_result: object = shutil.move(
+                    temporary_directory / "state.db", database_path
+                )
+                if not str(move_result) or not database_path.exists():
+                    raise RestoreError("Maker Guide database restore failed")
+                if restored_maker_guide_ownership is None:
+                    raise RestoreError("Maker Guide ownership is unavailable")
+                os.chown(
+                    database_path,
+                    restored_maker_guide_ownership.user_id,
+                    restored_maker_guide_ownership.group_id,
+                )
+                os.chmod(database_path, 0o640)
+                configuration_path = configured_path(
+                    configuration, "MAKER_GUIDE_CONFIG"
+                )
+                copy_result: object = shutil.copy2(
+                    temporary_directory / "config.toml",
+                    configuration_path,
+                )
+                if not str(copy_result) or not configuration_path.exists():
+                    raise RestoreError("Maker Guide configuration restore failed")
+            else:
+                data_path = configured_path(
+                    configuration, CONFIGURATION_KEYS[component][0]
+                )
+                shutil.rmtree(data_path, ignore_errors=True)
+                data_path.parent.mkdir(parents=True, exist_ok=True)
+                extract_archive(archive_path, data_path.parent)
+                if component == "forgejo":
+                    repair_forgejo_ownership(data_path)
+    finally:
+        shutil.rmtree(temporary_directory, ignore_errors=True)
+        restart_services(active_services)
+
+
+def restore_target(backup_source: str, target: str, configuration_path: str) -> None:
+    source_path = Path(backup_source)
+    if ":/" not in backup_source and not (
+        source_path.is_dir() and (source_path / ".classroom-backup").is_file()
+    ):
+        raise RestoreError(f"not a completed backup: {backup_source}")
+
+    remote_staging_directory = command_output(
+        ["ssh", target, "mktemp -d /var/tmp/classroom-restore.XXXXXXXX"]
+    ).strip()
+    try:
+        run_command(
+            [
+                "scp",
+                "-r",
+                "--",
+                backup_source.rstrip("/"),
+                f"{target}:{remote_staging_directory}/",
+            ]
+        )
+        remote_backup_directory = (
+            f"{remote_staging_directory}/{backup_source.rstrip('/').rsplit('/', 1)[-1]}"
+        )
+        remote_command = f"sudo python3 - --remote --config {shlex.quote(configuration_path)} {shlex.quote(remote_backup_directory)}"
+        run_command(
+            ["ssh", target, remote_command],
+            Path(__file__).read_bytes(),
+        )
+    finally:
+        best_effort_command(
+            ["ssh", target, f"rm -rf -- {shlex.quote(remote_staging_directory)}"]
+        )
+
+
+def main(arguments: Sequence[str]) -> int:
+    parsed_arguments = parse_arguments(arguments)
+    try:
+        if parsed_arguments.remote_mode:
+            restore_backup(
+                Path(parsed_arguments.backup_source),
+                Path(parsed_arguments.configuration_path),
+            )
+        else:
+            if parsed_arguments.target is None:
+                raise RestoreError("target is required")
+            restore_target(
+                parsed_arguments.backup_source,
+                parsed_arguments.target,
+                parsed_arguments.configuration_path,
+            )
+    except (RestoreError, OSError, subprocess.CalledProcessError) as error:
+        print(f"lf-classroom-backup-restore: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
