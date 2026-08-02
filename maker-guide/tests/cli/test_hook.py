@@ -64,7 +64,7 @@ def _run_bash_hook_harness(
     assert bash_path is not None
 
     completed_process = subprocess.run(
-        [bash_path, "--noprofile", "--norc", str(script_path)],
+        [bash_path, "--noprofile", "--norc", "-i", str(script_path)],
         cwd=tmp_path,
         text=True,
         capture_output=True,
