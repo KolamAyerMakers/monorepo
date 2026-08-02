@@ -1,6 +1,10 @@
 """Salt execution helpers for role-based state inclusion."""
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
+
+__grains__: dict[str, list[str]]
+__salt__: dict[str, Callable[[str], bool]]
 
 
 if TYPE_CHECKING:
