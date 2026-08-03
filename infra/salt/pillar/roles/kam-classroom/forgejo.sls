@@ -19,7 +19,7 @@ forgejo:
     domain: {{ public_hostname }}
     root_url: {{ https_url('git') }}
     ssh_domain: {{ public_hostname }}
-    landing_page: /git/user/oauth2/authelia
+    landing_page: /user/oauth2/authelia
     logout_redirect: /git/.kam-classroom/logout
   registration:
     disable_registration: true

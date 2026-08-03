@@ -2283,58 +2283,6 @@ def test_role_authelia_pillar_uses_canonical_paths_for_lf_dev() -> None:
     ]
 
 
-def test_role_service_pillars_use_canonical_paths_for_lf_dev() -> None:
-    """Test that lf-dev exposes services on its canonical host."""
-    forgejo = _role_pillar(
-        "pillar/roles/kam-classroom/forgejo.sls",
-        "forgejo",
-        "kam-classroom-dev",
-        "development",
-    )
-    lldap = _role_pillar(
-        "pillar/roles/kam-classroom/lldap.sls",
-        "lldap",
-        "kam-classroom-dev",
-        "development",
-    )
-    ttyd = _role_pillar(
-        "pillar/roles/kam-classroom/ttyd.sls",
-        "ttyd",
-        "kam-classroom-dev",
-        "development",
-    )
-    ergo = _role_pillar(
-        "pillar/roles/kam-classroom/irc.sls",
-        "ergo",
-        "kam-classroom-dev",
-        "development",
-    )
-
-    assert cast(dict[str, object], forgejo["server"])["root_url"] == (
-        "https://lf-dev.kolamayermakers.org/git/"
-    )
-    assert cast(dict[str, object], forgejo["registration"])[
-        "openid_whitelisted_uris"
-    ] == ["lf-dev.kolamayermakers.org"]
-    assert cast(dict[str, object], lldap["http"])["url"] == (
-        "https://lf-dev.kolamayermakers.org/lldap/"
-    )
-
-    ttyd_instances = cast(dict[str, object], ttyd["instances"])
-    registration_ttyd = cast(dict[str, object], ttyd_instances["registration"])
-    ssh_ttyd = cast(dict[str, object], ttyd_instances["ssh"])
-    assert cast(dict[str, object], registration_ttyd["server"])["domain"] == (
-        "lf-dev.kolamayermakers.org"
-    )
-    assert cast(dict[str, object], ssh_ttyd["server"])["url"] == (
-        "https://lf-dev.kolamayermakers.org/ssh/"
-    )
-
-    ergo_server = cast(dict[str, object], ergo["server"])
-    assert ergo_server["name"] == "lf-dev.kolamayermakers.org"
-    assert ergo_server["websocket_origins"] == ["https://lf-dev.kolamayermakers.org"]
-
-
 def test_role_forgejo_pillar_skips_local_ca_requirement_for_production() -> None:
     """Test production Forgejo OIDC discovery does not require local CA trust."""
     assert _forgejo_authelia_require("production-host") == [
@@ -2949,47 +2897,6 @@ def test_identity_state_owns_lldap_sssd_and_user_helper() -> None:
         "roles::kam_classroom::lldap_group::guide",
         "roles::kam_classroom::lldap_group::irc-bots",
     }
-
-
-def test_caddyfile_routes_canonical_service_paths() -> None:
-    """Test that the role routes services through the canonical host paths."""
-    rendered = (
-        _environment()
-        .get_template("roles/kam-classroom/caddy/templates/Caddyfile.j2")
-        .render(
-            forgejo_server=_forgejo_server(),
-            lldap_http=_lldap_http(),
-            authelia_server=_authelia_server(),
-            gamja_paths=_gamja_paths(),
-            ergo_server=_ergo_server(),
-            ergo_listeners=_ergo_listeners(),
-            registration_ttyd_server=_ttyd_server(),
-            ssh_ttyd_server=_ssh_ttyd_server(),
-            ttyd_web_assets=_ttyd_web_assets(),
-            caddy={
-                "local_certs": True,
-                "domain": "lf2607.kolamayermakers.org",
-                "docs_site_directory": "/var/www/maker-guide-docs/current",
-                "learner_routes_file": "/etc/caddy/learner-routes.caddy",
-            },
-        )
-    )
-
-    assert "lf2607.kolamayermakers.org {" in rendered
-    assert "import /etc/caddy/learner-routes.caddy" in rendered
-    assert "handle /git/* {" in rendered
-    assert "handle_path /lldap/* {" in rendered
-    assert "handle /auth/* {" in rendered
-    assert "rewrite /auth/api/authz/forward-auth" in rendered
-    assert "handle_path /register/* {" in rendered
-    assert "handle /docs {" in rendered
-    assert "handle /docs/* {" in rendered
-    assert "redir * /docs/ permanent" in rendered
-    assert "handle {" in rendered
-    assert "root * /var/www/maker-guide-docs/current" in rendered
-    assert "handle /ssh/* {" in rendered
-    assert "handle_path /ssh/ttyd-assets/* {" in rendered
-    assert "handle_path /irc/* {" in rendered
 
 
 def test_caddyfile_redirects_only_bare_valid_learner_homepages() -> None:

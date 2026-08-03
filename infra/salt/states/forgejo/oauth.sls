@@ -109,22 +109,4 @@ forgejo::oauth_source::{{ name }}:
 {%   endfor %}{# for requisite_type, requisite_identifier in requisite.items() #}
 {% endfor %}{# for requisite in source.get('require', []) #}
 
-forgejo::oauth_source::{{ name }}::updated:
-  cmd.run:
-    - name: {{ sync_command }}
-    - runas: {{ service.user }}
-    - onchanges:
-      - file: forgejo::oauth_source::{{ name }}::client_secret_file
-      - file: /usr/local/sbin/forgejo-sync-oauth-source
-    - require:
-      - cmd: forgejo::oauth_source::{{ name }}
-      - file: /usr/local/sbin/forgejo-sync-oauth-source
-      - file: forgejo::oauth_source::{{ name }}::client_secret_file
-      - test: forgejo::oauth_source::{{ name }}::required_pillar
-{% for requisite in source.get('require', []) %}
-{%   for requisite_type, requisite_identifier in requisite.items() %}
-      - {{ requisite_type }}: {{ requisite_identifier }}
-{%   endfor %}{# for requisite_type, requisite_identifier in requisite.items() #}
-{% endfor %}{# for requisite in source.get('require', []) #}
-
 {% endfor %}

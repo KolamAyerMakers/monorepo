@@ -2,9 +2,14 @@
 from __future__ import annotations
 
 import argparse
+import configparser
+import hmac
+import json
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast
 
 
 class ForgejoError(Exception):
@@ -62,6 +67,46 @@ def find_auth_source_id(arguments: argparse.Namespace) -> str | None:
     return None
 
 
+def oauth_source_matches(arguments: argparse.Namespace) -> bool:
+    configuration = configparser.ConfigParser()
+    _ = configuration.read(arguments.configuration_file)
+    try:
+        database_path = configuration["database"]["PATH"]
+    except KeyError as error:
+        raise ForgejoError("Forgejo database path is not configured") from error
+
+    with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as connection:
+        row = connection.execute(
+            "SELECT type, cfg FROM login_source WHERE name = ?", (arguments.name,)
+        ).fetchone()
+    if row is None or row[0] != 6:
+        return False
+    try:
+        source_configuration = cast(object, json.loads(row[1]))
+    except (TypeError, json.JSONDecodeError) as error:
+        raise ForgejoError("OAuth source configuration is invalid") from error
+    if not isinstance(source_configuration, dict):
+        raise ForgejoError("OAuth source configuration is invalid")
+    oauth_configuration = cast(dict[str, object], source_configuration)
+    stored_secret = oauth_configuration.get("ClientSecret")
+    if not isinstance(stored_secret, str):
+        return False
+
+    return (
+        oauth_configuration.get("Provider") == arguments.provider
+        and oauth_configuration.get("ClientID") == arguments.client_id
+        and hmac.compare_digest(
+            stored_secret,
+            Path(arguments.client_secret_file).read_text(encoding="utf-8").strip(),
+        )
+        and oauth_configuration.get("OpenIDConnectAutoDiscoveryURL")
+        == arguments.auto_discover_url
+        and oauth_configuration.get("Scopes") == arguments.scope
+        and oauth_configuration.get("GroupClaimName", "")
+        == (arguments.group_claim_name or "")
+    )
+
+
 def oauth_arguments(arguments: argparse.Namespace) -> list[str]:
     client_secret = (
         Path(arguments.client_secret_file).read_text(encoding="utf-8").strip()
@@ -78,8 +123,8 @@ def oauth_arguments(arguments: argparse.Namespace) -> list[str]:
         "--auto-discover-url",
         arguments.auto_discover_url,
     ]
-    if arguments.scope:
-        command_arguments.extend(["--scopes", " ".join(arguments.scope)])
+    for scope in arguments.scope:
+        command_arguments.extend(["--scopes", scope])
     if arguments.group_claim_name:
         command_arguments.extend(["--group-claim-name", arguments.group_claim_name])
     if arguments.skip_local_2fa:
@@ -88,12 +133,12 @@ def oauth_arguments(arguments: argparse.Namespace) -> list[str]:
 
 
 def synchronize_oauth_source(arguments: argparse.Namespace) -> None:
-    auth_source_id = find_auth_source_id(arguments)
     if arguments.check:
-        if auth_source_id is None:
-            raise ForgejoError(f"OAuth source not found: {arguments.name}")
+        if not oauth_source_matches(arguments):
+            raise ForgejoError(f"OAuth source differs: {arguments.name}")
         return
 
+    auth_source_id = find_auth_source_id(arguments)
     if auth_source_id is None:
         command = forgejo_command(
             arguments,
