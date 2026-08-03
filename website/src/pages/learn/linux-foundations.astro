@@ -1,0 +1,225 @@
+---
+import Motto from "../../components/Motto.astro";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta
+      name="description"
+      content="Linux Foundations is a hands-on course for anyone who wants to understand, build, and repair the computers they use. Learn with live sessions and a private AI guide."
+    />
+    <title>Linux Foundations | Kolam Ayer Makers</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Kolam Ayer Makers home">
+        <img src="/kolam-makers-logo.png" alt="Kolam Ayer Makers" />
+        <Motto compact />
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="/learn/linux-foundations/" aria-current="page">Linux Foundations</a>
+        <a href="/#next">What's next</a>
+        <a href="/#contact">Get involved</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-heading">
+        <div class="hero-content">
+          <p class="terminal-line"><span>student@laptop</span>:<b>~</b>$ learn --by-doing</p>
+          <h1 id="hero-heading">Understand your computer.<br /><em>Build with it.</em></h1>
+          <p class="hero-copy">
+            Linux Foundations is a practical course in using a computer as a tool you can understand,
+            direct, and repair. Build real things on Linux, with people in the room and an AI guide
+            between sessions.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="/#contact">Join the next build <span aria-hidden="true">-&gt;</span></a>
+            <a class="button" href="#how">How it works</a>
+          </div>
+        </div>
+        <figure class="poster">
+          <img
+            src="/linux-foundations-poster.png"
+            alt="Linux Foundations, a free Kolam Ayer Makers course on mastering the Linux command line"
+          />
+        </figure>
+      </section>
+
+      <section class="manifesto" aria-label="Linux Foundations outcomes">
+        <p>Understand the system.</p>
+        <p>Make useful things.</p>
+        <p>Keep learning.</p>
+      </section>
+
+      <section aria-labelledby="for-heading">
+        <p class="eyebrow">01 / no gatekeeping</p>
+        <h2 id="for-heading">For anyone who wants to learn.</h2>
+        <div class="two-column">
+          <p>
+            This is for complete beginners, students, developers, engineers, returning tinkerers,
+            and curious people. You do not need prior Linux experience. You need curiosity and a
+            willingness to try.
+          </p>
+          <p>
+            Different people arrive for different reasons: to understand their computer better,
+            work confidently in a development environment, return to an old interest, or build the
+            next strange project. The foundations are the same.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="learn-heading">
+        <p class="eyebrow">02 / learn the machine</p>
+        <h2 id="learn-heading">Skills that compound.</h2>
+        <div class="skills">
+          <article>
+            <h3>Use Linux</h3>
+            <p>Navigate the shell, work with files, use SSH, understand permissions, and read what the system tells you.</p>
+          </article>
+          <article>
+            <h3>Build and publish</h3>
+            <p>Keep your work in Git, write shell scripts, and publish a personal website from source you own.</p>
+          </article>
+          <article>
+            <h3>Run and repair</h3>
+            <p>Trace network and HTTP problems, inspect logs, run a user service, automate routine work, and recover from mistakes.</p>
+          </article>
+        </div>
+        <p class="section-copy">
+          Linux is a foundation for programming, web development, self-hosting, engineering work,
+          creative projects, automation, and ideas nobody has thought of yet. The aim is not to
+          memorise commands. It is to become someone who can keep learning.
+        </p>
+      </section>
+
+      <section id="how" aria-labelledby="how-heading">
+        <p class="eyebrow">03 / live, practical, supported</p>
+        <h2 id="how-heading">Learn by doing. Not watching.</h2>
+        <div class="two-column">
+          <p>
+            The course combines hands-on sessions with self-study guides, recaps, and optional
+            reinforcement quests. Bring a laptop, type commands, make safe mistakes, ask questions,
+            and fix problems with other people.
+          </p>
+          <p>
+            Each released session gives you focused work. Catch up on unfinished work, go deeper
+            when you are ready, and use the supporting material between sessions. The next lesson
+            is still a shared part of the journey, not something you rush through alone.
+          </p>
+        </div>
+      </section>
+
+      <section class="guide" aria-labelledby="guide-heading">
+        <p class="eyebrow">04 / help when you need it</p>
+        <h2 id="guide-heading">A private AI guide,<br /><em>built into the course.</em></h2>
+        <div class="guide-grid">
+          <div>
+            <p>
+              <code>guide</code> is an AI tutor available in your terminal and through IRC direct
+              messages. It knows the session you have reached, the commands you have learned, your
+              current objective, and the course documentation that applies.
+            </p>
+            <p>
+              It starts with useful questions and nudges, points you to the right material, and
+              helps you choose what to try next. You can get unstuck without waiting for the next
+              session, while still doing the thinking and building yourself.
+            </p>
+          </div>
+          <aside>
+            <p class="prompt">classroom:~$ <span>guide now</span></p>
+            <p>The guide can explain and coach. It cannot edit your files, run your commands, award progress, or do the work for you.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section aria-labelledby="proof-heading">
+        <p class="eyebrow">05 / make it real</p>
+        <h2 id="proof-heading">Leave with proof.</h2>
+        <div class="two-column">
+          <p>
+            You will build a live personal site, its source repository, reusable scripts,
+            documentation, and a service you can explain, inspect, and recover.
+          </p>
+          <p>
+            Progress comes from evidence: commands you ran, files you made, services you operated,
+            and explanations you can give. The AI helps you learn. The course checks the work.
+          </p>
+        </div>
+      </section>
+
+      <section class="clone" aria-labelledby="clone-heading">
+        <p class="eyebrow">06 / copy, improve, repeat</p>
+        <h2 id="clone-heading">Build this where you are.</h2>
+        <p>
+          Kolam Ayer Makers began at Kolam Ayer Community Club, but it should not stay there. Want
+          to run a free maker class in your own community? We need volunteers, mentors, and fellow
+          makers to help clone the work.
+        </p>
+        <a class="button primary" href="/#contact">Get involved <span aria-hidden="true">-&gt;</span></a>
+      </section>
+    </main>
+
+    <footer>
+      <Motto />
+      <a href="https://github.com/KolamAyerMakers/monorepo">GitHub</a>
+      <p>Made in Singapore &lt;3</p>
+    </footer>
+
+    <style>
+      :root { color-scheme: dark; --ink: #e8e8dd; --muted: #9ca49d; --lime: #c5f414; --teal: #00e0d0; --orange: #ff725c; --panel: #111613; --line: #2b3b35; --black: #090c0a; }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { background: var(--black); color: var(--ink); font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; line-height: 1.55; margin: 0; }
+      body::before { background-image: linear-gradient(rgba(0, 224, 208, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 224, 208, .035) 1px, transparent 1px); background-size: 32px 32px; content: ""; inset: 0; pointer-events: none; position: fixed; z-index: -1; }
+      a { color: inherit; }
+      .site-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; margin: auto; max-width: 1240px; padding: 1rem 2rem; }
+      .brand { display: flex; flex-direction: column; text-decoration: none; width: min(19rem, 36vw); }
+      .brand img { display: block; height: auto; width: 100%; }
+      nav { display: flex; gap: clamp(.75rem, 2.5vw, 2rem); }
+      nav a { color: var(--muted); font-size: .95rem; text-decoration: none; text-transform: uppercase; }
+      nav a:hover, nav a:focus-visible, nav a[aria-current="page"] { color: var(--lime); }
+      main { margin: auto; max-width: 1240px; }
+      section { padding: clamp(4.5rem, 10vw, 9rem) 2rem; }
+      .hero { align-items: center; display: grid; gap: clamp(2rem, 6vw, 6rem); grid-template-columns: minmax(0, 1.5fr) minmax(16rem, .7fr); padding-bottom: clamp(4rem, 8vw, 6rem); padding-top: clamp(2rem, 5vw, 4rem); }
+      .terminal-line, .prompt { color: var(--teal); font-size: .8rem; letter-spacing: .06em; text-transform: lowercase; }
+      .eyebrow { color: var(--teal); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+      .terminal-line span, .prompt span { color: var(--lime); }
+      .terminal-line b { color: var(--orange); }
+      h1, h2, h3, p { margin-top: 0; }
+      h1, h2 { font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-weight: 900; letter-spacing: -.05em; line-height: .87; text-transform: uppercase; }
+      h1 { font-size: clamp(2.8rem, 6vw, 5.3rem); margin: 1.1rem 0 1.5rem; }
+      h2 { font-size: clamp(2.8rem, 6vw, 5.5rem); margin-bottom: 2rem; }
+      h1 em, h2 em { color: var(--lime); font-style: normal; }
+      h3 { font-size: 1.5rem; line-height: 1.1; }
+      .hero-copy, .two-column p, .section-copy, .clone > p { color: var(--muted); font-size: clamp(1rem, 2vw, 1.2rem); max-width: 45rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+      .button { border: 1px solid var(--teal); color: var(--teal); display: inline-block; font-size: .85rem; padding: .9rem 1rem; text-decoration: none; text-transform: uppercase; }
+      .button:hover, .button:focus-visible { background: var(--teal); color: var(--black); }
+      .button.primary { background: var(--lime); border-color: var(--lime); color: var(--black); font-weight: bold; }
+      .button.primary:hover, .button.primary:focus-visible { background: var(--orange); border-color: var(--orange); }
+      .poster { border: 1px solid var(--line); margin: 0; padding: .75rem; }
+      .poster img { display: block; height: auto; width: 100%; }
+      .manifesto { background: var(--lime); color: var(--black); display: grid; font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: clamp(1.35rem, 2.5vw, 2.1rem); grid-template-columns: repeat(3, 1fr); letter-spacing: -.03em; line-height: 1; padding-bottom: 1.8rem; padding-top: 1.8rem; text-transform: uppercase; }
+      .manifesto p { margin: 0; }
+      .two-column, .guide-grid { display: grid; gap: clamp(2rem, 6vw, 6rem); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .panel-section, .guide, .clone { border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
+      .skills { display: grid; gap: 1px; grid-template-columns: repeat(3, 1fr); margin-bottom: 2.5rem; }
+      .skills article { background: var(--panel); padding: clamp(1.25rem, 3vw, 2rem); }
+      .skills p, .guide-grid p { color: var(--muted); }
+      .guide { background: var(--panel); }
+      .guide aside { border: 1px solid var(--line); padding: clamp(1.25rem, 3vw, 2rem); }
+      code { color: var(--lime); font: inherit; }
+      .clone { background: var(--lime); color: var(--black); }
+      .clone .eyebrow, .clone > p { color: var(--black); }
+      .clone .button { background: var(--black); border-color: var(--black); color: var(--lime); }
+      .clone .button:hover, .clone .button:focus-visible { background: var(--teal); border-color: var(--teal); color: var(--black); }
+      footer { color: var(--muted); display: flex; font-size: .75rem; justify-content: space-between; margin: auto; max-width: 1240px; padding: 2rem; text-transform: uppercase; }
+      @media (max-width: 700px) { .site-header { padding: .75rem 1rem; } nav { gap: .75rem; } nav a { font-size: .62rem; } section { padding-left: 1rem; padding-right: 1rem; } .manifesto, .two-column, .guide-grid, .skills { grid-template-columns: 1fr; } .manifesto { gap: .75rem; } footer { display: block; padding: 1.5rem 1rem; } }
+      @media (max-width: 480px) { .hero { grid-template-columns: 1fr; } }
+    </style>
+  </body>
+</html>

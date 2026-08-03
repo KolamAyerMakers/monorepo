@@ -22,7 +22,7 @@ const accessKey = "8f7a9e79-9816-41a9-aef8-d3650003913b";
         <Motto compact />
       </a>
       <nav aria-label="Main navigation">
-        <a href="#class">Linux Foundations</a>
+        <a href="/learn/linux-foundations/">Linux Foundations</a>
         <a href="#next">What's next</a>
         <a href="#contact">Get involved</a>
       </nav>
@@ -39,7 +39,7 @@ const accessKey = "8f7a9e79-9816-41a9-aef8-d3650003913b";
         </p>
         <div class="actions">
           <a class="button primary" href="#contact">Join the next build <span aria-hidden="true">-&gt;</span></a>
-          <a class="button" href="#class">See the first class</a>
+          <a class="button" href="/learn/linux-foundations/">Explore Linux Foundations</a>
         </div>
       </section>
 
@@ -54,7 +54,7 @@ const accessKey = "8f7a9e79-9816-41a9-aef8-d3650003913b";
           <p class="eyebrow">01 / booting now</p>
           <h2 id="class-heading">Linux Foundations</h2>
           <p>
-            Our first class is a hands-on starting point for people who want to understand the
+            Our first learning path is a hands-on starting point for people who want to understand the
             computer in front of them, instead of merely tapping the shiny parts.
           </p>
         </div>
@@ -74,7 +74,10 @@ const accessKey = "8f7a9e79-9816-41a9-aef8-d3650003913b";
               <li>Build a base for robotics and creative tech projects</li>
             </ul>
             <p class="small-print">No prior experience. No fees. No gatekeeping.</p>
-            <a class="button primary" href="#contact">I want in <span aria-hidden="true">-&gt;</span></a>
+            <div class="course-actions">
+              <a class="button" href="/learn/linux-foundations/">Learn how it works</a>
+              <a class="button primary" href="#contact">I want in <span aria-hidden="true">-&gt;</span></a>
+            </div>
           </article>
           <figure class="poster">
             <img
@@ -157,9 +160,8 @@ const accessKey = "8f7a9e79-9816-41a9-aef8-d3650003913b";
       main { margin: auto; max-width: 1240px; }
       section { padding: clamp(4.5rem, 10vw, 9rem) 2rem; }
       .hero { max-width: 900px; min-height: 0; padding-bottom: clamp(4rem, 8vw, 6rem); padding-top: clamp(1.5rem, 3vw, 2.5rem); }
-      .terminal-line { color: var(--teal); font-size: .8rem; letter-spacing: .06em; }
+      .terminal-line, .prompt { color: var(--teal); font-size: .8rem; letter-spacing: .06em; text-transform: lowercase; }
       .eyebrow { color: var(--teal); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
-      .prompt { color: var(--teal); font-size: .8rem; letter-spacing: .06em; }
       .terminal-line span, .prompt span { color: var(--lime); }
       .terminal-line b { color: var(--orange); }
       h1, h2, h3, p { margin-top: 0; }
@@ -182,6 +184,7 @@ const accessKey = "8f7a9e79-9816-41a9-aef8-d3650003913b";
       .terminal-card ul { padding-left: 1.25rem; }
       .terminal-card li::marker { color: var(--lime); }
       .small-print { color: var(--teal) !important; font-size: .8rem; margin-top: 2rem; }
+      .course-actions { display: flex; flex-wrap: wrap; gap: 1rem; }
       .poster { border: 1px solid var(--line); margin: 0; padding: .75rem; }
       .poster img { display: block; height: auto; width: 100%; }
       .next { display: grid; gap: 3rem; grid-template-columns: 1fr 1fr; }
