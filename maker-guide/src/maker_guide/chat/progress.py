@@ -13,6 +13,7 @@ from maker_guide.chat.presenter import (
     format_today_quest,
 )
 from maker_guide.chat.snapshot import build_learner_snapshot
+from maker_guide.curriculum.models import CommandHistoryValidation
 from maker_guide.progress.models import (
     CurrentSessionObjectiveResult,
     QuestAttemptInput,
@@ -154,6 +155,32 @@ def now_response(
         handle=learner_handle,
     )
     if objective_result.objective is not None:
+        objective = objective_result.objective
+        if isinstance(objective.validation, CommandHistoryValidation):
+            validation_result = validate_session_objective(
+                QuestValidationInput(
+                    database_connection=dependencies.database_connection,
+                    catalog=dependencies.catalog,
+                    handle=learner_handle,
+                    checked_at=timestamp,
+                    assigned_at=objective_result.evidence_since,
+                    account_lookup=dependencies.account_lookup,
+                ),
+                objective.validation,
+            )
+            missing_commands = _objective_evidence_strings(validation_result, "missing_commands")
+            return (
+                _format_session_objective(
+                    objective_result,
+                    dependencies,
+                    next_step=(
+                        f"Run `{missing_commands[0]}`."
+                        if missing_commands
+                        else "Run `guide check` to record completion."
+                    ),
+                ),
+                (),
+            )
         return _format_session_objective(objective_result, dependencies), ()
     return _current_quest_response(dependencies, learner_handle, source, timestamp)
 
@@ -375,6 +402,7 @@ def _format_session_objective(
     dependencies: ChatDependencies,
     validation_result: QuestValidationResult | None = None,
     tutor_feedback: str | None = None,
+    next_step: str | None = None,
 ) -> str:
     """Format a practical session objective and its incomplete evidence."""
     objective = objective_result.objective
@@ -382,7 +410,7 @@ def _format_session_objective(
         raise ChatError("current session objective was not found")
     response_parts = [
         f"Current session objective: {objective.title}",
-        f"Start here:\n{objective.prompt}",
+        f"Start here:\n{next_step or objective.prompt}",
     ]
     self_study_reference = next(
         (

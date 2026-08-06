@@ -296,21 +296,31 @@ def test_progress_and_tutor_support_enrollment_before_first_release(
     assert tutor_client.requests[0].context.quests == ()
 
 
-def test_now_displays_current_prompt_without_progress_side_effects(
+def test_now_displays_next_missing_command_without_progress_side_effects(
     migrated_database_path: Path,
 ) -> None:
-    """Now displays an incomplete objective without validation or quest assignment."""
+    """Now displays only the next missing command without writing progress."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
 
-        response = handle_chat_request(
+        first_response = handle_chat_request(
+            _chat_request("now"),
+            _chat_dependencies(database_connection),
+        )
+        add_command_observation(database_connection, _command_observation("whoami"))
+        second_response = handle_chat_request(
             _chat_request("now"),
             _chat_dependencies(database_connection),
         )
 
-        assert response.text.startswith(
+        assert first_response.text.startswith(
             "Current session objective: Confirm that your shell is working",
         )
+        assert "Start here:\nRun `whoami`." in first_response.text
+        assert "date" not in first_response.text
+        assert "uptime" not in first_response.text
+        assert "Start here:\nRun `date`." in second_response.text
+        assert "uptime" not in second_response.text
         assert _attempt_count(database_connection) == 0
         assert total_score_for_course(database_connection, "alice", CATALOG.course.id) == 0
         assert (
@@ -320,7 +330,22 @@ def test_now_displays_current_prompt_without_progress_side_effects(
             is None
         )
         assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
-        assert response.learner_snapshot.pending_quests == ("prove-shell-alive",)
+        assert second_response.learner_snapshot.pending_quests == ("prove-shell-alive",)
+
+
+def test_now_preserves_non_command_objective_prompt(
+    migrated_database_path: Path,
+) -> None:
+    """Now leaves non-command objective prompts unchanged."""
+    with connect_database(migrated_database_path) as database_connection:
+        _write_member(database_connection, joined_irc=False)
+
+        response = handle_chat_request(
+            _chat_request("now"),
+            _chat_dependencies(database_connection),
+        )
+
+    assert "Start here:\nJoin `#lf2607` at the classroom IRC page." in response.text
 
 
 def test_session_objective_command_evidence_starts_at_release_boundary(
