@@ -970,16 +970,20 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="read-permissions",
                     title="Read and change file permissions",
                     prompt=(
-                        "Run `ls -l ~/playground/hi.txt`, use `chmod u+x ~/playground/hi.txt`, "
-                        "then run `ls -l ~/playground/hi.txt` again and read the owner permission "
-                        "letters."
+                        "Run `mkdir -p ~/playground`, then "
+                        "`touch ~/playground/permission-demo.txt`. Run "
+                        "`ls -l ~/playground/permission-demo.txt`, use "
+                        "`chmod u+x ~/playground/permission-demo.txt`, then inspect it again "
+                        "and read the owner permission letters."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(
-                            r"^ls -l (?:~/playground/)?hi\.txt$",
-                            r"^chmod u\+x (?:~/playground/)?hi\.txt$",
+                            r"^mkdir -p (?:~/)?playground$",
+                            r"^touch (?:~/playground/)?permission-demo\.txt$",
+                            r"^ls -l (?:~/playground/)?permission-demo\.txt$",
+                            r"^chmod u\+x (?:~/playground/)?permission-demo\.txt$",
                         ),
-                        observed_commands=("ls -l", "chmod"),
+                        observed_commands=("mkdir", "touch", "ls -l", "chmod"),
                     ),
                 ),
                 SessionObjective(
@@ -2182,20 +2186,22 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=20,
             available_after_session="S4",
             prompt=(
-                "Run `ls -l ~/playground/hi.txt` and explain its file type plus the owner, "
+                "Run `ls -l ~/playground/permission-demo.txt` and explain its file type plus "
+                "the owner, "
                 "group, and other permission triplets."
             ),
             required_commands=("ls -l",),
             practiced_skills=("permissions",),
             validation=InteractiveQuestionValidation(
                 question=(
-                    "What type of path is hi.txt? What can its owner, group, and other users do?"
+                    "What type of path is permission-demo.txt? What can its owner, group, "
+                    "and other users do?"
                 ),
                 required_concepts=(
                     AnswerConcept(
                         id="regular-file",
                         aliases=(r"\bregular\s+file\b",),
-                        rubric="The answer must identify hi.txt as a regular file.",
+                        rubric="The answer must identify permission-demo.txt as a regular file.",
                     ),
                     AnswerConcept(
                         id="owner-permissions",

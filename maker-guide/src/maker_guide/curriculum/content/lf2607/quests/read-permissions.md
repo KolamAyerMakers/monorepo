@@ -4,7 +4,7 @@ Quest: read-permissions
 
 ## Mission
 
-Run `ls -l ~/playground/hi.txt` and explain its file type plus the owner, group, and other permission triplets.
+Run `ls -l ~/playground/permission-demo.txt` and explain its file type plus the owner, group, and other permission triplets.
 
 ## Commands You Will Use
 
@@ -13,10 +13,11 @@ Run `ls -l ~/playground/hi.txt` and explain its file type plus the owner, group,
 ## Steps
 
 1. Run `cd ~/playground`.
-2. Run `ls -l hi.txt`.
-3. Identify the first character as the file type.
-4. Read the owner, group, and other triplets.
-5. Answer the guide with what each class can do.
+2. Run `touch permission-demo.txt`.
+3. Run `ls -l permission-demo.txt`.
+4. Identify the first character as the file type.
+5. Read the owner, group, and other triplets.
+6. Answer the guide with what each class can do.
 
 ## Hints
 

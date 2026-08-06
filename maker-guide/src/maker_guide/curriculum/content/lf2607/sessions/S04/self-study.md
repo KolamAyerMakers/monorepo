@@ -14,7 +14,7 @@ Session: S4
 ## Permission Decode
 
 ```text
--rw-r--r-- 1 username username 12 Aug 1 10:00 hi.txt
+-rw-r--r-- 1 username username 0 Aug 8 10:00 permission-demo.txt
 | |  |  |
 | |  |  other: read only
 | |  group: read only
@@ -27,10 +27,12 @@ The first character is file type. The next nine characters are owner, group, and
 For a file, `r` reads content, `w` changes content, and `x` permits execution. For a directory, `r` lists names, `w` with `x` changes entries, and `x` permits traversal. Without directory `x`, you may see its name but cannot enter it.
 
 ```bash
-ls -l ~/playground/hi.txt
-chmod u-x ~/playground/hi.txt
-chmod u+x ~/playground/hi.txt
-ls -l ~/playground/hi.txt
+mkdir -p ~/playground
+touch ~/playground/permission-demo.txt
+ls -l ~/playground/permission-demo.txt
+chmod u-x ~/playground/permission-demo.txt
+chmod u+x ~/playground/permission-demo.txt
+ls -l ~/playground/permission-demo.txt
 ```
 
 Removing then adding `x` guarantees that you see the owner execute bit change. `chmod u+x` changes metadata, not file content. Use numeric modes such as `755` only when you can explain all three triplets.

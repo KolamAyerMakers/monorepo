@@ -151,7 +151,14 @@ def test_s4_path_validators_accept_relative_commands() -> None:
         if objective.id == "read-permissions"
     )
     assert isinstance(permission_objective.validation, CommandHistoryValidation)
-    for command in ("ls -l ~/playground/hi.txt", "ls -l hi.txt", "chmod u+x hi.txt"):
+    for command in (
+        "mkdir -p ~/playground",
+        "mkdir -p playground",
+        "touch ~/playground/permission-demo.txt",
+        "touch permission-demo.txt",
+        "ls -l permission-demo.txt",
+        "chmod u+x permission-demo.txt",
+    ):
         assert any(
             re.fullmatch(pattern, command)
             for pattern in permission_objective.validation.required_patterns

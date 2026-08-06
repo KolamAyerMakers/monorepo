@@ -33,7 +33,7 @@ Your home directory is your workspace, not everybody's workspace.
 # Read One `ls -l` Row
 
 ```text
--rw-r--r-- 1 username groupname 12 Aug 1 10:00 hi.txt
+-rw-r--r-- 1 username groupname 0 Aug 8 10:00 permission-demo.txt
 | |  |  |
 | |  |  other: read only
 | |  group: read only
@@ -78,7 +78,9 @@ rwx means: owner may read, write, and traverse this directory
 Hands-on now:
 
 ```bash
-ls -l ~/playground/hi.txt
+mkdir -p ~/playground
+touch ~/playground/permission-demo.txt
+ls -l ~/playground/permission-demo.txt
 ```
 
 Find the first three permission letters after the initial `-` or `d`.
@@ -103,13 +105,13 @@ u-x    owner, remove, execute
 Hands-on now: work only on the playground file you own.
 
 ```bash
-ls -l ~/playground/hi.txt       # Inspect the current mode
-chmod u-x ~/playground/hi.txt   # Remove owner execute
-chmod u+x ~/playground/hi.txt   # Add owner execute again
-ls -l ~/playground/hi.txt       # Verify the final mode
+ls -l ~/playground/permission-demo.txt       # Inspect the current mode
+chmod u-x ~/playground/permission-demo.txt   # Remove owner execute
+chmod u+x ~/playground/permission-demo.txt   # Add owner execute again
+ls -l ~/playground/permission-demo.txt       # Verify the final mode
 ```
 
-The first command tells you whether `x` is already present. Removing then adding it guarantees that you see the owner `x` change. `chmod` did not edit the text inside `hi.txt`.
+The first command tells you whether `x` is already present. Removing then adding it guarantees that you see the owner `x` change. `chmod` did not edit the text inside `permission-demo.txt`.
 
 <!-- end_slide -->
 

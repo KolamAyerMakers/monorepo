@@ -9,7 +9,7 @@ They are filesystem metadata. Changing permissions does not edit file content; i
 ## Long Listing Shape
 
 ```text
--rw-r--r-- 1 username username 12 Aug 1 10:00 hi.txt
+-rw-r--r-- 1 username username 0 Aug 8 10:00 permission-demo.txt
 | |  |  |
 | |  |  other: read only
 | |  group: read only
