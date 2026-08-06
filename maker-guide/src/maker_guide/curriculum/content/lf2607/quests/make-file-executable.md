@@ -4,32 +4,30 @@ Quest: make-file-executable
 
 ## Mission
 
-Create `~/playground/run-me.sh`, add a Bash shebang, and make it executable.
+Create a harmless playground file and make it executable.
 
 ## Commands You Will Use
 
-- `micro`
+- `touch`
 - `chmod`
 - `ls -l`
 
 ## Steps
 
-1. Open `micro ~/playground/run-me.sh`.
-2. Put `#!/bin/bash` on the first line.
-3. Add one harmless command such as `printf 'running\n'`.
-4. Run `chmod u+x ~/playground/run-me.sh`.
-5. Run `ls -l ~/playground/run-me.sh` and confirm the owner triplet has `x`.
-6. Ask the guide to check the file and executable bit.
+1. Run `touch ~/playground/permission-test.txt`.
+2. Run `chmod u+x ~/playground/permission-test.txt`.
+3. Run `ls -l ~/playground/permission-test.txt` and confirm the owner triplet has `x`.
+4. Ask the guide to check the file and executable bit.
 
 ## Hints
 
-1. The shebang must be the first line.
-2. `chmod u+x` adds execute permission for the owner.
-3. `ls -l` should show an `x` in the owner triplet.
+1. `chmod u+x` adds execute permission for the owner.
+2. `ls -l` should show an `x` in the owner triplet.
+3. The file does not need script content yet. S5 teaches shebangs and scripts.
 
 ## If Check Fails
 
-Fix the first line, rerun `chmod u+x ~/playground/run-me.sh`, and check the owner execute bit with `ls -l`.
+Rerun `chmod u+x ~/playground/permission-test.txt`, then check the owner execute bit with `ls -l`.
 
 ## Related Reading
 

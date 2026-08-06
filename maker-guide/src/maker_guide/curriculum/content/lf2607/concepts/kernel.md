@@ -33,7 +33,7 @@ Kernel code runs with high privilege. Normal commands run in user space and ask 
 - Linux is technically the kernel, but people often say Linux to mean the whole operating system stack.
 - Bash, git, curl, Caddy, and Python are user-space programs.
 - Root is a powerful user account, not the same thing as the kernel.
-- A kernel module is not the same thing as a package installed with `apt`.
+- A kernel module is not the same thing as an ordinary user-space software package.
 
 ## Proof Check
 

@@ -16,7 +16,7 @@ Run `git status` before and after staging so you can see what changed.
 
 ## Watch Out
 
-Staged does not mean saved forever. The commit saves the checkpoint.
+Staged does not mean recorded in history. A commit records the staged changes.
 
 ## Docs Pointers
 

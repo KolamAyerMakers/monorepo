@@ -77,7 +77,7 @@ The unquoted version splits on spaces. The quoted version preserves one value.
 - `ask-name.sh` uses `read -r`.
 - `reverse.sh` prints `$2` before `$1`.
 - `practice.md` publishes command-history evidence.
-- Your Forgejo remote has received your source history.
+- Your S4 Forgejo remote still contains your source history.
 - `hello.sh` handles missing arguments with a useful usage message.
 - `~/scripts/README.md` documents your script collection.
 - You can explain why `exit 1` marks the missing-argument path as failure.

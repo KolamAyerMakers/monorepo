@@ -16,7 +16,6 @@ from rich.console import Console
 from maker_guide.astro_shared.theme import copy_site_theme
 
 _STARTER_MARKER = ".astro-starter-marker"
-_INITIAL_COMMIT_MESSAGE = "chore: seed astro site"
 _LEARNER_STYLESHEET = Path("app/styles/student.css")
 _LEARNER_ASSET_DIRECTORY = Path("public/student")
 
@@ -97,9 +96,6 @@ def _bootstrap(destination: Path) -> None:
     try:
         _copy_starter(temporary_directory)
         _run(("npm", "ci"), temporary_directory)
-        _run(("git", "init", "--initial-branch=main"), temporary_directory)
-        _run(("git", "add", "--all"), temporary_directory)
-        _run(("git", "commit", "-m", _INITIAL_COMMIT_MESSAGE), temporary_directory)
         temporary_directory.replace(destination)
     except Exception:
         shutil.rmtree(temporary_directory, ignore_errors=True)

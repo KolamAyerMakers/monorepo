@@ -14,11 +14,11 @@ if TYPE_CHECKING:
     import pytest
 
 
-def test_bootstrap_copies_starter_installs_dependencies_and_commits(
+def test_bootstrap_copies_starter_and_installs_dependencies(
     temporary_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A new site receives the pinned starter and one initial source commit."""
+    """A new site receives the pinned starter without a Git repository."""
     commands: list[tuple[Sequence[str], Path]] = []
     destination = temporary_path / "src"
 
@@ -48,14 +48,12 @@ def test_bootstrap_copies_starter_installs_dependencies_and_commits(
     assert (destination / "public" / "kolam-ayer-makers.png").is_file()
     assert (destination / "public" / "kolam-ayer-makers-dark.png").is_file()
     assert (destination / "public" / "student").is_dir()
+    assert not (destination / ".git").exists()
     theme_content = (destination / "app" / "styles" / "site.css").read_text(encoding="utf-8")
     assert ".site-shell" in theme_content
     assert "prefers-color-scheme" in theme_content
     assert [command for command, _working_directory in commands] == [
         ("npm", "ci"),
-        ("git", "init", "--initial-branch=main"),
-        ("git", "add", "--all"),
-        ("git", "commit", "-m", "chore: seed astro site"),
         ("node", "scripts/build.mjs"),
     ]
     assert all(working_directory != destination for _, working_directory in commands[:-1])
@@ -86,7 +84,7 @@ def test_bootstrap_refuses_existing_project(
     assert was_called is False
 
 
-def test_bootstrap_rebuilds_seeded_project_and_preserves_learner_extensions(
+def test_bootstrap_rebuilds_existing_project_and_preserves_learner_extensions(
     temporary_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

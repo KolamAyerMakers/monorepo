@@ -60,19 +60,18 @@ Use command cards when a quest or self-study guide names a command but you need 
 - [kill](kill.md)
 - [killall](killall.md)
 
-## SSH, Packages, And Git
+## SSH And Git
 
 - [ssh-keygen](ssh-keygen.md)
 - [ssh-copy-id](ssh-copy-id.md)
 - [Get-Content](Get-Content.md)
-- [apt search](apt-search.md)
-- [apt show](apt-show.md)
 - [git](git.md)
 - [git init](git-init.md)
 - [git status](git-status.md)
 - [git diff](git-diff.md)
 - [git add](git-add.md)
 - [git commit](git-commit.md)
+- [git config](git-config.md)
 - [git log](git-log.md)
 - [git remote](git-remote.md)
 - [git push](git-push.md)

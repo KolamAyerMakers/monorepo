@@ -68,8 +68,8 @@ def test_generic_feedback_covers_every_generic_validation_reason() -> None:
             "make-file-executable",
             "not-executable",
             (
-                "Set the owner executable bit on the required script, then try again: "
-                "`~/playground/run-me.sh` needs a Bash shebang and executable permission."
+                "Set the owner executable bit on the required file, then try again: "
+                "`~/playground/permission-test.txt` needs owner execute permission."
             ),
         ),
         (

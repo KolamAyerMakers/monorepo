@@ -3,16 +3,16 @@
 ## Use
 
 ```bash
-git commit -m "describe the checkpoint"
+git commit -m "describe the change"
 ```
 
 ## What It Does
 
-`git commit` records staged changes as a named checkpoint.
+`git commit` records staged changes in local history.
 
 ## Practice
 
-Write messages that say why the checkpoint matters.
+Write messages that say why the change matters.
 
 ## Watch Out
 

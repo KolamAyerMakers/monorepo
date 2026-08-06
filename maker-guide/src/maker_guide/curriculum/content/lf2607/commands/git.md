@@ -2,7 +2,7 @@
 
 ## Core Idea
 
-Git records source history as commits. A commit is a named checkpoint of tracked files.
+Git records source history as commits. A commit is a named record of selected tracked-file changes.
 
 In this course, git protects `~/src`, not generated output in `~/public_html`.
 
@@ -21,7 +21,7 @@ git push
 
 - Working tree: files you are editing.
 - Staging area: changes selected for the next commit.
-- Commit: recorded checkpoint.
+- Commit: recorded history.
 - Remote: another repository, such as Forgejo.
 
 ## Common Commands
@@ -30,7 +30,8 @@ git push
 - [git status](git-status.md): inspect state.
 - [git add](git-add.md): stage changes.
 - [git diff](git-diff.md): inspect changes.
-- [git commit](git-commit.md): record a checkpoint.
+- [git commit](git-commit.md): record selected changes.
+- [git config](git-config.md): set Git preferences.
 - [git log](git-log.md): read history.
 - [git remote](git-remote.md): inspect or set remote repositories.
 - [git push](git-push.md): send commits to Forgejo.

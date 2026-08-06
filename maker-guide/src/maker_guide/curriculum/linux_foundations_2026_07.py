@@ -313,7 +313,7 @@ _FAILURE_FEEDBACK_TEXT_TEMPLATES = MappingProxyType(
             "Remove the forbidden file content, then try again: {evidence}"
         ),
         "not-executable": (
-            "Set the owner executable bit on the required script, then try again: {evidence}"
+            "Set the owner executable bit on the required file, then try again: {evidence}"
         ),
         "port-content-mismatch": (
             "Update the service file with your computed port, then try again: {evidence}"
@@ -940,12 +940,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S4",
-            title="Permissions, packages, git, Forgejo",
+            title="Permissions, Git, Forgejo",
             date=date(2026, 8, 8),
             starts_at=datetime(2026, 8, 8, 9, tzinfo=UTC),
             introduced_commands=(
-                "apt search",
-                "apt show",
                 "git init",
                 "git add",
                 "git commit",
@@ -954,53 +952,44 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "git diff",
                 "git remote",
                 "git push",
-                "git clone",
             ),
             introduced_skills=(
                 "permissions",
-                "package-discovery",
-                "package-management",
                 "git-basics",
                 "forgejo-publishing",
                 "multi-user-filesystems",
             ),
             learning_objectives=(
                 "Read and change file permissions.",
-                "Understand package discovery without sudo.",
                 "Version site source with git.",
                 "Push the source repository to Forgejo.",
             ),
-            content=_session_content("S4", "Permissions, packages, git, Forgejo"),
+            content=_session_content("S4", "Permissions, Git, Forgejo"),
             objectives=(
                 SessionObjective(
                     id="read-permissions",
                     title="Read and change file permissions",
                     prompt=(
-                        "Run `ls -l ~/playground/hi.txt` and read the permission letters "
-                        "at the start of its row."
+                        "Run `ls -l ~/playground/hi.txt`, use `chmod u+x ~/playground/hi.txt`, "
+                        "then run `ls -l ~/playground/hi.txt` again and read the owner permission "
+                        "letters."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^ls -l ~/playground/hi\.txt$",),
-                        observed_commands=("ls -l",),
-                    ),
-                ),
-                SessionObjective(
-                    id="discover-packages-without-sudo",
-                    title="Discover packages without sudo",
-                    prompt=(
-                        "Run `apt search ascii`, then run `apt show cmatrix` to inspect a package "
-                        "without installing it."
-                    ),
-                    validation=CommandHistoryValidation(
-                        required_patterns=(r"^apt search ascii$", r"^apt show cmatrix$"),
-                        observed_commands=("apt search", "apt show"),
+                        required_patterns=(
+                            r"^ls -l (?:~/playground/)?hi\.txt$",
+                            r"^chmod u\+x (?:~/playground/)?hi\.txt$",
+                        ),
+                        observed_commands=("ls -l", "chmod"),
                     ),
                 ),
                 SessionObjective(
                     id="initialize-source-repo",
-                    title="Version site source with git",
-                    prompt="Go to `~/src` and run `git init` so it becomes a Git repository.",
-                    validation=PathExistsValidation(paths=("~/src/.git",)),
+                    title="Initialize the source repository",
+                    prompt="From `~/src`, run `git init`, then run `git status`.",
+                    validation=CommandHistoryValidation(
+                        required_patterns=(r"^git init$", r"^git status$"),
+                        observed_commands=("git init", "git status"),
+                    ),
                 ),
                 SessionObjective(
                     id="push-source-to-forgejo",
@@ -2192,114 +2181,217 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Read permissions",
             sequence=20,
             available_after_session="S4",
-            prompt="Run `ls -l ~/playground/hi.txt` and explain the owner permission bits.",
+            prompt=(
+                "Run `ls -l ~/playground/hi.txt` and explain its file type plus the owner, "
+                "group, and other permission triplets."
+            ),
             required_commands=("ls -l",),
             practiced_skills=("permissions",),
             validation=InteractiveQuestionValidation(
-                question="What can the owner do according to the first permission triplet?",
+                question=(
+                    "What type of path is hi.txt? What can its owner, group, and other users do?"
+                ),
                 required_concepts=(
                     AnswerConcept(
-                        id="owner-can-read",
-                        aliases=(r"\bread\b",),
-                        rubric="The answer must state that the file owner can read the file.",
+                        id="regular-file",
+                        aliases=(r"\bregular\s+file\b",),
+                        rubric="The answer must identify hi.txt as a regular file.",
                     ),
                     AnswerConcept(
-                        id="owner-can-write",
-                        aliases=(r"\bwrite\b",),
-                        rubric="The answer must state that the file owner can write the file.",
+                        id="owner-permissions",
+                        aliases=(r"\bowner\b.*\bread\b.*\bwrite\b.*\bexecute\b",),
+                        rubric="The answer must state that the owner can read, write, and execute.",
+                    ),
+                    AnswerConcept(
+                        id="group-permissions",
+                        aliases=(r"\bgroup\b.*\bread\b",),
+                        rubric="The answer must state that the group can read.",
+                    ),
+                    AnswerConcept(
+                        id="other-permissions",
+                        aliases=(r"\b(other|others)\b.*\bread\b",),
+                        rubric="The answer must state that other users can read.",
                     ),
                 ),
             ),
             goal="Read Unix permission text without guessing.",
-            evidence="Answer with the owner permissions from `ls -l`.",
+            evidence="Answer with the file type and all three permission triplets from `ls -l`.",
         ),
         _quest(
             quest_id="make-file-executable",
             title="Make a file executable",
             sequence=21,
             available_after_session="S4",
-            prompt="Create `~/playground/run-me.sh`, add a shebang, and run `chmod u+x` on it.",
-            required_commands=("micro", "chmod", "ls -l"),
+            prompt=(
+                "Create `~/playground/permission-test.txt`, run `chmod u+x` on it, "
+                "and inspect the owner permission triplet."
+            ),
+            required_commands=("touch", "chmod", "ls -l"),
             practiced_skills=("permissions", "multi-user-filesystems"),
             validation=AllOfValidation(
                 validations=(
                     FileCheckValidation(
-                        path="~/playground/run-me.sh",
-                        required_regex=r"(?s)^#!/bin/bash\n.+",
+                        path="~/playground/permission-test.txt",
+                        required_regex=r"(?s).*",
                     ),
-                    ExecutablePathValidation(paths=("~/playground/run-me.sh",)),
+                    ExecutablePathValidation(paths=("~/playground/permission-test.txt",)),
                 ),
             ),
-            goal="Connect executable permission with runnable scripts.",
-            evidence="`~/playground/run-me.sh` needs a Bash shebang and executable permission.",
+            goal="Change one permission bit deliberately and verify the result.",
+            evidence="`~/playground/permission-test.txt` needs owner execute permission.",
         ),
         _quest(
-            quest_id="discover-packages-without-sudo",
-            title="Discover packages without sudo",
+            quest_id="recover-directory-traversal",
+            title="Recover directory traversal",
             sequence=22,
             available_after_session="S4",
-            prompt="Run `apt search ascii` and `apt show cmatrix`, then report what cmatrix does.",
-            required_commands=("apt search", "apt show"),
-            practiced_skills=("package-discovery",),
-            validation=InteractiveQuestionValidation(
-                question="What does the `cmatrix` package do?",
-                required_concepts=(
-                    AnswerConcept(
-                        id="matrix-display",
-                        aliases=(r"\bmatrix\b", r"\bterminal\s+screensaver\b"),
-                        rubric=(
-                            "The answer must describe cmatrix as a Matrix-style scrolling display "
-                            "or screensaver in the terminal."
+            prompt=(
+                "Create `~/playground/no-enter-demo`, remove owner execute permission, restore it, "
+                "and explain why entering the directory failed."
+            ),
+            required_commands=("mkdir", "chmod", "cd"),
+            practiced_skills=("permissions", "multi-user-filesystems"),
+            validation=AllOfValidation(
+                validations=(
+                    CommandHistoryValidation(
+                        required_patterns=(
+                            r"^mkdir -p (?:~/playground/)?no-enter-demo$",
+                            r"^chmod u-x (?:~/playground/)?no-enter-demo$",
+                            r"^chmod u\+x (?:~/playground/)?no-enter-demo$",
+                            r"^cd (?:~/playground/)?no-enter-demo$",
+                        ),
+                        observed_commands=("mkdir", "chmod", "cd"),
+                    ),
+                    InteractiveQuestionValidation(
+                        question="Why did entering no-enter-demo fail until you restored x?",
+                        required_concepts=(
+                            AnswerConcept(
+                                id="directory-traversal",
+                                aliases=(
+                                    r"\b(directory|enter|travers)\b.*\b(x|execute|travers)\b",
+                                ),
+                                rubric="The answer must explain that x permits directory entry.",
+                            ),
                         ),
                     ),
                 ),
             ),
-            goal="Research packages without installing software on the shared server.",
-            evidence="Answer with the purpose of the `cmatrix` package.",
-        ),
-        _quest(
-            quest_id="initialize-source-repo",
-            title="Inspect your source repo",
-            sequence=23,
-            available_after_session="S4",
-            prompt="Inspect the seeded site repository with `git log` and `git status`.",
-            required_commands=("git log", "git status"),
-            practiced_skills=("git-basics",),
-            validation=PathExistsValidation(paths=("~/src/.git",)),
-            goal="Recognize that your site source is already a Git repository.",
-            evidence="The guide needs `~/src/.git` to exist.",
+            goal="Experience that directory execute permission controls traversal.",
+            evidence=(
+                "The guide needs the remove-and-restore chmod commands and an explanation of "
+                "directory traversal."
+            ),
         ),
         _quest(
             quest_id="commit-source",
             title="Commit your source",
-            sequence=24,
+            sequence=23,
             available_after_session="S4",
-            prompt="Run `git add`, `git commit`, `git log`, and `git status` for your site source.",
-            required_commands=("git add", "git commit", "git log", "git status"),
+            prompt=(
+                "Run `git status`, `git diff`, `git add`, `git diff --staged`, `git commit`, "
+                "and `git log` for your site source."
+            ),
+            required_commands=("git status", "git diff", "git add", "git commit", "git log"),
             practiced_skills=("git-basics",),
             validation=CommandHistoryValidation(
-                required_patterns=(r"^git add ", r"^git commit", r"^git log", r"^git status"),
-                observed_commands=("git add", "git commit", "git log", "git status"),
+                required_patterns=(
+                    r"^git status$",
+                    r"^git diff$",
+                    r"^git add ",
+                    r"^git diff --staged$",
+                    r"^git commit",
+                    r"^git log",
+                ),
+                observed_commands=("git status", "git diff", "git add", "git commit", "git log"),
             ),
-            goal="Save a real checkpoint of your site source.",
-            evidence="The guide needs to see add, commit, log, and status commands.",
+            goal="Review selected source changes before recording a commit.",
+            evidence="The guide needs to see status, both diffs, add, commit, and log commands.",
         ),
         _quest(
             quest_id="ignore-scratch-files",
             title="Ignore scratch files",
-            sequence=25,
+            sequence=24,
             available_after_session="S4",
             prompt=(
                 "Create `~/src/.gitignore` that ignores `*.tmp`, then prove git status stays clean."
             ),
             required_commands=("micro", "touch", "git status"),
             practiced_skills=("git-basics",),
-            validation=FileCheckValidation(
-                path="~/src/.gitignore",
-                required_regex=r"(?m)^\*\.tmp$",
+            validation=AllOfValidation(
+                validations=(
+                    FileCheckValidation(
+                        path="~/src/.gitignore",
+                        required_regex=(
+                            r"(?ms)^(?=.*^node_modules/$)(?=.*^dist/$)(?=.*^\*\.tmp$).*$"
+                        ),
+                    ),
+                    CommandHistoryValidation(
+                        required_patterns=(
+                            r"^touch (?:~/src/)?scratch\.tmp$",
+                            r"^git status --short$",
+                        ),
+                        observed_commands=("touch", "git status"),
+                    ),
+                ),
             ),
             goal="Ignore disposable files that actually live inside your source repository.",
-            evidence="`~/src/.gitignore` needs a `*.tmp` ignore rule.",
+            evidence=(
+                "`~/src/.gitignore` needs its existing node_modules/ and dist/ rules plus `*.tmp`; "
+                "the guide also needs scratch.tmp and short status commands."
+            ),
+        ),
+        _quest(
+            quest_id="explain-git-states",
+            title="Explain Git states",
+            sequence=25,
+            available_after_session="S4",
+            prompt=(
+                "Run `git status` and `git diff`, then explain what unstaged, staged, committed, "
+                "and pushed mean."
+            ),
+            required_commands=("git status", "git diff"),
+            practiced_skills=("git-basics", "forgejo-publishing"),
+            validation=AllOfValidation(
+                validations=(
+                    CommandHistoryValidation(
+                        required_patterns=(r"^git status$", r"^git diff$"),
+                        observed_commands=("git status", "git diff"),
+                    ),
+                    InteractiveQuestionValidation(
+                        question="What do unstaged, staged, committed, and pushed mean?",
+                        required_concepts=(
+                            AnswerConcept(
+                                id="unstaged",
+                                aliases=(r"\bunstaged\b.*\b(work(ing)? tree|not.*commit)\b",),
+                                rubric=(
+                                    "The answer must explain that unstaged changes are not selected"
+                                    " for a commit."
+                                ),
+                            ),
+                            AnswerConcept(
+                                id="staged",
+                                aliases=(r"\bstaged\b.*\b(next commit|select)\b",),
+                                rubric=(
+                                    "The answer must explain that staged changes are selected for a"
+                                    " commit."
+                                ),
+                            ),
+                            AnswerConcept(
+                                id="committed",
+                                aliases=(r"\bcommitted\b.*\b(local|history|record)\b",),
+                                rubric="The answer must identify committed changes as local.",
+                            ),
+                            AnswerConcept(
+                                id="pushed",
+                                aliases=(r"\bpushed\b.*\b(remote|forgejo|server)\b",),
+                                rubric="The answer must identify pushed commits as remote.",
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            goal="Explain where a source change is in the Git workflow.",
+            evidence="The guide needs status, diff, and all four state explanations.",
         ),
         _quest(
             quest_id="write-hello-script",
@@ -2405,21 +2497,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Turn shell output into published site content.",
             evidence="`~/src/pages/practice.md` needs a heading and a fenced code block.",
-        ),
-        _quest(
-            quest_id="push-source-to-forgejo",
-            title="Push source to Forgejo",
-            sequence=39,
-            available_after_session="S5",
-            prompt="Add `origin` for your Forgejo repo and run `git push -u origin main`.",
-            required_commands=("git remote", "git push"),
-            practiced_skills=("forgejo-publishing",),
-            validation=CommandHistoryValidation(
-                required_patterns=(r"^git remote ", r"^git push -u origin main$"),
-                observed_commands=("git remote", "git push"),
-            ),
-            goal="Make your source browsable on the classroom git server.",
-            evidence="The guide needs to see the remote setup and first push.",
         ),
         _quest(
             quest_id="add-argument-guard",

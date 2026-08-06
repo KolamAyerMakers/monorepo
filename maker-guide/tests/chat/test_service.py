@@ -1784,13 +1784,13 @@ def test_check_intent_completes_executable_file_quest(
     migrated_database_path: Path,
     tmp_path: Path,
 ) -> None:
-    """Chat check can complete a catalog quest requiring script content and mode bits."""
+    """Chat check can complete a catalog quest requiring an executable file."""
     learner_home = tmp_path / "alice"
     playground_path = learner_home / "playground"
     playground_path.mkdir(parents=True)
-    script_path = playground_path / "run-me.sh"
-    script_path.write_text("#!/bin/bash\necho ready\n", encoding="utf-8")
-    script_path.chmod(0o700)
+    permission_test_path = playground_path / "permission-test.txt"
+    permission_test_path.touch()
+    permission_test_path.chmod(0o700)
 
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection, session_reached="S4")
@@ -1804,7 +1804,7 @@ def test_check_intent_completes_executable_file_quest(
             _chat_request("check my work"),
             _chat_dependencies(
                 database_connection,
-                account_lookup=_account_lookup(learner_home, script_path.stat().st_uid),
+                account_lookup=_account_lookup(learner_home, permission_test_path.stat().st_uid),
             ),
         )
 
@@ -1815,7 +1815,7 @@ def test_check_intent_completes_executable_file_quest(
         checks = cast("list[dict[str, object]]", evidence["checks"])
         assert evidence["validation_type"] == "all_of"
         assert checks[0]["validation_type"] == "file_check"
-        assert checks[0]["catalog_path"] == "~/playground/run-me.sh"
+        assert checks[0]["catalog_path"] == "~/playground/permission-test.txt"
         assert checks[0]["required_matched"] is True
         assert checks[1] == {
             "executable_count": 1,
@@ -1823,7 +1823,7 @@ def test_check_intent_completes_executable_file_quest(
             "passed": True,
             "paths": [
                 {
-                    "catalog_path": "~/playground/run-me.sh",
+                    "catalog_path": "~/playground/permission-test.txt",
                     "passed": True,
                     "failure_reason": None,
                 },

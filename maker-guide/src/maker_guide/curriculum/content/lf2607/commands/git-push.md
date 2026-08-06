@@ -22,8 +22,8 @@ Push commits, not uncommitted files. Run `git status` first.
 
 | Symptom | What It Usually Means | Fix |
 |---|---|---|
-| `src refspec main does not match any` | No local `main` branch or no commits | Run `git branch --show-current`, commit first, then push the actual branch. |
-| `remote origin already exists` | The remote name is already configured | Run `git remote -v`; use `git remote set-url origin <repo-url>` if wrong. |
+| `src refspec main does not match any` | No local `main` branch or no commits | Run `git log --oneline -1`. The course repository uses `main`; ask before changing branches. |
+| `remote origin already exists` | The remote name is already configured | Run `git remote -v`; ask before changing an existing remote. |
 | Authentication failed | Forgejo credentials or SSH key are not accepted | Verify the remote URL and key setup before retrying. |
 | Push rejected | Remote has commits your local branch does not have | Do not force push. Ask before merging or rebasing. |
 

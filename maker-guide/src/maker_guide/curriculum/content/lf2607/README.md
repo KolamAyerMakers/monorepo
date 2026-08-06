@@ -59,9 +59,9 @@ Standard streams, redirection grammar, useful pipelines, and process inspection.
 - [Reinforcement quests](quests/README.md#s03-reinforcement)
 - [Concept cards](concepts/README.md#s03-streams-and-processes)
 
-### S04: Permissions and Git
+### S04: Permissions, Git, and Forgejo
 
-Permissions, package discovery, Git, and Forgejo.
+Permissions, Git, and Forgejo.
 
 - [Slides](sessions/S04/slides.md)
 - [Self-study](sessions/S04/self-study.md)

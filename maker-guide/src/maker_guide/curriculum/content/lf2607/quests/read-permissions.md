@@ -4,7 +4,7 @@ Quest: read-permissions
 
 ## Mission
 
-Run `ls -l ~/playground/hi.txt` and explain the owner permission bits.
+Run `ls -l ~/playground/hi.txt` and explain its file type plus the owner, group, and other permission triplets.
 
 ## Commands You Will Use
 
@@ -12,20 +12,21 @@ Run `ls -l ~/playground/hi.txt` and explain the owner permission bits.
 
 ## Steps
 
-1. Run `ls -l ~/playground/hi.txt`.
-2. Read the first permission triplet after the file type character.
-3. Decide whether the owner can read, write, or execute the file.
-4. Answer the guide in words.
+1. Run `cd ~/playground`.
+2. Run `ls -l hi.txt`.
+3. Identify the first character as the file type.
+4. Read the owner, group, and other triplets.
+5. Answer the guide with what each class can do.
 
 ## Hints
 
-1. The first character is file type.
+1. `-` means regular file and `d` means directory.
 2. The next three characters are owner permissions.
-3. For a normal text file, expect read and write, not execute.
+3. The next two triplets belong to group and other users.
 
 ## If Check Fails
 
-Run `ls -l` again and answer with read, write, or execute permissions for the owner.
+Run `ls -l` again and name the file type plus what owner, group, and other users can do.
 
 ## Related Reading
 

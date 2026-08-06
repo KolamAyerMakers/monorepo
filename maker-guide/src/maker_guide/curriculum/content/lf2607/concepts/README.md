@@ -57,11 +57,10 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [signal](signal.md)
 - [job control](job-control.md)
 
-## S04 Permissions And Git
+## S04 Permissions, Git, And Forgejo
 
 - [permissions](permissions.md)
-- [package discovery](package-discovery.md)
-- [package management](package-management.md)
+- [glob patterns](glob-pattern.md)
 - [git basics](git-basics.md)
 - [Forgejo publishing](forgejo-publishing.md)
 - [multi-user filesystems](multi-user-filesystems.md)

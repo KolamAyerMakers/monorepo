@@ -77,7 +77,6 @@ def test_sessions_expose_independent_objective_validators() -> None:
         "S4": (
             CommandHistoryValidation,
             CommandHistoryValidation,
-            PathExistsValidation,
             CommandHistoryValidation,
         ),
         "S5": (
@@ -119,6 +118,72 @@ def test_sessions_expose_independent_objective_validators() -> None:
         not hasattr(objective, "quest_id")
         for session in LINUX_FOUNDATIONS_2026_07.sessions
         for objective in session.objectives
+    )
+
+
+def test_s4_initializes_source_history() -> None:
+    """S4 learners create their source repository."""
+    session = CATALOG.session("S4")
+    objective = next(
+        objective for objective in session.objectives if objective.id == "initialize-source-repo"
+    )
+
+    assert "git init" in session.introduced_commands
+    assert isinstance(objective.validation, CommandHistoryValidation)
+    assert r"^git init$" in objective.validation.required_patterns
+
+
+def test_s4_quests_cover_permission_recovery_and_git_states() -> None:
+    """S4 reinforcement covers the live labs without duplicating objectives."""
+    quest_ids = {quest.id for quest in CATALOG.course.quests}
+
+    assert "recover-directory-traversal" in quest_ids
+    assert "explain-git-states" in quest_ids
+    assert "initialize-source-repo" not in quest_ids
+    assert "push-source-to-forgejo" not in quest_ids
+
+
+def test_s4_path_validators_accept_relative_commands() -> None:
+    """S4 accepts the short path forms taught after changing directory."""
+    permission_objective = next(
+        objective
+        for objective in CATALOG.session("S4").objectives
+        if objective.id == "read-permissions"
+    )
+    assert isinstance(permission_objective.validation, CommandHistoryValidation)
+    for command in ("ls -l ~/playground/hi.txt", "ls -l hi.txt", "chmod u+x hi.txt"):
+        assert any(
+            re.fullmatch(pattern, command)
+            for pattern in permission_objective.validation.required_patterns
+        )
+
+    directory_validation = CATALOG.quest("recover-directory-traversal").validation
+    assert isinstance(directory_validation, AllOfValidation)
+    directory_history = next(
+        validation
+        for validation in directory_validation.validations
+        if isinstance(validation, CommandHistoryValidation)
+    )
+    for command in (
+        "mkdir -p ~/playground/no-enter-demo",
+        "mkdir -p no-enter-demo",
+        "chmod u-x no-enter-demo",
+        "chmod u+x no-enter-demo",
+        "cd no-enter-demo",
+    ):
+        assert any(
+            re.fullmatch(pattern, command) for pattern in directory_history.required_patterns
+        )
+
+    ignore_validation = CATALOG.quest("ignore-scratch-files").validation
+    assert isinstance(ignore_validation, AllOfValidation)
+    ignore_history = next(
+        validation
+        for validation in ignore_validation.validations
+        if isinstance(validation, CommandHistoryValidation)
+    )
+    assert any(
+        re.fullmatch(pattern, "touch scratch.tmp") for pattern in ignore_history.required_patterns
     )
 
 

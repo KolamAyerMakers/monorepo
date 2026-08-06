@@ -8,7 +8,7 @@ build-website
 
 ## What It Does
 
-`build-website` is a Bash alias for the course bootstrap. On its first run, it creates your learner-owned Astro project in `~/src`, installs its pinned dependencies, and makes the initial Git commit. Later runs call that project's `npm run build` command.
+`build-website` is a Bash alias for the course bootstrap. On its first run, it creates your learner-owned Astro project in `~/src` and installs its pinned dependencies. Later runs call that project's `npm run build` command.
 
 Your public page lives at `https://lf2607.kolamayermakers.org/~username/`.
 

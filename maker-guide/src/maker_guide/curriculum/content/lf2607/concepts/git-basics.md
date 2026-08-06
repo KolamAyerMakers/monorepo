@@ -2,7 +2,7 @@
 
 ## Core Idea
 
-Git records named checkpoints of source files. In this course, commit source under `~/src`; do not treat generated HTML under `~/public_html/` as the source of truth.
+Git records source history as commits. In this course, commit source under `~/src`; do not treat generated HTML under `~/public_html/` as the source of truth.
 
 The basic loop is:
 
@@ -28,7 +28,6 @@ Use `git status` before and after staging. It tells you which files are untracke
 ## Common Recovery
 
 - `nothing to commit`: save the file, check that you are in `~/src`, then run `git status` again.
-- Missing identity: run `git config --global user.name "$(whoami)"` and `git config --global user.email "$(whoami)@kolamayermakers.org"`, then retry the commit.
 - Scratch file appears in status: add a deliberate `.gitignore` rule before broad staging.
 - Unsure what changed: run `git diff` before `git add`.
 

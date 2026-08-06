@@ -1,76 +1,167 @@
-# S4 Self-Study Guide: Permissions, Packages, Git
+# S4 Self-Study Guide: Permissions, Git, Forgejo
 
 Session: S4
 
 ## Study Path
 
 1. Decode `ls -l` before changing permissions.
-2. Use `chmod u+x` on one harmless script and verify the owner execute bit.
-3. Use `apt search` and `apt show` for discovery only.
-4. Initialize git in `~/src`, inspect status, stage source files, and commit.
-5. Add `.gitignore` before broad staging so disposable `*.tmp` files stay out of history.
-6. Push to Forgejo and verify the remote.
+2. Use `chmod u+x` on the harmless playground file and verify the owner execute bit.
+3. Initialize `~/src` with `git init`, then make the initial source commit.
+4. Edit source, inspect `git diff`, stage deliberate files, commit, and inspect the log.
+5. Preserve the existing `.gitignore`, add `*.tmp`, and prove `scratch.tmp` is ignored.
+6. Add or verify `origin`, push to Forgejo, and compare the web UI with `git log`.
 
 ## Permission Decode
 
 ```text
 -rw-r--r-- 1 username username 12 Aug 1 10:00 hi.txt
 | |  |  |
-| |  |  others: read only
+| |  |  other: read only
 | |  group: read only
 | owner: read and write
 regular file
 ```
 
-Directory execute permission means traversal. Without it, you may see a directory name but cannot enter it.
+The first character is file type. The next nine characters are owner, group, and other permission triplets in the basic Unix permission model.
 
-## Git Minimal Session
+For a file, `r` reads content, `w` changes content, and `x` permits execution. For a directory, `r` lists names, `w` with `x` changes entries, and `x` permits traversal. Without directory `x`, you may see its name but cannot enter it.
+
+```bash
+ls -l ~/playground/hi.txt
+chmod u-x ~/playground/hi.txt
+chmod u+x ~/playground/hi.txt
+ls -l ~/playground/hi.txt
+```
+
+Removing then adding `x` guarantees that you see the owner execute bit change. `chmod u+x` changes metadata, not file content. Use numeric modes such as `755` only when you can explain all three triplets.
+
+## Permission Lab
+
+First, observe access Linux denies on the shared server. The first two commands may show metadata; the last two should fail with `Permission denied`. That diagnostic is stderr, as in S3; do not change system paths.
+
+```bash
+ls -l /etc/shadow
+ls -ld /root
+cat /etc/shadow
+touch /root/lf2607-permission-demo
+```
+
+Then create and recover from a denied traversal attempt in a directory you own:
+
+```bash
+cd ~/playground
+mkdir -p no-enter-demo
+printf 'hello\n' > no-enter-demo/note.txt
+chmod u-x no-enter-demo
+ls -ld no-enter-demo
+cd no-enter-demo
+cd ~/playground
+chmod u+x no-enter-demo
+ls -ld no-enter-demo
+cd no-enter-demo
+cat note.txt
+cd ..
+rm no-enter-demo/note.txt
+rmdir no-enter-demo
+```
+
+The first `cd` should fail because directory `x` permits traversal. Restore `x` before cleanup. Never change permissions on `~`, `~/src`, or `~/.ssh` during this lab.
+
+## Git Workflow
+
+`~/src` contains your site source but starts without Git history. Initialize it on `main` before Git can track its files.
+
+```text
+edit source -> inspect -> stage -> commit -> push
+working tree    git diff  git add  git commit  git push
+```
 
 ```bash
 cd ~/src
+git init
 git status
-git config --global user.name "$(whoami)"
-git config --global user.email "$(whoami)@kolamayermakers.org"
+git add --all
+git status
+git commit -m "Initial site source"
+git log --oneline -3
+micro pages/index.md
+git diff
+git add pages/index.md
+git commit -m "Update homepage"
+git status
 ```
 
-Staged means selected for the next commit. Committed means recorded in history. Pushed means sent to Forgejo.
+Staged means selected for the next commit. Committed means recorded locally. Pushed means the commit was sent to Forgejo.
+
+## Ignore Scratch Files
+
+The starter `.gitignore` already contains useful rules. Preserve them and add one new line:
+
+```text
+*.tmp
+```
+
+```bash
+micro ~/src/.gitignore
+touch ~/src/scratch.tmp
+cd ~/src
+git status --short
+```
+
+`scratch.tmp` should not appear. Ignore rules affect untracked files, so add the rule before staging scratch files. `~/public_html/` is outside `~/src`, so it does not need an ignore rule there.
+
+`--short` prints one compact line per changed path.
+
+## Create The Forgejo Repository
+
+Open [Forgejo](https://lf2607.kolamayermakers.org/git/) and sign in with your class account.
+
+1. Select **New Repository**.
+2. Name it `src`.
+3. Leave README, `.gitignore`, and license initialization unchecked.
+4. Create the empty repository.
+
+Your local source repository already has commits. Keeping the Forgejo repository empty lets your first push add that history.
 
 ## Forgejo Remote
 
-Use the `src` repository on the class Forgejo server:
+Use the `src` repository on the class Forgejo server. Inspect before adding `origin`:
 
 ```bash
 cd ~/src
-git remote add origin "https://lf2607.kolamayermakers.org/git/$(whoami)/src.git"
 git remote -v
+git remote add origin "https://lf2607.kolamayermakers.org/git/$USER/src.git"
+git remote -v
+git log --oneline -1
 git push -u origin main
 ```
 
-If your branch is not named `main`, run `git branch --show-current` and push that branch deliberately.
+Run `git remote add` only when `git remote -v` showed no `origin`. If `origin` exists, compare its URL with the course URL before changing it. Open the Forgejo web UI and verify the newest commit message there.
 
 ## Git Recovery
 
-- Missing identity: run `git config --global user.name "$(whoami)"` and `git config --global user.email "$(whoami)@kolamayermakers.org"`, then retry the commit.
 - `nothing to commit`: save the file, run `git status`, and check that you are in `~/src`.
-- `remote origin already exists`: run `git remote -v`, then use `git remote set-url origin REPO_URL` if the URL is wrong.
-- `src refspec main does not match any`: run `git branch --show-current`; push the actual branch or rename it deliberately.
-- Scratch file staged: make sure `.gitignore` contains `*.tmp`, remove the scratch file, then run `git status` again before committing.
+- `remote origin already exists`: run `git remote -v`, then ask before changing an existing remote URL.
+- `src refspec main does not match any`: run `git log --oneline -1`. You need an initial commit before pushing `main`.
+- Push rejected: run `git status` and `git log --oneline -3`. Ask for help with the rejection text.
+- Scratch file staged: add `*.tmp` to `.gitignore`, then run `git status` before committing.
 
 ## Proof Checklist
 
-- You can explain owner, group, and other permissions.
-- `~/src/.git` exists.
-- `~/src/.gitignore` contains `*.tmp`.
-- `git log --oneline` shows at least one source commit.
-- `git remote -v` shows `lf2607.kolamayermakers.org/git` and your `src` repository.
+- You can explain owner, group, and other permission triplets.
+- You can state exactly what `chmod u+x` changes.
+- You can explain why `cat /etc/shadow` and entering `no-enter-demo` were denied.
+- `git log --oneline` shows your initial source commit and homepage update.
+- `~/src/.gitignore` preserves its existing rules and contains `*.tmp`.
+- `git status --short` omits `scratch.tmp`.
+- `git remote -v` shows your Forgejo `src` repository.
+- Forgejo shows the newest local source commit.
 
 ## Docs Pointers
 
 - Run `man chmod`, then read symbolic modes.
 - Run `git help status`, `git help add`, `git help commit`, and `git help remote`.
-- Read the [Pro Git book](https://git-scm.com/book/en/v2) sections on basics and remotes.
-- Run `tldr git-status`, `tldr git-commit`, and `tldr git-push`.
+- Read the [Pro Git book](https://git-scm.com/book/en/v2) sections on recording changes and remotes.
 - Read [Forgejo Publishing](../../concepts/forgejo-publishing.md) before adding `origin`.
 - Read [Permissions](../../concepts/permissions.md) before changing modes outside scratch files.
-- Read [Package Management](../../concepts/package-management.md) before asking why learners cannot install packages on the shared server.
-- Read [Number Bases: Decimal, Hexadecimal, Octal](../../concepts/number-bases.md) if numeric permissions such as `755` appear.
+- Read [Number Bases: Decimal, Hexadecimal, Octal](../../concepts/number-bases.md) before using numeric modes such as `755`.

@@ -27,10 +27,10 @@ Quests are highly recommended reinforcement. Use them for extra practice or catc
 
 - [read-permissions](read-permissions.md)
 - [make-file-executable](make-file-executable.md)
-- [discover-packages-without-sudo](discover-packages-without-sudo.md)
-- [initialize-source-repo](initialize-source-repo.md)
+- [recover-directory-traversal](recover-directory-traversal.md)
 - [commit-source](commit-source.md)
 - [ignore-scratch-files](ignore-scratch-files.md)
+- [explain-git-states](explain-git-states.md)
 
 ## S05 Reinforcement
 
@@ -40,7 +40,6 @@ Quests are highly recommended reinforcement. Use them for extra practice or catc
 - [ask-for-input](ask-for-input.md)
 - [reverse-two-arguments](reverse-two-arguments.md)
 - [publish-practice-page](publish-practice-page.md)
-- [push-source-to-forgejo](push-source-to-forgejo.md)
 - [add-argument-guard](add-argument-guard.md)
 - [capture-environment](capture-environment.md)
 - [quote-spaced-value](quote-spaced-value.md)

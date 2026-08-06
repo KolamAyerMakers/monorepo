@@ -20,23 +20,22 @@ Use your course username in place of `username`. Forgejo uses the same course id
 
 ## Practice Alone
 
-Add a remote, push your commits, then inspect the repository in the web UI.
+Create an empty `src` repository in Forgejo first. Leave README, `.gitignore`, and license initialization unchecked because your local repository already has commits. Then add a remote, push your commits, and inspect the repository in the web UI.
 
 ```bash
 cd ~/src
-git remote add origin "https://lf2607.kolamayermakers.org/git/$(whoami)/src.git"
+git remote add origin "https://lf2607.kolamayermakers.org/git/$USER/src.git"
 git remote -v
 git push -u origin main
 ```
-
-If your branch is not named `main`, run `git branch --show-current` and push the branch you actually committed on.
 
 If `origin` already exists, inspect it before changing it:
 
 ```bash
 git remote -v
-git remote set-url origin "https://lf2607.kolamayermakers.org/git/$(whoami)/src.git"
 ```
+
+S4 initializes the course repository on `main`. If `origin` is missing or points elsewhere, ask before changing it.
 
 ## Done When
 
