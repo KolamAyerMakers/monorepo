@@ -78,9 +78,10 @@ rwx means: owner may read, write, and traverse this directory
 Hands-on now:
 
 ```bash
-mkdir -p ~/playground
-touch ~/playground/permission-demo.txt
-ls -l ~/playground/permission-demo.txt
+mkdir -p ~/playground  # Only if the directory is missing
+cd ~/playground
+touch permission-demo.txt
+ls -l permission-demo.txt
 ```
 
 Find the first three permission letters after the initial `-` or `d`.
@@ -105,10 +106,10 @@ u-x    owner, remove, execute
 Hands-on now: work only on the playground file you own.
 
 ```bash
-ls -l ~/playground/permission-demo.txt       # Inspect the current mode
-chmod u-x ~/playground/permission-demo.txt   # Remove owner execute
-chmod u+x ~/playground/permission-demo.txt   # Add owner execute again
-ls -l ~/playground/permission-demo.txt       # Verify the final mode
+ls -l permission-demo.txt       # Inspect the current mode
+chmod u-x permission-demo.txt   # Remove owner execute
+chmod u+x permission-demo.txt   # Add owner execute again
+ls -l permission-demo.txt       # Verify the final mode
 ```
 
 The first command tells you whether `x` is already present. Removing then adding it guarantees that you see the owner `x` change. `chmod` did not edit the text inside `permission-demo.txt`.

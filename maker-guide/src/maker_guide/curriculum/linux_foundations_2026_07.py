@@ -970,37 +970,56 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="read-permissions",
                     title="Read and change file permissions",
                     prompt=(
-                        "Run `mkdir -p ~/playground`, then "
-                        "`touch ~/playground/permission-demo.txt`. Run "
-                        "`ls -l ~/playground/permission-demo.txt`, use "
-                        "`chmod u+x ~/playground/permission-demo.txt`, then inspect it again "
-                        "and read the owner permission letters."
+                        "If `~/playground` is missing, run `mkdir -p ~/playground`. Then run "
+                        "`cd ~/playground`. Run `touch permission-demo.txt`, then "
+                        "`ls -l permission-demo.txt`, use `chmod u+x permission-demo.txt`, "
+                        "then inspect it and read the owner permission letters."
                     ),
+                    next_steps=(
+                        "touch permission-demo.txt",
+                        "ls -l permission-demo.txt",
+                        "chmod u+x permission-demo.txt",
+                    ),
+                    next_step_explanations=(
+                        "Let's make a harmless file that belongs to you for this exercise.",
+                        "Read the file type and its owner, group, and other permission triplets.",
+                        "Add execute permission for yourself, then compare what changed.",
+                    ),
+                    working_directory="~/playground",
+                    working_directory_creation_step="mkdir -p ~/playground",
                     validation=CommandHistoryValidation(
                         required_patterns=(
-                            r"^mkdir -p (?:~/)?playground$",
-                            r"^touch (?:~/playground/)?permission-demo\.txt$",
-                            r"^ls -l (?:~/playground/)?permission-demo\.txt$",
-                            r"^chmod u\+x (?:~/playground/)?permission-demo\.txt$",
+                            r"^touch permission-demo\.txt$",
+                            r"^ls -l permission-demo\.txt$",
+                            r"^chmod u\+x permission-demo\.txt$",
                         ),
-                        observed_commands=("mkdir", "touch", "ls -l", "chmod"),
+                        observed_commands=("touch", "ls -l", "chmod"),
                     ),
                 ),
                 SessionObjective(
                     id="initialize-source-repo",
                     title="Initialize the source repository",
-                    prompt="From `~/src`, run `git init`, then run `git status`.",
+                    prompt=(
+                        "From `~/src`, run `git init` and inspect `git status`. Then stage with "
+                        "`git add --all`, then create its first commit with `git commit -m`."
+                    ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^git init$", r"^git status$"),
-                        observed_commands=("git init", "git status"),
+                        required_patterns=(
+                            r"^git init$",
+                            r"^git status$",
+                            r"^git add --all$",
+                            r"^git commit -m .+",
+                        ),
+                        observed_commands=("git init", "git status", "git add", "git commit"),
                     ),
                 ),
                 SessionObjective(
                     id="push-source-to-forgejo",
                     title="Push the source repository to Forgejo",
                     prompt=(
-                        "Set your Forgejo repository as `origin`, then run "
-                        "`git push -u origin main`."
+                        "Open Forgejo and create an empty repository named `src`. Leave README, "
+                        "`.gitignore`, and license unchecked. Your local repository has history. "
+                        "Return here, add its HTTPS URL as `origin`, then push `main`."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(r"^git remote ", r"^git push -u origin main$"),

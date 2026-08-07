@@ -32,6 +32,7 @@ class SocketHelpRequest:
     username: str
     terminal: str | None
     text: str
+    cwd: str | None = None
     ssh_connection: str | None = None
     stream: bool = False
 
@@ -351,6 +352,9 @@ def _parse_help_request(payload: bytes, username: str) -> SocketHelpRequest:
     terminal = request_object.get("terminal")
     if terminal is not None and not isinstance(terminal, str):
         raise EventParseError("terminal must be null or a string")
+    cwd = request_object.get("cwd")
+    if cwd is not None and not isinstance(cwd, str):
+        raise EventParseError("cwd must be null or a string")
     ssh_connection = request_object.get("ssh_connection")
     if ssh_connection is not None and not isinstance(ssh_connection, str):
         raise EventParseError("ssh_connection must be null or a string")
@@ -358,6 +362,7 @@ def _parse_help_request(payload: bytes, username: str) -> SocketHelpRequest:
         username=username,
         terminal=terminal,
         text=text,
+        cwd=cwd,
         ssh_connection=ssh_connection,
         stream=request_object.get("stream") is True,
     )

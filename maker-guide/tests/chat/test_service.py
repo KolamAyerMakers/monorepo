@@ -296,31 +296,22 @@ def test_progress_and_tutor_support_enrollment_before_first_release(
     assert tutor_client.requests[0].context.quests == ()
 
 
-def test_now_displays_next_missing_command_without_progress_side_effects(
+def test_now_displays_current_prompt_without_progress_side_effects(
     migrated_database_path: Path,
 ) -> None:
-    """Now displays only the next missing command without writing progress."""
+    """Now displays an incomplete objective without validation or quest assignment."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
 
-        first_response = handle_chat_request(
-            _chat_request("now"),
-            _chat_dependencies(database_connection),
-        )
-        add_command_observation(database_connection, _command_observation("whoami"))
-        second_response = handle_chat_request(
+        response = handle_chat_request(
             _chat_request("now"),
             _chat_dependencies(database_connection),
         )
 
-        assert first_response.text.startswith(
+        assert response.text.startswith(
             "Current session objective: Confirm that your shell is working",
         )
-        assert "Start here:\nRun `whoami`." in first_response.text
-        assert "date" not in first_response.text
-        assert "uptime" not in first_response.text
-        assert "Start here:\nRun `date`." in second_response.text
-        assert "uptime" not in second_response.text
+        assert "Start here:\nRun `whoami`, `date`, and `uptime` separately." in response.text
         assert _attempt_count(database_connection) == 0
         assert total_score_for_course(database_connection, "alice", CATALOG.course.id) == 0
         assert (
@@ -330,7 +321,7 @@ def test_now_displays_next_missing_command_without_progress_side_effects(
             is None
         )
         assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
-        assert second_response.learner_snapshot.pending_quests == ("prove-shell-alive",)
+        assert response.learner_snapshot.pending_quests == ("prove-shell-alive",)
 
 
 def test_now_preserves_non_command_objective_prompt(
@@ -1137,8 +1128,11 @@ def test_answer_objective_explains_early_answer_and_check_transition(
 
 def test_releasing_s4_prioritizes_s4_before_unfinished_s3_objective(
     migrated_database_path: Path,
+    tmp_path: Path,
 ) -> None:
     """A new release supersedes unfinished objectives from earlier sessions."""
+    learner_home = tmp_path / "alice"
+    (learner_home / "playground").mkdir(parents=True)
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection, session_reached="S2")
         _complete_current_session_objectives(database_connection, "S2")
@@ -1180,13 +1174,18 @@ def test_releasing_s4_prioritizes_s4_before_unfinished_s3_objective(
         )
 
         response = handle_chat_request(
-            _chat_request("answer cut writes stdout (1) and wc reads stdin (0)"),
-            _chat_dependencies(database_connection, timestamp="2026-08-08T09:01:00Z"),
+            _chat_request("now"),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                timestamp="2026-08-08T09:01:00Z",
+            ),
         )
 
         assert response.text.startswith(
             "Current session objective: Read and change file permissions",
         )
+        assert "Run `cd ~/playground`." in response.text
         assert list_completed_objective_ids(
             database_connection,
             "alice",
@@ -1944,6 +1943,7 @@ WantedBy=default.target
             "matched_commands": ["systemctl --user", "curl"],
             "matched_observation_ids": [systemctl_observation_id, curl_observation_id],
             "missing_commands": [],
+            "missing_pattern_indexes": [],
             "observed_count": 2,
             "observed_since": "2026-07-19T09:00:00Z",
             "passed": True,

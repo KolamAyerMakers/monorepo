@@ -322,6 +322,7 @@ def _send_help_request(
                 "kind": "help",
                 "text": message,
                 "terminal": terminal,
+                "cwd": str(Path.cwd()),
                 "ssh_connection": os.environ.get("SSH_CONNECTION"),
                 "stream": chunk_writer is not None,
             },

@@ -28,6 +28,8 @@ class CliChatContext:
     """Unix username that maps directly to the learner handle."""
     terminal: str | None
     """Terminal device path, if known."""
+    cwd: str | None = None
+    """Current working directory reported by the local CLI."""
     ssh_connection: str | None = None
     """SSH_CONNECTION value when the CLI is running inside SSH."""
     source: Literal["cli"] = "cli"

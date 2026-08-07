@@ -49,6 +49,7 @@ def test_bootstrap_copies_starter_and_installs_dependencies(
     assert (destination / "public" / "kolam-ayer-makers-dark.png").is_file()
     assert (destination / "public" / "student").is_dir()
     assert not (destination / ".git").exists()
+    assert ".astro/" in (destination / ".gitignore").read_text(encoding="utf-8")
     theme_content = (destination / "app" / "styles" / "site.css").read_text(encoding="utf-8")
     assert ".site-shell" in theme_content
     assert "prefers-color-scheme" in theme_content

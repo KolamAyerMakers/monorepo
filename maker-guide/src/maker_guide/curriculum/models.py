@@ -99,6 +99,10 @@ class SessionObjective:
     title: str
     validation: SessionObjectiveValidation
     prompt: str = ""
+    next_steps: tuple[str, ...] = ()
+    next_step_explanations: tuple[str, ...] = ()
+    working_directory: str | None = None
+    working_directory_creation_step: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -536,6 +540,23 @@ def _validate_session(session: Session) -> None:
         _require_non_empty("session objective title", objective.title)
         _require_non_empty("session objective prompt", objective.prompt)
         _validate_session_objective_validation(objective.validation)
+        if objective.next_steps:
+            if not isinstance(objective.validation, CommandHistoryValidation):
+                raise ValueError("session objective next steps require command history validation")
+            _require_non_empty_values("session objective next step", objective.next_steps)
+            if len(objective.next_steps) != len(objective.validation.required_patterns):
+                raise ValueError("session objective next steps must match required patterns")
+            if len(objective.next_step_explanations) != len(objective.next_steps):
+                raise ValueError("session objective step explanations must match next steps")
+            _require_non_empty_values(
+                "session objective step explanation", objective.next_step_explanations
+            )
+        if (objective.working_directory is None) != (
+            objective.working_directory_creation_step is None
+        ):
+            raise ValueError(
+                "session objective working directory and creation step must be declared together"
+            )
     _validate_session_content(session)
 
 

@@ -27,12 +27,13 @@ The first character is file type. The next nine characters are owner, group, and
 For a file, `r` reads content, `w` changes content, and `x` permits execution. For a directory, `r` lists names, `w` with `x` changes entries, and `x` permits traversal. Without directory `x`, you may see its name but cannot enter it.
 
 ```bash
-mkdir -p ~/playground
-touch ~/playground/permission-demo.txt
-ls -l ~/playground/permission-demo.txt
-chmod u-x ~/playground/permission-demo.txt
-chmod u+x ~/playground/permission-demo.txt
-ls -l ~/playground/permission-demo.txt
+mkdir -p ~/playground  # Only if the directory is missing
+cd ~/playground
+touch permission-demo.txt
+ls -l permission-demo.txt
+chmod u-x permission-demo.txt
+chmod u+x permission-demo.txt
+ls -l permission-demo.txt
 ```
 
 Removing then adding `x` guarantees that you see the owner execute bit change. `chmod u+x` changes metadata, not file content. Use numeric modes such as `755` only when you can explain all three triplets.

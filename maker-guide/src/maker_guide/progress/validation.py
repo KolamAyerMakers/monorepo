@@ -382,7 +382,10 @@ def _validate_command_history(
             _first_matching_command_observation(required_pattern, observations)
             for required_pattern in validation.required_patterns
         )
-    passed = all(observation is not None for observation in matched_observations)
+    missing_pattern_indexes = tuple(
+        index for index, observation in enumerate(matched_observations) if observation is None
+    )
+    passed = not missing_pattern_indexes
     if len(validation.observed_commands) == len(matched_observations):
         matched_commands = [
             observed_command
@@ -417,6 +420,7 @@ def _validate_command_history(
             matched_commands=matched_commands,
             matched_observation_ids=_matched_command_observation_ids(matched_observations),
             missing_commands=missing_commands,
+            missing_pattern_indexes=list(missing_pattern_indexes),
             observed_count=len(observations),
             observed_since=validation_input.assigned_at,
             required_count=len(validation.required_patterns),

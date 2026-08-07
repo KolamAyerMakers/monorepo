@@ -5,6 +5,7 @@ from __future__ import annotations
 from maker_guide.chat.contract import (
     ChatDependencies,
     ChatRequest,
+    CliChatContext,
     PreparedAnswerInterpretation,
     ResponseDraft,
 )
@@ -43,6 +44,7 @@ def build_response_draft(  # noqa: PLR0911 - Each chat intent has one direct res
                 learner_handle,
                 request.context.source,
                 timestamp,
+                cwd=request.context.cwd if isinstance(request.context, CliChatContext) else None,
             )
             return ResponseDraft(
                 text=response_text,

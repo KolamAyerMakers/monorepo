@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import cast
 
 from maker_guide.chat.contract import ChatDependencies, ChatError, PreparedAnswerInterpretation
@@ -37,6 +38,7 @@ from maker_guide.progress.validation import (
 from maker_guide.repositories.cohort_membership import get_membership
 from maker_guide.repositories.session_objective_completion import list_completed_objective_ids
 from maker_guide.repositories.tier_promotion import TierPromotion
+from maker_guide.validation_paths import resolve_validation_path
 
 IRC_CLIENT_VERIFICATION_FAILURE_REASON = "missing-irc-ctcp-version"
 _NO_CURRENT_QUEST_TEXT = """All currently available quests are complete.
@@ -147,6 +149,8 @@ def now_response(
     learner_handle: str,
     source: str,
     timestamp: str,
+    *,
+    cwd: str | None = None,
 ) -> tuple[str, tuple[TierPromotion, ...]]:
     """Show the current objective or deterministically assigned quest without validation."""
     objective_result = current_session_objective(
@@ -156,7 +160,33 @@ def now_response(
     )
     if objective_result.objective is not None:
         objective = objective_result.objective
-        if isinstance(objective.validation, CommandHistoryValidation):
+        if isinstance(objective.validation, CommandHistoryValidation) and objective.next_steps:
+            if objective.working_directory is not None:
+                path_resolution = resolve_validation_path(
+                    learner_handle,
+                    objective.working_directory,
+                    account_lookup=dependencies.account_lookup,
+                )
+                if path_resolution.target_path is None or not path_resolution.target_path.is_dir():
+                    if objective.working_directory_creation_step is None:
+                        return _format_session_objective(objective_result, dependencies), ()
+                    return (
+                        _format_session_objective(
+                            objective_result,
+                            dependencies,
+                            next_step=f"Run `{objective.working_directory_creation_step}`.",
+                        ),
+                        (),
+                    )
+                if not _is_current_directory(cwd, path_resolution.target_path):
+                    return (
+                        _format_session_objective(
+                            objective_result,
+                            dependencies,
+                            next_step=f"Run `cd {objective.working_directory}`.",
+                        ),
+                        (),
+                    )
             validation_result = validate_session_objective(
                 QuestValidationInput(
                     database_connection=dependencies.database_connection,
@@ -168,14 +198,31 @@ def now_response(
                 ),
                 objective.validation,
             )
-            missing_commands = _objective_evidence_strings(validation_result, "missing_commands")
+            missing_pattern_indexes = validation_result.evidence.get("missing_pattern_indexes")
+            next_step = (
+                (
+                    objective.next_steps[missing_pattern_indexes[0]],
+                    objective.next_step_explanations[missing_pattern_indexes[0]],
+                )
+                if isinstance(missing_pattern_indexes, list)
+                and missing_pattern_indexes
+                and isinstance(missing_pattern_indexes[0], int)
+                else None
+            )
             return (
                 _format_session_objective(
                     objective_result,
                     dependencies,
                     next_step=(
-                        f"Run `{missing_commands[0]}`."
-                        if missing_commands
+                        "\n\n".join(
+                            (
+                                "Let's work through this one step at a time.",
+                                next_step[1],
+                                f"Run `{next_step[0]}` now.",
+                                "Then run `guide now` and we will continue.",
+                            )
+                        )
+                        if next_step is not None
                         else "Run `guide check` to record completion."
                     ),
                 ),
@@ -183,6 +230,19 @@ def now_response(
             )
         return _format_session_objective(objective_result, dependencies), ()
     return _current_quest_response(dependencies, learner_handle, source, timestamp)
+
+
+def _is_current_directory(cwd: str | None, expected_directory: Path | None) -> bool:
+    """Return whether the untrusted CLI directory identifies the expected path."""
+    if cwd is None or expected_directory is None:
+        return False
+    current_directory = Path(cwd)
+    if not current_directory.is_absolute():
+        return False
+    try:
+        return current_directory.resolve(strict=True) == expected_directory
+    except OSError:
+        return False
 
 
 def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context directly.
@@ -410,7 +470,7 @@ def _format_session_objective(
         raise ChatError("current session objective was not found")
     response_parts = [
         f"Current session objective: {objective.title}",
-        f"Start here:\n{next_step or objective.prompt}",
+        next_step or f"Start here:\n{objective.prompt}",
     ]
     self_study_reference = next(
         (

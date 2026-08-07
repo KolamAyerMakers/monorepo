@@ -18,7 +18,7 @@ import typer
 from rich.console import Console
 
 DEFAULT_SOCKET_PATH = Path("/run/maker-guide/preexec.sock")
-DEFAULT_TIMEOUT_SECONDS = 0.02
+DEFAULT_TIMEOUT_SECONDS = 0.5
 _HOOK_SOCKET_EXCEPTIONS = (OSError, TimeoutError, ValueError)
 
 

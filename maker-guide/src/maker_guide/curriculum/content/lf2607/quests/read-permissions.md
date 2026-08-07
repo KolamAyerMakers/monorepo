@@ -4,7 +4,7 @@ Quest: read-permissions
 
 ## Mission
 
-Run `ls -l ~/playground/permission-demo.txt` and explain its file type plus the owner, group, and other permission triplets.
+From `~/playground`, run `ls -l permission-demo.txt` and explain its file type plus the owner, group, and other permission triplets.
 
 ## Commands You Will Use
 

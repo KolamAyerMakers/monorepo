@@ -140,6 +140,7 @@ async def _handle_socket_help_request(
                         context=CliChatContext(
                             username=request.username,
                             terminal=request.terminal,
+                            cwd=request.cwd,
                             ssh_connection=request.ssh_connection,
                         ),
                         visibility="private",
