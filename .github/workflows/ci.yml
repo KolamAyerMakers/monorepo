@@ -25,6 +25,7 @@ jobs:
       - run: uv --directory infra/pulumi/website run ruff check
       - run: uv --directory infra/pulumi/website run ruff format --check
       - run: uv --directory infra/pulumi/website run basedpyright
+      - run: python3 infra/ops/test_normalize_forgejo_git_credentials.py
       - run: make -C infra/salt check
       - run: pnpm --dir website install --frozen-lockfile
       - run: pnpm --dir website build

@@ -59,6 +59,10 @@ pre-commit:
       glob: "infra/ops/**/*"
       run: python3 infra/ops/test_lf_classroom_backup_restore.py
 
+    ops.normalize-forgejo:
+      glob: "infra/ops/**/*"
+      run: python3 infra/ops/test_normalize_forgejo_git_credentials.py
+
     website.build:
       glob: "website/**/*"
       run: pnpm --dir website build

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-time Forgejo HTTPS credential backfill for existing classroom accounts."""
+"""Provision Forgejo Git credentials or repair learner home directory roots."""
 
 from __future__ import annotations
 
@@ -18,11 +18,19 @@ FORGEJO_CONFIG = "/etc/forgejo/app.ini"
 FORGEJO_WORK_PATH = "/data/forgejo"
 FORGEJO_RUN_USER = "git"
 TOKEN_SCOPES = "write:user,read:repository,write:repository"
+HOME_ROOT = Path("/home")
+HOME_DIRECTORY_MODE = 0o711
 
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    _ = parser.add_argument("--forgejo-url", required=True)
+    operation_group = parser.add_mutually_exclusive_group(required=True)
+    _ = operation_group.add_argument("--forgejo-url")
+    _ = operation_group.add_argument(
+        "--repair-home-ownership",
+        action="store_true",
+        help="Repair only existing /home/<username> directory roots.",
+    )
     _ = parser.add_argument("--apply", action="store_true")
     _ = parser.add_argument("--all", action="store_true", help="Configure linux-foundations members.")
     _ = parser.add_argument("username", nargs="*")
@@ -89,16 +97,52 @@ def generate_token(username: str) -> str | None:
     return token
 
 
+def prepare_home_directory(
+    user_record: pwd.struct_passwd,
+    *,
+    create: bool,
+) -> Path | None:
+    home_path = Path(user_record.pw_dir)
+    expected_home_path = HOME_ROOT / user_record.pw_name
+    if home_path != expected_home_path:
+        raise ValueError(f"refusing unexpected home path for {user_record.pw_name}: {home_path}")
+    if home_path.is_symlink():
+        raise ValueError(f"refusing symlink home path: {home_path}")
+    home_was_created = False
+    if not home_path.exists():
+        if not create:
+            return None
+        home_path.mkdir(mode=HOME_DIRECTORY_MODE)
+        home_was_created = True
+    if home_path.is_symlink() or not home_path.is_dir():
+        raise ValueError(f"refusing non-directory home path: {home_path}")
+    home_status = home_path.stat()
+    if home_status.st_uid not in (0, user_record.pw_uid):
+        raise ValueError(f"refusing home owned by unexpected user: {home_path}")
+    if (
+        home_was_created
+        or home_status.st_uid != user_record.pw_uid
+        or home_status.st_gid != user_record.pw_gid
+    ):
+        os.chown(home_path, user_record.pw_uid, user_record.pw_gid)
+    if home_was_created or home_status.st_uid == 0:
+        os.chmod(home_path, HOME_DIRECTORY_MODE)
+    return home_path
+
+
 def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     user_record = pwd.getpwnam(username)
-    credentials_directory = Path(user_record.pw_dir) / ".config" / "git"
+    home_path = prepare_home_directory(user_record, create=True)
+    if home_path is None:
+        raise RuntimeError(f"could not create home directory for {username}")
+    if (token := generate_token(username)) is None:
+        return False
+    credentials_directory = home_path / ".config" / "git"
     configuration_directory = credentials_directory.parent
-    data_directory = Path(user_record.pw_dir) / ".local" / "share"
+    data_directory = home_path / ".local" / "share"
     credentials_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     credentials_file = credentials_directory / "credentials"
-    if (token := generate_token(username)) is None:
-        return False
     _ = credentials_file.write_text(
         credential_url(forgejo_url, username, token) + "\n",
         encoding="utf-8",
@@ -113,7 +157,7 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     os.chmod(credentials_file, 0o600)
     os.chmod(data_directory.parent, 0o700)
     os.chmod(data_directory, 0o700)
-    configuration_file = Path(user_record.pw_dir) / ".gitconfig"
+    configuration_file = home_path / ".gitconfig"
     _ = subprocess.run(
         [
             "/usr/bin/git",
@@ -148,15 +192,31 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     return True
 
 
+def repair_home_ownership(username: str) -> bool:
+    user_record = pwd.getpwnam(username)
+    return prepare_home_directory(user_record, create=False) is not None
+
+
 def main() -> int:
     arguments = parse_arguments()
     if arguments.apply and os.geteuid() != 0:
         raise SystemExit("run as root")
     for username in usernames(arguments):
+        if arguments.repair_home_ownership:
+            if not arguments.apply:
+                print(f"would repair home ownership for {username}")
+            elif repair_home_ownership(username):
+                print(f"repaired home ownership for {username}")
+            else:
+                print(f"skipped {username}: home directory does not exist")
+            continue
         if not arguments.apply:
             print(f"would configure Git credentials for {username}")
             continue
-        if configure_git_credentials(arguments.forgejo_url, username):
+        forgejo_url = arguments.forgejo_url
+        if forgejo_url is None:
+            raise RuntimeError("--forgejo-url is required for credential provisioning")
+        if configure_git_credentials(forgejo_url, username):
             print(f"configured Git credentials for {username}")
         else:
             print(f"skipped {username}: no Forgejo account")
