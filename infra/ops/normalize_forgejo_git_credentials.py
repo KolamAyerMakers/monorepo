@@ -92,6 +92,7 @@ def generate_token(username: str) -> str | None:
 def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     user_record = pwd.getpwnam(username)
     credentials_directory = Path(user_record.pw_dir) / ".config" / "git"
+    configuration_directory = credentials_directory.parent
     credentials_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     credentials_file = credentials_directory / "credentials"
     if (token := generate_token(username)) is None:
@@ -100,8 +101,10 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
         credential_url(forgejo_url, username, token) + "\n",
         encoding="utf-8",
     )
+    os.chown(configuration_directory, user_record.pw_uid, user_record.pw_gid)
     os.chown(credentials_directory, user_record.pw_uid, user_record.pw_gid)
     os.chown(credentials_file, user_record.pw_uid, user_record.pw_gid)
+    os.chmod(configuration_directory, 0o700)
     os.chmod(credentials_directory, 0o700)
     os.chmod(credentials_file, 0o600)
     configuration_file = Path(user_record.pw_dir) / ".gitconfig"

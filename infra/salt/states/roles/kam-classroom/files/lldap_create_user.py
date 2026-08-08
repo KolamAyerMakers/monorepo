@@ -781,14 +781,17 @@ def provision_forgejo_git_credentials(
     if forgejo_public_url is None:
         raise ForgejoError("Forgejo ROOT_URL is not configured")
     credentials_directory = Path(home_directory) / ".config" / "git"
+    configuration_directory = credentials_directory.parent
     credentials_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     credentials_file = credentials_directory / "credentials"
     _ = credentials_file.write_text(
         f"{forgejo_public_url.removesuffix('/git').replace('://', f'://{arguments.username}:{token}@')}\n",
         encoding="utf-8",
     )
+    os.chown(configuration_directory, user_id_number_value, group_id_number_value)
     os.chown(credentials_directory, user_id_number_value, group_id_number_value)
     os.chown(credentials_file, user_id_number_value, group_id_number_value)
+    os.chmod(configuration_directory, 0o700)
     os.chmod(credentials_directory, 0o700)
     os.chmod(credentials_file, 0o600)
     _ = subprocess.run(
