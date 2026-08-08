@@ -2330,8 +2330,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=23,
             available_after_session="S4",
             prompt=(
-                "Run `git status`, `git diff`, `git add`, `git diff --staged`, `git commit`, "
-                "and `git log` for your site source."
+                "Run `cd ~/src`. Then run `git status`, `git diff`, `git add`, "
+                "`git diff --staged`, `git commit`, and `git log`."
             ),
             required_commands=("git status", "git diff", "git add", "git commit", "git log"),
             practiced_skills=("git-basics",),
