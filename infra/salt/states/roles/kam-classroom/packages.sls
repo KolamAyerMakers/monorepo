@@ -10,6 +10,16 @@ include:
   - presenterm
   - ttyd
 
+/etc/profile.d/editor.sh:
+  file.managed:
+    - user: root
+    - group: root
+    - mode: '0644'
+    - contents: |
+        export EDITOR=micro
+    - require:
+      - packages: micro
+
 {{ bootstrap_package_installed('weechat', state_identifier='roles::kam_classroom::weechat') }}
 
 {{ bootstrap_package_installed('sqlite3', state_identifier='roles::kam_classroom::sqlite3') }}
