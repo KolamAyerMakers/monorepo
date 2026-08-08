@@ -1,0 +1,2 @@
+include:
+  - fj.package

@@ -17,7 +17,7 @@ FORGEJO_BINARY = "/usr/local/bin/forgejo"
 FORGEJO_CONFIG = "/etc/forgejo/app.ini"
 FORGEJO_WORK_PATH = "/data/forgejo"
 FORGEJO_RUN_USER = "git"
-TOKEN_SCOPES = "read:repository,write:repository"
+TOKEN_SCOPES = "write:user,read:repository,write:repository"
 
 
 def parse_arguments() -> argparse.Namespace:

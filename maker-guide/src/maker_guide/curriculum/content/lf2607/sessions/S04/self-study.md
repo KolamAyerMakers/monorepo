@@ -9,7 +9,7 @@ Session: S4
 3. Initialize `~/src` with `git init`, then make the initial source commit.
 4. Edit source, inspect `git diff`, stage deliberate files, commit, and inspect the log.
 5. Preserve the existing `.gitignore`, add `*.tmp`, and prove `scratch.tmp` is ignored.
-6. Add or verify `origin`, push to Forgejo, and compare the web UI with `git log`.
+6. Create the Forgejo repository with `fj`, add or verify `origin`, push, and compare the web UI with `git log`.
 
 ## Permission Decode
 
@@ -117,14 +117,14 @@ git status --short
 
 ## Create The Forgejo Repository
 
-Open [Forgejo](https://lf2607.kolamayermakers.org/git/) and sign in with your class account.
+Create the empty repository with your configured class token:
 
-1. Select **New Repository**.
-2. Name it `src`.
-3. Leave README, `.gitignore`, and license initialization unchecked.
-4. Create the empty repository.
+```bash
+cd ~/src
+fj --host https://lf2607.kolamayermakers.org/git repo create src
+```
 
-Your local source repository already has commits. Keeping the Forgejo repository empty lets your first push add that history.
+Your local source repository already has commits. `fj` creates an empty Forgejo repository so your first push adds that history.
 
 ## Forgejo Remote
 

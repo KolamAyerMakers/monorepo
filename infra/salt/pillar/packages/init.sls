@@ -41,3 +41,4 @@ include:
   - packages.authelia
   - packages.ergo
   - packages.ttyd
+  - packages.fj

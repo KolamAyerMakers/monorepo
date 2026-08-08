@@ -33,7 +33,7 @@ The web IRC entry point is [lf2607.kolamayermakers.org/irc/](https://lf2607.kola
 
 ## Forgejo Shape
 
-Forgejo is the class git server. Use the same course username and password as your Unix and IRC account.
+Forgejo is the class git server. `fj` and HTTPS Git use your configured class token.
 
 - Web UI: [lf2607.kolamayermakers.org/git/](https://lf2607.kolamayermakers.org/git/)
 - Repository name for site source: `src`
@@ -41,6 +41,10 @@ Forgejo is the class git server. Use the same course username and password as yo
 - Remote name: `origin`
 - HTTPS remote shape: `https://lf2607.kolamayermakers.org/git/username/src.git`
 - SSH remote shape: `git@lf2607.kolamayermakers.org:username/src.git`
+
+```bash
+fj --host https://lf2607.kolamayermakers.org/git repo create src
+```
 
 Use HTTPS first unless the instructor has confirmed your Forgejo SSH key setup. Verify the remote with `git remote -v` before pushing.
 

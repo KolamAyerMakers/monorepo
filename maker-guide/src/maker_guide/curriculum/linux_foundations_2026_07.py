@@ -952,6 +952,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "git diff",
                 "git remote",
                 "git push",
+                "fj",
             ),
             introduced_skills=(
                 "permissions",
@@ -962,7 +963,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             learning_objectives=(
                 "Read and change file permissions.",
                 "Version site source with git.",
-                "Push the source repository to Forgejo.",
+                "Create and push the source repository to Forgejo.",
             ),
             content=_session_content("S4", "Permissions, Git, Forgejo"),
             objectives=(
@@ -1015,15 +1016,20 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 ),
                 SessionObjective(
                     id="push-source-to-forgejo",
-                    title="Push the source repository to Forgejo",
+                    title="Create and push the source repository to Forgejo",
                     prompt=(
-                        "Open Forgejo and create an empty repository named `src`. Leave README, "
-                        "`.gitignore`, and license unchecked. Your local repository has history. "
-                        "Return here, add its HTTPS URL as `origin`, then push `main`."
+                        "From `~/src`, run `fj --host https://lf2607.kolamayermakers.org/git "
+                        "repo create src`. Your configured class token creates an empty "
+                        "repository. "
+                        "Then add its HTTPS URL as `origin` and push `main`."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^git remote ", r"^git push -u origin main$"),
-                        observed_commands=("git remote", "git push"),
+                        required_patterns=(
+                            r"^fj --host https://lf2607\.kolamayermakers\.org/git repo create src$",
+                            r"^git remote ",
+                            r"^git push -u origin main$",
+                        ),
+                        observed_commands=("fj", "git remote", "git push"),
                     ),
                 ),
             ),

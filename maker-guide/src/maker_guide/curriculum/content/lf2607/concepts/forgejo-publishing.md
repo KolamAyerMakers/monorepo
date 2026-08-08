@@ -20,10 +20,11 @@ Use your course username in place of `username`. Forgejo uses the same course id
 
 ## Practice Alone
 
-Create an empty `src` repository in Forgejo first. Leave README, `.gitignore`, and license initialization unchecked because your local repository already has commits. Then add a remote, push your commits, and inspect the repository in the web UI.
+Create an empty `src` repository with `fj` first. Your configured class token creates it without README, `.gitignore`, or license initialization because your local repository already has commits. Then add a remote, push your commits, and inspect the repository in the web UI.
 
 ```bash
 cd ~/src
+fj --host https://lf2607.kolamayermakers.org/git repo create src
 git remote add origin "https://lf2607.kolamayermakers.org/git/$USER/src.git"
 git remote -v
 git push -u origin main

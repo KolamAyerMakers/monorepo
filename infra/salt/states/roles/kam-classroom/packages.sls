@@ -3,6 +3,7 @@
 include:
   - bootstrap.packages
   - d2
+  - fj
   - glow
   - micro
   - nodejs

@@ -133,6 +133,23 @@ def test_s4_initializes_source_history() -> None:
     assert r"^git init$" in objective.validation.required_patterns
 
 
+def test_s4_creates_the_forgejo_repository_with_fj() -> None:
+    """S4 creates the empty remote without browser-only setup."""
+    session = CATALOG.session("S4")
+    objective = next(
+        objective for objective in session.objectives if objective.id == "push-source-to-forgejo"
+    )
+
+    assert "fj" in session.introduced_commands
+    assert isinstance(objective.validation, CommandHistoryValidation)
+    assert objective.validation.required_patterns == (
+        r"^fj --host https://lf2607\.kolamayermakers\.org/git repo create src$",
+        r"^git remote ",
+        r"^git push -u origin main$",
+    )
+    assert objective.validation.observed_commands == ("fj", "git remote", "git push")
+
+
 def test_s4_quests_cover_permission_recovery_and_git_states() -> None:
     """S4 reinforcement covers the live labs without duplicating objectives."""
     quest_ids = {quest.id for quest in CATALOG.course.quests}

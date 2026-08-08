@@ -76,6 +76,7 @@ Use command cards when a quest or self-study guide names a command but you need 
 - [git remote](git-remote.md)
 - [git push](git-push.md)
 - [git clone](git-clone.md)
+- [fj](fj.md)
 
 ## Scripting And Control Flow
 

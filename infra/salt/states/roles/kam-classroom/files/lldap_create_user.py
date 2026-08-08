@@ -763,7 +763,7 @@ def provision_forgejo_git_credentials(
             f"classroom-git-{uuid.uuid4().hex}",
             "--raw",
             "--scopes",
-            "read:repository,write:repository",
+            "write:user,read:repository,write:repository",
         ],
     ).strip()
     if not token:
@@ -802,6 +802,21 @@ def provision_forgejo_git_credentials(
             "--global",
             "credential.helper",
             f"store --file {credentials_file}",
+        ],
+        check=True,
+    )
+    _ = subprocess.run(
+        [
+            "/usr/sbin/runuser",
+            "-u",
+            arguments.username,
+            "--",
+            "/usr/local/bin/fj",
+            "--host",
+            forgejo_public_url,
+            "auth",
+            "add-token",
+            token,
         ],
         check=True,
     )

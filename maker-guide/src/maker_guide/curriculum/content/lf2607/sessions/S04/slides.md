@@ -309,14 +309,14 @@ The message says why this commit matters. A clean status means your working tree
 
 # Create The Remote Repository
 
-In a browser, open [Forgejo](https://lf2607.kolamayermakers.org/git/) and sign in with your class account.
+Create the empty Forgejo repository from your terminal:
 
-1. Select **New Repository**.
-2. Name it `src`.
-3. Leave README, `.gitignore`, and license initialization unchecked.
-4. Create the empty repository.
+```bash
+cd ~/src
+fj --host https://lf2607.kolamayermakers.org/git repo create src
+```
 
-Your local repository already has commits. The remote must start empty so your first push can add that history.
+`fj` uses your configured class token. Your local repository already has commits, so the remote must start empty for your first push to add that history.
 
 <!-- end_slide -->
 
@@ -341,7 +341,7 @@ A commit must exist before Git can push it.
 
 Read this as: push local `main` to the remote named `origin`, then remember that relationship for later `git push` commands.
 
-Your first HTTPS push may ask for your class Forgejo credentials. Push commits, not loose files. If authentication fails or the push is rejected, stop and read the message.
+Your class token is configured for HTTPS Git and `fj`. Push commits, not loose files. If authentication fails or the push is rejected, stop and read the message.
 
 <!-- end_slide -->
 
@@ -377,4 +377,4 @@ Use `guide now` for the S4 objectives and reinforcement quests.
 2. Initialize `~/src` on `main`, then make the initial source commit.
 3. Review a source diff, stage deliberately, commit, and check status.
 4. Add `*.tmp` without replacing existing `.gitignore` rules.
-5. Push the commit to Forgejo and verify it in the web UI.
+5. Create the Forgejo repository with `fj`, push the commit, and verify it in the web UI.
