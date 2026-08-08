@@ -2223,22 +2223,34 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 required_concepts=(
                     AnswerConcept(
                         id="regular-file",
-                        aliases=(r"\bregular\s+file\b",),
+                        aliases=(
+                            r"\bregular\s+file\b",
+                            r"\btype\s+is\s+(?:a\s+)?file\b",
+                        ),
                         rubric="The answer must identify permission-demo.txt as a regular file.",
                     ),
                     AnswerConcept(
                         id="owner-permissions",
-                        aliases=(r"\bowner\b.*\bread\b.*\bwrite\b.*\bexecute\b",),
+                        aliases=(
+                            r"\bowner\b.*\bread\b.*\bwrite\b.*\bexecute\b",
+                            r"\bowner\b.*\bis readable/writable/executable by me\b",
+                        ),
                         rubric="The answer must state that the owner can read, write, and execute.",
                     ),
                     AnswerConcept(
                         id="group-permissions",
-                        aliases=(r"\bgroup\b.*\bread\b",),
+                        aliases=(
+                            r"\bgroup\b.*\bread\b",
+                            r"\bgroup is (?P<name>\S+)\b.*\b(?:is|and) readable by (?P=name)\b",
+                        ),
                         rubric="The answer must state that the group can read.",
                     ),
                     AnswerConcept(
                         id="other-permissions",
-                        aliases=(r"\b(other|others)\b.*\bread\b",),
+                        aliases=(
+                            r"\bothers?\b.*\bread\b",
+                            r"(?:^|\b(?:is|are|and) )readable by (?:\S+ and )?others?\b",
+                        ),
                         rubric="The answer must state that other users can read.",
                     ),
                 ),

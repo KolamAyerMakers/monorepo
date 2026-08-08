@@ -934,6 +934,26 @@ def test_count_home_entries_accepts_plain_count_answers(
     assert result.passed is True
 
 
+def test_read_permissions_accepts_natural_permission_wording(
+    migrated_database_path: Path,
+) -> None:
+    """Correct permission descriptions do not require exact rubric wording."""
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_quest(
+            _validation_input(
+                database_connection,
+                "read-permissions",
+                answer_text=(
+                    "type is file, owner is ss79, group is humans, file is "
+                    "readable/writable/executable by me, and readable by humans and others"
+                ),
+            ),
+        )
+
+    assert result.passed is True
+    assert result.failure_reason is None
+
+
 def test_learner_handle_question_validation_matches_handle(
     migrated_database_path: Path,
 ) -> None:
