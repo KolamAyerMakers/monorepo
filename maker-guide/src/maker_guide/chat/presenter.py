@@ -23,12 +23,12 @@ def format_today_quest(quest: Quest) -> str:
     ]
     if quest.docs:
         response_parts.append(
-            "Read:\n"
+            "Optional reference:\n"
             + "\n".join(
                 "\n".join(
                     (
                         f"- {reference.title}",
-                        f"  Read: glow -p {learner_document_path(reference.path)}",
+                        f"  Open: glow -p {learner_document_path(reference.path)}",
                     ),
                 )
                 for reference in quest.docs

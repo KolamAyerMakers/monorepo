@@ -455,13 +455,13 @@ def _quest(  # noqa: PLR0913
         learner_goal=goal,
         prompt=prompt,
         autonomy_checklist=(
-            "Read the quest guide before starting.",
+            "Use the quest guide if you need a reference.",
             prompt,
             evidence,
             "Ask the guide to check your work.",
         ),
         hints=(
-            Hint(level=1, text="Start by reading the related command cards."),
+            Hint(level=1, text="If you need help, read the related command cards."),
             Hint(level=2, text="Run the smallest command that proves one part of the task."),
             Hint(level=3, text=evidence),
         ),
