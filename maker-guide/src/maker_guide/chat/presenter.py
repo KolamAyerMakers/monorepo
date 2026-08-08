@@ -39,6 +39,8 @@ def format_today_quest(quest: Quest) -> str:
     if (question := validation_answer_question(quest.validation)) is not None:
         response_parts.append(f"Question:\n{question}")
         response_parts.append("When ready, run: guide answer 'your answer'")
+    else:
+        response_parts.append("When ready, run: guide check")
     return "\n\n".join(response_parts)
 
 

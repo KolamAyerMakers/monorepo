@@ -1824,6 +1824,13 @@ def test_check_intent_completes_executable_file_quest(
             _completed_quest_ids_before("make-file-executable"),
         )
 
+        assignment_response = handle_chat_request(
+            _chat_request("now"),
+            _chat_dependencies(database_connection),
+        )
+
+        assert "guide check" in assignment_response.text
+
         response = handle_chat_request(
             _chat_request("check my work"),
             _chat_dependencies(

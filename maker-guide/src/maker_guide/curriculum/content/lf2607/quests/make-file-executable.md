@@ -17,7 +17,7 @@ Create a harmless playground file and make it executable.
 1. Run `touch ~/playground/permission-test.txt`.
 2. Run `chmod u+x ~/playground/permission-test.txt`.
 3. Run `ls -l ~/playground/permission-test.txt` and confirm the owner triplet has `x`.
-4. Ask the guide to check the file and executable bit.
+4. Run `guide check` to check the file and executable bit.
 
 ## Hints
 
