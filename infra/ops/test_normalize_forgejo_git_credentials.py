@@ -40,7 +40,8 @@ def test_configure_owns_absent_home_before_generating_token() -> None:
         def record_chown(path: Path, user_id: int, group_id: int) -> None:
             chown_calls.append((path, user_id, group_id))
 
-        def assert_home_was_owned() -> None:
+        def assert_home_was_owned(username: str) -> None:
+            assert username == "alice"
             assert chown_calls == [(home_path, user_record.pw_uid, user_record.pw_gid)]
 
         with (
