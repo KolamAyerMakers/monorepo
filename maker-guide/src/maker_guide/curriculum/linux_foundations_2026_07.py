@@ -2210,9 +2210,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=20,
             available_after_session="S4",
             prompt=(
-                "Run `ls -l ~/playground/permission-demo.txt` and explain its file type plus "
-                "the owner, "
-                "group, and other permission triplets."
+                "From `~/playground`, run `ls -l permission-demo.txt` and explain its file type "
+                "plus the owner, group, and other permission triplets."
             ),
             required_commands=("ls -l",),
             practiced_skills=("permissions",),
