@@ -41,6 +41,10 @@ import {{ caddy.learner_routes_file }}
         }
     }
 
+    handle /api/v1/* {
+        reverse_proxy {{ forgejo_server.http_address }}:{{ forgejo_server.http_port }}
+    }
+
     handle_path /git/* {
         reverse_proxy {{ forgejo_server.http_address }}:{{ forgejo_server.http_port }}
     }

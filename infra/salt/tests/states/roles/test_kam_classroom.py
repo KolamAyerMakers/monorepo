@@ -2899,8 +2899,8 @@ def test_identity_state_owns_lldap_sssd_and_user_helper() -> None:
     }
 
 
-def test_caddyfile_redirects_only_bare_valid_learner_homepages() -> None:
-    """Test that bare learner homepages redirect without catching assets."""
+def test_caddyfile_uses_narrow_path_routes() -> None:
+    """Test learner redirects and the fj API alias do not catch unrelated paths."""
     rendered = (
         _environment()
         .get_template("roles/kam-classroom/caddy/templates/Caddyfile.j2")
@@ -2934,6 +2934,10 @@ def test_caddyfile_redirects_only_bare_valid_learner_homepages() -> None:
     assert (
         "@user_home path_regexp user_home ^/~(?P<username>[a-z][a-z0-9_-]*)/(?P<path>.*)$"
         in rendered
+    )
+    assert "handle /api/v1/* {\n        reverse_proxy 127.0.0.1:3000\n    }" in rendered
+    assert (
+        "handle_path /git/* {\n        reverse_proxy 127.0.0.1:3000\n    }" in rendered
     )
 
 
