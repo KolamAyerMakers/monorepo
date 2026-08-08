@@ -1018,16 +1018,13 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="push-source-to-forgejo",
                     title="Create and push the source repository to Forgejo",
                     prompt=(
-                        "From `~/src`, run `fj --host https://lf2607.kolamayermakers.org/git/ "
-                        "repo create src`. Your configured class token creates an empty "
-                        "repository. "
+                        "From `~/src`, run `fj repo create src`. Your configured class token "
+                        "creates an empty repository. "
                         "Then add its HTTPS URL as `origin` and push `main`."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(
-                            r"^fj --host https://lf2607\.kolamayermakers\.org/git/ {}$".format(
-                                "repo create src"
-                            ),
+                            r"^fj repo create src$",
                             r"^git remote ",
                             r"^git push -u origin main$",
                         ),

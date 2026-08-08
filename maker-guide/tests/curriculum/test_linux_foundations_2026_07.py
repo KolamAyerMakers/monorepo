@@ -143,7 +143,7 @@ def test_s4_creates_the_forgejo_repository_with_fj() -> None:
     assert "fj" in session.introduced_commands
     assert isinstance(objective.validation, CommandHistoryValidation)
     assert objective.validation.required_patterns == (
-        r"^fj --host https://lf2607\.kolamayermakers\.org/git/ repo create src$",
+        r"^fj repo create src$",
         r"^git remote ",
         r"^git push -u origin main$",
     )

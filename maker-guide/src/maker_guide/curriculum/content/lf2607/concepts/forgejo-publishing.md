@@ -24,7 +24,7 @@ Create an empty `src` repository with `fj` first. Your configured class token cr
 
 ```bash
 cd ~/src
-fj --host https://lf2607.kolamayermakers.org/git/ repo create src
+fj repo create src
 git remote add origin "https://lf2607.kolamayermakers.org/git/$USER/src.git"
 git remote -v
 git push -u origin main

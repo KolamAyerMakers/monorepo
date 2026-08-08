@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-fj --host https://lf2607.kolamayermakers.org/git/ repo create src
+fj repo create src
 ```
 
 ## What It Does

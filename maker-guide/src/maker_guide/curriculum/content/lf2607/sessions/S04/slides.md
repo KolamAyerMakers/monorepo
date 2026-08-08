@@ -313,7 +313,7 @@ Create the empty Forgejo repository from your terminal:
 
 ```bash
 cd ~/src
-fj --host https://lf2607.kolamayermakers.org/git/ repo create src
+fj repo create src
 ```
 
 `fj` uses your configured class token. Your local repository already has commits, so the remote must start empty for your first push to add that history.

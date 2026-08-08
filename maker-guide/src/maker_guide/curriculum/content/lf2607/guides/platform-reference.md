@@ -43,7 +43,7 @@ Forgejo is the class git server. `fj` and HTTPS Git use your configured class to
 - SSH remote shape: `git@lf2607.kolamayermakers.org:username/src.git`
 
 ```bash
-fj --host https://lf2607.kolamayermakers.org/git/ repo create src
+fj repo create src
 ```
 
 Use HTTPS first unless the instructor has confirmed your Forgejo SSH key setup. Verify the remote with `git remote -v` before pushing.
