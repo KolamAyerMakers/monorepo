@@ -1033,10 +1033,17 @@ def test_main_continues_when_sss_cache_invalidation_fails(
         "provision_forgejo_account",
         lambda parsed_arguments, password, public_key: calls.append("forgejo"),
     )
+    monkeypatch.setattr(
+        script,
+        "provision_forgejo_git_credentials",
+        lambda parsed_arguments, home_directory, user_id_number, group_id_number: (
+            calls.append("git-credentials")
+        ),
+    )
     monkeypatch.setattr(script, "generate_password", lambda: "forgejo-secret")
 
     assert script.main() == 0
-    assert calls == ["password", "forgejo"]
+    assert calls == ["password", "forgejo", "git-credentials"]
     assert capsys.readouterr().err == (
         "lldap-create-user: could not invalidate SSSD cache for alice: "
         "cache unavailable\n"

@@ -8,6 +8,7 @@ import os
 import socket
 import subprocess
 import sys
+import uuid
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -744,6 +745,68 @@ def provision_forgejo_account(
     )
 
 
+def provision_forgejo_git_credentials(
+    arguments: argparse.Namespace,
+    home_directory: str,
+    user_id_number_value: int,
+    group_id_number_value: int,
+) -> None:
+    token = run_forgejo_command(
+        arguments,
+        [
+            "admin",
+            "user",
+            "generate-access-token",
+            "--username",
+            arguments.username,
+            "--token-name",
+            f"classroom-git-{uuid.uuid4().hex}",
+            "--raw",
+            "--scopes",
+            "read:repository,write:repository",
+        ],
+    ).strip()
+    if not token:
+        raise ForgejoError("Forgejo did not return a Git access token")
+    forgejo_public_url = next(
+        (
+            line.split("=", 1)[1].strip().removesuffix("/")
+            for line in Path(arguments.forgejo_configuration_file)
+            .read_text(encoding="utf-8")
+            .splitlines()
+            if line.startswith("ROOT_URL =")
+        ),
+        None,
+    )
+    if forgejo_public_url is None:
+        raise ForgejoError("Forgejo ROOT_URL is not configured")
+    credentials_directory = Path(home_directory) / ".config" / "git"
+    credentials_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    credentials_file = credentials_directory / "credentials"
+    _ = credentials_file.write_text(
+        f"{forgejo_public_url.removesuffix('/git').replace('://', f'://{arguments.username}:{token}@')}\n",
+        encoding="utf-8",
+    )
+    os.chown(credentials_directory, user_id_number_value, group_id_number_value)
+    os.chown(credentials_file, user_id_number_value, group_id_number_value)
+    os.chmod(credentials_directory, 0o700)
+    os.chmod(credentials_file, 0o600)
+    _ = subprocess.run(
+        [
+            "/usr/sbin/runuser",
+            "-u",
+            arguments.username,
+            "--",
+            "/usr/bin/git",
+            "config",
+            "--global",
+            "credential.helper",
+            f"store --file {credentials_file}",
+        ],
+        check=True,
+    )
+
+
 def apply_home_quota(
     quota_command: str,
     configuration_file: str,
@@ -948,6 +1011,12 @@ def main() -> int:
             file=sys.stderr,
         )
     provision_forgejo_account(arguments, generate_password(), public_key)
+    provision_forgejo_git_credentials(
+        arguments,
+        home_directory_from_arguments(arguments),
+        user_id_number_value,
+        group_id_number_value,
+    )
     if arguments.print_user_id_number:
         print(user_id_number_value)
     else:
