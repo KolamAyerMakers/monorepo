@@ -2296,10 +2296,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 validations=(
                     CommandHistoryValidation(
                         required_patterns=(
-                            r"^mkdir -p (?:~/playground/)?no-enter-demo$",
-                            r"^chmod u-x (?:~/playground/)?no-enter-demo$",
-                            r"^chmod u\+x (?:~/playground/)?no-enter-demo$",
-                            r"^cd (?:~/playground/)?no-enter-demo$",
+                            r"^mkdir(?: -p)? (?:~/playground/)?no-enter-demo/?$",
+                            r"^chmod u-x (?:~/playground/)?no-enter-demo/?$",
+                            r"^chmod u\+x (?:~/playground/)?no-enter-demo/?$",
+                            r"^cd (?:~/playground/)?no-enter-demo/?$",
                         ),
                         observed_commands=("mkdir", "chmod", "cd"),
                     ),
@@ -2309,7 +2309,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                             AnswerConcept(
                                 id="directory-traversal",
                                 aliases=(
-                                    r"\b(directory|enter|travers)\b.*\b(x|execute|travers)\b",
+                                    r"\b(?:directory|enter|travers\w*)\b.*\b(?:x|execut\w*)\b",
+                                    r"\b(?:x|execut\w*)\b.*\b(?:directory|enter|travers\w*)\b",
                                 ),
                                 rubric="The answer must explain that x permits directory entry.",
                             ),

@@ -954,6 +954,36 @@ def test_read_permissions_accepts_natural_permission_wording(
     assert result.failure_reason is None
 
 
+def test_recover_directory_traversal_accepts_equivalent_commands_and_answer(
+    migrated_database_path: Path,
+) -> None:
+    """Equivalent shell path forms and natural explanations satisfy the quest."""
+    with connect_database(migrated_database_path) as database_connection:
+        write_learner(database_connection)
+        for observation in (
+            _command_observation("mkdir no-enter-demo"),
+            _command_observation("chmod u-x no-enter-demo/"),
+            replace(_command_observation("cd no-enter-demo/"), exit_status=1),
+            _command_observation("chmod u+x no-enter-demo/"),
+            _command_observation("cd no-enter-demo/"),
+        ):
+            add_command_observation(database_connection, observation)
+
+        result = validate_quest(
+            _validation_input(
+                database_connection,
+                "recover-directory-traversal",
+                answer_text=(
+                    "removing the execute perm prevented directory traversal "
+                    "so i couldnt enter it anymore"
+                ),
+            ),
+        )
+
+    assert result.passed is True
+    assert result.failure_reason is None
+
+
 def test_learner_handle_question_validation_matches_handle(
     migrated_database_path: Path,
 ) -> None:
