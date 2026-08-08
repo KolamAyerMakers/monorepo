@@ -108,12 +108,12 @@ The starter `.gitignore` already contains useful rules. Preserve them and add on
 micro ~/src/.gitignore
 touch ~/src/scratch.tmp
 cd ~/src
-git status --short
+git status
 ```
 
 `scratch.tmp` should not appear. Ignore rules affect untracked files, so add the rule before staging scratch files. `~/public_html/` is outside `~/src`, so it does not need an ignore rule there.
 
-`--short` prints one compact line per changed path.
+`git status --short` is an optional compact view of the same status.
 
 ## Create The Forgejo Repository
 
@@ -156,7 +156,7 @@ Run `git remote add` only when `git remote -v` showed no `origin`. If `origin` e
 - You can explain why `cat /etc/shadow` and entering `no-enter-demo` were denied.
 - `git log --oneline` shows your initial source commit and homepage update.
 - `~/src/.gitignore` preserves its existing rules and contains `*.tmp`.
-- `git status --short` omits `scratch.tmp`.
+- `git status` omits `scratch.tmp`.
 - `git remote -v` shows your Forgejo `src` repository.
 - Forgejo shows the newest local source commit.
 

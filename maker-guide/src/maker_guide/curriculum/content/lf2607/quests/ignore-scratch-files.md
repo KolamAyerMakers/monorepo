@@ -4,7 +4,7 @@ Quest: ignore-scratch-files
 
 ## Mission
 
-Preserve the starter ignore rules, add `*.tmp`, then prove git status stays clean.
+Preserve the starter ignore rules, add `*.tmp`, then prove the scratch file stays out of Git status.
 
 ## Why This Matters
 
@@ -18,15 +18,13 @@ Git ignore rules only affect files inside the repository. `~/public_html/` is al
 
 ## Steps
 
-1. Open `micro ~/src/.gitignore`.
-2. Keep the existing `node_modules/` and `dist/` rules.
-3. Add the line `*.tmp`.
-4. Save the file.
-5. Run `cd ~/src`.
-6. Run `touch scratch.tmp`.
-7. Run `git status --short`.
-8. Confirm `scratch.tmp` is not listed.
-9. Ask the guide to check `.gitignore`.
+1. Add the line `*.tmp` to `~/src/.gitignore` without removing its existing rules.
+2. You can use an editor or run `echo '*.tmp' >> ~/src/.gitignore`.
+3. Run `cd ~/src`.
+4. Run `touch scratch.tmp`.
+5. Run `git status`. The optional `--short` flag only makes the output compact.
+6. Confirm `scratch.tmp` is not listed.
+7. Run `guide check`.
 
 ## Hints
 

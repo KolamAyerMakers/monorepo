@@ -984,6 +984,42 @@ def test_recover_directory_traversal_accepts_equivalent_commands_and_answer(
     assert result.failure_reason is None
 
 
+def test_ignore_scratch_files_accepts_plain_git_status(
+    migrated_database_path: Path,
+    tmp_path: Path,
+) -> None:
+    """The ignore quest accepts the standard status form taught by the course."""
+    learner_home = tmp_path / "alice"
+    source_path = learner_home / "src"
+    source_path.mkdir(parents=True)
+    gitignore_path = source_path / ".gitignore"
+    gitignore_path.write_text("node_modules/\ndist/\n/.astro/\n*.tmp\n", encoding="utf-8")
+
+    with connect_database(migrated_database_path) as database_connection:
+        write_learner(database_connection)
+        for command in (
+            "git status",
+            "touch foo.tmp",
+            "git status",
+            "touch scratch.tmp",
+            "git status",
+        ):
+            add_command_observation(
+                database_connection,
+                replace(_command_observation(command), cwd=str(source_path)),
+            )
+
+        result = validate_quest(
+            replace(
+                _validation_input(database_connection, "ignore-scratch-files"),
+                account_lookup=_account_lookup(learner_home, gitignore_path.stat().st_uid),
+            ),
+        )
+
+    assert result.passed is True
+    assert result.failure_reason is None
+
+
 def test_learner_handle_question_validation_matches_handle(
     migrated_database_path: Path,
 ) -> None:

@@ -2355,7 +2355,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=24,
             available_after_session="S4",
             prompt=(
-                "Create `~/src/.gitignore` that ignores `*.tmp`, then prove git status stays clean."
+                "Add `*.tmp` to `~/src/.gitignore` without removing its existing rules, run "
+                "`touch scratch.tmp` from `~/src`, and confirm `git status` does not list it."
             ),
             required_commands=("micro", "touch", "git status"),
             practiced_skills=("git-basics",),
@@ -2370,7 +2371,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     CommandHistoryValidation(
                         required_patterns=(
                             r"^touch (?:~/src/)?scratch\.tmp$",
-                            r"^git status --short$",
+                            r"^git status(?: --short)?$",
                         ),
                         observed_commands=("touch", "git status"),
                     ),
@@ -2379,7 +2380,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             goal="Ignore disposable files that actually live inside your source repository.",
             evidence=(
                 "`~/src/.gitignore` needs its existing node_modules/ and dist/ rules plus `*.tmp`; "
-                "the guide also needs scratch.tmp and short status commands."
+                "the guide also needs `touch scratch.tmp` and `git status` commands."
             ),
         ),
         _quest(
