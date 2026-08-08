@@ -124,6 +124,7 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     _ = subprocess.run(
         [
             "/usr/sbin/runuser",
+            "--login",
             "-u",
             username,
             "--",

@@ -811,6 +811,7 @@ def provision_forgejo_git_credentials(
     _ = subprocess.run(
         [
             "/usr/sbin/runuser",
+            "--login",
             "-u",
             arguments.username,
             "--",
