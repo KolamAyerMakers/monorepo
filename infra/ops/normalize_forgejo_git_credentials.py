@@ -124,18 +124,20 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     _ = subprocess.run(
         [
             "/usr/sbin/runuser",
-            "--login",
             "-u",
             username,
             "--",
+            "/usr/bin/env",
+            f"HOME={user_record.pw_dir}",
             "/usr/local/bin/fj",
             "--host",
             forgejo_url.removesuffix("/") + "/",
             "auth",
             "add-token",
-            token,
         ],
+        input=token + "\n",
         check=True,
+        text=True,
     )
     return True
 

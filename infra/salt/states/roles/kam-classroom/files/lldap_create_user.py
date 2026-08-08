@@ -811,18 +811,20 @@ def provision_forgejo_git_credentials(
     _ = subprocess.run(
         [
             "/usr/sbin/runuser",
-            "--login",
             "-u",
             arguments.username,
             "--",
+            "/usr/bin/env",
+            f"HOME={home_directory}",
             "/usr/local/bin/fj",
             "--host",
             forgejo_public_url + "/",
             "auth",
             "add-token",
-            token,
         ],
+        input=token + "\n",
         check=True,
+        text=True,
     )
 
 
