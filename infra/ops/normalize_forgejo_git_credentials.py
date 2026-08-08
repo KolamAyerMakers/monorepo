@@ -93,7 +93,9 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     user_record = pwd.getpwnam(username)
     credentials_directory = Path(user_record.pw_dir) / ".config" / "git"
     configuration_directory = credentials_directory.parent
+    data_directory = Path(user_record.pw_dir) / ".local" / "share"
     credentials_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     credentials_file = credentials_directory / "credentials"
     if (token := generate_token(username)) is None:
         return False
@@ -104,9 +106,13 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     os.chown(configuration_directory, user_record.pw_uid, user_record.pw_gid)
     os.chown(credentials_directory, user_record.pw_uid, user_record.pw_gid)
     os.chown(credentials_file, user_record.pw_uid, user_record.pw_gid)
+    os.chown(data_directory.parent, user_record.pw_uid, user_record.pw_gid)
+    os.chown(data_directory, user_record.pw_uid, user_record.pw_gid)
     os.chmod(configuration_directory, 0o700)
     os.chmod(credentials_directory, 0o700)
     os.chmod(credentials_file, 0o600)
+    os.chmod(data_directory.parent, 0o700)
+    os.chmod(data_directory, 0o700)
     configuration_file = Path(user_record.pw_dir) / ".gitconfig"
     _ = subprocess.run(
         [

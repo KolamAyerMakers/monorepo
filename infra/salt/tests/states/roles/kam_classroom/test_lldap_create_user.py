@@ -469,6 +469,68 @@ def test_provision_forgejo_account_creates_account_and_key(
     ]
 
 
+def test_provision_forgejo_git_credentials_prepares_fj_data_home(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Legacy root-owned homes receive writable storage for fj credentials."""
+    script = _load_script()
+    home_directory = tmp_path / "alice"
+    forgejo_configuration_file = tmp_path / "app.ini"
+    _ = forgejo_configuration_file.write_text(
+        "ROOT_URL = https://lf-dev.kolamayermakers.org/git/\n",
+        encoding="utf-8",
+    )
+    calls: list[tuple[list[str], str | None, bool]] = []
+
+    monkeypatch.setattr(
+        script, "run_forgejo_command", lambda arguments, command: "token"
+    )
+    monkeypatch.setattr(script.os, "chown", lambda path, user_id, group_id: None)
+
+    def run(
+        arguments: list[str],
+        *,
+        check: bool,
+        input: str | None = None,
+        text: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        calls.append((arguments, input, text))
+        assert check is True
+        return subprocess.CompletedProcess(arguments, 0)
+
+    monkeypatch.setattr(script.subprocess, "run", run)
+
+    script.provision_forgejo_git_credentials(
+        argparse.Namespace(
+            username="alice",
+            forgejo_configuration_file=str(forgejo_configuration_file),
+        ),
+        str(home_directory),
+        20000,
+        20000,
+    )
+
+    assert (home_directory / ".local/share").is_dir()
+    assert calls[1] == (
+        [
+            "/usr/sbin/runuser",
+            "-u",
+            "alice",
+            "--",
+            "/usr/bin/env",
+            f"HOME={home_directory}",
+            "/usr/local/bin/fj",
+            "--host",
+            "https://lf-dev.kolamayermakers.org/git/",
+            "auth",
+            "add-token",
+        ],
+        "token\n",
+        True,
+    )
+
+
 def test_apply_home_quota_runs_quota_helper(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
