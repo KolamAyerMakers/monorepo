@@ -121,7 +121,7 @@ Create the empty repository with your configured class token:
 
 ```bash
 cd ~/src
-fj --host https://lf2607.kolamayermakers.org/git repo create src
+fj --host https://lf2607.kolamayermakers.org/git/ repo create src
 ```
 
 Your local source repository already has commits. `fj` creates an empty Forgejo repository so your first push adds that history.

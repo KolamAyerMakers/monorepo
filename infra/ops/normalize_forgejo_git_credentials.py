@@ -118,6 +118,21 @@ def configure_git_credentials(forgejo_url: str, username: str) -> bool:
     )
     os.chown(configuration_file, user_record.pw_uid, user_record.pw_gid)
     os.chmod(configuration_file, 0o600)
+    _ = subprocess.run(
+        [
+            "/usr/sbin/runuser",
+            "-u",
+            username,
+            "--",
+            "/usr/local/bin/fj",
+            "--host",
+            forgejo_url.removesuffix("/") + "/",
+            "auth",
+            "add-token",
+            token,
+        ],
+        check=True,
+    )
     return True
 
 

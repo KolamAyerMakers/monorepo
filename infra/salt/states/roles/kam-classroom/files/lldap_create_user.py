@@ -813,7 +813,7 @@ def provision_forgejo_git_credentials(
             "--",
             "/usr/local/bin/fj",
             "--host",
-            forgejo_public_url,
+            forgejo_public_url + "/",
             "auth",
             "add-token",
             token,
