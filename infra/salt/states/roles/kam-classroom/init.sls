@@ -9,6 +9,7 @@ include:
   - openssh-server
   - pam-pwquality
   - roles.kam-classroom.packages
+  - roles.kam-classroom.git
   - roles.kam-classroom.tldr
   - roles.kam-classroom.data
   - roles.kam-classroom.backup

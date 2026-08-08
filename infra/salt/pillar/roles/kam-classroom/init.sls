@@ -6,6 +6,7 @@ include:
   - roles.kam-classroom.openssh-server
   - roles.kam-classroom.forgejo
   - roles.kam-classroom.identity
+  - roles.kam-classroom.git
   - roles.kam-classroom.nodejs
   - roles.kam-classroom.npm
   - roles.kam-classroom.lldap

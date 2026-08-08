@@ -451,6 +451,7 @@ def test_role_composes_debian_base_and_classroom_services() -> None:
             "openssh-server",
             "pam-pwquality",
             "roles.kam-classroom.packages",
+            "roles.kam-classroom.git",
             "roles.kam-classroom.tldr",
             "roles.kam-classroom.data",
             "roles.kam-classroom.backup",
@@ -474,6 +475,36 @@ def test_role_composes_debian_base_and_classroom_services() -> None:
             "uv",
             "roles.kam-classroom.bot",
         ]
+    }
+
+
+def test_role_configures_git_default_branch() -> None:
+    """Classroom Git initializes new repositories on the course branch."""
+    pillar = cast(
+        dict[str, object],
+        _load_pillar_file("pillar/roles/kam-classroom/git.sls"),
+    )
+    state = _load_state("roles/kam-classroom/git.sls", pillar)
+
+    assert state == {
+        "roles::kam_classroom::git::required_pillar": {
+            "test.check_pillar": [
+                {"string": ["kam_classroom:git:default_branch"]},
+                {"failhard": True},
+            ]
+        },
+        "roles::kam_classroom::git::default_branch": {
+            "cmd.run": [
+                {"name": "/usr/bin/git config --system init.defaultBranch main"},
+                {
+                    "unless": (
+                        '/usr/bin/test "$(/usr/bin/git config --system --get '
+                        'init.defaultBranch)" = main'
+                    )
+                },
+                {"require": [{"test": "roles::kam_classroom::git::required_pillar"}]},
+            ]
+        },
     }
 
 
