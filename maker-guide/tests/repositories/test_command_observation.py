@@ -83,6 +83,13 @@ def test_command_observation_deletes_raw_rows_before_cutoff(
         add_command_observation(
             database_connection,
             _command_observation(
+                command="kept-after-fraction",
+                observed_at="2026-11-29T00:00:00.500000Z",
+            ),
+        )
+        add_command_observation(
+            database_connection,
+            _command_observation(
                 command="other-course",
                 course_id="other-course",
                 observed_at="2026-11-28T23:59:59Z",
@@ -107,7 +114,7 @@ def test_command_observation_deletes_raw_rows_before_cutoff(
                 observed_since="0000-01-01T00:00:00Z",
                 limit=10,
             )
-        ] == ["kept"]
+        ] == ["kept-after-fraction", "kept"]
 
 
 def test_command_observation_ignores_a_replayed_event(

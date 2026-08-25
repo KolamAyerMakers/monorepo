@@ -134,7 +134,7 @@ def test_command_history_validation_uses_assignment_window(
         observation_ids = [
             add_command_observation(
                 database_connection,
-                _command_observation(command, observed_at="2026-07-19T09:02:00Z"),
+                _command_observation(command, observed_at="2026-07-19T09:01:00.500000Z"),
             )
             for command in ("whoami", "date", "uptime")
         ]

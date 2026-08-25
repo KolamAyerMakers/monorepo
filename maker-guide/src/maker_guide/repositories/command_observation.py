@@ -68,7 +68,7 @@ def delete_command_observations_before(
     cursor = database_connection.execute(
         """
         delete from command_observations
-        where course_id = ? and observed_at < ?
+        where course_id = ? and julianday(observed_at) < julianday(?)
         """,
         (course_id, observed_before),
     )
@@ -95,9 +95,9 @@ def list_recent_command_observations(  # noqa: PLR0913 - Query scope and time bo
                 and course_id = ?
                 and phase = 'after'
                 and exit_status = 0
-                and observed_at >= ?
-                and (? is null or observed_at <= ?)
-            order by observed_at desc, id desc
+                and julianday(observed_at) >= julianday(?)
+                and (? is null or julianday(observed_at) <= julianday(?))
+            order by julianday(observed_at) desc, id desc
             limit ?
             """,
             (handle, course_id, observed_since, observed_through, observed_through, limit),
