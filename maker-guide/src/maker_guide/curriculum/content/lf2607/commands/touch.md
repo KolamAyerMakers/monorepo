@@ -6,4 +6,4 @@ Create an empty file or update a file timestamp.
 touch ~/playground/one.txt
 ```
 
-For S2, use it as the simplest way to make practice files.
+Use it as the simplest way to make practice files.

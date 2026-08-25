@@ -37,4 +37,4 @@ Keep your `.gitignore`, source commits, and Forgejo remote. S5 uses execute perm
 
 ## Full Autonomy
 
-Use [S4 Self-Study Guide: Permissions, Git, Forgejo](self-study.md) for permission decoding, Git staging recovery, Forgejo recovery, and package discovery.
+Use [S4 Self-Study Guide: Permissions, Git, Forgejo](self-study.md) for permission decoding, Git staging recovery, and Forgejo recovery.

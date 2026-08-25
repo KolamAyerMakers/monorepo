@@ -19,7 +19,7 @@ Prompt before removing:
 rm -i file.txt
 ```
 
-`rm -rf` means recursive and force. It can remove a whole directory tree without prompting, so understand it but do not run it in S2.
+`rm -rf` means recursive and force. It can remove a whole directory tree without prompting, so understand it before you need it.
 
 ## Watch Out
 

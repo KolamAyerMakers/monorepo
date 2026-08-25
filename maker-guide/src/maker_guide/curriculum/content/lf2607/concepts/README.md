@@ -72,9 +72,12 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [shebang](shebang.md)
 - [script permissions](script-permissions.md)
 - [variables](variables.md)
-- [environment variables](environment-variables.md)
 - [quoting](quoting.md)
 - [script arguments](script-arguments.md)
+
+### Go Deeper After S05
+
+- [environment variables](environment-variables.md)
 - [standard input](standard-input.md)
 
 ## S06 Control Flow And Networking

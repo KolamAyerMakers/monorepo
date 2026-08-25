@@ -8,7 +8,7 @@ Files, editing, identity
 
 # Schedule Change
 
-S5, Scripting begins, moves from Saturday, August 15 to Saturday, August 22.
+S5, Scripting begins, moves from Saturday, August 15 to Saturday, August 29.
 
 <!-- end_slide -->
 

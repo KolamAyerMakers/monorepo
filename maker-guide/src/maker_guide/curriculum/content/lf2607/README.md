@@ -67,11 +67,11 @@ Permissions, Git, and Forgejo.
 - [Self-study](sessions/S04/self-study.md)
 - [Recap](sessions/S04/recap.md)
 - [Reinforcement quests](quests/README.md#s04-reinforcement)
-- [Concept cards](concepts/README.md#s04-permissions-and-git)
+- [Concept cards](concepts/README.md#s04-permissions-git-and-forgejo)
 
 ### S05: Scripts
 
-Scripts, arguments, quoting, and input.
+Saved commands, direct execution, quoted arguments, and a published report.
 
 - [Slides](sessions/S05/slides.md)
 - [Self-study](sessions/S05/self-study.md)

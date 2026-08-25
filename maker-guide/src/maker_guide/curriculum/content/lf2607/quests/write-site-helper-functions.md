@@ -21,7 +21,7 @@ You are building one reusable command for the second URL workflow. Instead of re
 
 - `mkdir`
 - `micro`
-- `chmod +x`
+- `chmod`
 - `python3 -m http.server --bind 127.0.0.1`
 - `id -u`
 - `systemctl --user`

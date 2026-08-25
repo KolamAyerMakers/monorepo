@@ -8,6 +8,7 @@
 - SQLite is the source of truth. `/makers`, Unix groups, and JSONL files are projections or audit artifacts.
 - Application database code uses `sqlite3`. Alembic is only migration plumbing; migrations are hand-written raw SQL.
 - The typed frozen Python dataclasses under `src/maker_guide/curriculum` define the curriculum catalog. Learner-facing curriculum material is packaged Markdown under `src/maker_guide/curriculum/content`.
+- Reference cards under `content/<course>/commands/` and `content/<course>/concepts/` are session-agnostic and self-contained: they must not name specific sessions (S1-S10), and every example must introduce its own files and inputs rather than relying on session artifacts such as a course project. Point to another card for required background.
 
 ## Validation
 

@@ -19,6 +19,18 @@ Read redirection as `[stream][operator][destination]`:
 
 For `>` and `>>`, no descriptor means stdout. Descriptor `2` means stderr. Redirections are applied from left to right.
 
+Group several commands when one redirection should capture all their stdout:
+
+```bash
+{
+  printf '# Report\n'
+  whoami
+  hostname
+} > ~/src/pages/report.md
+```
+
+The braces create one grouped command. The single `>` replaces the destination with stdout from the whole group. Stderr remains visible because it was not redirected.
+
 `2>>` is optional exploration for later: it appends stderr to a file instead of replacing the file.
 
 ## Practice Alone

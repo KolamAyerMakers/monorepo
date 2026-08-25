@@ -139,7 +139,7 @@ The executable is the program file on disk. When the shell asks the kernel to ru
 
 Shell built-ins, including `cd` and `history`, run inside the shell instead of launching a separate executable.
 
-`$USER` is a shell-provided value containing your username. Environment variables get a full lesson in S5.
+`$USER` is a shell-provided value containing your username. For now, quote it so the shell passes one value. Environment inheritance is later exploration.
 
 Inspect your own processes:
 

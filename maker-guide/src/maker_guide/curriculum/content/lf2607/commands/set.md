@@ -3,25 +3,25 @@
 ## Use
 
 ```bash
-set -euo pipefail
+set -u
 ```
 
 ## What It Does
 
-`set` changes shell options for the current shell or script. These options depend on exit status: `0` means success, nonzero means failure.
+`set` changes shell options for the current shell or script. Different options react to different problems.
 
 ## Course Options
 
-Stop when a command fails:
-
-```bash
-set -e
-```
-
-Reject unset variables:
+Reject expansion of an unset variable or positional parameter:
 
 ```bash
 set -u
+```
+
+In a simple straight-line script, exit after an unhandled command returns nonzero:
+
+```bash
+set -e
 ```
 
 Make a pipeline fail if any stage fails:
@@ -38,13 +38,15 @@ set -euo pipefail
 
 ## Why Use It
 
-These options make script bugs loud. Without them, a script may continue after an earlier command failed.
+These options can make script bugs loud. Without `-u`, a missing value can silently become empty. Without deliberate failure handling, a script can continue after an earlier command failed.
 
 ## Watch Out
 
-`set -u` makes `$1` fail when no argument was passed. Add argument checks before using positional arguments.
+`set -u` makes `$1` fail when no argument was passed. It does not reject a supplied empty argument. Add argument checks before using positional arguments.
 
-`set -e` is not a replacement for understanding failures. It reacts to nonzero exit statuses; you still need to know which command failed and why.
+`set -e` is not a universal "stop on every error" rule. It has exceptions in conditions, `&&` and `||` lists, negation, and pipelines. It is not a replacement for understanding which command failed or handling expected failures explicitly.
+
+`set -e` alone does not make every pipeline fail when an earlier stage fails. `pipefail` changes that behavior and should be learned separately.
 
 ## Docs Pointers
 

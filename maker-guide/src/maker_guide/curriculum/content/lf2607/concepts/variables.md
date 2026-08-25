@@ -15,31 +15,24 @@ Quotes matter. `"$name"` preserves the value as one piece of text even when it c
 
 ## Practice Alone
 
-Assign a value, print it with `printf`, and inspect environment variables with `env`.
+Assign a script argument to a descriptive name, then print it.
 
 ```bash
-site_title="My Linux Foundations Site"
-printf '%s\n' "$site_title"
-env | grep '^HOME='
+report_title="$1"
+printf '# %s\n' "$report_title"
 ```
 
-Local variables exist in the current shell. Environment variables are exported to child processes.
-
-```bash
-local_only="not exported"
-export SHARED_WITH_CHILD="exported"
-bash -c 'printf "%s\n" "$SHARED_WITH_CHILD"'
-```
+Variables let one script reuse an input under a readable name. Exporting values to child processes is later exploration.
 
 ## Watch Out
 
 - `name = value` is not assignment in the shell.
 - `$name` without quotes can split on spaces.
-- Environment variables are process input, not permanent configuration unless you put them in a startup file deliberately.
+- A variable becomes empty when the input it names is missing; later control flow can detect that case.
 
 ## Done When
 
-You can tell local variables from environment variables.
+You can assign one value and pass it to `printf` without losing its spaces.
 
 ## Docs Pointers
 

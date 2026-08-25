@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Build and deploy the updated Maker Guide artifact for S5 with the operator; do not run Salt during curriculum authoring.
 - [ ] Update external Forgejo, Caddy, and Classroom references after the monorepo deployment succeeds.
 - [ ] Remove the Presenterm export pseudo-terminal wrapper after [the non-TTY export fix](https://github.com/mfontanini/presenterm/pull/857) is released and deployed.
 - [ ] Migrate pulumi stacks to KAM account

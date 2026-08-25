@@ -7,9 +7,6 @@ Arguments let one script handle different inputs.
 Inside a shell script:
 
 - `$1` is the first argument.
-- `$2` is the second argument.
-- `$#` is the number of arguments.
-- `"$@"` means all arguments, preserving each one separately.
 
 ## Practice Alone
 
@@ -17,34 +14,32 @@ Create a scratch script:
 
 ```bash
 mkdir -p ~/scripts
-micro ~/scripts/args.sh
+micro ~/scripts/title.sh
 ```
 
 ```bash
 #!/bin/bash
-set -euo pipefail
 
-printf 'count=%s\n' "$#"
-printf 'first=%s\n' "${1:-missing}"
+report_title="$1"
+printf 'title=%s\n' "$report_title"
 ```
 
 Run it with different inputs:
 
 ```bash
-bash ~/scripts/args.sh
-bash ~/scripts/args.sh makers
-bash ~/scripts/args.sh "two words"
+bash ~/scripts/title.sh "My Maker Report"
 ```
 
 ## Watch Out
 
-- `$1` is empty when no first argument exists unless strict mode turns that into an error.
-- Use a guard before relying on required arguments.
+- `$1` is empty when no first argument exists. Pass one required title when running the script.
 - Quote positional parameters: `"$1"`, not `$1`.
+
+`$2`, `$#`, `"$@"`, and missing-argument guards become useful when later scripts accept more inputs or make decisions.
 
 ## Done When
 
-You can write a script that behaves differently based on its arguments.
+You can give one script a quoted value and use that value as `$1`.
 
 ## Docs Pointers
 

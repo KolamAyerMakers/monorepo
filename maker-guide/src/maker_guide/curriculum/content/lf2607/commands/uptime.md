@@ -6,4 +6,4 @@ Show how long the machine has been running.
 uptime
 ```
 
-It also shows a compact load summary. For S1, focus on the running time.
+It also shows a compact load summary. Focus first on the running time.

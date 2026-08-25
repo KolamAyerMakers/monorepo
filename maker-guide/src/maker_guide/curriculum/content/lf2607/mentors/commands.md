@@ -2,12 +2,14 @@
 
 Run these commands on the classroom server as a member of the `mentors` group.
 
+For the next session, use the [S5 Instructor Runbook](S05.md).
+
 ## During A Session
 
 Set the current session before running commands that use it:
 
 ```sh
-SESSION_ID=S03
+SESSION_ID=S05
 ```
 
 Show the slides:
@@ -60,7 +62,7 @@ systemctl status maker-guide-build-docs.timer
 systemctl list-timers 'maker-guide-*'
 ```
 
-View the 100 most recent log entries for a service:
+An administrator can view the 100 most recent log entries for a service. Ordinary mentors do not have journal access:
 
 ```sh
 journalctl -u maker-guide-bot.service -n 100 --no-pager
@@ -72,7 +74,7 @@ Derived-data synchronization runs every minute. Documentation builds run hourly 
 
 ## Documentation Build Recovery
 
-If published documentation is out of date after a release, check the build status and journal above. Mentors cannot start the build service directly. An administrator can recover it with:
+If published documentation is out of date after a release, a mentor can report the service status. An administrator checks the journal and can recover it with:
 
 ```sh
 sudo -u maker-guide /usr/bin/sudo -n /usr/bin/systemctl start maker-guide-build-docs.service

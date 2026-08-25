@@ -34,18 +34,9 @@ Quests are highly recommended reinforcement. Use them for extra practice or catc
 
 ## S05 Reinforcement
 
-- [write-hello-script](write-hello-script.md)
-- [use-printf-deliberately](use-printf-deliberately.md)
-- [write-info-script](write-info-script.md)
-- [ask-for-input](ask-for-input.md)
-- [reverse-two-arguments](reverse-two-arguments.md)
-- [publish-practice-page](publish-practice-page.md)
-- [add-argument-guard](add-argument-guard.md)
-- [capture-environment](capture-environment.md)
-- [quote-spaced-value](quote-spaced-value.md)
-- [capture-script-output](capture-script-output.md)
-- [document-scripts](document-scripts.md)
+- [extend-maker-report](extend-maker-report.md)
 - [run-scripts-from-elsewhere](run-scripts-from-elsewhere.md)
+- [preserve-maker-report](preserve-maker-report.md)
 
 ## S06 Reinforcement
 

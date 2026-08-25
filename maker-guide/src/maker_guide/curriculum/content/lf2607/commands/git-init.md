@@ -12,7 +12,7 @@ git init
 
 ## Practice
 
-Run this from `~/src` in S4 to start your site's Git history.
+Run this from `~/src` to start your site's Git history.
 
 ## Watch Out
 

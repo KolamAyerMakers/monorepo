@@ -40,7 +40,6 @@ If `~/scripts` is missing, create it with `mkdir -p ~/scripts`. If `~/src/pages`
 
 ```bash
 #!/bin/bash
-set -euo pipefail
 
 {
   printf '# Network Fetch\n\n'

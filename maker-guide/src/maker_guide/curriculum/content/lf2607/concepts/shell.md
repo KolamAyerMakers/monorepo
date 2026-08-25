@@ -39,7 +39,7 @@ Unquoted variables can split into multiple words. Quoted variables preserve one 
 
 ## Interactive Shell Versus Script
 
-An interactive shell prints a prompt and waits for you. A script is a file of shell commands run by a shell. The same syntax appears in both, but scripts need more discipline: shebang, `set -euo pipefail`, argument checks, and predictable output.
+An interactive shell prints a prompt and waits for you. A script is a file of shell commands run by a shell. The same syntax appears in both, but reusable scripts need deliberate paths, quoted inputs, predictable output, and eventually explicit failure handling.
 
 ## Common Confusions
 

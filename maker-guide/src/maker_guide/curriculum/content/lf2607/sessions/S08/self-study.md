@@ -59,7 +59,6 @@ Detaching preserves the session. `tmux kill-session` ends it. Tmux survives an S
 
 ```bash
 #!/bin/bash
-set -euo pipefail
 
 site_port() {
   printf '%s\n' "$((10000 + $(id -u)))"

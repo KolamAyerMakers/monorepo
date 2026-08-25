@@ -22,6 +22,7 @@ from maker_guide.curriculum.linux_foundations_2026_07 import (
 from maker_guide.curriculum.models import (
     AllOfValidation,
     CommandHistoryValidation,
+    ExecutablePathValidation,
     FileCheckValidation,
     FileMatchesPathValidation,
     InteractiveQuestionValidation,
@@ -81,9 +82,9 @@ def test_sessions_expose_independent_objective_validators() -> None:
         ),
         "S5": (
             AllOfValidation,
-            FileCheckValidation,
-            FileCheckValidation,
-            FileCheckValidation,
+            AllOfValidation,
+            AllOfValidation,
+            AllOfValidation,
         ),
         "S6": (
             FileCheckValidation,
@@ -208,6 +209,308 @@ def test_s4_path_validators_accept_relative_commands() -> None:
     )
 
 
+def test_s5_builds_one_cumulative_report_script(temporary_path: Path) -> None:
+    """S5 objectives and reinforcement converge on one runnable report."""
+    session = CATALOG.session("S5")
+    objectives = {objective.id: objective for objective in session.objectives}
+
+    assert tuple(objectives) == (
+        "create-maker-report",
+        "run-maker-report-directly",
+        "personalize-maker-report",
+        "publish-maker-report",
+    )
+    assert session.introduced_commands == ("bash", "printf")
+    assert "set -euo pipefail" not in session.introduced_commands
+    assert "environment-variables" not in session.introduced_skills
+    assert [quest.id for quest in CATALOG.quests_available_after("S5")] == [
+        "extend-maker-report",
+        "run-scripts-from-elsewhere",
+        "preserve-maker-report",
+    ]
+
+    final_validation = objectives["publish-maker-report"].validation
+    assert isinstance(final_validation, AllOfValidation)
+    assert any(
+        isinstance(validation, ExecutablePathValidation)
+        and validation.paths == ("~/scripts/maker-report.sh",)
+        for validation in final_validation.validations
+    )
+    assert any(
+        isinstance(validation, CommandHistoryValidation)
+        and validation.ordered
+        and len(validation.required_patterns) == 2
+        for validation in final_validation.validations
+    )
+    documented_commands_by_objective = {
+        "create-maker-report": ("bash maker-report.sh",),
+        "run-maker-report-directly": (
+            "chmod u+x maker-report.sh",
+            "head -n 1 maker-report.sh",
+            "./maker-report.sh",
+        ),
+        "personalize-maker-report": (
+            "./maker-report.sh My Maker Report",
+            './maker-report.sh "My Maker Report"',
+        ),
+        "publish-maker-report": (
+            './maker-report.sh "S5 Report"',
+            "build-website",
+        ),
+    }
+    for objective_id, documented_commands in documented_commands_by_objective.items():
+        objective_validation = objectives[objective_id].validation
+        assert isinstance(objective_validation, AllOfValidation)
+        command_validation = next(
+            validation
+            for validation in objective_validation.validations
+            if isinstance(validation, CommandHistoryValidation)
+        )
+        if objective_id in {"run-maker-report-directly", "personalize-maker-report"}:
+            assert command_validation.ordered
+        assert all(
+            any(
+                re.fullmatch(required_pattern, documented_command)
+                for required_pattern in command_validation.required_patterns
+            )
+            for documented_command in documented_commands
+        )
+
+    incomplete_sources_by_objective = {
+        "run-maker-report-directly": (
+            "#!/bin/bash\n",
+            "whoami\nhostname\ndate\n",
+        ),
+        "personalize-maker-report": (
+            '#!/bin/bash\nreport_title="$1"\nprintf \'<%s>\\n\' "$report_title"\n',
+            "#!/bin/bash\nwhoami\nhostname\ndate\n",
+            (
+                "#!/bin/bash\n"
+                'report_title="$1"\n'
+                "printf '%%s\\n' \"$report_title\"\n"
+                "whoami\nhostname\ndate\n"
+            ),
+        ),
+    }
+    for objective_id, incomplete_sources in incomplete_sources_by_objective.items():
+        objective_validation = objectives[objective_id].validation
+        assert isinstance(objective_validation, AllOfValidation)
+        source_validations = tuple(
+            validation
+            for validation in objective_validation.validations
+            if isinstance(validation, FileCheckValidation)
+        )
+        assert source_validations
+        for incomplete_source in incomplete_sources:
+            assert not all(
+                re.search(validation.required_regex, incomplete_source)
+                for validation in source_validations
+            )
+
+    reference_text = (
+        _content_root()
+        .joinpath(
+            "mentors",
+            "s05-solutions",
+            "maker-report.sh",
+        )
+        .read_text(encoding="utf-8")
+    )
+    reference_path = temporary_path / "maker-report.sh"
+    reference_path.write_text(reference_text, encoding="utf-8")
+    reference_path.chmod(0o755)
+    temporary_path.joinpath("src", "pages").mkdir(parents=True)
+    bash_path = shutil.which("bash")
+    assert bash_path is not None
+    syntax_check = subprocess.run(
+        [bash_path, "-n", str(reference_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert syntax_check.returncode == 0, syntax_check.stderr
+
+    completed_process = subprocess.run(
+        [str(reference_path), "My Maker Report"],
+        cwd=temporary_path,
+        check=False,
+        capture_output=True,
+        env=os.environ | {"HOME": str(temporary_path), "LC_ALL": "C", "TZ": "UTC"},
+        text=True,
+    )
+    assert completed_process.returncode == 0, completed_process.stderr
+    assert completed_process.stderr == ""
+    assert completed_process.stdout == ""
+    generated_report_text = temporary_path.joinpath("src", "pages", "maker-report.md").read_text(
+        encoding="utf-8"
+    )
+    assert generated_report_text.startswith("# My Maker Report\n\n* User: ")
+    assert "```text\n" in generated_report_text
+    assert generated_report_text.endswith("```\n")
+
+    source_validations = tuple(
+        validation
+        for validation in final_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/scripts/maker-report.sh"
+    )
+    assert source_validations
+    assert all(
+        re.search(validation.required_regex, reference_text) for validation in source_validations
+    )
+    for invalid_source in (
+        reference_text.replace(
+            "  printf '# %s\\n\\n' \"$report_title\"\n",
+            "  printf '# Fixed title\\n\\n'\n  printf 'title=%s\\n' \"$report_title\"\n",
+        ),
+        reference_text.replace(
+            "  printf '* User: '\n  whoami\n",
+            "  printf '* User: fixed\\n'\n  whoami\n",
+        ),
+        reference_text.replace(
+            "} > ~/src/pages/maker-report.md\n",
+            "}\n",
+        ),
+        reference_text.replace("```text", "text"),
+        reference_text.replace("  printf '```\\n'\n", ""),
+    ):
+        assert not all(
+            re.search(validation.required_regex, invalid_source)
+            for validation in source_validations
+        )
+    markdown_validation = next(
+        validation
+        for validation in final_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/src/pages/maker-report.md"
+    )
+    assert re.search(markdown_validation.required_regex, generated_report_text)
+    assert not re.search(
+        markdown_validation.required_regex,
+        generated_report_text.replace("```", "~~~"),
+    )
+
+
+def test_s5_reinforcement_preserves_the_cumulative_script(temporary_path: Path) -> None:
+    """S5 extensions cannot replace the useful report with isolated syntax."""
+    extension_validation = CATALOG.quest("extend-maker-report").validation
+    preserve_validation = CATALOG.quest("preserve-maker-report").validation
+    assert isinstance(extension_validation, AllOfValidation)
+    assert isinstance(preserve_validation, AllOfValidation)
+
+    uptime_reference_text = (
+        _content_root()
+        .joinpath(
+            "mentors",
+            "s05-solutions",
+            "maker-report-with-uptime.sh",
+        )
+        .read_text(encoding="utf-8")
+    )
+    extension_source_validations = tuple(
+        validation
+        for validation in extension_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/scripts/maker-report.sh"
+    )
+    assert all(
+        re.search(validation.required_regex, uptime_reference_text)
+        for validation in extension_source_validations
+    )
+    assert not all(
+        re.search(
+            validation.required_regex,
+            uptime_reference_text.replace(
+                "  printf '* Uptime: '\n  uptime\n",
+                "  printf '* Uptime: fixed\\n'\n  uptime\n",
+            ),
+        )
+        for validation in extension_source_validations
+    )
+
+    preserve_source_validations = tuple(
+        validation
+        for validation in preserve_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/src/scripts/maker-report.sh"
+    )
+    assert all(
+        re.search(validation.required_regex, uptime_reference_text)
+        for validation in preserve_source_validations
+    )
+
+    uptime_reference_path = temporary_path / "maker-report-with-uptime.sh"
+    uptime_reference_path.write_text(uptime_reference_text, encoding="utf-8")
+    uptime_reference_path.chmod(0o755)
+    temporary_path.joinpath("src", "pages").mkdir(parents=True)
+    uptime_process = subprocess.run(
+        [str(uptime_reference_path), "Uptime Report"],
+        cwd=temporary_path,
+        check=False,
+        capture_output=True,
+        env=os.environ | {"HOME": str(temporary_path), "LC_ALL": "C", "TZ": "UTC"},
+        text=True,
+    )
+    assert uptime_process.returncode == 0, uptime_process.stderr
+    assert uptime_process.stdout == ""
+    assert uptime_process.stderr == ""
+    uptime_report_text = temporary_path.joinpath("src", "pages", "maker-report.md").read_text(
+        encoding="utf-8"
+    )
+    assert "* Uptime: " in uptime_report_text
+    assert uptime_report_text.endswith("```\n")
+    assert not all(
+        re.search(
+            validation.required_regex,
+            uptime_reference_text.replace("  printf '* Uptime: '\n  uptime\n", ""),
+        )
+        for validation in preserve_source_validations
+    )
+    extension_command_validation = next(
+        validation
+        for validation in extension_validation.validations
+        if isinstance(validation, CommandHistoryValidation)
+    )
+    for documented_command in (
+        '~/scripts/maker-report.sh "Uptime Report"',
+        "build-website",
+    ):
+        assert any(
+            re.fullmatch(required_pattern, documented_command)
+            for required_pattern in extension_command_validation.required_patterns
+        )
+
+    elsewhere_validation = CATALOG.quest("run-scripts-from-elsewhere").validation
+    assert isinstance(elsewhere_validation, CommandHistoryValidation)
+    for documented_command in (
+        "cd ~/playground",
+        "pwd",
+        'bash ~/scripts/maker-report.sh "Elsewhere Report"',
+        "build-website",
+    ):
+        assert any(
+            re.fullmatch(required_pattern, documented_command)
+            for required_pattern in elsewhere_validation.required_patterns
+        )
+    preserve_command_validation = next(
+        validation
+        for validation in preserve_validation.validations
+        if isinstance(validation, CommandHistoryValidation)
+    )
+    assert preserve_command_validation.ordered
+    for documented_command in (
+        "git add scripts/maker-report.sh",
+        'git commit -m "Add maker report script"',
+        "git diff --exit-code HEAD -- scripts/maker-report.sh",
+        "git status --short scripts/maker-report.sh",
+        "git log --oneline -- scripts/maker-report.sh > ~/playground/maker-report-git.txt",
+    ):
+        assert any(
+            re.fullmatch(required_pattern, documented_command)
+            for required_pattern in preserve_command_validation.required_patterns
+        )
+
+
 def test_catalog_exposes_course_identity_and_tiers() -> None:
     """Course ids and tiers line up with repository state ids."""
     assert LINUX_FOUNDATIONS_2026_07.id == COURSE_ID
@@ -232,9 +535,9 @@ def test_catalog_exposes_july_18_session_schedule() -> None:
         ("S2", date(2026, 7, 25)),
         ("S3", date(2026, 8, 1)),
         ("S4", date(2026, 8, 8)),
-        ("S5", date(2026, 8, 22)),
-        ("S6", date(2026, 8, 29)),
-        ("S7", date(2026, 9, 12)),
+        ("S5", date(2026, 8, 29)),
+        ("S6", date(2026, 9, 12)),
+        ("S7", date(2026, 9, 19)),
         ("S8", date(2026, 9, 26)),
         ("S9", date(2026, 10, 10)),
         ("S10", date(2026, 10, 24)),
@@ -244,9 +547,9 @@ def test_catalog_exposes_july_18_session_schedule() -> None:
         ("S2", datetime(2026, 7, 25, 9, tzinfo=UTC)),
         ("S3", datetime(2026, 8, 1, 9, tzinfo=UTC)),
         ("S4", datetime(2026, 8, 8, 9, tzinfo=UTC)),
-        ("S5", datetime(2026, 8, 22, 9, tzinfo=UTC)),
-        ("S6", datetime(2026, 8, 29, 9, tzinfo=UTC)),
-        ("S7", datetime(2026, 9, 12, 9, tzinfo=UTC)),
+        ("S5", datetime(2026, 8, 29, 5, tzinfo=UTC)),
+        ("S6", datetime(2026, 9, 12, 9, tzinfo=UTC)),
+        ("S7", datetime(2026, 9, 19, 9, tzinfo=UTC)),
         ("S8", datetime(2026, 9, 26, 9, tzinfo=UTC)),
         ("S9", datetime(2026, 10, 10, 9, tzinfo=UTC)),
         ("S10", datetime(2026, 10, 24, 9, tzinfo=UTC)),

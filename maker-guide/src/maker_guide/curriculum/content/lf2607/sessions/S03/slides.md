@@ -273,7 +273,7 @@ Before leaving, you can:
 
 See you on Saturday, 8 August to learn about permissions and Git.
 
-There is no class on Saturday, 15 August. Our next class is Saturday, 22 August, when we start scripting.
+There is no class on Saturday, 15 August or Saturday, 22 August. Our next class is Saturday, 29 August, when we start scripting.
 
 Use `guide now` for the current objective. After objectives, it shows the current quest. Submit requested explanations with `guide answer 'your answer'` and run `guide check` after practical work.
 

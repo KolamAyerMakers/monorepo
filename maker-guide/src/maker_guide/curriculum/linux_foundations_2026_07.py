@@ -40,6 +40,93 @@ _KEEP_PIPELINE_COPY_PATTERN = (
 _COMBINE_STANDARD_STREAMS_PATTERN = (
     r"^date --debug \+%F 2>&1\s*\|\s*tee ~/playground/combined\.txt\s*\|\s*wc -l$"
 )
+_S5_KNOWN_COMMANDS_SCRIPT_PATTERN = (
+    r"(?ms)\A"
+    r"(?=.*^[ \t]*whoami[ \t]*(?:#.*)?$)"
+    r"(?=.*^[ \t]*hostname[ \t]*(?:#.*)?$)"
+    r"(?=.*^[ \t]*date[ \t]*(?:#.*)?$)"
+    r".+\Z"
+)
+_S5_SHEBANG_PATTERN = r"\A#!/bin/bash(?:\n|\Z)"
+_S5_REPORT_TITLE_SCRIPT_PATTERN = (
+    r"""(?ms)\A"""
+    r"""(?=.*^[ \t]*report_title=(?:"\$(?:1|\{1\})"|\$(?:1|\{1\}))[ \t]*(?:#.*)?$"""
+    r""".*?^[ \t]*printf[ \t]+(?:'[^'\n]*(?<!%)%s[^'\n]*'|"[^"\n]*(?<!%)%s[^"\n]*")"""
+    r"""[ \t]+"\$(?:report_title|\{report_title\})"[ \t]*(?:#.*)?$)"""
+    r""".+\Z"""
+)
+_S5_REPORT_HEADING_SCRIPT_PATTERN = (
+    r"""(?ms)\A"""
+    r"""(?=.*^[ \t]*report_title=(?:"\$(?:1|\{1\})"|\$(?:1|\{1\}))[ \t]*(?:#.*)?$"""
+    r""".*?^[ \t]*printf[ \t]+(?:'#[ \t]+%s\\n(?:\\n)?'|"#[ \t]+%s\\n(?:\\n)?")"""
+    r"""[ \t]+"\$(?:report_title|\{report_title\})"[ \t]*(?:#.*)?$)"""
+    r""".+\Z"""
+)
+_S5_REPORT_LABELS_SCRIPT_PATTERN = (
+    r"""(?ms)\A"""
+    r"""(?=.*^[ \t]*printf[ \t]+(?:'\*[ \t]+User:[ \t]*'|"\*[ \t]+User:[ \t]*")"""
+    r"""[ \t]*(?:#.*)?$\n[ \t]*whoami[ \t]*(?:#.*)?$)"""
+    r"""(?=.*^[ \t]*printf[ \t]+(?:'\*[ \t]+Host:[ \t]*'|"\*[ \t]+Host:[ \t]*")"""
+    r"""[ \t]*(?:#.*)?$\n[ \t]*hostname[ \t]*(?:#.*)?$)"""
+    r"""(?=.*^[ \t]*printf[ \t]+(?:'\*[ \t]+Date:[ \t]*'|"\*[ \t]+Date:[ \t]*")"""
+    r"""[ \t]*(?:#.*)?$\n[ \t]*date[ \t]*(?:#.*)?$)"""
+    r""".+\Z"""
+)
+_S5_REPORT_PIPELINE_PATTERN = (
+    r"(?m)^[ \t]*cut[ \t]+-d:[ \t]+-f7[ \t]+/etc/passwd"
+    r"[ \t]*\|[ \t]*sort[ \t]+-u[ \t]*(?:#.*)?$"
+)
+_S5_REPORT_DESTINATION_SCRIPT_PATTERN = (
+    r"(?ms)\A"
+    r"(?=.*^[ \t]*\{[ \t]*(?:#.*)?$"
+    r".*?^[ \t]*\}[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"
+    r".+\Z"
+)
+_S5_REPORT_FENCES_SCRIPT_PATTERN = (
+    r"""(?ms)\A"""
+    r"""(?=.*^[ \t]*printf[^\n]*```text\\n[^\n]*$)"""
+    r"""(?=.*^[ \t]*printf[ \t]+(?:'```\\n'|"```\\n")[ \t]*(?:#.*)?$"""
+    r"""\n[ \t]*\}[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"""
+    r""".+\Z"""
+)
+_S5_MARKDOWN_REPORT_PATTERN = (
+    r"(?ms)\A#[ \t]+\S[^\n]*\n"
+    r".*?^\*[ \t]+User:[ \t]+\S[^\n]*$"
+    r".*?^\*[ \t]+Host:[ \t]+\S[^\n]*$"
+    r".*?^\*[ \t]+Date:[ \t]+\S[^\n]*$"
+    r".*?^##[ \t]+Shell fields in /etc/passwd[ \t]*$"
+    r".*?^```text[ \t]*$"
+    r".*?^/[^\n]+$"
+    r".*?^```[ \t]*$\n?\Z"
+)
+_S5_HTML_REPORT_PATTERN = (
+    r"(?is)<h1[^>]*>.+?</h1>.*User:.*Host:.*Date:.*"
+    r"<h2[^>]*>Shell fields in /etc/passwd</h2>"
+)
+_S5_QUOTED_TITLE_ARGUMENT_PATTERN = r"""(?:"[^"]+ [^"]+"|'[^']+ [^']+')"""
+_S5_TITLED_REPORT_COMMAND_PATTERN = (
+    r"^(?:\./|~/scripts/)maker-report\.sh " + _S5_QUOTED_TITLE_ARGUMENT_PATTERN + r"$"
+)
+_S5_HOME_TITLED_REPORT_COMMAND_PATTERN = (
+    r"^~/scripts/maker-report\.sh " + _S5_QUOTED_TITLE_ARGUMENT_PATTERN + r"$"
+)
+_S5_BASH_HOME_TITLED_REPORT_COMMAND_PATTERN = (
+    r"^(?:bash|/bin/bash) ~/scripts/maker-report\.sh " + _S5_QUOTED_TITLE_ARGUMENT_PATTERN + r"$"
+)
+_S5_BUILD_WEBSITE_PATTERN = r"^(?:build-website|maker-guide-build-personal-website)$"
+_S5_UPTIME_SCRIPT_PATTERN = (
+    r"""(?m)^[ \t]*printf[ \t]+(?:'\*[ \t]+Uptime:[ \t]*'|"\*[ \t]+Uptime:[ \t]*")"""
+    r"""[ \t]*(?:#.*)?$\n[ \t]*uptime[ \t]*(?:#.*)?$"""
+)
+_S5_UPTIME_REPORT_PATTERN = r"(?m)^\*[ \t]+Uptime:[ \t]+\S[^\n]*$"
+_S5_UPTIME_HTML_PATTERN = r"(?is)<li>Uptime:[^<]+</li>"
+_S5_GIT_LOG_PATTERN = r"(?m)^[0-9a-f]{4,64}[ \t]+\S"
+_S5_GIT_CLEAN_COMMAND_PATTERN = r"^git diff --exit-code HEAD -- scripts/maker-report\.sh$"
+_S5_GIT_STATUS_COMMAND_PATTERN = r"^git status --short scripts/maker-report\.sh$"
+_S5_GIT_LOG_COMMAND_PATTERN = (
+    r"^git log --oneline -- scripts/maker-report\.sh"
+    r"[ \t]*>[ \t]*~/playground/maker-report-git\.txt$"
+)
 _EXECUTABLE_NOT_FILE_PATTERN = (
     r"\b(executable|program|binary)\b.{0,12}\b(isn't|is not|means not|never)\s+"
     r"(a )?(file|disk)\b"
@@ -1036,84 +1123,171 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         Session(
             id="S5",
             title="Scripting begins",
-            date=date(2026, 8, 22),
-            starts_at=datetime(2026, 8, 22, 9, tzinfo=UTC),
+            date=date(2026, 8, 29),
+            starts_at=datetime(2026, 8, 29, 5, tzinfo=UTC),
             introduced_commands=(
                 "bash",
-                "chmod +x",
-                "set -euo pipefail",
-                "echo",
                 "printf",
-                "read",
-                "env",
             ),
             introduced_skills=(
                 "shell-scripting",
                 "shebang",
                 "script-permissions",
                 "variables",
-                "environment-variables",
                 "quoting",
                 "script-arguments",
-                "standard-input",
             ),
             learning_objectives=(
-                "Write executable shell scripts.",
-                "Use variables and arguments.",
-                "Quote shell values deliberately.",
-                "Read input from a user.",
+                "Save familiar commands in a script and run it with Bash.",
+                "Run a script directly using a shebang and executable permission.",
+                "Use one quoted argument to personalize a script.",
+                "Generate and publish a useful Markdown report.",
             ),
             content=_session_content("S5", "Scripting begins"),
             objectives=(
                 SessionObjective(
-                    id="write-hello-script",
-                    title="Write executable shell scripts",
+                    id="create-maker-report",
+                    title="Save familiar commands in a script",
                     prompt=(
-                        "Create executable `~/scripts/hello.sh` with `#!/bin/bash` "
-                        "that uses its first argument."
+                        "Create `~/scripts/maker-report.sh` with `#!/bin/bash` first, then "
+                        "`whoami`, `hostname`, and `date` on separate command lines. From "
+                        "`~/scripts`, run it with `bash maker-report.sh`."
                     ),
                     validation=AllOfValidation(
                         validations=(
                             FileCheckValidation(
-                                path="~/scripts/hello.sh",
-                                required_regex=r"(?s)^#!/bin/bash\n.+\$1.+",
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_KNOWN_COMMANDS_SCRIPT_PATTERN,
                             ),
-                            ExecutablePathValidation(paths=("~/scripts/hello.sh",)),
+                            CommandHistoryValidation(
+                                required_patterns=(r"^(?:bash|/bin/bash) maker-report\.sh$",),
+                                observed_commands=("bash",),
+                            ),
                         ),
                     ),
                 ),
                 SessionObjective(
-                    id="ask-for-input",
-                    title="Read input from a user",
+                    id="run-maker-report-directly",
+                    title="Turn the script into an executable command",
                     prompt=(
-                        "Create `~/scripts/ask-name.sh` that uses `read` and then prints what the "
-                        "user typed."
+                        "From `~/scripts`, try `./maker-report.sh` before changing permissions "
+                        "and observe `Permission denied`. Inspect with `ls -l`, run "
+                        "`chmod u+x maker-report.sh`, verify `#!/bin/bash` with "
+                        "`head -n 1 maker-report.sh`, then run `./maker-report.sh`."
                     ),
-                    validation=FileCheckValidation(
-                        path="~/scripts/ask-name.sh", required_regex=r"(?s)read .+printf"
+                    validation=AllOfValidation(
+                        validations=(
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_KNOWN_COMMANDS_SCRIPT_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_SHEBANG_PATTERN,
+                            ),
+                            ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
+                            CommandHistoryValidation(
+                                required_patterns=(
+                                    r"^chmod u\+x maker-report\.sh$",
+                                    r"^head -n 1 maker-report\.sh$",
+                                    r"^\./maker-report\.sh$",
+                                ),
+                                observed_commands=("chmod", "head", "./maker-report.sh"),
+                                ordered=True,
+                            ),
+                        ),
                     ),
                 ),
                 SessionObjective(
-                    id="reverse-two-arguments",
-                    title="Use variables and arguments",
+                    id="personalize-maker-report",
+                    title="Personalize the report with one argument",
                     prompt=(
-                        "Create `~/scripts/reverse.sh` that prints its second argument before its "
-                        "first argument."
+                        'Assign the first argument with `report_title="$1"`, print it with '
+                        '`printf` as `"$report_title"`, compare an unquoted multi-word title '
+                        "with one quoted title, and leave the quoted form working."
                     ),
-                    validation=FileCheckValidation(
-                        path="~/scripts/reverse.sh", required_regex=r"(?s)\$2.+\$1"
+                    validation=AllOfValidation(
+                        validations=(
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_KNOWN_COMMANDS_SCRIPT_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_SHEBANG_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_REPORT_TITLE_SCRIPT_PATTERN,
+                            ),
+                            ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
+                            CommandHistoryValidation(
+                                required_patterns=(
+                                    r"^\./maker-report\.sh My Maker Report$",
+                                    _S5_TITLED_REPORT_COMMAND_PATTERN,
+                                ),
+                                observed_commands=("./maker-report.sh", "./maker-report.sh"),
+                                ordered=True,
+                            ),
+                        ),
                     ),
                 ),
                 SessionObjective(
-                    id="quote-spaced-value",
-                    title="Quote shell values deliberately",
+                    id="publish-maker-report",
+                    title="Generate and publish a useful report",
                     prompt=(
-                        "Create `~/scripts/quote-name.sh`: assign a name containing a space, then "
-                        'print `"$name"` with `printf`.'
+                        "Format `maker-report.sh` as Markdown, add "
+                        "`cut -d: -f7 /etc/passwd | sort -u`, group the report commands so the "
+                        "script writes `~/src/pages/maker-report.md`, inspect it, run "
+                        "`build-website`, then open the generated page."
                     ),
-                    validation=FileCheckValidation(
-                        path="~/scripts/quote-name.sh",
-                        required_regex=r'(?s)name=.+ .+printf.+"\$name"',
+                    validation=AllOfValidation(
+                        validations=(
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_REPORT_LABELS_SCRIPT_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_SHEBANG_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_REPORT_HEADING_SCRIPT_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_REPORT_PIPELINE_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_REPORT_DESTINATION_SCRIPT_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_REPORT_FENCES_SCRIPT_PATTERN,
+                            ),
+                            ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
+                            FileCheckValidation(
+                                path="~/src/pages/maker-report.md",
+                                required_regex=_S5_MARKDOWN_REPORT_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/public_html/maker-report.html",
+                                required_regex=_S5_HTML_REPORT_PATTERN,
+                            ),
+                            CommandHistoryValidation(
+                                required_patterns=(
+                                    r'^\./maker-report\.sh "S5 Report"$',
+                                    _S5_BUILD_WEBSITE_PATTERN,
+                                ),
+                                observed_commands=(
+                                    "./maker-report.sh",
+                                    "build-website",
+                                ),
+                                ordered=True,
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -1121,8 +1295,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         Session(
             id="S6",
             title="Control flow and networking primer",
-            date=date(2026, 8, 29),
-            starts_at=datetime(2026, 8, 29, 9, tzinfo=UTC),
+            date=date(2026, 9, 12),
+            starts_at=datetime(2026, 9, 12, 9, tzinfo=UTC),
             introduced_commands=(
                 "if",
                 "then",
@@ -1214,8 +1388,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         Session(
             id="S7",
             title="Your first page",
-            date=date(2026, 9, 12),
-            starts_at=datetime(2026, 9, 12, 9, tzinfo=UTC),
+            date=date(2026, 9, 19),
+            starts_at=datetime(2026, 9, 19, 9, tzinfo=UTC),
             introduced_commands=(
                 "curl -v",
                 "curl -I",
@@ -2437,203 +2611,186 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             evidence="The guide needs status, diff, and all four state explanations.",
         ),
         _quest(
-            quest_id="write-hello-script",
-            title="Write hello.sh",
+            quest_id="extend-maker-report",
+            title="Add uptime to the report",
             sequence=33,
             available_after_session="S5",
             prompt=(
-                "Create executable `~/scripts/hello.sh` that prints `Hello` plus its first "
-                "argument."
+                "Add a labeled `uptime` line to `maker-report.sh`, regenerate "
+                "`~/src/pages/maker-report.md`, and rebuild the site."
             ),
-            required_commands=("mkdir", "bash", "chmod +x", "printf", "micro"),
-            practiced_skills=("shell-scripting", "script-arguments", "script-permissions"),
+            required_commands=("micro", "uptime", "cat", "build-website"),
+            practiced_skills=("shell-scripting", "filesystem-as-cms", "stream-redirection"),
             validation=AllOfValidation(
                 validations=(
                     FileCheckValidation(
-                        path="~/scripts/hello.sh",
-                        required_regex=r"(?s)^#!/bin/bash\n.+\$1.+",
+                        path="~/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_LABELS_SCRIPT_PATTERN,
                     ),
-                    ExecutablePathValidation(paths=("~/scripts/hello.sh",)),
-                ),
-            ),
-            goal="Run a script that reacts to an argument.",
-            evidence="`~/scripts/hello.sh` needs a shebang and `$1`.",
-        ),
-        _quest(
-            quest_id="use-printf-deliberately",
-            title="Use printf deliberately",
-            sequence=34,
-            available_after_session="S5",
-            prompt="Modify `~/scripts/hello.sh` to use `printf` instead of `echo`.",
-            required_commands=("micro", "printf", "bash"),
-            practiced_skills=("shell-scripting", "quoting"),
-            validation=FileCheckValidation(
-                path="~/scripts/hello.sh",
-                required_regex=r"(?s)printf .+\$1",
-            ),
-            goal="Use predictable formatted output in scripts.",
-            evidence="`~/scripts/hello.sh` must contain `printf` and use `$1`.",
-        ),
-        _quest(
-            quest_id="write-info-script",
-            title="Write info.sh",
-            sequence=35,
-            available_after_session="S5",
-            prompt=(
-                "Create executable `~/scripts/info.sh` that runs `whoami`, `date`, and `hostname`."
-            ),
-            required_commands=("bash", "chmod +x", "whoami", "date", "hostname", "micro"),
-            practiced_skills=("shell-scripting", "variables"),
-            validation=AllOfValidation(
-                validations=(
                     FileCheckValidation(
-                        path="~/scripts/info.sh",
-                        required_regex=r"(?s)whoami.+date.+hostname",
+                        path="~/scripts/maker-report.sh",
+                        required_regex=_S5_SHEBANG_PATTERN,
                     ),
-                    ExecutablePathValidation(paths=("~/scripts/info.sh",)),
+                    FileCheckValidation(
+                        path="~/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_HEADING_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_PIPELINE_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_DESTINATION_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_FENCES_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/scripts/maker-report.sh",
+                        required_regex=_S5_UPTIME_SCRIPT_PATTERN,
+                    ),
+                    ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
+                    FileCheckValidation(
+                        path="~/src/pages/maker-report.md",
+                        required_regex=_S5_MARKDOWN_REPORT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/pages/maker-report.md",
+                        required_regex=_S5_UPTIME_REPORT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/public_html/maker-report.html",
+                        required_regex=_S5_HTML_REPORT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/public_html/maker-report.html",
+                        required_regex=_S5_UPTIME_HTML_PATTERN,
+                    ),
+                    CommandHistoryValidation(
+                        required_patterns=(
+                            _S5_HOME_TITLED_REPORT_COMMAND_PATTERN,
+                            _S5_BUILD_WEBSITE_PATTERN,
+                        ),
+                        observed_commands=("build-website",),
+                        ordered=True,
+                    ),
                 ),
             ),
-            goal="Build a small system-info script from commands you already know.",
-            evidence="`~/scripts/info.sh` needs `whoami`, `date`, and `hostname`.",
-        ),
-        _quest(
-            quest_id="ask-for-input",
-            title="Ask for input",
-            sequence=36,
-            available_after_session="S5",
-            prompt="Create `~/scripts/ask-name.sh` that uses `read` and greets the typed name.",
-            required_commands=("read", "printf", "bash", "micro"),
-            practiced_skills=("standard-input", "variables"),
-            validation=FileCheckValidation(
-                path="~/scripts/ask-name.sh",
-                required_regex=r"(?s)read .+printf",
-            ),
-            goal="Make a script ask a user for data.",
-            evidence="`~/scripts/ask-name.sh` needs `read` and `printf`.",
-        ),
-        _quest(
-            quest_id="reverse-two-arguments",
-            title="Reverse two arguments",
-            sequence=37,
-            available_after_session="S5",
-            prompt="Create `~/scripts/reverse.sh` that prints `$2` before `$1`.",
-            required_commands=("bash", "printf", "micro"),
-            practiced_skills=("script-arguments", "quoting"),
-            validation=FileCheckValidation(
-                path="~/scripts/reverse.sh",
-                required_regex=r"(?s)\$2.+\$1",
-            ),
-            goal="Use positional parameters deliberately.",
-            evidence="`~/scripts/reverse.sh` needs `$2` before `$1`.",
-        ),
-        _quest(
-            quest_id="publish-practice-page",
-            title="Publish a practice page",
-            sequence=38,
-            available_after_session="S5",
-            prompt="Create `~/src/pages/practice.md` with a fenced block of recent history.",
-            required_commands=("history", "tail", "tee", "micro", "build-website"),
-            practiced_skills=("filesystem-as-cms", "stream-redirection"),
-            validation=FileCheckValidation(
-                path="~/src/pages/practice.md",
-                required_regex=r"(?s)# What I ran this week.+```.+```",
-            ),
-            goal="Turn shell output into published site content.",
-            evidence="`~/src/pages/practice.md` needs a heading and a fenced code block.",
-        ),
-        _quest(
-            quest_id="add-argument-guard",
-            title="Add an argument guard",
-            sequence=40,
-            available_after_session="S5",
-            prompt="Add an argument check to `~/scripts/hello.sh` before it uses `$1`.",
-            required_commands=("micro", "bash", "printf"),
-            practiced_skills=("script-arguments", "shell-scripting"),
-            validation=FileCheckValidation(
-                path="~/scripts/hello.sh",
-                required_regex=r"(?s)\$#.+printf.+usage|usage.+\$#",
-            ),
-            goal="Fail with a useful message instead of crashing on missing input.",
-            evidence="`~/scripts/hello.sh` needs an argument-count check and usage output.",
-        ),
-        _quest(
-            quest_id="capture-environment",
-            title="Capture your environment",
-            sequence=41,
-            available_after_session="S5",
-            prompt=(
-                "Write selected environment variables to `~/playground/env.txt` and inspect them."
-            ),
-            required_commands=("env", "grep", ">", "cat"),
-            practiced_skills=("environment-variables", "text-search", "stream-redirection"),
-            validation=FileCheckValidation(
-                path="~/playground/env.txt",
-                required_regex=r"(?m)^(HOME|PATH)=",
-            ),
-            goal="Treat environment variables as inspectable process input.",
-            evidence="`~/playground/env.txt` needs at least `HOME=` or `PATH=` from `env`.",
-        ),
-        _quest(
-            quest_id="quote-spaced-value",
-            title="Quote a spaced value",
-            sequence=42,
-            available_after_session="S5",
-            prompt="Create `~/scripts/quote-name.sh` that preserves a name containing a space.",
-            required_commands=("micro", "bash", "printf"),
-            practiced_skills=("quoting", "variables"),
-            validation=FileCheckValidation(
-                path="~/scripts/quote-name.sh",
-                required_regex=r'(?s)name=.+ .+printf.+"\$name"',
-            ),
-            goal="Stop the shell from splitting one value into accidental words.",
-            evidence="`~/scripts/quote-name.sh` needs a spaced value and quoted `$name`.",
-        ),
-        _quest(
-            quest_id="capture-script-output",
-            title="Capture script output",
-            sequence=43,
-            available_after_session="S5",
-            prompt="Run `info.sh` and redirect its output into `~/playground/info-output.txt`.",
-            required_commands=("bash", ">", "cat"),
-            practiced_skills=("shell-scripting", "stream-redirection"),
-            validation=FileCheckValidation(
-                path="~/playground/info-output.txt",
-                required_regex=r"(?s).+",
-            ),
-            goal="Save script output so another command can inspect it later.",
-            evidence="`~/playground/info-output.txt` must contain output from your script.",
-        ),
-        _quest(
-            quest_id="document-scripts",
-            title="Document your scripts",
-            sequence=44,
-            available_after_session="S5",
-            prompt="Create `~/scripts/README.md` that lists what your scripts do.",
-            required_commands=("micro", "ls", "cat"),
-            practiced_skills=("shell-scripting", "markdown-basics"),
-            validation=FileCheckValidation(
-                path="~/scripts/README.md",
-                required_regex=r"(?s)# Scripts.+hello\.sh.+info\.sh",
-            ),
-            goal="Leave enough notes that your future self can reuse the scripts.",
-            evidence="`~/scripts/README.md` needs a heading plus `hello.sh` and `info.sh`.",
+            goal="Extend a useful script without replacing the working parts.",
+            evidence="The script, Markdown page, and built HTML all need a labeled uptime value.",
         ),
         _quest(
             quest_id="run-scripts-from-elsewhere",
             title="Run scripts from elsewhere",
-            sequence=45,
+            sequence=34,
             available_after_session="S5",
             prompt=(
-                "Change directories, then run one script by absolute path from another location."
+                "Change to `~/playground`, confirm the directory, then run `maker-report.sh` "
+                "with Bash and a quoted title using its home-anchored `~/...` path."
             ),
-            required_commands=("pwd", "cd", "bash"),
+            required_commands=("mkdir", "pwd", "cd", "bash", "build-website"),
             practiced_skills=("path", "shell-scripting"),
+            # ponytail: ordered commands are sufficient for optional path practice; cwd is not
+            # an authorization boundary.
             validation=CommandHistoryValidation(
-                required_patterns=(r"^pwd$", r"^cd ", r"^bash ~/scripts/"),
-                observed_commands=("pwd", "cd", "bash"),
+                required_patterns=(
+                    r"^cd ~/playground$",
+                    r"^pwd$",
+                    _S5_BASH_HOME_TITLED_REPORT_COMMAND_PATTERN,
+                    _S5_BUILD_WEBSITE_PATTERN,
+                ),
+                observed_commands=("cd", "pwd", "bash", "build-website"),
+                ordered=True,
             ),
             goal="Separate your current directory from the path to an executable file.",
-            evidence="The guide needs to see `pwd`, `cd`, and `bash ~/scripts/...`.",
+            evidence=(
+                "The guide needs `cd ~/playground`, `pwd`, then a titled "
+                "`bash ~/scripts/maker-report.sh ...` run followed by `build-website`."
+            ),
+        ),
+        _quest(
+            quest_id="preserve-maker-report",
+            title="Preserve the report script in Git",
+            sequence=35,
+            available_after_session="S5",
+            prompt=(
+                "Copy `maker-report.sh` to `~/src/scripts/`, commit it from `~/src`, then save "
+                "`git log --oneline -- scripts/maker-report.sh` to "
+                "`~/playground/maker-report-git.txt`."
+            ),
+            required_commands=(
+                "mkdir",
+                "cp",
+                "chmod",
+                "git status",
+                "git add",
+                "git diff",
+                "git commit",
+                "git log",
+                ">",
+            ),
+            practiced_skills=("shell-scripting", "git-basics"),
+            validation=AllOfValidation(
+                validations=(
+                    FileCheckValidation(
+                        path="~/src/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_LABELS_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/scripts/maker-report.sh",
+                        required_regex=_S5_SHEBANG_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_HEADING_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_PIPELINE_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_DESTINATION_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/scripts/maker-report.sh",
+                        required_regex=_S5_REPORT_FENCES_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/scripts/maker-report.sh",
+                        required_regex=_S5_UPTIME_SCRIPT_PATTERN,
+                    ),
+                    ExecutablePathValidation(paths=("~/src/scripts/maker-report.sh",)),
+                    FileCheckValidation(
+                        path="~/playground/maker-report-git.txt",
+                        required_regex=_S5_GIT_LOG_PATTERN,
+                    ),
+                    CommandHistoryValidation(
+                        required_patterns=(
+                            r"^git add scripts/maker-report\.sh$",
+                            r"^git commit -m .+",
+                            _S5_GIT_CLEAN_COMMAND_PATTERN,
+                            _S5_GIT_STATUS_COMMAND_PATTERN,
+                            _S5_GIT_LOG_COMMAND_PATTERN,
+                        ),
+                        observed_commands=(
+                            "git add",
+                            "git commit",
+                            "git diff",
+                            "git status",
+                            "git log",
+                        ),
+                        ordered=True,
+                    ),
+                ),
+            ),
+            goal="Keep the useful script in the source history created during S4.",
+            evidence=(
+                "The copied final script must be executable, match HEAD, and appear in saved "
+                "Git log output."
+            ),
         ),
         _quest(
             quest_id="loop-one-to-ten",
@@ -3214,7 +3371,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             required_commands=(
                 "mkdir",
                 "micro",
-                "chmod +x",
+                "chmod",
                 "python3 -m http.server --bind 127.0.0.1",
                 "id -u",
                 "systemctl --user",

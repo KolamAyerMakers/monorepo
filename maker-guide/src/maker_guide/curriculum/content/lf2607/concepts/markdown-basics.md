@@ -46,6 +46,15 @@ ls
 ```
 ````
 
+The optional word after the opening triple backticks describes the content. Use `bash` for Bash source and `text` for plain command output:
+
+````markdown
+```text
+/bin/bash
+/usr/sbin/nologin
+```
+````
+
 ## Source Versus Output
 
 Your source Markdown lives under `~/src/pages`. `build-website` turns it into generated HTML under `~/public_html`.

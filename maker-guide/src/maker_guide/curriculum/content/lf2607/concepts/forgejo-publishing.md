@@ -36,7 +36,7 @@ If `origin` already exists, inspect it before changing it:
 git remote -v
 ```
 
-S4 initializes the course repository on `main`. If `origin` is missing or points elsewhere, ask before changing it.
+The course repository initializes on `main`. If `origin` is missing or points elsewhere, ask before changing it.
 
 ## Done When
 

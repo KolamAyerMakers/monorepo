@@ -3,6 +3,7 @@
 ## Repository
 
 - `maker-guide/` is the learner-support application. Read `maker-guide/AGENTS.md` before changing it.
+- Reference cards (`commands/`, `concepts/`) must stay session-agnostic; session-specific material belongs in `sessions/` and `mentors/`.
 - `website/` is the public Astro website.
 - `branding/` contains source brand assets.
 - `infra/pulumi/` defines cloud resources. Read `infra/pulumi/README.md` before changing it.

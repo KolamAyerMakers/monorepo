@@ -35,7 +35,6 @@ Create `~/scripts/alive.sh` that pings `$1` once and prints `alive` or `dead`.
 
 ```bash
 #!/bin/bash
-set -euo pipefail
 
 if [[ "$#" -lt 1 ]]; then
   printf 'usage: %s HOST\n' "$0" >&2
@@ -51,7 +50,7 @@ fi
 
 ## If Check Fails
 
-- If the script exits with `unbound variable`, add the argument-count guard before using `$1`.
+- If no host was supplied, add the argument-count guard before using `$1`.
 - If it prints `dead` for a working website, remember ping can be blocked; try `1.1.1.1` and compare.
 - If it hangs, make sure `ping` uses `-c 1`.
 - If validation fails, confirm the script contains `$1`, `ping`, `alive`, and `dead`.

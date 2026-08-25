@@ -282,7 +282,7 @@ def test_build_docs_publishes_open_reference_routes_and_gates_coursework(
         output / "docs" / "sessions" / "S05" / "self-study.md" / "index.html"
     ).read_text(encoding="utf-8")
     assert re.search(
-        r'<a href="/docs/commands/exit\.md/"[^>]*>Command: <code[^>]*>exit</code></a>',
+        r'<a href="/docs/concepts/shell-scripting\.md/"[^>]*>Shell Scripting</a>',
         s5_self_study_page,
     )
 

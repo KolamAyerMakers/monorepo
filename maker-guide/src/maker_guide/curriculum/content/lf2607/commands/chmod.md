@@ -18,7 +18,7 @@ chmod go-r private-notes.txt
 chmod a+r public.html
 ```
 
-- `u`: owner.
+- `u`: user who owns the file.
 - `g`: group.
 - `o`: other.
 - `a`: all.
@@ -28,12 +28,15 @@ chmod a+r public.html
 
 ## Executable Scripts
 
+After saving a Bash script such as `~/scripts/report.sh`:
+
 ```bash
-chmod +x ~/scripts/hello.sh
-./scripts/hello.sh Makers
+cd ~/scripts
+chmod u+x report.sh
+./report.sh
 ```
 
-`chmod +x` allows direct execution. It does not fix a broken script, a missing shebang, or bad syntax.
+`chmod u+x` adds execute permission for the user who owns the file. It does not fix a broken script, a missing shebang, or bad syntax.
 
 ## Watch Out
 
