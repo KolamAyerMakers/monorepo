@@ -28,6 +28,8 @@ def test_bootstrap_copies_starter_and_installs_dependencies(
         working_directory = keyword_arguments["cwd"]
         assert isinstance(working_directory, Path)
         commands.append((command, working_directory))
+        if command == ("npm", "ci"):
+            (working_directory / "node_modules").mkdir()
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr(subprocess, "run", run)
@@ -48,6 +50,7 @@ def test_bootstrap_copies_starter_and_installs_dependencies(
     assert (destination / "public" / "kolam-ayer-makers.png").is_file()
     assert (destination / "public" / "kolam-ayer-makers-dark.png").is_file()
     assert (destination / "public" / "student").is_dir()
+    assert (destination / "node_modules").is_dir()
     assert not (destination / ".git").exists()
     assert ".astro/" in (destination / ".gitignore").read_text(encoding="utf-8")
     theme_content = (destination / "app" / "styles" / "site.css").read_text(encoding="utf-8")
@@ -59,6 +62,43 @@ def test_bootstrap_copies_starter_and_installs_dependencies(
     ]
     assert all(working_directory != destination for _, working_directory in commands[:-1])
     assert commands[-1][1] == destination
+
+
+def test_bootstrap_ignores_source_dependencies(
+    temporary_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A contaminated source tree cannot leak its dependencies into a learner site."""
+    resource_root = temporary_path / "resources"
+    starter = resource_root / "template"
+    source_dependencies = starter / "node_modules"
+    source_dependencies.mkdir(parents=True)
+    (source_dependencies / "source-only.txt").write_text("source\n", encoding="utf-8")
+    (starter / "package-lock.json").write_text("lock\n", encoding="utf-8")
+    (starter / ".astro-starter-marker").write_text("1\n", encoding="utf-8")
+    (resource_root / "site.css").write_text("body {}\n", encoding="utf-8")
+    destination = temporary_path / "src"
+
+    def files(_package_name: str) -> Path:
+        return resource_root
+
+    def run(
+        command: Sequence[str], **keyword_arguments: object
+    ) -> subprocess.CompletedProcess[str]:
+        working_directory = keyword_arguments["cwd"]
+        assert isinstance(working_directory, Path)
+        if command == ("npm", "ci"):
+            installed_dependencies = working_directory / "node_modules"
+            installed_dependencies.mkdir()
+            (installed_dependencies / "installed.txt").write_text("installed\n", encoding="utf-8")
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(resources, "files", files)
+    monkeypatch.setattr(subprocess, "run", run)
+
+    assert bootstrap_personal_website.main(["--destination", str(destination)]) == 0
+    assert (destination / "node_modules" / "installed.txt").is_file()
+    assert not (destination / "node_modules" / "source-only.txt").exists()
 
 
 def test_bootstrap_refuses_existing_project(
@@ -158,6 +198,33 @@ def test_bootstrap_reinstalls_dependencies_only_after_lockfile_update(
 
     assert bootstrap_personal_website.main(["--destination", str(destination)]) == 0
     assert commands == [("node", "scripts/build.mjs")]
+
+
+def test_bootstrap_retries_dependency_refresh_after_failure(
+    temporary_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed dependency refresh leaves the old lockfile so the next build retries."""
+    destination = temporary_path / "src"
+    destination.mkdir()
+    (destination / ".astro-starter-marker").write_text("1\n", encoding="utf-8")
+    (destination / "package-lock.json").write_text("outdated\n", encoding="utf-8")
+    commands: list[Sequence[str]] = []
+
+    def run(
+        command: Sequence[str], **_keyword_arguments: object
+    ) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        if len(commands) == 1:
+            raise FileNotFoundError("npm")
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(subprocess, "run", run)
+
+    assert bootstrap_personal_website.main(["--destination", str(destination)]) == 1
+    assert (destination / "package-lock.json").read_text(encoding="utf-8") == "outdated\n"
+    assert bootstrap_personal_website.main(["--destination", str(destination)]) == 0
+    assert commands == [("npm", "ci"), ("npm", "ci"), ("node", "scripts/build.mjs")]
 
 
 def test_sync_refreshes_class_files_without_running_the_build(

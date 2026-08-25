@@ -34,9 +34,18 @@ def main(arguments: Sequence[str] | None = None) -> int:
         if destination.exists():
             if not (destination / _STARTER_MARKER).is_file():
                 raise _existing_project_error(destination)
-            dependencies_changed = _copy_managed_assets(destination)
-            if dependencies_changed:
-                _run(("npm", "ci"), destination)
+            package_lock = destination / "package-lock.json"
+            previous_lock = package_lock.read_bytes() if package_lock.is_file() else None
+            _copy_managed_assets(destination)
+            if previous_lock != package_lock.read_bytes():
+                try:
+                    _run(("npm", "ci"), destination)
+                except (FileNotFoundError, subprocess.CalledProcessError):
+                    if previous_lock is None:
+                        package_lock.unlink(missing_ok=True)
+                    else:
+                        package_lock.write_bytes(previous_lock)
+                    raise
         else:
             if sync_only:
                 raise _missing_project_error(destination)
@@ -52,19 +61,22 @@ def main(arguments: Sequence[str] | None = None) -> int:
 def _copy_starter(destination: Path) -> None:
     starter = resources.files("maker_guide.astro_starter").joinpath("template")
     with resources.as_file(starter) as starter_path:
-        shutil.copytree(starter_path, destination, dirs_exist_ok=True)
+        shutil.copytree(
+            starter_path,
+            destination,
+            dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns("node_modules"),
+        )
     _copy_managed_assets(destination)
 
 
-def _copy_managed_assets(destination: Path) -> bool:
+def _copy_managed_assets(destination: Path) -> None:
     """Refresh class-owned files without touching learner pages or extensions."""
-    package_lock = destination / "package-lock.json"
-    previous_lock = package_lock.read_bytes() if package_lock.is_file() else None
     starter = resources.files("maker_guide.astro_starter").joinpath("template")
     with resources.as_file(starter) as starter_path:
 
         def ignore(directory: str, entries: list[str]) -> set[str]:
-            ignored = shutil.ignore_patterns(".gitignore")(directory, entries)
+            ignored = shutil.ignore_patterns(".gitignore", "node_modules")(directory, entries)
             if Path(directory) == starter_path:
                 ignored.add("pages")
             return ignored
@@ -77,7 +89,6 @@ def _copy_managed_assets(destination: Path) -> bool:
         )
     copy_site_theme(destination / "app" / "styles" / "site.css")
     _ensure_learner_extensions(destination)
-    return previous_lock != package_lock.read_bytes()
 
 
 def _ensure_learner_extensions(destination: Path) -> None:
