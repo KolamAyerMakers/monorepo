@@ -2034,7 +2034,10 @@ def test_private_fallback_uses_llm_without_mutating_progress(
             doc_context.learner_path == "/docs/sessions/S01/self-study.md"
             for doc_context in tutor_client.requests[0].context.docs
         )
-        assert tutor_client.requests[0].context.validation_status is None
+        validation_status = tutor_client.requests[0].context.validation_status
+        assert validation_status is not None
+        assert validation_status.target_type == "session_objective"
+        assert validation_status.target_id == "prove-shell-alive"
         assert tutor_client.requests[0].context.learner.pending_quests == ()
         assert tutor_client.requests[0].context.session.terminal == "/dev/pts/1"
         assert (
@@ -2126,7 +2129,8 @@ def test_private_tutor_receives_read_only_validation_status(
         validation_status = tutor_client.requests[0].context.validation_status
         assert response.text == "You still need date and uptime."
         assert validation_status is not None
-        assert validation_status.quest_id == "prove-shell-alive"
+        assert validation_status.target_type == "quest"
+        assert validation_status.target_id == "prove-shell-alive"
         assert validation_status.passed is False
         assert validation_status.failure_reason == "missing-command"
         assert validation_status.evidence["matched_commands"] == ["whoami"]
@@ -2200,7 +2204,10 @@ def test_private_tutor_does_not_validate_quest_blocked_by_session_objective(
             _chat_dependencies(database_connection, tutor_client=tutor_client),
         )
 
-    assert tutor_client.requests[0].context.validation_status is None
+    validation_status = tutor_client.requests[0].context.validation_status
+    assert validation_status is not None
+    assert validation_status.target_type == "session_objective"
+    assert validation_status.target_id == "join-course-irc"
 
 
 def test_private_tutor_receives_recent_private_interactions_from_its_transport(

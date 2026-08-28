@@ -120,7 +120,8 @@ def test_tutor_messages_expose_read_only_context_without_mutation_tools() -> Non
         },
         "failure_reason": "missing-command",
         "passed": False,
-        "quest_id": "prove-shell-alive",
+        "target_id": "prove-shell-alive",
+        "target_type": "quest",
     }
     assert session_payload == {
         "source": "cli",
@@ -791,7 +792,8 @@ def _read_only_context() -> ReadOnlyTutorContext:
             ),
         ),
         validation_status=ReadOnlyValidationStatus(
-            quest_id="prove-shell-alive",
+            target_type="quest",
+            target_id="prove-shell-alive",
             passed=False,
             failure_reason="missing-command",
             evidence={

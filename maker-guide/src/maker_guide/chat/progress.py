@@ -123,6 +123,7 @@ class CheckResponse:
     text: str
     retry_after_irc_client_verification: bool = False
     tier_promotions: tuple[TierPromotion, ...] = ()
+    failed: bool = False
 
 
 def _current_quest_response(
@@ -347,6 +348,7 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
             retry_after_irc_client_verification=(
                 validation_result.failure_reason == IRC_CLIENT_VERIFICATION_FAILURE_REASON
             ),
+            failed=True,
         )
     return CheckResponse(
         text=format_completed_quest(
@@ -430,6 +432,7 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
                     else None
                 ),
             ),
+            failed=True,
         )
     completion_result = complete_session_objective(
         dependencies.database_connection,
@@ -504,6 +507,8 @@ def _format_session_objective(
             )
         else:
             response_parts.append(_objective_status(validation_result, tutor_feedback))
+            if tutor_feedback is None:
+                response_parts.append("For an explanation, ask privately: why did my check fail?")
     return "\n\n".join(response_parts)
 
 

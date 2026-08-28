@@ -279,7 +279,6 @@ def test_s5_builds_one_cumulative_report_script(temporary_path: Path) -> None:
                 re.search(validation.required_regex, incomplete_source)
                 for validation in source_validations
             )
-
     reference_text = (
         _content_root()
         .joinpath(
@@ -402,6 +401,46 @@ today
     assert not re.search(
         markdown_validation.required_regex,
         generated_report_text.replace("```", "~~~"),
+    )
+
+
+def test_s5_personalize_accepts_direct_printf_variable() -> None:
+    """A quoted first argument can be printed without the percent-s formatter."""
+    validation = CATALOG.session("S5").objectives[2].validation
+    assert isinstance(validation, AllOfValidation)
+    assert all(
+        re.search(
+            file_validation.required_regex,
+            """#!/bin/bash
+report_title="$1"
+whoami
+hostname
+date
+printf "$report_title\\n"
+""",
+        )
+        for file_validation in validation.validations
+        if isinstance(file_validation, FileCheckValidation)
+    )
+    publish_validation = CATALOG.session("S5").objectives[3].validation
+    assert isinstance(publish_validation, AllOfValidation)
+    markdown_validation = next(
+        file_validation
+        for file_validation in publish_validation.validations
+        if isinstance(file_validation, FileCheckValidation)
+        and file_validation.path == "~/src/pages/maker-report.md"
+    )
+    assert re.search(
+        markdown_validation.required_regex,
+        """# foo bar
+* User: ss79
+* Hostname: lf-dev
+* Date: Fri Aug 28 13:51:34 UTC 2026
+## Shell fields in /etc/passwd
+```
+/bin/bash
+```
+""",
     )
 
 
@@ -546,8 +585,6 @@ Uptime: unavailable, sign up today""",
     elsewhere_validation = CATALOG.quest("run-scripts-from-elsewhere").validation
     assert isinstance(elsewhere_validation, CommandHistoryValidation)
     for documented_command in (
-        "cd ~/playground",
-        "cd ~/playground/",
         '~/scripts/maker-report.sh "Elsewhere Report"',
         'bash ~/scripts/maker-report.sh "Elsewhere Report"',
     ):

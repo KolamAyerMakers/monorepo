@@ -1472,6 +1472,7 @@ def test_file_check_validation_reads_bounded_text_files(
     assert failed_result.evidence == {
         "byte_count": 6,
         "catalog_path": "notes.txt",
+        "content_excerpt": "ready\n",
         "failure_reason": "file-content-mismatch",
         "forbidden_matched": None,
         "passed": False,
@@ -2333,6 +2334,7 @@ def test_user_port_file_validation_uses_uid_derived_port(
     assert failed_result.evidence == {
         "byte_count": 47,
         "catalog_path": "site.service",
+        "content_excerpt": "ExecStart=/usr/bin/python3 -m http.server 9999\n",
         "computed_port": 14242,
         "failure_reason": "port-content-mismatch",
         "forbidden_matched": None,

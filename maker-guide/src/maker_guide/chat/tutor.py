@@ -39,10 +39,12 @@ from maker_guide.llm_tutor import (
     build_tutor_messages,
     safe_tutor_text,
 )
+from maker_guide.progress.models import CurrentSessionObjectiveResult
 from maker_guide.progress.service import current_session_objective
 from maker_guide.progress.validation import (
     QuestValidationInput,
     validate_quest,
+    validate_session_objective,
     validation_answer_question,
 )
 from maker_guide.repositories.audit_event import AuditEvent, append_audit_event
@@ -258,6 +260,7 @@ def build_read_only_tutor_context(
             handle,
             timestamp,
             focused_pending_quest_ids,
+            objective_result,
         ),
         session=ReadOnlySessionContext(
             terminal=request.context.terminal
@@ -407,13 +410,32 @@ def _read_only_quest_context(quest: Quest) -> ReadOnlyQuestContext:
     )
 
 
-def _read_only_validation_status(
+def _read_only_validation_status(  # noqa: PLR0913, validation context is assembled from read-only state.
     database_connection: sqlite3.Connection,
     catalog: CourseCatalog,
     handle: str,
     timestamp: str,
     pending_quest_ids: tuple[str, ...],
+    objective_result: CurrentSessionObjectiveResult | None,
 ) -> ReadOnlyValidationStatus | None:
+    if objective_result is not None and objective_result.objective is not None:
+        validation_result = validate_session_objective(
+            QuestValidationInput(
+                database_connection=database_connection,
+                catalog=catalog,
+                handle=handle,
+                checked_at=timestamp,
+                assigned_at=objective_result.evidence_since,
+            ),
+            objective_result.objective.validation,
+        )
+        return ReadOnlyValidationStatus(
+            target_type="session_objective",
+            target_id=objective_result.objective.id,
+            passed=validation_result.passed,
+            failure_reason=validation_result.failure_reason,
+            evidence=validation_result.evidence,
+        )
     if not pending_quest_ids:
         return None
     assignment = get_assignment(
@@ -435,7 +457,8 @@ def _read_only_validation_status(
         ),
     )
     return ReadOnlyValidationStatus(
-        quest_id=assignment.quest_id,
+        target_type="quest",
+        target_id=assignment.quest_id,
         passed=validation_result.passed,
         failure_reason=validation_result.failure_reason,
         evidence=validation_result.evidence,

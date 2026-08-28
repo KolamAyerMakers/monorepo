@@ -51,6 +51,7 @@ from maker_guide.validation_paths import (
 _OBSERVATION_LIMIT = 100
 _AUDIT_EVENT_LIMIT = 20
 _MAX_VALIDATION_FILE_BYTES = 1_048_576
+_MAX_DIAGNOSTIC_FILE_CHARS = 4_000
 _PATH_RESOLUTION_FAILURE_REASONS = frozenset(
     {
         "unknown-user",
@@ -1098,6 +1099,7 @@ def _validate_file_regex_contents(
             byte_count=file_read.byte_count,
             required_matched=required_matched,
             forbidden_matched=forbidden_matched if request.forbidden_regex is not None else None,
+            content_excerpt=file_contents[:_MAX_DIAGNOSTIC_FILE_CHARS],
             **(request.extra_evidence or {}),
         )
     if forbidden_matched:
@@ -1109,6 +1111,7 @@ def _validate_file_regex_contents(
             byte_count=file_read.byte_count,
             required_matched=required_matched,
             forbidden_matched=forbidden_matched,
+            content_excerpt=file_contents[:_MAX_DIAGNOSTIC_FILE_CHARS],
             **(request.extra_evidence or {}),
         )
     return _file_validation_result(

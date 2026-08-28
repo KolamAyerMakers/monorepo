@@ -52,8 +52,10 @@ _S5_SHEBANG_PATTERN = r"\A#!/bin/bash(?:\n|\Z)"
 _S5_REPORT_TITLE_SCRIPT_PATTERN = (
     r"""(?ms)\A"""
     r"""(?=.*^[ \t]*report_title=(?:"\$(?:1|\{1\})"|\$(?:1|\{1\}))[ \t]*(?:#.*)?$"""
-    r""".*?^[ \t]*printf[ \t]+(?:'[^'\n]*(?<!%)%s[^'\n]*'|"[^"\n]*(?<!%)%s[^"\n]*")"""
-    r"""[ \t]+"\$(?:report_title|\{report_title\})"[ \t]*(?:#.*)?$)"""
+    r"""(?=.*^[ \t]*printf[ \t]+(?:"""
+    r"""(?:'[^'\n]*(?<!%)%s[^'\n]*'|"[^"\n]*(?<!%)%s[^"\n]*")[ \t]+"""
+    r"""\$(?:report_title|\{report_title\})"""
+    r"""|"\$(?:report_title|\{report_title\})\\n")[ \t]*(?:#.*)?$))"""
     r""".+\Z"""
 )
 _S5_REPORT_HEADING_SCRIPT_PATTERN = (
@@ -94,7 +96,7 @@ _S5_REPORT_FENCES_SCRIPT_PATTERN = (
 _S5_MARKDOWN_REPORT_PATTERN = (
     r"(?ms)\A#[ \t]+\S[^\n]*\n"
     r"(?=.*?^\*[ \t]+User:[^\n]*$)"
-    r"(?=.*?^\*[ \t]+Host:[^\n]*$)"
+    r"(?=.*?^\*[ \t]+Host(?:name)?:[^\n]*$)"
     r"(?=.*?^\*[ \t]+Date:[^\n]*$)"
     r"(?=.*?^##[ \t]+Shell fields in /etc/passwd[ \t]*:?[ \t]*$)"
     r"(?=.*?^```(?:text)?[ \t]*$)"
@@ -102,7 +104,7 @@ _S5_MARKDOWN_REPORT_PATTERN = (
     r".*?^```[ \t]*$\n?\Z"
 )
 _S5_HTML_REPORT_PATTERN = (
-    r"(?is)<h1[^>]*>.+?</h1>.*User:.*Host:.*Date:.*"
+    r"(?is)<h1[^>]*>.+?</h1>.*User:.*Host(?:name)?:.*Date:.*"
     r"<h2[^>]*>Shell fields in /etc/passwd:?</h2>"
 )
 _S5_HOME_TITLED_REPORT_COMMAND_PATTERN = (
@@ -2624,10 +2626,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             required_commands=("cd",),
             practiced_skills=("path", "shell-scripting"),
             validation=CommandHistoryValidation(
-                required_patterns=(
-                    r"^cd ~/playground/?$",
-                    _S5_HOME_TITLED_REPORT_COMMAND_PATTERN,
-                ),
+                required_patterns=(_S5_HOME_TITLED_REPORT_COMMAND_PATTERN,),
                 observed_commands=("cd",),
                 ordered=True,
             ),

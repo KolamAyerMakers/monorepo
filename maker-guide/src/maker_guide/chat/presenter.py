@@ -103,7 +103,8 @@ def format_failed_check(
         if tutor_feedback is not None
         else (
             "Let's work through it:\nReview the quest prompt and checklist, do the work "
-            "yourself, then ask me to check again."
+            "yourself, then ask me to check again. For an explanation, ask privately: "
+            "why did my check fail?"
         )
     )
     return (

@@ -187,8 +187,10 @@ class ReadOnlySessionContext:
 class ReadOnlyValidationStatus:
     """Current deterministic validation status exposed without write access."""
 
-    quest_id: str
-    """Quest id this status describes."""
+    target_type: Literal["quest", "session_objective"]
+    """Curriculum item type this status describes."""
+    target_id: str
+    """Stable curriculum item id this status describes."""
     passed: bool
     """Whether currently visible evidence satisfies validation."""
     failure_reason: str | None
