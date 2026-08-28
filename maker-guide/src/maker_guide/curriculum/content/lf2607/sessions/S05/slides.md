@@ -506,6 +506,8 @@ Three sequential extensions are available after the live objectives:
 
 # Next Session: Decisions And Networks
 
+S6: 2026-09-12
+
 Your script always writes the same report. It types, it does not choose.
 
 In S6, it learns to make decisions and to talk to the network.
