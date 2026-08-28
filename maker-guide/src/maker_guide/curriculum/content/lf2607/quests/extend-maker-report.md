@@ -18,20 +18,19 @@ Add a labeled `uptime` line to `maker-report.sh`, regenerate `~/src/pages/maker-
 1. Run `guide now` so this quest is assigned before you create evidence.
 2. Run `uptime` by itself and inspect its output.
 3. Open `~/scripts/maker-report.sh` in Micro.
-4. Inside the report group, after the date lines, print the label `* Uptime: ` and run `uptime` on the next line.
+4. Inside the report group, add `uptime` after the date information and keep a visible `* Uptime:` label in the generated Markdown.
 5. Run `~/scripts/maker-report.sh "Uptime Report"`. The script rewrites `~/src/pages/maker-report.md`.
 6. Inspect the Markdown with `cat ~/src/pages/maker-report.md`, then run `build-website`.
 7. Open the report page and run `guide check`.
 
 ## Hints
 
-1. Follow the same two-line shape as the existing User, Host, and Date entries.
-2. The `uptime` command already writes a final newline.
-3. The script, Markdown source, and built HTML all need the labeled uptime value.
+1. The `uptime` command already writes a final newline.
+2. The script needs the `uptime` command; the Markdown source and built HTML need visible uptime information.
 
 ## If Check Fails
 
-Run `bash -x ~/scripts/maker-report.sh "Uptime Report"`. The trace remains visible while report output goes to the Markdown file. Confirm the file contains one line beginning `* Uptime: `, then rebuild before checking again.
+Run `bash -x ~/scripts/maker-report.sh "Uptime Report"`. The trace remains visible while report output goes to the Markdown file. Confirm the Markdown and built page both show uptime information, then check again.
 
 ## Related Reading
 

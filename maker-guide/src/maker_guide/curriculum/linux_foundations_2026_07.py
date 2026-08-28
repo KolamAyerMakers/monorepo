@@ -17,6 +17,7 @@ from maker_guide.curriculum.models import (
     FailureFeedback,
     FileCheckValidation,
     FileMatchesPathValidation,
+    GitTrackedPathValidation,
     Hint,
     InteractiveQuestionValidation,
     IrcChannelJoinObservedValidation,
@@ -78,55 +79,42 @@ _S5_REPORT_PIPELINE_PATTERN = (
 )
 _S5_REPORT_DESTINATION_SCRIPT_PATTERN = (
     r"(?ms)\A"
-    r"(?=.*^[ \t]*\{[ \t]*(?:#.*)?$"
-    r".*?^[ \t]*\}[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"
+    r"(?=.*^[ \t]*(?:\{|\()[ \t]*(?:#.*)?$"
+    r".*?^[ \t]*(?:\}|\))[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"
     r".+\Z"
 )
 _S5_REPORT_FENCES_SCRIPT_PATTERN = (
     r"""(?ms)\A"""
-    r"""(?=.*^[ \t]*printf[^\n]*```text\\n[^\n]*$)"""
-    r"""(?=.*^[ \t]*printf[ \t]+(?:'```\\n'|"```\\n")[ \t]*(?:#.*)?$"""
-    r"""\n[ \t]*\}[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"""
+    r"""(?=.*^[ \t]*printf[^\n]*(?:```(?:text)?\\n|'%s\\n'[ \t]+'```(?:text)?')[^\n]*$"""
+    r""".*?^[ \t]*cut[^\n]*$"""
+    r""".*?^[ \t]*printf[ \t]+(?:'```\\n'|"```\\n"|'%s\\n'[ \t]+'```')[ \t]*(?:#.*)?$"""
+    r""".*?^[ \t]*(?:\}|\))[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"""
     r""".+\Z"""
 )
 _S5_MARKDOWN_REPORT_PATTERN = (
     r"(?ms)\A#[ \t]+\S[^\n]*\n"
-    r".*?^\*[ \t]+User:[ \t]+\S[^\n]*$"
-    r".*?^\*[ \t]+Host:[ \t]+\S[^\n]*$"
-    r".*?^\*[ \t]+Date:[ \t]+\S[^\n]*$"
-    r".*?^##[ \t]+Shell fields in /etc/passwd[ \t]*$"
-    r".*?^```text[ \t]*$"
-    r".*?^/[^\n]+$"
+    r"(?=.*?^\*[ \t]+User:[^\n]*$)"
+    r"(?=.*?^\*[ \t]+Host:[^\n]*$)"
+    r"(?=.*?^\*[ \t]+Date:[^\n]*$)"
+    r"(?=.*?^##[ \t]+Shell fields in /etc/passwd[ \t]*:?[ \t]*$)"
+    r"(?=.*?^```(?:text)?[ \t]*$)"
+    r"(?=.*?^/[^\n]+$)"
     r".*?^```[ \t]*$\n?\Z"
 )
 _S5_HTML_REPORT_PATTERN = (
     r"(?is)<h1[^>]*>.+?</h1>.*User:.*Host:.*Date:.*"
-    r"<h2[^>]*>Shell fields in /etc/passwd</h2>"
-)
-_S5_QUOTED_TITLE_ARGUMENT_PATTERN = r"""(?:"[^"]+ [^"]+"|'[^']+ [^']+')"""
-_S5_TITLED_REPORT_COMMAND_PATTERN = (
-    r"^(?:\./|~/scripts/)maker-report\.sh " + _S5_QUOTED_TITLE_ARGUMENT_PATTERN + r"$"
+    r"<h2[^>]*>Shell fields in /etc/passwd:?</h2>"
 )
 _S5_HOME_TITLED_REPORT_COMMAND_PATTERN = (
-    r"^~/scripts/maker-report\.sh " + _S5_QUOTED_TITLE_ARGUMENT_PATTERN + r"$"
+    r"^(?:(?:bash|/bin/bash)[ \t]+)?~/scripts/maker-report\.sh[ \t]+"
+    r"""(?:"[^"]+"|'[^']+')$"""
 )
-_S5_BASH_HOME_TITLED_REPORT_COMMAND_PATTERN = (
-    r"^(?:bash|/bin/bash) ~/scripts/maker-report\.sh " + _S5_QUOTED_TITLE_ARGUMENT_PATTERN + r"$"
-)
-_S5_BUILD_WEBSITE_PATTERN = r"^(?:build-website|maker-guide-build-personal-website)$"
 _S5_UPTIME_SCRIPT_PATTERN = (
-    r"""(?m)^[ \t]*printf[ \t]+(?:'\*[ \t]+Uptime:[ \t]*'|"\*[ \t]+Uptime:[ \t]*")"""
-    r"""[ \t]*(?:#.*)?$\n[ \t]*uptime[ \t]*(?:#.*)?$"""
+    r"(?im)^\s*(?:printf|echo)\b[^\n]*\bUptime\b[^\n]*"
+    r"(?:\n[^\n]*){0,2}\n\s*uptime\b"
 )
-_S5_UPTIME_REPORT_PATTERN = r"(?m)^\*[ \t]+Uptime:[ \t]+\S[^\n]*$"
-_S5_UPTIME_HTML_PATTERN = r"(?is)<li>Uptime:[^<]+</li>"
-_S5_GIT_LOG_PATTERN = r"(?m)^[0-9a-f]{4,64}[ \t]+\S"
-_S5_GIT_CLEAN_COMMAND_PATTERN = r"^git diff --exit-code HEAD -- scripts/maker-report\.sh$"
-_S5_GIT_STATUS_COMMAND_PATTERN = r"^git status --short scripts/maker-report\.sh$"
-_S5_GIT_LOG_COMMAND_PATTERN = (
-    r"^git log --oneline -- scripts/maker-report\.sh"
-    r"[ \t]*>[ \t]*~/playground/maker-report-git\.txt$"
-)
+_S5_UPTIME_REPORT_PATTERN = r"(?m)^\*[ \t]+Uptime:[ \t]*(?:\S|\n[ \t]*(?![#*])\S)"
+_S5_UPTIME_HTML_PATTERN = r"(?is)Uptime:\s*[^<\n]*\bup\s+\d"
 _EXECUTABLE_NOT_FILE_PATTERN = (
     r"\b(executable|program|binary)\b.{0,12}\b(isn't|is not|means not|never)\s+"
     r"(a )?(file|disk)\b"
@@ -377,6 +365,11 @@ _QUEST_SPECIFIC_FAILURE_REASONS_BY_VALIDATION_TYPE = MappingProxyType(
         ExecutablePathValidation: ("missing-path", "not-executable", "wrong-owner"),
         OwnedPathValidation: ("missing-path", "wrong-owner"),
         FileMatchesPathValidation: ("missing-path", "file-content-mismatch"),
+        GitTrackedPathValidation: (
+            "git-path-not-committed",
+            "git-path-modified",
+            "git-repository-error",
+        ),
         UserPortFileValidation: ("missing-path", "port-content-mismatch"),
     },
 )
@@ -405,6 +398,9 @@ _FAILURE_FEEDBACK_TEXT_TEMPLATES = MappingProxyType(
         "port-content-mismatch": (
             "Update the service file with your computed port, then try again: {evidence}"
         ),
+        "git-path-not-committed": "Commit the required Git path, then try again: {evidence}",
+        "git-path-modified": "Commit or discard changes to the required Git path, then try again.",
+        "git-repository-error": "Check that the required directory is a working Git repository.",
         "missing-irc-ctcp-version": (
             "Message the guide from terminal IRC so it can verify your IRC client."
         ),
@@ -573,6 +569,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         giving direct steps, unless safety or syntax requires direct correction.
         Do not do the work for the learner. Help them reason from shell fundamentals:
         files, permissions, processes, networking, user services, Git, and publishing.
+        The Bash hook records every successful learner command automatically; you can see
+        recent commands in the snapshot. Never ask the learner to copy or paste command
+        output as evidence. When required evidence is missing, name the exact command to
+        run in their terminal; validation happens automatically after they run it.
         """,
     ).strip(),
     timezone="Asia/Singapore",
@@ -1159,9 +1159,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 path="~/scripts/maker-report.sh",
                                 required_regex=_S5_KNOWN_COMMANDS_SCRIPT_PATTERN,
                             ),
-                            CommandHistoryValidation(
-                                required_patterns=(r"^(?:bash|/bin/bash) maker-report\.sh$",),
-                                observed_commands=("bash",),
+                            FileCheckValidation(
+                                path="~/scripts/maker-report.sh",
+                                required_regex=_S5_SHEBANG_PATTERN,
                             ),
                         ),
                     ),
@@ -1186,15 +1186,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 required_regex=_S5_SHEBANG_PATTERN,
                             ),
                             ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
-                            CommandHistoryValidation(
-                                required_patterns=(
-                                    r"^chmod u\+x maker-report\.sh$",
-                                    r"^head -n 1 maker-report\.sh$",
-                                    r"^\./maker-report\.sh$",
-                                ),
-                                observed_commands=("chmod", "head", "./maker-report.sh"),
-                                ordered=True,
-                            ),
                         ),
                     ),
                 ),
@@ -1221,14 +1212,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 required_regex=_S5_REPORT_TITLE_SCRIPT_PATTERN,
                             ),
                             ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
-                            CommandHistoryValidation(
-                                required_patterns=(
-                                    r"^\./maker-report\.sh My Maker Report$",
-                                    _S5_TITLED_REPORT_COMMAND_PATTERN,
-                                ),
-                                observed_commands=("./maker-report.sh", "./maker-report.sh"),
-                                ordered=True,
-                            ),
                         ),
                     ),
                 ),
@@ -1236,25 +1219,14 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="publish-maker-report",
                     title="Generate and publish a useful report",
                     prompt=(
-                        "Format `maker-report.sh` as Markdown, add "
-                        "`cut -d: -f7 /etc/passwd | sort -u`, group the report commands so the "
-                        "script writes `~/src/pages/maker-report.md`, inspect it, run "
-                        "`build-website`, then open the generated page."
+                        "Generate `~/src/pages/maker-report.md` with a `#` title, User, Host, "
+                        "and Date information, then `## Shell fields in /etc/passwd` and a fenced "
+                        "shell list from `cut -d: -f7 /etc/passwd | sort -u`. Group commands so "
+                        'the script writes the file. Run `./maker-report.sh "Your report title"` '
+                        "before inspecting it. Then run `build-website`. Open the generated page."
                     ),
                     validation=AllOfValidation(
                         validations=(
-                            FileCheckValidation(
-                                path="~/scripts/maker-report.sh",
-                                required_regex=_S5_REPORT_LABELS_SCRIPT_PATTERN,
-                            ),
-                            FileCheckValidation(
-                                path="~/scripts/maker-report.sh",
-                                required_regex=_S5_SHEBANG_PATTERN,
-                            ),
-                            FileCheckValidation(
-                                path="~/scripts/maker-report.sh",
-                                required_regex=_S5_REPORT_HEADING_SCRIPT_PATTERN,
-                            ),
                             FileCheckValidation(
                                 path="~/scripts/maker-report.sh",
                                 required_regex=_S5_REPORT_PIPELINE_PATTERN,
@@ -1264,28 +1236,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 required_regex=_S5_REPORT_DESTINATION_SCRIPT_PATTERN,
                             ),
                             FileCheckValidation(
-                                path="~/scripts/maker-report.sh",
-                                required_regex=_S5_REPORT_FENCES_SCRIPT_PATTERN,
-                            ),
-                            ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
-                            FileCheckValidation(
                                 path="~/src/pages/maker-report.md",
                                 required_regex=_S5_MARKDOWN_REPORT_PATTERN,
                             ),
                             FileCheckValidation(
                                 path="~/public_html/maker-report.html",
                                 required_regex=_S5_HTML_REPORT_PATTERN,
-                            ),
-                            CommandHistoryValidation(
-                                required_patterns=(
-                                    r'^\./maker-report\.sh "S5 Report"$',
-                                    _S5_BUILD_WEBSITE_PATTERN,
-                                ),
-                                observed_commands=(
-                                    "./maker-report.sh",
-                                    "build-website",
-                                ),
-                                ordered=True,
                             ),
                         ),
                     ),
@@ -2625,18 +2581,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 validations=(
                     FileCheckValidation(
                         path="~/scripts/maker-report.sh",
-                        required_regex=_S5_REPORT_LABELS_SCRIPT_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/scripts/maker-report.sh",
-                        required_regex=_S5_SHEBANG_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/scripts/maker-report.sh",
-                        required_regex=_S5_REPORT_HEADING_SCRIPT_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/scripts/maker-report.sh",
                         required_regex=_S5_REPORT_PIPELINE_PATTERN,
                     ),
                     FileCheckValidation(
@@ -2645,13 +2589,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     ),
                     FileCheckValidation(
                         path="~/scripts/maker-report.sh",
-                        required_regex=_S5_REPORT_FENCES_SCRIPT_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/scripts/maker-report.sh",
                         required_regex=_S5_UPTIME_SCRIPT_PATTERN,
                     ),
-                    ExecutablePathValidation(paths=("~/scripts/maker-report.sh",)),
                     FileCheckValidation(
                         path="~/src/pages/maker-report.md",
                         required_regex=_S5_MARKDOWN_REPORT_PATTERN,
@@ -2668,14 +2607,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         path="~/public_html/maker-report.html",
                         required_regex=_S5_UPTIME_HTML_PATTERN,
                     ),
-                    CommandHistoryValidation(
-                        required_patterns=(
-                            _S5_HOME_TITLED_REPORT_COMMAND_PATTERN,
-                            _S5_BUILD_WEBSITE_PATTERN,
-                        ),
-                        observed_commands=("build-website",),
-                        ordered=True,
-                    ),
                 ),
             ),
             goal="Extend a useful script without replacing the working parts.",
@@ -2687,27 +2618,23 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=34,
             available_after_session="S5",
             prompt=(
-                "Change to `~/playground`, confirm the directory, then run `maker-report.sh` "
-                "with Bash and a quoted title using its home-anchored `~/...` path."
+                "Change to `~/playground`, then run `maker-report.sh` with a quoted title using "
+                "its home-anchored `~/...` path."
             ),
-            required_commands=("mkdir", "pwd", "cd", "bash", "build-website"),
+            required_commands=("cd",),
             practiced_skills=("path", "shell-scripting"),
-            # ponytail: ordered commands are sufficient for optional path practice; cwd is not
-            # an authorization boundary.
             validation=CommandHistoryValidation(
                 required_patterns=(
-                    r"^cd ~/playground$",
-                    r"^pwd$",
-                    _S5_BASH_HOME_TITLED_REPORT_COMMAND_PATTERN,
-                    _S5_BUILD_WEBSITE_PATTERN,
+                    r"^cd ~/playground/?$",
+                    _S5_HOME_TITLED_REPORT_COMMAND_PATTERN,
                 ),
-                observed_commands=("cd", "pwd", "bash", "build-website"),
+                observed_commands=("cd",),
                 ordered=True,
             ),
             goal="Separate your current directory from the path to an executable file.",
             evidence=(
-                "The guide needs `cd ~/playground`, `pwd`, then a titled "
-                "`bash ~/scripts/maker-report.sh ...` run followed by `build-website`."
+                "The guide needs `cd ~/playground`, then a titled "
+                "`~/scripts/maker-report.sh ...` run."
             ),
         ),
         _quest(
@@ -2715,36 +2642,14 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Preserve the report script in Git",
             sequence=35,
             available_after_session="S5",
-            prompt=(
-                "Copy `maker-report.sh` to `~/src/scripts/`, commit it from `~/src`, then save "
-                "`git log --oneline -- scripts/maker-report.sh` to "
-                "`~/playground/maker-report-git.txt`."
-            ),
-            required_commands=(
-                "mkdir",
-                "cp",
-                "chmod",
-                "git status",
-                "git add",
-                "git diff",
-                "git commit",
-                "git log",
-                ">",
-            ),
+            prompt="Commit `maker-report.sh` in `~/src/scripts/` with your normal Git workflow.",
+            required_commands=("git log",),
             practiced_skills=("shell-scripting", "git-basics"),
             validation=AllOfValidation(
                 validations=(
                     FileCheckValidation(
                         path="~/src/scripts/maker-report.sh",
-                        required_regex=_S5_REPORT_LABELS_SCRIPT_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/src/scripts/maker-report.sh",
                         required_regex=_S5_SHEBANG_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/src/scripts/maker-report.sh",
-                        required_regex=_S5_REPORT_HEADING_SCRIPT_PATTERN,
                     ),
                     FileCheckValidation(
                         path="~/src/scripts/maker-report.sh",
@@ -2756,41 +2661,17 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     ),
                     FileCheckValidation(
                         path="~/src/scripts/maker-report.sh",
-                        required_regex=_S5_REPORT_FENCES_SCRIPT_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/src/scripts/maker-report.sh",
                         required_regex=_S5_UPTIME_SCRIPT_PATTERN,
                     ),
                     ExecutablePathValidation(paths=("~/src/scripts/maker-report.sh",)),
-                    FileCheckValidation(
-                        path="~/playground/maker-report-git.txt",
-                        required_regex=_S5_GIT_LOG_PATTERN,
-                    ),
-                    CommandHistoryValidation(
-                        required_patterns=(
-                            r"^git add scripts/maker-report\.sh$",
-                            r"^git commit -m .+",
-                            _S5_GIT_CLEAN_COMMAND_PATTERN,
-                            _S5_GIT_STATUS_COMMAND_PATTERN,
-                            _S5_GIT_LOG_COMMAND_PATTERN,
-                        ),
-                        observed_commands=(
-                            "git add",
-                            "git commit",
-                            "git diff",
-                            "git status",
-                            "git log",
-                        ),
-                        ordered=True,
+                    GitTrackedPathValidation(
+                        repository_path="~/src",
+                        path="scripts/maker-report.sh",
                     ),
                 ),
             ),
             goal="Keep the useful script in the source history created during S4.",
-            evidence=(
-                "The copied final script must be executable, match HEAD, and appear in saved "
-                "Git log output."
-            ),
+            evidence="The final script must be executable, committed, and unchanged from HEAD.",
         ),
         _quest(
             quest_id="loop-one-to-ten",

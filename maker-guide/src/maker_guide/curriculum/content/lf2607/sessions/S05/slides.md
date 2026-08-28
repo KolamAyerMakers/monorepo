@@ -394,7 +394,7 @@ The script will create this plain-text structure:
 ```
 ````
 
-Triple backticks open and close a code block. `text` says its contents are plain text. The shell list varies by computer.
+Triple backticks on lines by themselves open and close a code block. The optional `text` labels its contents as plain text. Use single quotes when printing them so Bash treats the backticks as ordinary output. The shell list varies by computer.
 
 <!-- end_slide -->
 
@@ -455,9 +455,9 @@ report_title="$1"
   printf '* Date: '
   date
   printf '\n## Shell fields in /etc/passwd\n\n'
-  printf '```text\n'
+  printf '%s\n' '```text'
   cut -d: -f7 /etc/passwd | sort -u
-  printf '```\n'
+  printf '%s\n' '```'
 } > ~/src/pages/maker-report.md
 ````
 

@@ -6,6 +6,7 @@ import os
 import re
 import sqlite3
 import stat
+import subprocess
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,6 +20,7 @@ from maker_guide.curriculum.models import (
     ExecutablePathValidation,
     FileCheckValidation,
     FileMatchesPathValidation,
+    GitTrackedPathValidation,
     InteractiveQuestionValidation,
     IrcChannelJoinObservedValidation,
     IrcCtcpVersionValidation,
@@ -114,6 +116,8 @@ _VALIDATION_FAILURE_REASONS_BY_ID = {
     "file_matches_path": _PATH_RESOLUTION_FAILURE_REASONS
     | _FILE_READ_FAILURE_REASONS
     | frozenset({"file-content-mismatch"}),
+    "git_tracked_path": _PATH_RESOLUTION_FAILURE_REASONS
+    | frozenset({"git-path-not-committed", "git-path-modified", "git-repository-error"}),
     "user_port_file": _PATH_RESOLUTION_FAILURE_REASONS
     | _FILE_READ_FAILURE_REASONS
     | frozenset({"port-content-mismatch", "invalid-regex", "unsupported-port-formula"}),
@@ -133,6 +137,7 @@ _SUPPORTED_VALIDATION_TYPE_IDS = frozenset(
         "owned_path",
         "file_check",
         "file_matches_path",
+        "git_tracked_path",
         "user_port_file",
         "interactive_question",
         "learner_handle_question",
@@ -346,6 +351,8 @@ def _validate_rule(  # noqa: C901
             result = _validate_file_check(validation_input, validation)
         case FileMatchesPathValidation():
             result = _validate_file_matches_path(validation_input, validation)
+        case GitTrackedPathValidation():
+            result = _validate_git_tracked_path(validation_input, validation)
         case UserPortFileValidation():
             result = _validate_user_port_file(validation_input, validation)
         case InteractiveQuestionValidation():
@@ -806,6 +813,70 @@ def _validate_file_matches_path(
             len(target_bytes.content_bytes) if target_bytes.content_bytes is not None else None
         ),
         source_path=validation.source_path,
+    )
+
+
+def _validate_git_tracked_path(
+    validation_input: QuestValidationInput,
+    validation: GitTrackedPathValidation,
+) -> QuestValidationResult:
+    resolution = resolve_validation_path(
+        validation_input.handle,
+        validation.repository_path,
+        account_lookup=validation_input.account_lookup,
+    )
+    if resolution.failure_reason is not None or resolution.target_path is None:
+        return _git_tracked_path_result(
+            validation,
+            False,
+            resolution.failure_reason or "read-error",
+        )
+    command_prefix = (
+        "git",
+        "-c",
+        f"safe.directory={resolution.target_path}",
+        "-C",
+        str(resolution.target_path),
+    )
+    try:
+        committed_path = subprocess.run(  # noqa: S603, catalog paths are validated and shell-free.
+            (*command_prefix, "cat-file", "-e", f"HEAD:{validation.path}"),
+            capture_output=True,
+            check=False,
+            timeout=5,
+        )
+        if committed_path.returncode != 0:
+            return _git_tracked_path_result(validation, False, "git-path-not-committed")
+        clean_path = subprocess.run(  # noqa: S603, catalog paths are validated and shell-free.
+            (*command_prefix, "diff", "--quiet", "HEAD", "--", validation.path),
+            capture_output=True,
+            check=False,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return _git_tracked_path_result(validation, False, "git-repository-error")
+    if clean_path.returncode == 0:
+        return _git_tracked_path_result(validation, True, None)
+    if clean_path.returncode == 1:
+        return _git_tracked_path_result(validation, False, "git-path-modified")
+    return _git_tracked_path_result(validation, False, "git-repository-error")
+
+
+def _git_tracked_path_result(
+    validation: GitTrackedPathValidation,
+    passed: bool,
+    failure_reason: str | None,
+) -> QuestValidationResult:
+    return QuestValidationResult(
+        passed=passed,
+        failure_reason=failure_reason,
+        evidence=_validation_evidence(
+            "git_tracked_path",
+            passed,
+            failure_reason,
+            repository_path=validation.repository_path,
+            path=validation.path,
+        ),
     )
 
 

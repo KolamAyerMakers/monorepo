@@ -2382,6 +2382,69 @@ def test_irc_check_marks_missing_client_evidence_as_retryable(
     assert "Not yet." in response.text
 
 
+def test_check_intent_names_stale_s5_report_html(
+    migrated_database_path: Path,
+    tmp_path: Path,
+) -> None:
+    """S5 report feedback tells learners how to rebuild stale HTML."""
+    learner_home = tmp_path / "alice"
+    script_path = learner_home / "scripts" / "maker-report.sh"
+    script_path.parent.mkdir(parents=True)
+    script_path.write_text(
+        "{\ncut -d: -f7 /etc/passwd | sort -u\n} > ~/src/pages/maker-report.md\n",
+        encoding="utf-8",
+    )
+    report_path = learner_home / "src" / "pages" / "maker-report.md"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text(
+        """# Title
+* User: learner
+* Host: classroom
+* Date: today
+## Shell fields in /etc/passwd
+```
+/bin/bash
+```
+""",
+        encoding="utf-8",
+    )
+    html_path = learner_home / "public_html" / "maker-report.html"
+    html_path.parent.mkdir(parents=True)
+    html_path.write_text("<h1>Old report</h1>\n", encoding="utf-8")
+
+    with connect_database(migrated_database_path) as database_connection:
+        _write_member(database_connection, session_reached="S5")
+        _complete_current_session_objectives(database_connection, "S4")
+        with database_connection:
+            for objective in CATALOG.session("S5").objectives[:3]:
+                complete_session_objective(
+                    database_connection,
+                    SessionObjectiveCompletion(
+                        handle="alice",
+                        course_id=CATALOG.course.id,
+                        session_id="S5",
+                        objective_id=objective.id,
+                        completed_at="2026-08-30T09:00:00Z",
+                        evidence_json="{}",
+                    ),
+                )
+
+        response = handle_chat_request(
+            _chat_request("check"),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home, html_path.stat().st_uid),
+                timestamp="2026-08-30T09:01:00Z",
+            ),
+        )
+
+    assert (
+        "`~/public_html/maker-report.html` is stale or does not contain this report"
+        in response.text
+    )
+    assert "I cannot verify that yet" not in response.text
+
+
 def _write_member(
     database_connection: sqlite3.Connection,
     session_reached: str = "S1",

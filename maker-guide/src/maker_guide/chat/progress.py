@@ -507,7 +507,7 @@ def _format_session_objective(
     return "\n\n".join(response_parts)
 
 
-def _objective_status(
+def _objective_status(  # noqa: PLR0911 - Each validation failure has one direct response.
     validation_result: QuestValidationResult,
     tutor_feedback: str | None = None,
 ) -> str:
@@ -537,6 +537,20 @@ def _objective_status(
         "contradicted-concept",
     }:
         return f"Let's work through your answer:\n{tutor_feedback}"
+    if (failed_artifact := _objective_failed_artifact(validation_result)) is not None:
+        failure_reason, catalog_path = failed_artifact
+        if failure_reason == "missing-path":
+            return f"I cannot find `{catalog_path}`. Create it, then run `guide check`."
+        if failure_reason == "file-content-mismatch":
+            if catalog_path == "~/public_html/maker-report.html":
+                return (
+                    f"`{catalog_path}` is stale or does not contain this report. "
+                    "Run `build-website`, then run `guide check`."
+                )
+            return (
+                f"`{catalog_path}` exists, but its contents do not match this objective. "
+                "Recheck the required structure, then run `guide check`."
+            )
     concept_nudges = tuple(
         _CONCEPT_ASSOCIATION_NUDGES[concept_id]
         for concept_id in _objective_evidence_strings(
@@ -565,6 +579,22 @@ def _objective_status(
             )
         )
     return "I cannot verify that yet. Do the objective, then run `guide now`."
+
+
+def _objective_failed_artifact(validation_result: QuestValidationResult) -> tuple[str, str] | None:
+    """Return the first failed file check with its learner-facing path."""
+    checks = validation_result.evidence.get("checks")
+    if not isinstance(checks, list):
+        return None
+    for check in cast("list[object]", checks):
+        if not isinstance(check, dict):
+            continue
+        check_evidence = cast("dict[str, object]", check)
+        failure_reason = check_evidence.get("failure_reason")
+        catalog_path = check_evidence.get("catalog_path")
+        if isinstance(failure_reason, str) and isinstance(catalog_path, str):
+            return failure_reason, catalog_path
+    return None
 
 
 def _objective_evidence_strings(

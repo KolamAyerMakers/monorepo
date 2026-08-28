@@ -230,6 +230,16 @@ class FileMatchesPathValidation:
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
+class GitTrackedPathValidation:
+    """Validation that a learner-owned Git path is committed and clean at HEAD."""
+
+    repository_path: str
+    """Learner-owned repository directory."""
+    path: str
+    """Repository-relative path that must exist in HEAD without local changes."""
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
 class UserPortFileValidation:
     """Validation based on a file containing the learner's computed service port."""
 
@@ -299,6 +309,7 @@ type QuestValidationLeaf = (
     | InteractiveQuestionValidation
     | FileCheckValidation
     | FileMatchesPathValidation
+    | GitTrackedPathValidation
     | UserPortFileValidation
     | PathExistsValidation
     | ExecutablePathValidation
@@ -675,6 +686,13 @@ def _validate_file_based_validation(validation: object) -> bool:
         if not validation.source_path.startswith("/"):
             raise ValueError("file match source path must be absolute")
         _require_validation_path("file match source path", validation.source_path)
+        return True
+    if isinstance(validation, GitTrackedPathValidation):
+        _require_validation_path("Git repository path", validation.repository_path)
+        tracked_path = PurePosixPath(validation.path)
+        if tracked_path.is_absolute() or ".." in tracked_path.parts:
+            raise ValueError("Git tracked path must be repository-relative")
+        _require_non_empty("Git tracked path", validation.path)
         return True
     if isinstance(validation, UserPortFileValidation):
         _require_validation_path("user port file path", validation.path)

@@ -225,7 +225,7 @@ The target file should contain this plain-text structure:
 ```
 ````
 
-`#` and `##` create headings. `*` starts a list item. Triple backticks open and close a fenced code block; `text` says its contents are plain text. The exact shell list varies by machine.
+`#` and `##` create headings. `*` starts a list item. Triple backticks on lines by themselves open and close a fenced code block; the optional `text` labels its contents as plain text. To print a fence, use a single-quoted value such as `printf '%s\n' '```text'`: single quotes make the backticks ordinary output, not a Bash command. The exact shell list varies by machine.
 
 Rebuild the data pipeline at the prompt before putting it in the script:
 
@@ -247,9 +247,9 @@ hostname
 printf '* Date: '
 date
 printf '\n## Shell fields in /etc/passwd\n\n'
-printf '```text\n'
+printf '%s\n' '```text'
 cut -d: -f7 /etc/passwd | sort -u
-printf '```\n'
+printf '%s\n' '```'
 ````
 
 Save, check syntax, and keep the output visible once:
@@ -287,9 +287,9 @@ report_title="$1"
   printf '* Date: '
   date
   printf '\n## Shell fields in /etc/passwd\n\n'
-  printf '```text\n'
+  printf '%s\n' '```text'
   cut -d: -f7 /etc/passwd | sort -u
-  printf '```\n'
+  printf '%s\n' '```'
 } > ~/src/pages/maker-report.md
 ````
 

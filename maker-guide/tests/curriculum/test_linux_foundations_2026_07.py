@@ -22,9 +22,9 @@ from maker_guide.curriculum.linux_foundations_2026_07 import (
 from maker_guide.curriculum.models import (
     AllOfValidation,
     CommandHistoryValidation,
-    ExecutablePathValidation,
     FileCheckValidation,
     FileMatchesPathValidation,
+    GitTrackedPathValidation,
     InteractiveQuestionValidation,
     IrcChannelJoinObservedValidation,
     IrcCtcpVersionValidation,
@@ -231,49 +231,22 @@ def test_s5_builds_one_cumulative_report_script(temporary_path: Path) -> None:
 
     final_validation = objectives["publish-maker-report"].validation
     assert isinstance(final_validation, AllOfValidation)
-    assert any(
-        isinstance(validation, ExecutablePathValidation)
-        and validation.paths == ("~/scripts/maker-report.sh",)
+    assert [
+        validation.path
         for validation in final_validation.validations
-    )
-    assert any(
-        isinstance(validation, CommandHistoryValidation)
-        and validation.ordered
-        and len(validation.required_patterns) == 2
-        for validation in final_validation.validations
-    )
-    documented_commands_by_objective = {
-        "create-maker-report": ("bash maker-report.sh",),
-        "run-maker-report-directly": (
-            "chmod u+x maker-report.sh",
-            "head -n 1 maker-report.sh",
-            "./maker-report.sh",
-        ),
-        "personalize-maker-report": (
-            "./maker-report.sh My Maker Report",
-            './maker-report.sh "My Maker Report"',
-        ),
-        "publish-maker-report": (
-            './maker-report.sh "S5 Report"',
-            "build-website",
-        ),
-    }
-    for objective_id, documented_commands in documented_commands_by_objective.items():
-        objective_validation = objectives[objective_id].validation
+        if isinstance(validation, FileCheckValidation)
+    ] == [
+        "~/scripts/maker-report.sh",
+        "~/scripts/maker-report.sh",
+        "~/src/pages/maker-report.md",
+        "~/public_html/maker-report.html",
+    ]
+    for objective in objectives.values():
+        objective_validation = objective.validation
         assert isinstance(objective_validation, AllOfValidation)
-        command_validation = next(
-            validation
+        assert not any(
+            isinstance(validation, CommandHistoryValidation)
             for validation in objective_validation.validations
-            if isinstance(validation, CommandHistoryValidation)
-        )
-        if objective_id in {"run-maker-report-directly", "personalize-maker-report"}:
-            assert command_validation.ordered
-        assert all(
-            any(
-                re.fullmatch(required_pattern, documented_command)
-                for required_pattern in command_validation.required_patterns
-            )
-            for documented_command in documented_commands
         )
 
     incomplete_sources_by_objective = {
@@ -354,30 +327,28 @@ def test_s5_builds_one_cumulative_report_script(temporary_path: Path) -> None:
         if isinstance(validation, FileCheckValidation)
         and validation.path == "~/scripts/maker-report.sh"
     )
-    assert source_validations
     assert all(
         re.search(validation.required_regex, reference_text) for validation in source_validations
     )
-    for invalid_source in (
-        reference_text.replace(
-            "  printf '# %s\\n\\n' \"$report_title\"\n",
-            "  printf '# Fixed title\\n\\n'\n  printf 'title=%s\\n' \"$report_title\"\n",
-        ),
-        reference_text.replace(
-            "  printf '* User: '\n  whoami\n",
-            "  printf '* User: fixed\\n'\n  whoami\n",
-        ),
-        reference_text.replace(
-            "} > ~/src/pages/maker-report.md\n",
-            "}\n",
-        ),
-        reference_text.replace("```text", "text"),
-        reference_text.replace("  printf '```\\n'\n", ""),
+    assert all(
+        re.search(
+            validation.required_regex,
+            reference_text.replace("{\n", "(\n").replace(
+                "} > ~/src/pages/maker-report.md",
+                ") > ~/src/pages/maker-report.md",
+            ),
+        )
+        for validation in source_validations
+    )
+    for incomplete_source in (
+        reference_text.replace("  cut -d: -f7 /etc/passwd | sort -u\n", ""),
+        reference_text.replace("} > ~/src/pages/maker-report.md\n", "}\n"),
     ):
         assert not all(
-            re.search(validation.required_regex, invalid_source)
+            re.search(validation.required_regex, incomplete_source)
             for validation in source_validations
         )
+
     markdown_validation = next(
         validation
         for validation in final_validation.validations
@@ -385,6 +356,49 @@ def test_s5_builds_one_cumulative_report_script(temporary_path: Path) -> None:
         and validation.path == "~/src/pages/maker-report.md"
     )
     assert re.search(markdown_validation.required_regex, generated_report_text)
+    assert not re.search(
+        markdown_validation.required_regex,
+        generated_report_text.replace("# My Maker Report", "#"),
+    )
+    assert re.search(
+        markdown_validation.required_regex,
+        generated_report_text.replace("```text", "```"),
+    )
+    assert re.search(
+        markdown_validation.required_regex,
+        generated_report_text.replace(
+            "## Shell fields in /etc/passwd",
+            "## Shell fields in /etc/passwd:",
+        ),
+    )
+    assert re.search(
+        markdown_validation.required_regex,
+        """# My Super Title
+* User: ```
+learner
+```
+* Host: ```
+classroom
+```
+* Date: ```
+today
+```
+## Shell fields in /etc/passwd:
+```
+/bin/bash
+```
+""",
+    )
+    html_validation = next(
+        validation
+        for validation in final_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/public_html/maker-report.html"
+    )
+    assert re.search(
+        html_validation.required_regex,
+        "<h1>Title</h1>User: Host: Date: <h2>Shell fields in /etc/passwd:</h2>",
+    )
     assert not re.search(
         markdown_validation.required_regex,
         generated_report_text.replace("```", "~~~"),
@@ -420,10 +434,7 @@ def test_s5_reinforcement_preserves_the_cumulative_script(temporary_path: Path) 
     assert not all(
         re.search(
             validation.required_regex,
-            uptime_reference_text.replace(
-                "  printf '* Uptime: '\n  uptime\n",
-                "  printf '* Uptime: fixed\\n'\n  uptime\n",
-            ),
+            uptime_reference_text.replace("  uptime\n", ""),
         )
         for validation in extension_source_validations
     )
@@ -438,6 +449,13 @@ def test_s5_reinforcement_preserves_the_cumulative_script(temporary_path: Path) 
         re.search(validation.required_regex, uptime_reference_text)
         for validation in preserve_source_validations
     )
+    git_validation = next(
+        validation
+        for validation in preserve_validation.validations
+        if isinstance(validation, GitTrackedPathValidation)
+    )
+    assert git_validation.repository_path == "~/src"
+    assert git_validation.path == "scripts/maker-report.sh"
 
     uptime_reference_path = temporary_path / "maker-report-with-uptime.sh"
     uptime_reference_path.write_text(uptime_reference_text, encoding="utf-8")
@@ -459,55 +477,83 @@ def test_s5_reinforcement_preserves_the_cumulative_script(temporary_path: Path) 
     )
     assert "* Uptime: " in uptime_report_text
     assert uptime_report_text.endswith("```\n")
+    assert all(
+        re.search(
+            validation.required_regex,
+            """# Title
+* User:
+learner
+* Host:
+classroom
+* Date:
+today
+* Uptime:
+ 14:25:07 up 36 days
+## Shell fields in /etc/passwd:
+```
+/bin/bash
+```
+""",
+        )
+        for validation in extension_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/src/pages/maker-report.md"
+    )
+    assert all(
+        re.search(
+            validation.required_regex,
+            """<h1>Title</h1>User: Host: Date: <h2>Shell fields in /etc/passwd:</h2> \
+<li>Uptime:
+14:25:07 up 36 days</li>""",
+        )
+        for validation in extension_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/public_html/maker-report.html"
+    )
     assert not all(
         re.search(
             validation.required_regex,
-            uptime_reference_text.replace("  printf '* Uptime: '\n  uptime\n", ""),
+            """# Title
+* User: learner
+* Host: classroom
+* Date: today
+* Uptime:
+## Shell fields in /etc/passwd:
+```
+/bin/bash
+```
+""",
         )
+        for validation in extension_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/src/pages/maker-report.md"
+    )
+    assert not all(
+        re.search(
+            validation.required_regex,
+            """<h1>Title</h1>User: Host: Date: <h2>Shell fields in /etc/passwd:</h2> \
+Uptime: unavailable, sign up today""",
+        )
+        for validation in extension_validation.validations
+        if isinstance(validation, FileCheckValidation)
+        and validation.path == "~/public_html/maker-report.html"
+    )
+    assert not all(
+        re.search(validation.required_regex, uptime_reference_text.replace("  uptime\n", ""))
         for validation in preserve_source_validations
     )
-    extension_command_validation = next(
-        validation
-        for validation in extension_validation.validations
-        if isinstance(validation, CommandHistoryValidation)
-    )
-    for documented_command in (
-        '~/scripts/maker-report.sh "Uptime Report"',
-        "build-website",
-    ):
-        assert any(
-            re.fullmatch(required_pattern, documented_command)
-            for required_pattern in extension_command_validation.required_patterns
-        )
 
     elsewhere_validation = CATALOG.quest("run-scripts-from-elsewhere").validation
     assert isinstance(elsewhere_validation, CommandHistoryValidation)
     for documented_command in (
         "cd ~/playground",
-        "pwd",
+        "cd ~/playground/",
+        '~/scripts/maker-report.sh "Elsewhere Report"',
         'bash ~/scripts/maker-report.sh "Elsewhere Report"',
-        "build-website",
     ):
         assert any(
             re.fullmatch(required_pattern, documented_command)
             for required_pattern in elsewhere_validation.required_patterns
-        )
-    preserve_command_validation = next(
-        validation
-        for validation in preserve_validation.validations
-        if isinstance(validation, CommandHistoryValidation)
-    )
-    assert preserve_command_validation.ordered
-    for documented_command in (
-        "git add scripts/maker-report.sh",
-        'git commit -m "Add maker report script"',
-        "git diff --exit-code HEAD -- scripts/maker-report.sh",
-        "git status --short scripts/maker-report.sh",
-        "git log --oneline -- scripts/maker-report.sh > ~/playground/maker-report-git.txt",
-    ):
-        assert any(
-            re.fullmatch(required_pattern, documented_command)
-            for required_pattern in preserve_command_validation.required_patterns
         )
 
 

@@ -13,7 +13,7 @@ report_title="$1"
   printf '* Uptime: '
   uptime
   printf '\n## Shell fields in /etc/passwd\n\n'
-  printf '```text\n'
+  printf '%s\n' '```text'
   cut -d: -f7 /etc/passwd | sort -u
-  printf '```\n'
+  printf '%s\n' '```'
 } > ~/src/pages/maker-report.md
