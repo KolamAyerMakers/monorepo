@@ -26,6 +26,7 @@ include:
   - ergo
   - roles.kam-classroom.irc
   - roles.kam-classroom.npm
+  - roles.kam-classroom.network-diagnostics
   - nftables
   - root
   - htop

@@ -8,6 +8,7 @@ include:
   - roles.kam-classroom.identity
   - roles.kam-classroom.git
   - roles.kam-classroom.nodejs
+  - roles.kam-classroom.network-diagnostics
   - roles.kam-classroom.npm
   - roles.kam-classroom.lldap
   - roles.kam-classroom.authelia

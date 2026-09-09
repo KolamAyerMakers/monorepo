@@ -10,6 +10,9 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from typing import Protocol, TypeGuard, cast
 
+import pytest
+from salt.utils.requisite import DependencyGraph, RequisiteType  # pyright: ignore[reportMissingTypeStubs]
+
 from tests.support.paths import SALTSTACK_DIRECTORY
 
 
@@ -468,6 +471,7 @@ def test_role_composes_debian_base_and_classroom_services() -> None:
             "ergo",
             "roles.kam-classroom.irc",
             "roles.kam-classroom.npm",
+            "roles.kam-classroom.network-diagnostics",
             "nftables",
             "root",
             "htop",
@@ -475,6 +479,133 @@ def test_role_composes_debian_base_and_classroom_services() -> None:
             "uv",
             "roles.kam-classroom.bot",
         ]
+    }
+
+
+def test_network_diagnostics_uses_pillar_packages_and_identity_group() -> None:
+    """Diagnostic tools join bootstrap; UDP access follows identity, not a fixed GID."""
+    packages = ["test-curl", "test-traceroute"]
+    state = _load_state(
+        "roles/kam-classroom/network-diagnostics.sls",
+        {
+            "kam_classroom": {
+                "identity": {"groups": {"humans": {"gid_number": 2042}}},
+                "network_diagnostics": {
+                    "packages": packages,
+                    "traceroute": {
+                        "firewall_file": "/etc/nftables.d/50-test-traceroute.nft",
+                        "udp_port_range": "33434-33534",
+                    },
+                },
+            }
+        },
+    )
+    for package in packages:
+        arguments = cast(
+            dict[str, list[dict[str, object]]],
+            state[f"kam-classroom::network-diagnostics::{package}"],
+        )["pkg.installed"]
+        assert {"name": package} in arguments
+        assert {
+            "require": [
+                {"module": "apt::refresh"},
+                {"test": "bootstrap::package_sources_ready"},
+                {"test": "kam-classroom::network-diagnostics::required-pillar"},
+            ]
+        } in arguments
+        assert {"require_in": [{"test": "bootstrap::apt_packages_ready"}]} in arguments
+
+    firewall = cast(
+        dict[str, list[dict[str, object]]],
+        state["kam-classroom::network-diagnostics::traceroute-firewall"],
+    )["nftables_file.managed"]
+    assert {"name": "/etc/nftables.d/50-test-traceroute.nft"} in firewall
+    assert {
+        "rules": [
+            {
+                "chain": "output",
+                "position": "10",
+                "rule": (
+                    "meta skgid 2042 udp dport 33434-33534 "
+                    'counter name "output_kam_classroom_traceroute" accept '
+                    'comment "classroom users traceroute udp"'
+                ),
+            }
+        ]
+    } in firewall
+
+
+def test_firewall_validation_gates_startup_and_reload() -> None:
+    """Rules validate after packages are ready and before startup or reload."""
+    state = cast(
+        dict[str, dict[str, list[dict[str, object]]]],
+        _load_state("nftables/service.sls", {}),
+    )
+    assert {"require": [{"test": "bootstrap::apt_packages_ready"}]} in state[
+        "nftables::validate"
+    ]["cmd.run"]
+    assert state["nftables::validate_startup"]["cmd.run"] == [
+        {"name": "nft -c -f /etc/nftables.conf"},
+        {"unless": "systemctl is-active --quiet nftables"},
+        {"require": [{"cmd": "nftables::validate"}]},
+    ]
+    assert {
+        "require": [
+            {"pkg": "nftables"},
+            {"file": "/etc/nftables.conf"},
+            {"test": "bootstrap::apt_packages_ready"},
+            {"cmd": "nftables::validate_startup"},
+        ]
+    } in state["nftables::service"]["service.running"]
+    assert {"require": [{"service": "nftables::service"}]} in state["nftables::reload"][
+        "cmd.run"
+    ]
+    assert {"onchanges": [{"cmd": "nftables::validate"}]} in state["nftables::reload"][
+        "cmd.run"
+    ]
+
+
+@pytest.mark.parametrize("fragment_type", ["file", "nftables_file"])
+def test_firewall_fragment_requisites_resolve_by_name(fragment_type: str) -> None:
+    """Salt resolves symbolic fragment IDs, including with zero custom states."""
+    validation: dict[str, object] = {
+        "state": "cmd",
+        "fun": "run",
+        "__id__": "nftables::validate",
+    }
+    for argument in cast(
+        dict[str, list[dict[str, object]]],
+        _load_state("nftables/service.sls", {})["nftables::validate"],
+    )["cmd.run"]:
+        validation.update(argument)
+    graph = DependencyGraph()
+    graph.add_chunk(validation, allow_aggregate=False)
+    for index, (state_type, name) in enumerate(
+        [
+            ("test", "bootstrap::apt_packages_ready"),
+            ("file", "/etc/nftables.conf"),
+            ("file", "/etc/nftables.d/99-default-input-log.nft"),
+            (fragment_type, "/etc/nftables.d/50-test.nft"),
+        ]
+    ):
+        graph.add_chunk(
+            {
+                "state": state_type,
+                "fun": "nop",
+                "__id__": f"test::fragment::{index}",
+                "name": name,
+            },
+            allow_aggregate=False,
+        )
+    assert graph.add_requisites(validation, []) is None
+    assert {
+        dependency["name"]
+        for requisite_type, dependency in graph.get_dependencies(validation)
+        if requisite_type == RequisiteType.ONCHANGES
+    } == {
+        "/etc/nftables.conf",
+        "/etc/nftables.d/99-default-input-log.nft",
+        "/etc/nftables.d/50-test.nft",
     }
 
 
