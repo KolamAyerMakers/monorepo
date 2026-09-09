@@ -8,7 +8,7 @@ Session: S4
 2. Use `chmod u+x` on the harmless playground file and verify the owner execute bit.
 3. Initialize `~/src` with `git init`, then make the initial source commit.
 4. Edit source, inspect `git diff`, stage deliberate files, commit, and inspect the log.
-5. Preserve the existing `.gitignore`, add `*.tmp`, and prove `scratch.tmp` is ignored.
+5. Preserve the existing `.gitignore`, add `*.tmp`, commit only that rule change, and prove `scratch.tmp` is ignored.
 6. Create the Forgejo repository with `fj`, add or verify `origin`, push, and compare the web UI with `git log`.
 
 ## Permission Decode
@@ -113,6 +113,21 @@ git status
 
 `scratch.tmp` should not appear. Ignore rules affect untracked files, so add the rule before staging scratch files. `~/public_html/` is outside `~/src`, so it does not need an ignore rule there.
 
+If `scratch.tmp` is already staged, use the scratch-file recovery below before committing. Commit only the intended `.gitignore` addition before pushing:
+
+```bash
+git diff -- .gitignore
+git add .gitignore
+git diff --cached
+```
+
+The staged diff should contain only the new ignore rule. If unrelated files are staged, run `git restore --staged` followed by their exact paths; this keeps their working files. Inspect the staged diff again, then commit:
+
+```bash
+git commit -m "Ignore temporary files"
+git status
+```
+
 `git status --short` is an optional compact view of the same status.
 
 ## Create The Forgejo Repository
@@ -147,7 +162,7 @@ Run `git remote add` only when `git remote -v` showed no `origin`. If `origin` e
 - `remote origin already exists`: run `git remote -v`, then ask before changing an existing remote URL.
 - `src refspec main does not match any`: run `git log --oneline -1`. You need an initial commit before pushing `main`.
 - Push rejected: run `git status` and `git log --oneline -3`. Ask for help with the rejection text.
-- Scratch file staged: add `*.tmp` to `.gitignore`, then run `git status` before committing.
+- Scratch file staged: from `~/src`, run `git restore --staged scratch.tmp`, then `ls -l scratch.tmp` to confirm the working file remains. Preserve existing `.gitignore` rules, add `*.tmp`, and run `git status` to confirm the now-untracked scratch file is ignored. Stage and commit only the intended `.gitignore` change.
 
 ## Proof Checklist
 
@@ -155,7 +170,7 @@ Run `git remote add` only when `git remote -v` showed no `origin`. If `origin` e
 - You can state exactly what `chmod u+x` changes.
 - You can explain why `cat /etc/shadow` and entering `no-enter-demo` were denied.
 - `git log --oneline` shows your initial source commit and homepage update.
-- `~/src/.gitignore` preserves its existing rules and contains `*.tmp`.
+- `~/src/.gitignore` preserves its existing rules and contains a committed `*.tmp` rule.
 - `git status` omits `scratch.tmp`.
 - `git remote -v` shows your Forgejo `src` repository.
 - Forgejo shows the newest local source commit.

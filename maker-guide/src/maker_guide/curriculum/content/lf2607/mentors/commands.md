@@ -2,14 +2,14 @@
 
 Run these commands on the classroom server as a member of the `mentors` group.
 
-For the next session, use the [S5 Instructor Runbook](S05.md).
+Use the [S5 runbook](S05.md) or [S6 runbook](S06.md) for session-specific preparation.
 
 ## During A Session
 
 Set the current session before running commands that use it:
 
 ```sh
-SESSION_ID=S05
+SESSION_ID=S06
 ```
 
 Show the slides:

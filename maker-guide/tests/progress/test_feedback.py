@@ -77,7 +77,8 @@ def test_generic_feedback_covers_every_generic_validation_reason() -> None:
             "port-content-mismatch",
             (
                 "Update the service file with your computed port, then try again: "
-                "`site.service` must use your computed port, be enabled, and answer a local curl."
+                "`site.service` must use your computed port, with enable and local/public curl "
+                "observations. Inspect actual responses and browser access yourself."
             ),
         ),
     ],

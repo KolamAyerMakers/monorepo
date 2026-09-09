@@ -8,18 +8,41 @@ The site is now a small system. Systems need automation and documentation.
 
 ## Remember
 
-- Timers remove memory from the workflow.
+- `site-build.timer` starts the oneshot `site-build.service`; `site.service` keeps serving the site.
+- The monotonic timer uses `OnBootSec=5min` and `OnUnitActiveSec=1h`, with no missed calendar-run catchup after downtime.
+- A build renders existing report Markdown; rerun `maker-report.sh` separately to collect fresh facts.
 - `sed` and `awk` reshape text.
 - README files explain projects to other humans.
 - The webring makes the cohort visible as a neighborhood.
 
+## Checkpoint Routine
+
+After completing a step, run `guide now` first:
+
+- If it still names the objective you just worked on, run `guide check`, then `guide now`.
+- If it already names the next goal, continue with that goal without checking its unfinished work.
+
+Successful commands can record completion automatically, including objectives that also require files. File-only goals still need an explicit check when they remain current. If a check reports a problem, address the named objective and return to `guide now` first.
+
 ## Live Core
 
-If you attended live, you have the core milestone when your README explains the project, you can inspect a timer, the webring is enabled from source configuration, and you know what you will demo in S10.
+Complete these seven steps in order, using the checkpoint routine after each one.
+
+1. Create and enable `site-build.timer`, start its build service, and read a successful build log. Run `guide now`.
+2. Run the heading substitution with `sed`. Run `guide now`.
+3. Run the first-field extraction with `awk`. Run `guide now`.
+4. Create `~/playground/vim-note.txt` with vim and save it with `:wq`. Run `guide now`.
+5. Write `~/src/README.md` with build, service, logs, and recovery instructions. Run `guide now`.
+6. Enable `webring = true` in `~/src/site.toml` and verify one navigation block after two rebuilds. Run `guide now`.
+7. Prepare the source handoff: copy the three working scripts into `~/src/scripts/` and the three units into `~/src/services/`, then commit and push with the README and source changes. Run `guide now`.
+
+Use [Prepare a source handoff](../../quests/prepare-source-handoff.md) for exact paths. Keep the active originals in place; a log of commits alone does not preserve files outside Git.
 
 ## Optional Reinforcement
 
-Use the S9 quests if you want polish and demo readiness. They cover cron, text transforms, vim, extra README practice, timer automation, Bandit preparation, source handoff, and graduation preflight. Run `guide now` for your current session objective; after you complete it, it shows your current quest. Submit prompted answers with `guide answer 'your answer'`, and run `guide check` after practical work. A passing check records your progress.
+Cron and extra Bandit pipeline practice are optional. If you try cron, remove only your demo job and preserve unrelated entries. Timer creation, text transforms, the vim note, README, webring, and source handoff remain core work.
+
+Run `guide now` for your current session objective; after you complete it, it shows your current quest. Use matching quests for further practice, submit prompted answers with `guide answer 'your answer'`, and use the same checkpoint routine after practice. Optional quests are not graduation prerequisites.
 
 ## Can You Explain This?
 
@@ -29,10 +52,10 @@ Use the S9 quests if you want polish and demo readiness. They cover cron, text t
 - What does a systemd timer activate?
 - How do you prove the webring navigation is generated idempotently?
 
-## Keep
+## Before S10
 
-Keep the README and webring source setting, then push them if you can. The final demo is stronger when somebody else can understand the repo without you narrating every file.
+S10 is on **2026-10-24**. Rehearse showing your static site and report, the real backend at its local port and public URL, the Forgejo source, and README. Keep one debugging story ready. If you missed earlier work, identify the gap with the instructor and use the relevant self-study guide.
 
 ## Full Autonomy
 
-Use [S9 Self-Study Guide: Timers, Text, Polish](self-study.md) for safe cron editing, systemd timers, sed and awk anatomy, README structure, webring verification, and a small Bandit preparation loop.
+Use [S9 Self-Study Guide: Timers, Text, Polish](self-study.md) for timer creation, explained text transforms, vim save/quit, README and handoff steps, webring verification, and optional cron and Bandit practice.

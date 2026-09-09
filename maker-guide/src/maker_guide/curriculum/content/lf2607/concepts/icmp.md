@@ -2,7 +2,7 @@
 
 ## Core Idea
 
-ICMP is a network control protocol used for diagnostic and error messages; `ping` uses ICMP echo requests and echo replies.
+ICMP means Internet Control Message Protocol. It carries network diagnostic and error messages; `ping` uses its echo requests and echo replies.
 
 ## Commands To Try
 

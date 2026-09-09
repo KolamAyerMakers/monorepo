@@ -6,27 +6,15 @@ A web service is a process listening for network requests.
 
 ## Practice Alone
 
-Compute your course personal service port, run a local server, fetch it with `curl`, then stop it and observe failure.
-
-```bash
-PORT="$((10000 + $(id -u)))"
-python3 -m http.server "$PORT" --bind 127.0.0.1
-curl -I "http://127.0.0.1:$PORT/"
-```
+Follow the complete [Python HTTP server example](../commands/python3-http-server.md): create its demo directory, serve that explicit directory in one shell, and request it with curl from a second shell. The foreground server occupies the first shell until you stop it with `Ctrl-C`.
 
 The manual server keeps the port busy while it runs. Stop it before starting a systemd service on the same port.
 
-The public service URL has this shape:
-
-```text
-https://username.lf2607.kolamayermakers.org/
-```
-
-Caddy can only make that URL work when your backend process is listening on the expected local port.
+A reverse proxy can forward public requests to a loopback listener. Binding to loopback does not guarantee privacy when a proxy exposes the port: serve only the intended directory. Use your platform's assigned port and routing rules when moving from the standalone example to a published service.
 
 ## Done When
 
-You can explain why a process must be running for the second URL to work.
+You can explain why a backend process must be running for a proxy to return its content, and why stopping the process changes the client's result.
 
 ## Docs Pointers
 

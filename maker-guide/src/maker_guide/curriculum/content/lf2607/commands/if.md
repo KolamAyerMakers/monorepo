@@ -3,7 +3,8 @@
 ## Use
 
 ```bash
-if [[ -e "$1" ]]; then
+path=/etc/hostname
+if [[ -e "$path" ]]; then
   printf 'exists\n'
 else
   printf 'missing\n'
@@ -17,20 +18,22 @@ fi
 ## Command Success
 
 ```bash
-if curl -fsS https://example.org >/dev/null; then
-  printf 'up\n'
+if curl -I --max-time 10 https://example.org; then
+  printf 'A response arrived; inspect its HTTP status.\n'
 else
-  printf 'down\n'
+  printf 'The request failed; inspect the curl error.\n'
 fi
 ```
 
 Bash does not require a numeric comparison. It branches on exit status: `0` means success, nonzero means failure.
 
+Without curl's `-f` option, an HTTP `404` response normally still gives command status `0`. To require `200`, capture the HTTP code and compare it explicitly.
+
 ## File Test
 
 ```bash
-if [[ -f ~/src/pages/index.md ]]; then
-  printf 'homepage source exists\n'
+if [[ -f /etc/hostname ]]; then
+  printf 'hostname file exists\n'
 fi
 ```
 
@@ -39,7 +42,7 @@ fi
 ## One-Line Form
 
 ```bash
-if [[ -d ~/src ]]; then printf 'source exists\n'; fi
+if [[ -d /etc ]]; then printf 'directory exists\n'; fi
 ```
 
 Use this only when it remains readable. Multi-line form is better for learning and for scripts.

@@ -8,6 +8,7 @@ import shutil
 import sqlite3
 from collections.abc import Generator
 from contextlib import contextmanager
+from importlib.resources import files
 from pathlib import Path
 from typing import cast
 
@@ -413,6 +414,13 @@ def test_makers_projection_publishes_open_references_and_gates_coursework(
     assert (documents_root / "commands" / "tmux.md").exists()
     assert (documents_root / "concepts" / "terminal-multiplexing.md").exists()
     assert (documents_root / "guides" / "docs-map.md").exists()
+    provided_report = documents_root / "guides/resources/maker-report.sh"
+    assert provided_report.read_bytes() == (
+        files("maker_guide.curriculum")
+        .joinpath("content/lf2607/guides/resources/maker-report.sh")
+        .read_bytes()
+    )
+    assert provided_report.stat().st_mode & 0o444 == 0o444
     assert (documents_root / "mentors" / "commands.md").exists()
     assert not (documents_root / "sessions").exists()
     assert not (documents_root / "quests").exists()

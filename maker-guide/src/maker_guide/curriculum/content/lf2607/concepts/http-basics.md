@@ -2,11 +2,13 @@
 
 ## Core Idea
 
-HTTP is request text and response text with status codes, headers, and sometimes a body.
+HTTP is a request-response protocol with methods, status codes, headers, and optional bodies. Tools such as curl display these fields as readable text; HTTP/2 and HTTP/3 do not use the same text wire format as HTTP/1.1.
 
 ## Practice Alone
 
 Use `curl -I` for headers and plain `curl` for the body.
+
+`-I` sends a `HEAD` request; plain curl sends `GET`. Use `-i` for GET headers and body together. HTTPS protects HTTP with TLS encryption and certificate verification.
 
 ## Done When
 

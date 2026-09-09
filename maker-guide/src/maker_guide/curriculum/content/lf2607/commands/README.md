@@ -92,6 +92,7 @@ Use command cards when a quest or self-study guide names a command but you need 
 ## Networking And Services
 
 - [ping](ping.md)
+- [traceroute](traceroute.md)
 - [dig](dig.md)
 - [host](host.md)
 - [curl](curl.md)

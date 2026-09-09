@@ -1919,10 +1919,17 @@ WantedBy=default.target
                 observed_at="2026-07-19T09:01:00Z",
             ),
         )
-        curl_observation_id = add_command_observation(
+        local_curl_observation_id = add_command_observation(
             database_connection,
             _command_observation(
                 "curl -I http://127.0.0.1:14242/",
+                observed_at="2026-07-19T09:01:00Z",
+            ),
+        )
+        public_curl_observation_id = add_command_observation(
+            database_connection,
+            _command_observation(
+                "curl -I https://alice.lf2607.kolamayermakers.org/",
                 observed_at="2026-07-19T09:01:00Z",
             ),
         )
@@ -1946,15 +1953,19 @@ WantedBy=default.target
         assert checks[0]["required_matched"] is True
         assert checks[1] == {
             "failure_reason": None,
-            "matched_count": 2,
+            "matched_count": 3,
             "matched_commands": ["systemctl --user", "curl"],
-            "matched_observation_ids": [systemctl_observation_id, curl_observation_id],
+            "matched_observation_ids": [
+                systemctl_observation_id,
+                local_curl_observation_id,
+                public_curl_observation_id,
+            ],
             "missing_commands": [],
             "missing_pattern_indexes": [],
-            "observed_count": 2,
+            "observed_count": 3,
             "observed_since": "2026-07-19T09:00:00Z",
             "passed": True,
-            "required_count": 2,
+            "required_count": 3,
             "validation_type": "command_history",
         }
         assert (

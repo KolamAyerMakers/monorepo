@@ -16,8 +16,8 @@ Write a useful `~/src/README.md`, commit it, and push it.
 
 ## Steps
 
-1. Create `~/src/README.md`.
-2. Add a title, site description, build command, and service notes.
+1. Open `~/src/README.md`, preserving useful existing content.
+2. Add a Markdown title, site description, build command, and service notes. Include runnable commands such as `build-website` and `systemctl --user start site.service`, not only the words "build" or "run".
 3. Commit the README.
 4. Push to Forgejo.
 5. Ask the guide to check the file.
@@ -26,7 +26,7 @@ Write a useful `~/src/README.md`, commit it, and push it.
 
 1. A README is for another human.
 2. Explain how to rebuild and run the site.
-3. The check looks for a title, site text, and run instructions.
+3. Include the actual build and `systemctl --user` commands so another person can repeat them.
 
 ## If Check Fails
 

@@ -85,23 +85,26 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [control flow](control-flow.md)
 - [conditionals](conditionals.md)
 - [loops](loops.md)
-- [one-liners](oneliner.md)
 - [network diagnostics](network-diagnostics.md)
 - [DNS](dns.md)
 - [IP networking](ip-networking.md)
-- [IP addressing basics](ip-addressing-basics.md)
-- [sockets](sockets.md)
 - [ICMP](icmp.md)
 - [HTTP basics](http-basics.md)
 - [HTTP](http.md)
+- [HTTP status codes](http-status-codes.md)
+
+### Go Deeper After S06
+
+- [one-liners](oneliner.md)
+- [IP addressing basics](ip-addressing-basics.md)
 - [SMTP basics](smtp-basics.md)
 - [external data fetching](external-data-fetching.md)
 
 ## S07 Web Diagnostics
 
+- [sockets](sockets.md)
 - [HTTP inspection](http-inspection.md)
 - [HTML on the wire](html-on-the-wire.md)
-- [status codes](status-codes.md)
 - [reverse proxy](reverse-proxy.md)
 - [multi-page sites](multi-page-sites.md)
 

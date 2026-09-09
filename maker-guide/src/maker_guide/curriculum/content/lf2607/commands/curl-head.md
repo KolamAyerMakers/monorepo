@@ -40,4 +40,4 @@ Read the status line first. `200` means success. `301` or `302` means redirect. 
 - Run `man curl` and search for `-I`.
 - Read [curl man page](https://curl.se/docs/manpage.html).
 - Read [MDN HTTP status reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status).
-- Read [curl](curl.md), [curl -v](curl-verbose.md), [HTTP](../concepts/http.md), and [status codes](../concepts/status-codes.md).
+- Read [curl](curl.md), [curl -v](curl-verbose.md), [HTTP](../concepts/http.md), and [HTTP status codes](../concepts/http-status-codes.md).

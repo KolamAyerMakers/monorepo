@@ -4,7 +4,7 @@ Session: S2
 
 ## Study Path
 
-1. Create a local SSH key with a passphrase, install its public key, and reconnect without your account password.
+1. Inspect local SSH keys; reuse a safe pair or create a new one with a passphrase, install its public key, and reconnect without your account password.
 2. Create a safe workspace under `~/playground/`.
 3. Create files with `touch`, use `micro` to write the exact note `edited with micro`, and verify with `cat`.
 4. Practice `>`, `>>`, `cp`, `mv`, `rm -i`, and `rmdir` only in the playground first.
@@ -69,9 +69,17 @@ ls -l ~/playground
 
 Before generating or inspecting a key, read your prompt. A prompt ending in `@lf2607` means you are on the server. Run `exit`, then use a terminal on your own computer.
 
-This course assumes you do not have an SSH key yet. `ssh-keygen` creates a private key and public key on the machine where you run it. The private key stays on your own computer; only the `.pub` file is safe to install on the server. If it reports that a key already exists, do not overwrite it: ask the instructor.
+Inspect `~/.ssh` with `ls -l ~/.ssh` on macOS or Linux, or `Get-ChildItem -Force ~/.ssh` in PowerShell. A missing directory means there are no keys at that location. Look for a private key and its matching `.pub` file, such as `id_ed25519` and `id_ed25519.pub`, or `id_rsa` and `id_rsa.pub`. List filenames, not private-key contents. Reuse a safe existing pair.
 
-Run `ssh-keygen`, accept the default location, and choose a passphrase. On macOS or Linux, type `ssh-copy-id ` followed by the address from your personal registration command, then reconnect using that same command without entering your account password and run `whoami`. In Windows Terminal or PowerShell, run `Get-Content ~/.ssh/id_ed25519.pub` as a preview-only command: it displays the public key and changes nothing. Copy that one public-key line, then use your personal registration command to sign in with your password. On the server, run `mkdir -p ~/.ssh`, then `chmod 700 ~/.ssh` so only you can enter or change that directory. Run `cat >> ~/.ssh/authorized_keys`; paste the line, press Enter and Ctrl-D, then run `chmod 600 ~/.ssh/authorized_keys` so only you can read or change the key list. This appends without replacing existing keys. Exit, reconnect with the same personal command without entering your account password, and run `whoami`. The guide records a successful public-key login automatically.
+A previous bare `ssh-keygen` on an older client may have created `id_rsa`, not `id_ed25519`. If `id_ed25519.pub` is missing but your safe `id_rsa` pair exists, use `~/.ssh/id_rsa.pub` below instead. A missing public-key file alone is not a reason to replace its private key. If you find only half a pair or are unsure which key is safe, ask the instructor.
+
+Only for a genuinely new pair, run `ssh-keygen -t ed25519` and choose a passphrase. Accept the default location only when neither `~/.ssh/id_ed25519` nor `~/.ssh/id_ed25519.pub` exists; otherwise choose an unused filename. At any overwrite prompt, answer `n` or cancel with `Ctrl-C`. Note the saved paths. The private key stays on your own computer; only the `.pub` file is safe to install on the server.
+
+On macOS or Linux, type `ssh-copy-id -i ~/.ssh/id_ed25519.pub` followed by the address from your personal registration command. Replace the example `.pub` path with the actual public-key path you selected. Reconnect using your personal command without entering your account password and run `whoami`.
+
+In PowerShell on Windows, run `Get-Content ~/.ssh/id_ed25519.pub`, substituting your actual `.pub` path. This preview-only command displays the public key and changes nothing. Copy that one public-key line, then use your personal registration command to sign in with your password. On the server, run `mkdir -p ~/.ssh`, then `chmod 700 ~/.ssh` so only you can enter or change that directory. Run `cat >> ~/.ssh/authorized_keys`; paste the line, press Enter and Ctrl-D, then run `chmod 600 ~/.ssh/authorized_keys` so only you can read or change the key list. This appends without replacing existing keys. Exit, reconnect with the same personal command without entering your account password, and run `whoami`. The guide records a successful public-key login automatically.
+
+If you chose a non-default key filename, insert `-i` followed by its matching private-key path immediately after `ssh` in your personal command so SSH knows which key to use. A key passphrase prompt is different from your server account password prompt.
 
 If your private key is lost or copied, create and test a replacement key, then remove the former public-key line from `~/.ssh/authorized_keys`. If you cannot still log in with another key, use browser SSH recovery or ask the instructor. Never send a private key.
 

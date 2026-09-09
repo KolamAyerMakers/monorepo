@@ -508,11 +508,11 @@ Three sequential extensions are available after the live objectives:
 
 S6: 2026-09-12
 
-Your script always writes the same report. It types, it does not choose.
+Your script generates a report. How do you know visitors can reach it?
 
-In S6, it learns to make decisions and to talk to the network.
+In S6, build a checker that requests your pages and makes decisions about the responses.
 
-Make sure `maker-report.sh` works. S6 keeps building on it.
+Keep `maker-report.sh` working. Its page will be one of the checker's two targets.
 
 <!-- end_slide -->
 

@@ -40,19 +40,12 @@ Quests are highly recommended reinforcement. Use them for extra practice or catc
 
 ## S06 Reinforcement
 
-- [loop-one-to-ten](loop-one-to-ten.md)
-- [branch-on-file](branch-on-file.md)
-- [write-countdown](write-countdown.md)
+Practise the observations and checker from the [S6 self-study](../sessions/S06/self-study.md). The first three quests check reported observations. The checker quest checks source shape, not script execution or live site health.
+
+- [resolve-hostname](resolve-hostname.md)
 - [measure-ping](measure-ping.md)
 - [read-http-headers](read-http-headers.md)
-- [write-alive-or-dead](write-alive-or-dead.md)
-- [resolve-hostname](resolve-hostname.md)
-- [publish-network-fetch](publish-network-fetch.md)
-- [compare-dns-tools](compare-dns-tools.md)
-- [save-fetched-page](save-fetched-page.md)
-- [write-http-status-script](write-http-status-script.md)
-- [log-network-checks](log-network-checks.md)
-- [explain-sockets](explain-sockets.md)
+- [check-personal-pages](check-personal-pages.md)
 
 ## S07 Reinforcement
 

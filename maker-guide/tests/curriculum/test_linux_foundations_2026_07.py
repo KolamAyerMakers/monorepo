@@ -7,11 +7,14 @@ import re
 import shutil
 import sqlite3
 import subprocess
+import sys
 from datetime import UTC, date, datetime
 from importlib.resources import files
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import cast
+
+from rich.markdown import Markdown
 
 from maker_guide.curriculum.catalogs import DEFAULT_CATALOG as CATALOG
 from maker_guide.curriculum.documentation import command_card_slug
@@ -45,6 +48,186 @@ DOCS_PATH_PREFIX = "/docs/"
 def test_linux_foundations_catalog_is_valid() -> None:
     """The production Linux Foundations catalog passes semantic validation."""
     validate_courses((LINUX_FOUNDATIONS_2026_07,))
+
+
+def test_s6_site_check_requires_both_pages() -> None:
+    """Source checks reject realistic checker edits without running learner code."""
+    reference_script = (
+        _content_text(f"content/{COURSE_ID}/sessions/S06/self-study.md")
+        .split("````bash\n", 1)[1]
+        .split("\n````", 1)[0]
+    )
+    for validation in (
+        next(
+            objective.validation
+            for objective in CATALOG.session("S6").objectives
+            if objective.id == "check-personal-pages"
+        ),
+        CATALOG.quest("check-personal-pages").validation,
+    ):
+        assert isinstance(validation, FileCheckValidation)
+        assert re.search(validation.required_regex, reference_script)
+        assert re.search(validation.required_regex, reference_script + " \t\n")
+        assert re.search(
+            validation.required_regex,
+            reference_script.replace(" \\\n    ||", " ||"),
+        )
+        assert re.search(
+            validation.required_regex,
+            reference_script.replace(
+                'for page in "" maker-report.html; do',
+                'for page in "" maker-report.html\ndo',
+            ),
+        )
+        for original, replacement in (
+            ('for page in "" maker-report.html;', "for page in maker-report.html;"),
+            ('for page in "" maker-report.html;', 'for page in "";'),
+            ('~$USER"', '~someone-else"'),
+            ('url="$base_url/$page"', 'url="$base_url/"'),
+            ("  curl_exit_code=0\n", ""),
+            ("curl_exit_code=0", "curl_exit_code=1"),
+            (
+                (
+                    'for page in "" maker-report.html; do\n'
+                    '  url="$base_url/$page"\n  curl_exit_code=0'
+                ),
+                ('curl_exit_code=0\nfor page in "" maker-report.html; do\n  url="$base_url/$page"'),
+            ),
+            ('"$url")', '"$base_url/")'),
+            ("status=$(curl ", "status=$(printf "),
+            (" \\\n    || curl_exit_code=$?", ""),
+            ("|| curl_exit_code=$?", "&& curl_exit_code=$?"),
+            ("curl_exit_code=$?", "status=$?"),
+            ("curl_exit_code=$?", "curl_exit_code=0"),
+            ("curl_exit_code=$?", "printf 'failed\\n'; curl_exit_code=$?"),
+            ('"$curl_exit_code" -eq 0', '"$curl_exit_code" -ne 0'),
+            ('"$curl_exit_code" -eq 0', '"$curl_exit_code" == 0'),
+            ('"$curl_exit_code" -eq 0', '"$curl_exit_code" -eq 200'),
+            (" -I ", " "),
+            (" -o /dev/null", ""),
+            ("%{http_code}", "%{size_download}"),
+            ('"$status" == "200"', '"$status" != "200"'),
+            ('    if [[ "$status"', '    status=200\n    if [[ "$status"'),
+            ('for page in ""', 'status=404\nfor page in ""'),
+            ('"$page" == "maker-report.html" && ', ""),
+            ('"$status" == "404"', '"$status" == "403"'),
+            ("maker-report.sh", "missing-script.sh"),
+            ("build-website", "missing-build"),
+            ("; then", ";"),
+            ("; do", ";"),
+            ("\n    fi\n", "\n    broken-fi\n"),
+            ("\n  fi\n", "\n  broken-fi\n"),
+            ("done", "broken-done"),
+        ):
+            assert not re.search(
+                validation.required_regex,
+                reference_script.replace(original, replacement),
+            )
+        # A child process bounds a near-match regression without risking a stuck pytest.
+        completed_process = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import re\nimport sys\n"
+                    "sys.exit(re.search(sys.argv[1], sys.stdin.read()) is not None)"
+                ),
+                validation.required_regex,
+            ],
+            input=reference_script.rstrip() + " " * 250_000 + "# note\n",
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+        assert completed_process.returncode == 0, completed_process.stderr
+
+
+def test_static_homepage_history_accepts_quoting_but_not_subpaths() -> None:
+    """The documented homepage command accepts shell quoting, not other resources."""
+    for validation in (
+        CATALOG.session("S6").objectives[1].validation,
+        CATALOG.session("S7").objectives[0].validation,
+    ):
+        assert isinstance(validation, CommandHistoryValidation)
+        for command in (
+            'curl -I "https://lf2607.kolamayermakers.org/~$USER/"',
+            'curl -I "https://lf2607.kolamayermakers.org/~${USER}/"',
+            'curl -I "https://lf2607.kolamayermakers.org/~learner/"',
+            "curl -I 'https://lf2607.kolamayermakers.org/~learner/'",
+            "curl -I https://lf2607.kolamayermakers.org/~learner/",
+        ):
+            assert re.search(validation.required_patterns[0], command)
+        for command in (
+            'curl -I "https://lf2607.kolamayermakers.org/~$USER/maker-report.html"',
+            'curl -I "https://lf2607.kolamayermakers.org/~$USER/subpath/"',
+            'curl -I "https://lf2607.kolamayermakers.org/~$USER/"/',
+            'curl -I "https://lf2607.kolamayermakers.org/~$USER/',
+            "curl -I 'https://lf2607.kolamayermakers.org/~$USER/'",
+            'curl -I "https://$USER.lf2607.kolamayermakers.org/"',
+        ):
+            assert not re.search(validation.required_patterns[0], command)
+
+
+def test_reported_results_need_values_not_just_keywords() -> None:
+    """Reported evidence includes actual results, including loss and failed services."""
+    for quest_id, accepted, rejected in (
+        (
+            "resolve-hostname",
+            (
+                "203.0.113.10",
+                "2001:db8::10",
+                "2001:db8:0:0:0:0:0:10",
+                "lf2607.kolamayermakers.org has address 203.0.113.10",
+                "lf2607.kolamayermakers.org has IPv6 address 2001:db8::10",
+                "lf2607.kolamayermakers.org is an alias for classroom.example.org.",
+            ),
+            (
+                "address",
+                "has address",
+                "has ipv6",
+                "no address found",
+                "999.999.999.999",
+                "2001:db8:::10",
+                "2001:db8:0:0:0:0:0::10",
+            ),
+        ),
+        (
+            "read-http-headers",
+            ("HTTP/2 200", "HTTP/1.1 404 Not Found", "Server: Caddy"),
+            ("HTTP/2", "HTTP/1.1", "HTTP/2 20", "HTTP/2 2000", "HTTP/2 200.5", "Server:"),
+        ),
+        (
+            "measure-ping",
+            ("12.3 ms", "100% packet loss", "3 transmitted, 0 received, 100% packet loss"),
+            ("ms", "packet loss", "ping failed so the website is down"),
+        ),
+        (
+            "check-service-status",
+            (
+                "site.service is active (running)",
+                "site.service is inactive (dead)",
+                "site.service failed with an exit-code result",
+                "site.service is activating (auto-restart)",
+            ),
+            ("site.service", "I ran systemctl", "The website loaded in my browser"),
+        ),
+    ):
+        validation = CATALOG.quest(quest_id).validation
+        assert isinstance(validation, InteractiveQuestionValidation)
+        for answer in accepted:
+            assert all(
+                any(re.search(alias, answer.casefold()) for alias in concept.aliases)
+                and not any(
+                    re.search(pattern, answer.casefold()) for pattern in concept.forbidden_patterns
+                )
+                for concept in validation.required_concepts
+            ), (quest_id, answer)
+        for answer in rejected:
+            assert not all(
+                any(re.search(alias, answer.casefold()) for alias in concept.aliases)
+                for concept in validation.required_concepts
+            ), (quest_id, answer)
 
 
 def test_sessions_expose_independent_objective_validators() -> None:
@@ -87,10 +270,9 @@ def test_sessions_expose_independent_objective_validators() -> None:
             AllOfValidation,
         ),
         "S6": (
-            FileCheckValidation,
-            FileCheckValidation,
             CommandHistoryValidation,
             CommandHistoryValidation,
+            FileCheckValidation,
         ),
         "S7": (
             CommandHistoryValidation,
@@ -111,6 +293,7 @@ def test_sessions_expose_independent_objective_validators() -> None:
             CommandHistoryValidation,
             FileCheckValidation,
             FileCheckValidation,
+            AllOfValidation,
             AllOfValidation,
         ),
         "S10": (),
@@ -282,25 +465,23 @@ def test_s5_builds_one_cumulative_report_script(temporary_path: Path) -> None:
     reference_text = (
         _content_root()
         .joinpath(
-            "mentors",
-            "s05-solutions",
+            "guides",
+            "resources",
             "maker-report.sh",
         )
         .read_text(encoding="utf-8")
+    )
+    personalize_validation = objectives["personalize-maker-report"].validation
+    assert isinstance(personalize_validation, AllOfValidation)
+    assert all(
+        re.search(validation.required_regex, reference_text)
+        for validation in personalize_validation.validations
+        if isinstance(validation, FileCheckValidation)
     )
     reference_path = temporary_path / "maker-report.sh"
     reference_path.write_text(reference_text, encoding="utf-8")
     reference_path.chmod(0o755)
     temporary_path.joinpath("src", "pages").mkdir(parents=True)
-    bash_path = shutil.which("bash")
-    assert bash_path is not None
-    syntax_check = subprocess.run(
-        [bash_path, "-n", str(reference_path)],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert syntax_check.returncode == 0, syntax_check.stderr
 
     completed_process = subprocess.run(
         [str(reference_path), "My Maker Report"],
@@ -584,13 +765,22 @@ Uptime: unavailable, sign up today""",
 
     elsewhere_validation = CATALOG.quest("run-scripts-from-elsewhere").validation
     assert isinstance(elsewhere_validation, CommandHistoryValidation)
+    assert elsewhere_validation.ordered is True
     for documented_command in (
         '~/scripts/maker-report.sh "Elsewhere Report"',
         'bash ~/scripts/maker-report.sh "Elsewhere Report"',
     ):
-        assert any(
-            re.fullmatch(required_pattern, documented_command)
-            for required_pattern in elsewhere_validation.required_patterns
+        assert all(
+            re.search(pattern, command)
+            for pattern, command in zip(
+                elsewhere_validation.required_patterns,
+                ("cd ~/playground", documented_command),
+                strict=True,
+            )
+        )
+        assert not all(
+            re.search(pattern, documented_command)
+            for pattern in elsewhere_validation.required_patterns
         )
 
 
@@ -661,6 +851,10 @@ def test_catalog_exposes_taught_commands_and_skills_by_session() -> None:
     assert "kernel" not in CATALOG.skills_available_through("S1")
     assert "kernel" in CATALOG.enrichment_skills_available_through("S1")
     assert "kernel" in CATALOG.all_skills_available_through("S1")
+    assert "http" in CATALOG.skills_available_through("S6")
+    assert "oneliner" not in CATALOG.skills_available_through("S6")
+    assert "sockets" not in CATALOG.skills_available_through("S6")
+    assert "sockets" in CATALOG.skills_available_through("S7")
 
 
 def test_catalog_exposes_ordered_quest_lookup() -> None:
@@ -683,6 +877,9 @@ def test_catalog_exposes_ordered_quest_lookup() -> None:
         "count-stream",
         "keep-pipeline-copy",
     ]
+    assert [
+        quest.id for quest in CATALOG.course.quests if quest.available_after_session == "S6"
+    ] == ["resolve-hostname", "measure-ping", "read-http-headers", "check-personal-pages"]
     assert CATALOG.quests_available_after("S8")[0].id == "keep-tmux-workbench"
     assert [quest.id for quest in CATALOG.quests_available_through("S2")] == [
         "prove-shell-alive",
@@ -805,7 +1002,7 @@ def test_s1_site_build_is_not_repeated_as_a_quest() -> None:
 
 
 def test_s7_setup_page_requires_linked_rebuild_evidence() -> None:
-    """The setup-page quest checks source, index link, output, and build command."""
+    """The taught HTTP commands and linked setup page satisfy their own gates."""
     setup_validation = CATALOG.quest("create-setup-page").validation
 
     assert isinstance(setup_validation, AllOfValidation)
@@ -827,6 +1024,35 @@ def test_s7_setup_page_requires_linked_rebuild_evidence() -> None:
         in validation.required_patterns
         for validation in setup_validation.validations
     )
+    for objective_id, command_prefix in (
+        ("inspect-first-url-headers", "curl -I "),
+        ("diagnose-second-url", "curl -v "),
+    ):
+        validation = next(
+            objective.validation
+            for objective in CATALOG.session("S7").objectives
+            if objective.id == objective_id
+        )
+        assert isinstance(validation, CommandHistoryValidation)
+        for document_name in ("slides.md", "self-study.md"):
+            documented_command = next(
+                line
+                for line in _content_text(
+                    f"content/{COURSE_ID}/sessions/S07/{document_name}"
+                ).splitlines()
+                if line.startswith(command_prefix)
+            )
+            assert all(
+                re.search(pattern, documented_command) for pattern in validation.required_patterns
+            ), (objective_id, document_name, documented_command)
+            assert not any(
+                re.search(pattern, documented_command.replace('"', "'"))
+                for pattern in validation.required_patterns
+            )
+        assert not any(
+            re.search(pattern, f'{command_prefix}"https://example.org/"')
+            for pattern in validation.required_patterns
+        )
 
 
 def test_s3_objectives_and_reinforcement_require_lesson_evidence() -> None:
@@ -1110,13 +1336,12 @@ def test_curriculum_avoids_shell_redirection_as_answer_placeholder() -> None:
 
 
 def test_s8_tmux_and_service_quests_require_real_evidence() -> None:
-    """S8 validators require the tmux lifecycle and real service evidence."""
+    """S8 requires safe service files and distinct endpoint observations, not HTTP success."""
     objectives = {objective.id: objective for objective in CATALOG.session("S8").objectives}
     tmux_objective_validation = objectives["keep-tmux-workbench"].validation
     tmux_validation = CATALOG.quest("keep-tmux-workbench").validation
     log_validation = CATALOG.quest("watch-service-logs").validation
     manual_server_validation = CATALOG.quest("serve-local-check-page").validation
-    site_service_validation = CATALOG.quest("enable-site-service").validation
 
     assert isinstance(tmux_objective_validation, CommandHistoryValidation)
     assert tmux_objective_validation.ordered is True
@@ -1155,34 +1380,137 @@ def test_s8_tmux_and_service_quests_require_real_evidence() -> None:
         r"^tmux kill-session -t local-server$",
         r"^systemctl --user start site\.service$",
     )
-    assert isinstance(site_service_validation, AllOfValidation)
-    assert any(
-        isinstance(validation, UserPortFileValidation)
-        and "{port}" in validation.required_regex_template
-        for validation in site_service_validation.validations
+    self_study = _content_text(f"content/{COURSE_ID}/sessions/S08/self-study.md")
+    reference_unit = (
+        self_study.split("## Minimal `site.service`\n", 1)[1]
+        .split("```ini\n", 1)[1]
+        .split("\n```", 1)[0]
     )
-    assert any(
-        isinstance(validation, CommandHistoryValidation)
-        and r"^systemctl --user enable --now site\.service$" in validation.required_patterns
-        and r'^curl -I "?http://127\.0\.0\.1:(?:[0-9]+|\$PORT|\$\{PORT\})/"?$'
-        in validation.required_patterns
-        for validation in site_service_validation.validations
+    service_commands = (
+        self_study.split("## Service Lifecycle\n", 1)[1]
+        .split("```bash\n", 1)[1]
+        .split("\n```", 1)[0]
+        .splitlines()
     )
+    for service_validation in (
+        objectives["enable-site-service"].validation,
+        CATALOG.quest("enable-site-service").validation,
+    ):
+        assert isinstance(service_validation, AllOfValidation)
+        port_validation = next(
+            validation
+            for validation in service_validation.validations
+            if isinstance(validation, UserPortFileValidation)
+        )
+        required_regex = port_validation.required_regex_template.replace("{port}", "11234")
+        assert re.search(required_regex, reference_unit.replace("12345", "11234"))
+        for invalid_port in ("12345", "11235", "$PORT", "$((10000 + $(id -u)))"):
+            assert not re.search(required_regex, reference_unit.replace("12345", invalid_port))
+        history_validation = next(
+            validation
+            for validation in service_validation.validations
+            if isinstance(validation, CommandHistoryValidation)
+        )
+        assert all(
+            any(re.search(pattern, command) for command in service_commands)
+            for pattern in history_validation.required_patterns
+        )
+        for omitted_prefix in ("systemctl --user enable", 'curl -I "http:', 'curl -I "https:'):
+            assert not all(
+                any(
+                    re.search(pattern, command)
+                    for command in service_commands
+                    if not command.startswith(omitted_prefix)
+                )
+                for pattern in history_validation.required_patterns
+            ), omitted_prefix
+
+    helper_match = re.search(r"(?ms)^```bash\n(?P<script>#!/bin/bash\n.*?)^```$", self_study)
+    assert helper_match is not None
+    for helper_validation in (
+        objectives["write-site-helper-functions"].validation,
+        CATALOG.quest("write-site-helper-functions").validation,
+    ):
+        assert isinstance(helper_validation, AllOfValidation)
+        source_validation = next(
+            validation
+            for validation in helper_validation.validations
+            if isinstance(validation, FileCheckValidation)
+        )
+        assert re.search(source_validation.required_regex, helper_match["script"])
+        for directory_option in ("", '--directory "$HOME"'):
+            assert not re.search(
+                source_validation.required_regex,
+                helper_match["script"].replace('--directory "$HOME/public_html"', directory_option),
+            )
+
+    preflight_validation = CATALOG.quest("preflight-both-urls").validation
+    assert isinstance(preflight_validation, CommandHistoryValidation)
+    preflight_commands = (
+        self_study.split("## Preflight Both Public URLs\n", 1)[1]
+        .split("```bash\n", 1)[1]
+        .split("\n```", 1)[0]
+        .splitlines()
+    )
+    for username, quote, accepted in (
+        ("$USER", '"', True),
+        ("${USER}", '"', True),
+        ("$USER", "", True),
+        ("${USER}", "", True),
+        ("learner", '"', True),
+        ("learner", "'", True),
+        ("learner", "", True),
+        ("$USER", "'", False),
+        ("${USER}", "'", False),
+    ):
+        assert (
+            all(
+                any(
+                    re.search(pattern, command.replace("$USER", username).replace('"', quote))
+                    for command in preflight_commands
+                )
+                for pattern in preflight_validation.required_patterns
+            )
+            is accepted
+        ), (username, quote)
+    for omitted_prefix in (
+        'curl -I "https://lf2607.',
+        'curl -I "https://$USER.',
+        "systemctl --user show site.service",
+    ):
+        assert not all(
+            any(
+                re.search(pattern, command)
+                for command in preflight_commands
+                if not command.startswith(omitted_prefix)
+            )
+            for pattern in preflight_validation.required_patterns
+        ), omitted_prefix
 
 
 def test_s9_automation_quests_require_cleanup_and_runtime_evidence() -> None:
     """Automation quests require more than artifact existence."""
     cron_validation = CATALOG.quest("try-cron-and-remove-it").validation
     webring_validation = CATALOG.quest("enable-webring").validation
-    timer_validation = CATALOG.quest("schedule-site-rebuilds").validation
 
     assert isinstance(cron_validation, AllOfValidation)
-    assert any(
-        isinstance(validation, FileCheckValidation)
-        and validation.path == "~/crontab.after"
-        and validation.forbidden_regex == r"cron\.log"
+    cleanup_validation = next(
+        validation
         for validation in cron_validation.validations
+        if isinstance(validation, FileCheckValidation) and validation.path == "~/crontab.after"
     )
+    assert cleanup_validation.forbidden_regex is not None
+    cron_demo = (
+        _content_text(f"content/{COURSE_ID}/quests/try-cron-and-remove-it.md")
+        .split("```text\n", 1)[1]
+        .split("\n```", 1)[0]
+    )
+    unrelated_job = "0 3 * * * /home/learner/bin/backup >> /home/learner/cron.log 2>&1\n"
+    for remaining_crontab in ("", unrelated_job, f"{unrelated_job}  # {cron_demo}\n"):
+        assert re.search(cleanup_validation.required_regex, remaining_crontab)
+        assert not re.search(cleanup_validation.forbidden_regex, remaining_crontab)
+    for active_demo in (cron_demo, f"  {cron_demo}", cron_demo.replace("cron.log", "demo.log")):
+        assert re.search(cleanup_validation.forbidden_regex, f"{unrelated_job}{active_demo}\n")
     assert any(
         isinstance(validation, CommandHistoryValidation)
         and r"^crontab -l > ~/crontab\.after 2>/dev/null \|\| true$" in validation.required_patterns
@@ -1195,18 +1523,132 @@ def test_s9_automation_quests_require_cleanup_and_runtime_evidence() -> None:
         and "(?=.*\\bnext\\b)" in validation.required_regex
         for validation in webring_validation.validations
     )
-    assert isinstance(timer_validation, AllOfValidation)
-    assert any(
-        isinstance(validation, FileCheckValidation)
-        and validation.path == "~/.config/systemd/user/site-build.service"
-        and "/usr/local/bin/npm run build" in validation.required_regex
-        for validation in timer_validation.validations
+    for timer_validation in (
+        next(
+            objective.validation
+            for objective in CATALOG.session("S9").objectives
+            if objective.id == "schedule-site-rebuilds"
+        ),
+        CATALOG.quest("schedule-site-rebuilds").validation,
+    ):
+        assert isinstance(timer_validation, AllOfValidation)
+        for validation in timer_validation.validations:
+            if isinstance(validation, FileCheckValidation):
+                reference_unit = (
+                    _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
+                    .split(f"`{validation.path}`:\n", 1)[1]
+                    .split("```ini\n", 1)[1]
+                    .split("\n```", 1)[0]
+                )
+                assert re.search(validation.required_regex, reference_unit)
+                for required_line in reference_unit.splitlines():
+                    if required_line.startswith(("OnBootSec=", "OnUnitActiveSec=", "ExecStart=")):
+                        assert not re.search(
+                            validation.required_regex,
+                            reference_unit.replace(required_line, ""),
+                        )
+        assert any(
+            isinstance(validation, CommandHistoryValidation)
+            and r"^systemctl --user enable --now site-build\.timer$" in validation.required_patterns
+            for validation in timer_validation.validations
+        )
+
+    sed_validation = next(
+        objective.validation
+        for objective in CATALOG.session("S9").objectives
+        if objective.id == "transform-heading-with-sed"
     )
-    assert any(
-        isinstance(validation, CommandHistoryValidation)
-        and r"^systemctl --user enable --now site-build\.timer$" in validation.required_patterns
-        for validation in timer_validation.validations
+    assert isinstance(sed_validation, CommandHistoryValidation)
+    for document_name in ("slides.md", "self-study.md"):
+        documented_pipeline = next(
+            line
+            for line in _content_text(
+                f"content/{COURSE_ID}/sessions/S09/{document_name}"
+            ).splitlines()
+            if line.startswith("printf ") and " | sed " in line
+        )
+        assert re.search(sed_validation.required_patterns[0], documented_pipeline)
+        assert re.search(
+            sed_validation.required_patterns[0],
+            documented_pipeline.split(" | ", 1)[1] + " ~/playground/heading.md",
+        )
+    assert not re.search(
+        sed_validation.required_patterns[0], "printf '%s\\n' 'sed replaces headings'"
     )
+
+
+def test_final_handoff_requires_committed_files_and_a_concrete_next_page() -> None:
+    """The final project preserves committed files, runnable instructions, and a next action."""
+    readme_text = (
+        "# My Homepage\n\nBuild: `build-website`.\n"
+        "Service: `systemctl --user start site.service`.\n"
+    )
+    for readme_validation in (
+        next(
+            objective.validation
+            for objective in CATALOG.session("S9").objectives
+            if objective.id == "write-readme"
+        ),
+        CATALOG.quest("write-readme").validation,
+    ):
+        assert isinstance(readme_validation, FileCheckValidation)
+        assert re.search(readme_validation.required_regex, readme_text)
+        for required_text in ("# My Homepage", "build-website", "systemctl --user"):
+            assert not re.search(
+                readme_validation.required_regex, readme_text.replace(required_text, "")
+            )
+
+    for handoff_validation in (
+        next(
+            objective.validation
+            for objective in CATALOG.session("S9").objectives
+            if objective.id == "prepare-source-handoff"
+        ),
+        CATALOG.quest("prepare-source-handoff").validation,
+    ):
+        assert isinstance(handoff_validation, AllOfValidation)
+        assert {
+            (validation.repository_path, validation.path)
+            for validation in handoff_validation.validations
+            if isinstance(validation, GitTrackedPathValidation)
+        } == {
+            ("~/src", path)
+            for path in (
+                "README.md",
+                "scripts/maker-report.sh",
+                "scripts/site-check.sh",
+                "scripts/site.sh",
+                "services/site.service",
+                "services/site-build.service",
+                "services/site-build.timer",
+            )
+        }
+
+    next_validation = CATALOG.quest("write-next-path").validation
+    assert isinstance(next_validation, FileCheckValidation)
+    next_page = (
+        _content_text(f"content/{COURSE_ID}/sessions/S10/self-study.md")
+        .split("## Next Path Template\n", 1)[1]
+        .split("```markdown\n", 1)[1]
+        .split("\n```", 1)[0]
+    )
+    action_line = next(line for line in next_page.splitlines() if line.startswith("Next action:"))
+    assert re.search(next_validation.required_regex, next_page)
+    assert re.search(next_validation.required_regex, f"# Linux Maintenance\n\n{action_line}\n")
+    assert re.search(
+        next_validation.required_regex,
+        f"# Linux Maintenance\n{action_line}\n\n"
+        + next_page.partition("\n")[2].replace(action_line, ""),
+    )
+    assert not re.search(next_validation.required_regex, next_page.partition("\n")[2])
+    assert not re.search(
+        next_validation.required_regex, "# My Next Project\n" + next_page.partition("\n")[2]
+    )
+    for empty_action in ("", "Next action:", "Next action: \t"):
+        assert not re.search(
+            next_validation.required_regex,
+            next_page.replace(action_line, empty_action),
+        )
 
 
 def test_s10_terminal_irc_quest_uses_ctcp_version_validation() -> None:
@@ -1267,7 +1709,7 @@ def test_content_link_labels_close_inline_code_spans() -> None:
 
 
 def test_local_markdown_links_resolve() -> None:
-    """Every local Markdown link points at a packaged resource on disk."""
+    """Only actual local links, not code examples, must resolve to packaged resources."""
     for markdown_resource in _markdown_resources(_content_root()):
         for link_target in _markdown_link_targets(markdown_resource.read_text(encoding="utf-8")):
             if _is_external_or_page_anchor(link_target):
@@ -1470,13 +1912,13 @@ def _content_text(content_path: str) -> str:
 
 def _markdown_link_targets(markdown_text: str) -> tuple[str, ...]:
     return tuple(
-        _link_path_without_title(link_match.group("target"))
-        for link_match in MARKDOWN_LINK_PATTERN.finditer(markdown_text)
+        link_target
+        for inline_token in Markdown(markdown_text).parsed
+        if inline_token.type == "inline"
+        for child_token in inline_token.children or ()
+        if child_token.type == "link_open"
+        and isinstance(link_target := child_token.attrGet("href"), str)
     )
-
-
-def _link_path_without_title(link_target: str) -> str:
-    return link_target.split(maxsplit=1)[0]
 
 
 def _is_external_or_page_anchor(link_target: str) -> bool:

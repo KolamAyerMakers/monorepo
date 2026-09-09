@@ -31,4 +31,4 @@ Answer again and mention the backend service explicitly.
 
 - [curl -v](../commands/curl-verbose.md)
 - [reverse proxy](../concepts/reverse-proxy.md)
-- [status codes](../concepts/status-codes.md)
+- [HTTP status codes](../concepts/http-status-codes.md)

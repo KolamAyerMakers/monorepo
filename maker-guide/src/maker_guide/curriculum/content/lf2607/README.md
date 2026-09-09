@@ -79,19 +79,20 @@ Saved commands, direct execution, quoted arguments, and a published report.
 - [Reinforcement quests](quests/README.md#s05-reinforcement)
 - [Concept cards](concepts/README.md#s05-scripting)
 
-### S06: Control flow and networking
+### S06: Is your site actually working?
 
-Control flow, networking, and external data.
+Explore how web requests work, then write a checker that diagnoses your homepage and report page.
 
 - [Slides](sessions/S06/slides.md)
 - [Self-study](sessions/S06/self-study.md)
 - [Recap](sessions/S06/recap.md)
 - [Reinforcement quests](quests/README.md#s06-reinforcement)
 - [Concept cards](concepts/README.md#s06-control-flow-and-networking)
+- [Instructor runbook](mentors/S06.md)
 
-### S07: HTTP and reverse proxies
+### S07: Your page on the wire
 
-Multi-page sites, HTTP inspection, and reverse proxy failures.
+Compare generated files with HTTP bodies, send a raw request, link another page, and investigate the separate service route.
 
 - [Slides](sessions/S07/slides.md)
 - [Self-study](sessions/S07/self-study.md)
@@ -101,7 +102,7 @@ Multi-page sites, HTTP inspection, and reverse proxy failures.
 
 ### S08: Services
 
-Tmux, manual web services, systemd user services, and logs.
+Tmux, a safe service helper, systemd user services, logs, and checks of the local backend and public service URL.
 
 - [Slides](sessions/S08/slides.md)
 - [Self-study](sessions/S08/self-study.md)
@@ -111,7 +112,7 @@ Tmux, manual web services, systemd user services, and logs.
 
 ### S09: Automation and sharing
 
-Timers, text transforms, vim, README files, and the webring.
+Timers, text transforms, vim, README files, the webring, and a committed handoff of working scripts and units.
 
 - [Slides](sessions/S09/slides.md)
 - [Self-study](sessions/S09/self-study.md)
@@ -121,7 +122,7 @@ Timers, text transforms, vim, README files, and the webring.
 
 ### S10: Boss fight
 
-Live boss fight, demos, archives, and your next path.
+Bandit investigation, a demo of the site and backend, a recoverable source handoff, and your next Linux project.
 
 - [Slides](sessions/S10/slides.md)
 - [Self-study](sessions/S10/self-study.md)

@@ -6,46 +6,60 @@
 [Timer]
 OnBootSec=5min
 OnUnitActiveSec=1h
-Persistent=true
 ```
 
 ## What It Does
 
-A systemd timer starts a matching service on a schedule. In this course, the timer and service are user units under `~/.config/systemd/user`.
+A systemd timer starts a matching service on a schedule. User units live under `~/.config/systemd/user` and are managed with `systemctl --user`, without root access.
 
 ## Minimal Pair
 
-`site-build.service` does the work:
+This standalone example writes the current date to the journal. Create the directory with `mkdir -p ~/.config/systemd/user`, then create these two files with your editor. Inspect existing files before replacing them.
+
+`~/.config/systemd/user/clock-note.service` does the work:
 
 ```ini
 [Service]
 Type=oneshot
-WorkingDirectory=%h/src
-ExecStart=/usr/local/bin/npm run build
+ExecStart=/usr/bin/date
 ```
 
-`site-build.timer` schedules it:
+`~/.config/systemd/user/clock-note.timer` schedules it:
 
 ```ini
 [Timer]
 OnBootSec=5min
 OnUnitActiveSec=1h
-Persistent=true
+
+[Install]
+WantedBy=timers.target
 ```
 
 ## Lifecycle
 
 ```bash
 systemctl --user daemon-reload
-systemctl --user enable --now site-build.timer
+systemctl --user enable --now clock-note.timer
+systemctl --user start clock-note.service
 systemctl --user list-timers
-systemctl --user start site-build.service
-journalctl --user -u site-build.service --no-pager -n 50
+journalctl --user -u clock-note.service --no-pager -n 20
 ```
+
+Find a date line from the manual service run and the timer's next run. A oneshot service normally becomes inactive after it finishes successfully.
+
+For this temporary example, stop future runs when finished:
+
+```bash
+systemctl --user disable --now clock-note.timer
+```
+
+## Schedule Meaning
+
+`OnBootSec=5min` schedules a run relative to boot; if that time has passed when the timer is activated, it can fire immediately. `OnUnitActiveSec=1h` schedules another run relative to the service's last activation. These are monotonic intervals, not wall-clock appointments. There is no catchup of missed calendar runs after downtime.
 
 ## Watch Out
 
-Timers trigger services. Debug the service first, then debug the schedule.
+Timers trigger services. Debug the service first, then the schedule. A timer only runs the command in its service; scheduling a renderer does not also refresh its input data. User timers require the user manager to be running; logout behavior depends on lingering.
 
 ## Docs Pointers
 

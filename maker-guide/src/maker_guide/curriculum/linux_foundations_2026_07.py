@@ -54,7 +54,7 @@ _S5_REPORT_TITLE_SCRIPT_PATTERN = (
     r"""(?=.*^[ \t]*report_title=(?:"\$(?:1|\{1\})"|\$(?:1|\{1\}))[ \t]*(?:#.*)?$"""
     r"""(?=.*^[ \t]*printf[ \t]+(?:"""
     r"""(?:'[^'\n]*(?<!%)%s[^'\n]*'|"[^"\n]*(?<!%)%s[^"\n]*")[ \t]+"""
-    r"""\$(?:report_title|\{report_title\})"""
+    r"""(?:"\$(?:report_title|\{report_title\})"|\$(?:report_title|\{report_title\}))"""
     r"""|"\$(?:report_title|\{report_title\})\\n")[ \t]*(?:#.*)?$))"""
     r""".+\Z"""
 )
@@ -117,6 +117,66 @@ _S5_UPTIME_SCRIPT_PATTERN = (
 )
 _S5_UPTIME_REPORT_PATTERN = r"(?m)^\*[ \t]+Uptime:[ \t]*(?:\S|\n[ \t]*(?![#*])\S)"
 _S5_UPTIME_HTML_PATTERN = r"(?is)Uptime:\s*[^<\n]*\bup\s+\d"
+_STATIC_HOMEPAGE_COMMAND_PATTERN = (
+    r"""^curl -I (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)"""
+    r"""https://lf2607\.kolamayermakers\.org/~"""
+    r"""[a-z_][a-z0-9_-]*/(?P=quote)|(?P<variable_quote>"?)"""
+    r"""https://lf2607\.kolamayermakers\.org/~\$(?:USER|\{USER\})/(?P=variable_quote))$"""
+)
+_SERVICE_HOMEPAGE_COMMAND_PATTERN = (
+    r"""^curl -I (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)https://[a-z_][a-z0-9_-]*"""
+    r"""\.lf2607\.kolamayermakers\.org/(?P=quote)|(?P<variable_quote>"?)"""
+    r"""https://\$(?:USER|\{USER\})\.lf2607\.kolamayermakers\.org/(?P=variable_quote))$"""
+)
+_LOCAL_SERVICE_COMMAND_PATTERN = (
+    r'^curl -I (?:--max-time [0-9]+ )?"?http://127\.0\.0\.1:'
+    r'(?:[0-9]+|\$PORT|\$\{PORT\})/"?$'
+)
+_SOURCE_HANDOFF_PATHS = (
+    "README.md",
+    "scripts/maker-report.sh",
+    "scripts/site-check.sh",
+    "scripts/site.sh",
+    "services/site.service",
+    "services/site-build.service",
+    "services/site-build.timer",
+)
+# ponytail: source shape only, not a Bash parser or proof of runtime behavior.
+# Learners run syntax and HTTP checks themselves; the bot never runs their scripts.
+_S6_SITE_CHECK_SCRIPT_PATTERN = (
+    r"(?ms)\A"
+    r"(?!.*^[ \t]*status=(?!\$\(curl[ \t]))"
+    r'.*?^[ \t]*base_url="https://lf2607\.kolamayermakers\.org/~\$(?:USER|\{USER\})"[ \t]*$'
+    r""".*?^[ \t]*for[ \t]+page[ \t]+in[ \t]+(?:""|'')[ \t]+"""
+    r"""(?:maker-report\.html|"maker-report\.html"|'maker-report\.html')"""
+    r"[ \t]*(?:;|\n)[ \t]*do[ \t]*$"
+    r'.*?^[ \t]*url="\$base_url/\$page"[ \t]*$'
+    r"\n[ \t]*curl_exit_code=0[ \t]*$"
+    r"\n[ \t]*status=\$\(curl[ \t]+"
+    r"(?=[^\n)]*(?<!\S)-I[ \t])"
+    r"""(?=[^\n)]*(?<!\S)-o[ \t]+(?:/dev/null|"/dev/null"|'/dev/null')[ \t])"""
+    r"""(?=[^\n)]*-w[ \t]+(?:'%\{http_code\}'|"%\{http_code\}")[ \t])"""
+    r'[^\n)]*[ \t]+"\$url"[ \t]*\)[ \t]*(?:\\\n[ \t]*)?'
+    r"\|\|[ \t]+curl_exit_code=\$\?[ \t]*$"
+    r'\n[ \t]*if[ \t]+\[\[[ \t]+"\$curl_exit_code"[ \t]+-eq[ \t]+0'
+    r"[ \t]+\]\][ \t]*;[ \t]*then[ \t]*$"
+    r'\n[ \t]*if[ \t]+\[\[[ \t]+"\$status"[ \t]+==[ \t]+'
+    r"""(?:"200"|'200'|200)[ \t]+\]\][ \t]*;[ \t]*then[ \t]*$"""
+    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
+    r'.*?^[ \t]*elif[ \t]+\[\[[ \t]+"\$page"[ \t]+==[ \t]+'
+    r"""(?:"maker-report\.html"|'maker-report\.html'|maker-report\.html)[ \t]+&&[ \t]+"""
+    r""""\$status"[ \t]+==[ \t]+(?:"404"|'404'|404)[ \t]+\]\][ \t]*;[ \t]*then[ \t]*$"""
+    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
+    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]*maker-report\.sh[^\n]*"
+    r"(?:\n[ \t]*(?:printf|echo)[ \t]+[^\n]*)*?build-website[^\n]*$"
+    r".*?^[ \t]*else[ \t]*$"
+    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
+    r".*?^[ \t]*fi[ \t]*$"
+    r"\s*else[ \t]*$"
+    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
+    r".*?^[ \t]*fi[ \t]*$"
+    r"\s*done\s*\Z"
+)
 _EXECUTABLE_NOT_FILE_PATTERN = (
     r"\b(executable|program|binary)\b.{0,12}\b(isn't|is not|means not|never)\s+"
     r"(a )?(file|disk)\b"
@@ -368,6 +428,7 @@ _QUEST_SPECIFIC_FAILURE_REASONS_BY_VALIDATION_TYPE = MappingProxyType(
         OwnedPathValidation: ("missing-path", "wrong-owner"),
         FileMatchesPathValidation: ("missing-path", "file-content-mismatch"),
         GitTrackedPathValidation: (
+            "missing-path",
             "git-path-not-committed",
             "git-path-modified",
             "git-repository-error",
@@ -1252,7 +1313,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S6",
-            title="Control flow and networking primer",
+            title="Is your site actually working?",
             date=date(2026, 9, 12),
             starts_at=datetime(2026, 9, 12, 9, tzinfo=UTC),
             introduced_commands=(
@@ -1264,7 +1325,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "for",
                 "while",
                 "ping",
-                "dig",
+                "traceroute",
                 "host",
                 "curl",
                 "curl -I",
@@ -1273,112 +1334,104 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "control-flow",
                 "conditionals",
                 "loops",
-                "oneliner",
                 "network-diagnostics",
                 "dns",
                 "ip-networking",
-                "ip-addressing-basics",
-                "sockets",
                 "icmp",
                 "http-basics",
                 "http",
-                "smtp-basics",
-                "external-data-fetching",
+                "http-status-codes",
             ),
             learning_objectives=(
-                "Make shell scripts branch and loop.",
-                "Run basic network diagnostics.",
-                "Fetch data with curl.",
-                "Publish fetched content through the site build.",
+                "Distinguish the DNS, ICMP, and HTTP questions behind a website check.",
+                "Inspect an HTTP response with curl.",
+                (
+                    "Use a for loop and if statement to verify two personal website pages "
+                    "return HTTP 200."
+                ),
             ),
-            content=_session_content("S6", "Control flow and networking primer"),
+            content=_session_content("S6", "Is your site actually working?"),
             objectives=(
                 SessionObjective(
-                    id="loop-one-to-ten",
-                    title="Make shell scripts loop",
+                    id="resolve-classroom-host",
+                    title="Resolve the classroom hostname",
                     prompt=(
-                        "Create `~/scripts/count-ten.sh` with a `for` loop that "
-                        "prints the numbers 1 through 10."
-                    ),
-                    validation=FileCheckValidation(
-                        path="~/scripts/count-ten.sh", required_regex=r"(?s)for .+1.+10.+printf"
-                    ),
-                ),
-                SessionObjective(
-                    id="branch-on-file",
-                    title="Make shell scripts branch",
-                    prompt=(
-                        "Create `~/scripts/exists.sh` with an `if` statement that "
-                        "checks a path using `[[ -e ... ]]` and has an `else` branch."
-                    ),
-                    validation=FileCheckValidation(
-                        path="~/scripts/exists.sh",
-                        required_regex=r"(?s)if .+\[\[ .+-e .+then.+else.+fi",
-                    ),
-                ),
-                SessionObjective(
-                    id="measure-ping",
-                    title="Run basic network diagnostics",
-                    prompt=(
-                        "Run `ping` followed by a hostname to check whether it responds over the "
-                        "network."
+                        "Run `host lf2607.kolamayermakers.org`. Read one address or answer line "
+                        "yourself; the live check records the command, not your interpretation."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^ping ",), observed_commands=("ping",)
+                        required_patterns=(r"^host lf2607\.kolamayermakers\.org$",),
+                        observed_commands=("host",),
                     ),
                 ),
                 SessionObjective(
-                    id="publish-network-fetch",
-                    title="Publish fetched content through the site build",
+                    id="inspect-personal-site-headers",
+                    title="Inspect your site response",
                     prompt=(
-                        "Fetch a URL with `curl`, then run `build-website` to rebuild your site."
+                        'Run `curl -I "https://lf2607.kolamayermakers.org/~$USER/"`. Read the '
+                        "HTTP status yourself; the live check records the command, not the status "
+                        "or your interpretation."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(
-                            r"^curl ",
-                            r"^(?:build-website|maker-guide-build-personal-website)$",
-                        ),
-                        observed_commands=("curl", "build-website"),
+                        required_patterns=(_STATIC_HOMEPAGE_COMMAND_PATTERN,),
+                        observed_commands=("curl -I",),
+                    ),
+                ),
+                SessionObjective(
+                    id="check-personal-pages",
+                    title="Check both personal pages",
+                    prompt=(
+                        "Create `~/scripts/site-check.sh`. It must loop over your homepage and "
+                        "`maker-report.html`, inspect each HTTP response with `curl -I`, and print "
+                        "whether it returned HTTP 200. For a missing report page, tell the learner "
+                        "to rerun `maker-report.sh` and `build-website`. Follow the S6 self-study "
+                        "script, including its connection-failure branch. The guide checks source "
+                        "shape only; run syntax and HTTP checks yourself."
+                    ),
+                    validation=FileCheckValidation(
+                        path="~/scripts/site-check.sh",
+                        required_regex=_S6_SITE_CHECK_SCRIPT_PATTERN,
                     ),
                 ),
             ),
         ),
         Session(
             id="S7",
-            title="Your first page",
+            title="Your page on the wire",
             date=date(2026, 9, 19),
             starts_at=datetime(2026, 9, 19, 9, tzinfo=UTC),
             introduced_commands=(
                 "curl -v",
-                "curl -I",
                 "nc",
                 "diff",
                 "caddy",
             ),
             introduced_skills=(
                 "http-inspection",
+                "sockets",
                 "html-on-the-wire",
-                "status-codes",
                 "reverse-proxy",
                 "multi-page-sites",
             ),
             learning_objectives=(
                 "Inspect HTTP requests and responses.",
                 "Compare rendered HTML on disk and over the network.",
-                "Understand the second URL failure mode.",
+                "Distinguish static hosting from a proxy with no backend service.",
                 "Add another page to the site.",
             ),
-            content=_session_content("S7", "Your first page"),
+            content=_session_content("S7", "Your page on the wire"),
             objectives=(
                 SessionObjective(
                     id="inspect-first-url-headers",
                     title="Inspect HTTP requests and responses",
                     prompt=(
-                        "Run `curl -I` followed by one of your site URLs to see "
-                        "its response headers."
+                        'Run `curl -I "https://lf2607.kolamayermakers.org/~$USER/"` to inspect '
+                        "your static homepage headers. Compare with the raw HTTP lab; the guide "
+                        "records the curl command, not the returned status."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^curl -I ",), observed_commands=("curl -I",)
+                        required_patterns=(_STATIC_HOMEPAGE_COMMAND_PATTERN,),
+                        observed_commands=("curl -I",),
                     ),
                 ),
                 SessionObjective(
@@ -1398,12 +1451,17 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 ),
                 SessionObjective(
                     id="diagnose-second-url",
-                    title="Understand the second URL failure mode",
+                    title="Diagnose the separate service URL",
                     prompt=(
-                        "Run `curl -v` on your second site URL and inspect the connection details."
+                        'Run `curl -v "https://$USER.lf2607.kolamayermakers.org/"`. Inspect '
+                        "the proxy response and explain the missing backend. This is a separate "
+                        "serving route, not the report path checked in S6."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^curl -v ",), observed_commands=("curl -v",)
+                        required_patterns=(
+                            _SERVICE_HOMEPAGE_COMMAND_PATTERN.replace("curl -I", "curl -v"),
+                        ),
+                        observed_commands=("curl -v",),
                     ),
                 ),
                 SessionObjective(
@@ -1493,7 +1551,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "`curl` to request a page from it."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"python3 -m http\.server", r"^curl "),
+                        required_patterns=(
+                            r"python3 -m http\.server",
+                            _LOCAL_SERVICE_COMMAND_PATTERN,
+                        ),
                         observed_commands=("python3 -m http.server --bind 127.0.0.1", "curl"),
                     ),
                 ),
@@ -1510,7 +1571,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 path="~/bin/site.sh",
                                 required_regex=(
                                     r"(?s)site_port\(\).+10000.+id -u.+serve\(\).+"
-                                    r"python3 -m http\.server.+--bind 127\.0\.0\.1.+status\(\).+"
+                                    r"python3 -m http\.server.+--bind 127\.0\.0\.1.+"
+                                    r'--directory "\$HOME/public_html".+status\(\).+'
                                     r"systemctl --user status.+stop\(\).+systemctl --user stop"
                                 ),
                             ),
@@ -1524,22 +1586,25 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     prompt=(
                         "Create `~/.config/systemd/user/site.service` to serve `~/public_html` on "
                         "localhost, enable it with `systemctl --user enable --now "
-                        "site.service`, then check it with `curl -I`."
+                        "site.service`, then check both its localhost port and public service "
+                        "URL with `curl -I`. Read the statuses yourself; command evidence alone "
+                        "does not prove a healthy response."
                     ),
                     validation=AllOfValidation(
                         validations=(
-                            FileCheckValidation(
+                            UserPortFileValidation(
                                 path="~/.config/systemd/user/site.service",
-                                required_regex=(
+                                required_regex_template=(
                                     r"(?s)\[Unit\].+\[Service\].+WorkingDirectory=%h/public_html.+"
-                                    r"ExecStart=/usr/bin/python3 -m http\.server .+"
+                                    r"ExecStart=/usr/bin/python3 -m http\.server {port} "
                                     r"--bind 127\.0\.0\.1.+\[Install\].+WantedBy=default\.target"
                                 ),
                             ),
                             CommandHistoryValidation(
                                 required_patterns=(
                                     r"^systemctl --user enable --now site\.service$",
-                                    r"^curl -I ",
+                                    _LOCAL_SERVICE_COMMAND_PATTERN,
+                                    _SERVICE_HOMEPAGE_COMMAND_PATTERN,
                                 ),
                                 observed_commands=("systemctl --user", "curl"),
                             ),
@@ -1550,11 +1615,14 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="watch-service-logs",
                     title="Read service logs",
                     prompt=(
-                        "Request your site with `curl`, then run "
+                        "Request your public service URL with `curl -I`, then run "
                         "`journalctl --user -u site.service` to read the service log."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^journalctl --user -u site\.service", r"^curl "),
+                        required_patterns=(
+                            r"^journalctl --user -u site\.service",
+                            _SERVICE_HOMEPAGE_COMMAND_PATTERN,
+                        ),
                         observed_commands=("journalctl --user", "curl"),
                     ),
                 ),
@@ -1585,11 +1653,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             learning_objectives=(
                 "Schedule user-level site rebuilds.",
-                "Recognize cron and systemd timer differences.",
                 "Use light sed and awk transforms with regular expressions.",
                 "Survive basic vim editing.",
                 "Publish a readable README.",
-                "Try terminal IRC after web IRC is already familiar.",
+                "Enable the webring through source configuration.",
+                "Preserve the working scripts and systemd units in the source repository.",
             ),
             content=_session_content("S9", "Polish"),
             objectives=(
@@ -1613,7 +1681,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 path="~/.config/systemd/user/site-build.timer",
                                 required_regex=(
                                     r"(?s)\[Timer\].+OnBootSec=5min.+OnUnitActiveSec=1h.+"
-                                    r"Persistent=true.+\[Install\].+WantedBy=timers\.target"
+                                    r"\[Install\].+WantedBy=timers\.target"
                                 ),
                             ),
                             CommandHistoryValidation(
@@ -1638,7 +1706,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Run a `sed` command that changes a heading in a text file or sample text."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^sed ",), observed_commands=("sed",)
+                        required_patterns=(r"(?:^|\|\s*)sed ",), observed_commands=("sed",)
                     ),
                 ),
                 SessionObjective(
@@ -1668,7 +1736,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "and explains how to run it."
                     ),
                     validation=FileCheckValidation(
-                        path="~/src/README.md", required_regex=r"(?s)# .+site.+run"
+                        path="~/src/README.md",
+                        required_regex=(
+                            r"(?ms)\A# \S[^\n]*\n"
+                            r"(?=.*(?:build-website|npm run build))(?=.*systemctl --user).+"
+                        ),
                     ),
                 ),
                 SessionObjective(
@@ -1687,6 +1759,23 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 path="~/public_html/index.html",
                                 required_regex=r"(?is)(?=.*\bwebring\b)(?=.*\bprevious\b)(?=.*\bnext\b).+",
                             ),
+                        ),
+                    ),
+                ),
+                SessionObjective(
+                    id="prepare-source-handoff",
+                    title="Preserve the working project",
+                    prompt=(
+                        "Copy the three working scripts into `~/src/scripts/` and the three "
+                        "systemd units into `~/src/services/`, keeping active originals in place. "
+                        "Commit those copies and `README.md`, then verify them in Forgejo. "
+                        "The guide checks committed, unchanged local files; "
+                        "verify the push yourself."
+                    ),
+                    validation=AllOfValidation(
+                        validations=tuple(
+                            GitTrackedPathValidation(repository_path="~/src", path=path)
+                            for path in _SOURCE_HANDOFF_PATHS
                         ),
                     ),
                 ),
@@ -1714,7 +1803,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             learning_objectives=(
                 "Solve Bandit levels in teams.",
-                "Walk the room through your site.",
+                "Demonstrate the static site, report, backend, source repository, and README.",
+                "Publish a concrete next Linux project with a recovery plan.",
                 "Understand what to explore after graduation.",
             ),
             content=_session_content("S10", "Boss fight, demos, graduation"),
@@ -2342,10 +2432,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=20,
             available_after_session="S4",
             prompt=(
-                "From `~/playground`, run `ls -l permission-demo.txt` and explain its file type "
+                "From `~/playground`, run `chmod u+x permission-demo.txt`, then "
+                "`ls -l permission-demo.txt` and explain its file type "
                 "plus the owner, group, and other permission triplets."
             ),
-            required_commands=("ls -l",),
+            required_commands=("chmod", "ls -l"),
             practiced_skills=("permissions",),
             validation=InteractiveQuestionValidation(
                 question=(
@@ -2626,7 +2717,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             required_commands=("cd",),
             practiced_skills=("path", "shell-scripting"),
             validation=CommandHistoryValidation(
-                required_patterns=(_S5_HOME_TITLED_REPORT_COMMAND_PATTERN,),
+                required_patterns=(r"^cd ~/playground$", _S5_HOME_TITLED_REPORT_COMMAND_PATTERN),
                 observed_commands=("cd",),
                 ordered=True,
             ),
@@ -2673,91 +2764,104 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             evidence="The final script must be executable, committed, and unchanged from HEAD.",
         ),
         _quest(
-            quest_id="loop-one-to-ten",
-            title="Loop from one to ten",
+            quest_id="resolve-hostname",
+            title="Resolve a hostname",
             sequence=46,
             available_after_session="S6",
-            prompt="Create `~/scripts/count-ten.sh` with a `for` loop that prints 1 through 10.",
-            required_commands=("for", "printf", "bash", "micro"),
-            practiced_skills=("loops", "control-flow"),
-            validation=FileCheckValidation(
-                path="~/scripts/count-ten.sh",
-                required_regex=r"(?s)for .+1.+10.+printf",
-            ),
-            goal="Repeat work with a loop instead of copy-paste.",
-            evidence="`~/scripts/count-ten.sh` needs a `for` loop and `printf`.",
-        ),
-        _quest(
-            quest_id="branch-on-file",
-            title="Branch on a file",
-            sequence=47,
-            available_after_session="S6",
-            prompt=(
-                "Create `~/scripts/exists.sh` that prints different text for existing "
-                "and missing files."
-            ),
-            required_commands=("if", "then", "else", "fi", "[[ ]]", "printf", "bash", "micro"),
-            practiced_skills=("conditionals", "control-flow"),
-            validation=FileCheckValidation(
-                path="~/scripts/exists.sh",
-                required_regex=r"(?s)if .+\[\[ .+-e .+then.+else.+fi",
-            ),
-            goal="Make a script decide based on filesystem state.",
-            evidence="`~/scripts/exists.sh` needs `if`, `[[ -e ... ]]`, `else`, and `fi`.",
-        ),
-        _quest(
-            quest_id="write-countdown",
-            title="Write a countdown",
-            sequence=48,
-            available_after_session="S6",
-            prompt="Create `~/scripts/countdown.sh` with a `while` countdown from 5 to 1.",
-            required_commands=("while", "printf", "bash", "micro"),
-            practiced_skills=("loops", "control-flow"),
-            validation=FileCheckValidation(
-                path="~/scripts/countdown.sh",
-                required_regex=r"(?s)while .+printf",
-            ),
-            goal="Use `while` for repeated work controlled by a condition.",
-            evidence="`~/scripts/countdown.sh` needs `while` and `printf`.",
-        ),
-        _quest(
-            quest_id="measure-ping",
-            title="Measure a ping",
-            sequence=49,
-            available_after_session="S6",
-            prompt="Run `ping -c 3 google.com` and report the average round-trip time.",
-            required_commands=("ping",),
-            practiced_skills=("network-diagnostics",),
+            prompt="Run `host lf2607.kolamayermakers.org` and report one address or answer line.",
+            required_commands=("host",),
+            practiced_skills=("dns", "network-diagnostics"),
             validation=InteractiveQuestionValidation(
-                question="What average round-trip time did `ping -c 3 google.com` report?",
+                question="What answer did `host lf2607.kolamayermakers.org` return?",
                 required_concepts=(
                     AnswerConcept(
-                        id="milliseconds",
-                        aliases=(r"\b[0-9]+(?:\.[0-9]+)?\s*ms\b",),
+                        id="host-answer-line",
+                        aliases=(
+                            (
+                                r"^(?:[a-z0-9.-]+ has address )?"
+                                r"(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}"
+                                r"(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+                            ),
+                            (
+                                r"^(?:[a-z0-9.-]+ has ipv6 address )?"
+                                r"(?:(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|"
+                                r"(?=(?::*[0-9a-f]{1,4}){0,7}:*$)"
+                                r"(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4})*)?::"
+                                r"(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4})*)?)$"
+                            ),
+                            r"^[a-z0-9.-]+ is an alias for [a-z0-9-]+(?:\.[a-z0-9-]+)+\.?$",
+                        ),
                         rubric=(
-                            "The answer must report the observed average round-trip time as a "
-                            "number with the ms unit."
+                            "The answer must report one returned IP address or a complete host "
+                            "address or alias answer line for lf2607.kolamayermakers.org. "
+                            "The words 'has' or 'address' without a record value are not enough."
                         ),
                     ),
                 ),
             ),
-            goal="Test whether a host responds and read latency.",
-            evidence="Answer with the average time and include `ms`.",
+            goal="Use DNS tools to ask how a name resolves before using it in a URL.",
+            evidence=(
+                "Answer with one returned IP address or complete `host` address or alias line."
+            ),
+        ),
+        _quest(
+            quest_id="measure-ping",
+            title="Measure a ping",
+            sequence=47,
+            available_after_session="S6",
+            prompt=(
+                "Run `ping -c 3 1.1.1.1` and report the average round-trip time in ms, "
+                "or the packet-loss percentage if no replies provide an average."
+            ),
+            required_commands=("ping",),
+            practiced_skills=("network-diagnostics",),
+            validation=InteractiveQuestionValidation(
+                question=(
+                    "What average time in ms did ping report, or what packet-loss percentage "
+                    "did you observe when no average was available?"
+                ),
+                required_concepts=(
+                    AnswerConcept(
+                        id="milliseconds",
+                        aliases=(
+                            r"\b[0-9]+(?:\.[0-9]+)?\s*ms\b",
+                            r"\b100(?:\.0+)?%\s+packet\s+loss\b",
+                        ),
+                        rubric=(
+                            "The answer must report the observed average round-trip time as a "
+                            "number with the ms unit, or honestly report 100% packet loss when "
+                            "no replies provided an average. Failed ICMP does not prove HTTP fails."
+                        ),
+                    ),
+                ),
+            ),
+            goal="Read ICMP latency or packet loss without treating ping as a website test.",
+            evidence=(
+                "Answer with the observed average in `ms`, or `100% packet loss` if no replies."
+            ),
         ),
         _quest(
             quest_id="read-http-headers",
             title="Read HTTP headers",
-            sequence=50,
+            sequence=48,
             available_after_session="S6",
-            prompt="Run `curl -I https://github.com` and report the status line or Server header.",
+            prompt=(
+                "Run `curl -I` on your personal homepage and report the status line "
+                "or Server header."
+            ),
             required_commands=("curl -I",),
-            practiced_skills=("http-basics", "external-data-fetching"),
+            practiced_skills=("http-basics",),
             validation=InteractiveQuestionValidation(
-                question="What status or Server header did `curl -I https://github.com` show?",
+                question=(
+                    "What status or Server header did `curl -I` on your personal homepage show?"
+                ),
                 required_concepts=(
                     AnswerConcept(
                         id="http-header",
-                        aliases=(r"\bhttp/[0-9.]\b", r"\bserver:\s*\S+"),
+                        aliases=(
+                            r"\bhttp/[0-9]+(?:\.[0-9]+)?\s+[1-5][0-9]{2}(?=\s|$)",
+                            r"\bserver:\s*\S+",
+                        ),
                         rubric=(
                             "The answer must quote either the observed HTTP status line or the "
                             "Server response header."
@@ -2766,161 +2870,35 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 ),
             ),
             goal="Inspect HTTP headers without downloading a page body.",
-            evidence="Answer with an HTTP status line or header.",
-        ),
-        _quest(
-            quest_id="write-alive-or-dead",
-            title="Write alive or dead",
-            sequence=51,
-            available_after_session="S6",
-            prompt="Create `~/scripts/alive.sh` that pings `$1` once and prints `alive` or `dead`.",
-            required_commands=("if", "then", "else", "fi", "ping", "printf", "bash", "micro"),
-            practiced_skills=("conditionals", "network-diagnostics", "script-arguments"),
-            validation=FileCheckValidation(
-                path="~/scripts/alive.sh",
-                required_regex=r"(?s)ping .+\$1.+alive.+dead",
+            evidence=(
+                "Answer with an HTTP status line including its three-digit code, or Server header."
             ),
-            goal="Combine arguments, networking, and branching.",
-            evidence="`~/scripts/alive.sh` needs `$1`, `ping`, `alive`, and `dead`.",
         ),
         _quest(
-            quest_id="resolve-hostname",
-            title="Resolve a hostname",
-            sequence=52,
-            available_after_session="S6",
-            prompt="Run `host kolamayermakers.org` and report one address or answer line.",
-            required_commands=("host",),
-            practiced_skills=("dns", "network-diagnostics"),
-            validation=InteractiveQuestionValidation(
-                question="What answer did `host kolamayermakers.org` return?",
-                required_concepts=(
-                    AnswerConcept(
-                        id="host-answer-line",
-                        aliases=(r"\bhas\s+(address|ipv6)\b", r"\baddress\b"),
-                        rubric=(
-                            "The answer must report one address or answer line returned by host "
-                            "for kolamayermakers.org."
-                        ),
-                    ),
-                ),
-            ),
-            goal="Use DNS tools to ask how a name resolves before using it in a URL.",
-            evidence="Answer with one `host` result line.",
-        ),
-        _quest(
-            quest_id="publish-network-fetch",
-            title="Publish a network fetch",
-            sequence=53,
+            quest_id="check-personal-pages",
+            title="Check your personal pages",
+            sequence=49,
             available_after_session="S6",
             prompt=(
-                "Create `~/scripts/fetch-status.sh` that writes a fetched HTTP result to "
-                "`~/src/pages/network.md`, then rebuilds the site."
+                "Create `~/scripts/site-check.sh` to check your homepage and "
+                "`maker-report.html`. It must print whether each page returned HTTP 200 and "
+                "explain how to rebuild a missing report page. Follow the S6 self-study script, "
+                "including its connection-failure branch. The guide checks source shape only."
             ),
-            required_commands=("bash", "curl", "date", "printf", "micro", "build-website"),
-            practiced_skills=("external-data-fetching", "http-basics", "shell-scripting"),
+            required_commands=("for", "if", "curl -I", "printf", "bash", "micro"),
+            practiced_skills=("loops", "conditionals", "control-flow", "http-basics"),
             validation=FileCheckValidation(
-                path="~/src/pages/network.md",
-                required_regex=r"(?s)# Network Fetch.+```text.+```",
+                path="~/scripts/site-check.sh",
+                required_regex=_S6_SITE_CHECK_SCRIPT_PATTERN,
             ),
-            goal=(
-                "Fetch external text, preserve it as Markdown, and publish it through the "
-                "site build."
+            goal="Turn two manual HTTP checks into one reusable diagnosis.",
+            evidence=(
+                "`~/scripts/site-check.sh` needs a personal base_url using $USER, a loop over "
+                'both pages, url="$base_url/$page", a curl status capture, a == 200 branch, '
+                "a report-specific 404 repair with maker-report.sh and build-website, and "
+                "closed if/for blocks. Run syntax and HTTP checks yourself; the bot does not "
+                "execute the script or verify live HTTP results."
             ),
-            evidence="`~/src/pages/network.md` needs a heading and fenced fetched output.",
-        ),
-        _quest(
-            quest_id="compare-dns-tools",
-            title="Compare DNS tools",
-            sequence=54,
-            available_after_session="S6",
-            prompt="Run both `dig kolamayermakers.org` and `host kolamayermakers.org`.",
-            required_commands=("dig", "host"),
-            practiced_skills=("dns", "network-diagnostics"),
-            validation=CommandHistoryValidation(
-                required_patterns=(r"^dig kolamayermakers\.org$", r"^host kolamayermakers\.org$"),
-                observed_commands=("dig", "host"),
-            ),
-            goal="See that different DNS tools ask the same system different ways.",
-            evidence="The guide needs to see both `dig` and `host` commands.",
-        ),
-        _quest(
-            quest_id="save-fetched-page",
-            title="Save a fetched page",
-            sequence=55,
-            available_after_session="S6",
-            prompt="Use `curl` to save a page body into `~/playground/fetch.html`.",
-            required_commands=("curl", ">", "cat"),
-            practiced_skills=("external-data-fetching", "http-basics"),
-            validation=FileCheckValidation(
-                path="~/playground/fetch.html",
-                required_regex=r"(?s).+",
-            ),
-            goal="Fetch HTTP content into a file instead of only printing it to the terminal.",
-            evidence="`~/playground/fetch.html` must contain fetched content.",
-        ),
-        _quest(
-            quest_id="write-http-status-script",
-            title="Write an HTTP status script",
-            sequence=56,
-            available_after_session="S6",
-            prompt=(
-                "Create `~/scripts/status-line.sh` that fetches headers and prints a status line."
-            ),
-            required_commands=("curl -I", "grep", "bash", "micro"),
-            practiced_skills=("shell-scripting", "http-basics", "text-search"),
-            validation=FileCheckValidation(
-                path="~/scripts/status-line.sh",
-                required_regex=r"(?s)curl .*-I.+grep.+HTTP",
-            ),
-            goal="Turn a network check into a reusable script.",
-            evidence="`~/scripts/status-line.sh` needs `curl -I`, `grep`, and `HTTP`.",
-        ),
-        _quest(
-            quest_id="log-network-checks",
-            title="Log network checks",
-            sequence=57,
-            available_after_session="S6",
-            prompt="Append a dated ping result to `~/playground/network-checks.log`.",
-            required_commands=("date", ">>", "ping", "bash", "micro"),
-            practiced_skills=("network-diagnostics", "stream-redirection"),
-            validation=FileCheckValidation(
-                path="~/playground/network-checks.log",
-                required_regex=r"(?s).+",
-            ),
-            goal="Keep a small text log of network evidence instead of relying on memory.",
-            evidence="`~/playground/network-checks.log` must contain at least one entry.",
-        ),
-        _quest(
-            quest_id="explain-sockets",
-            title="Explain sockets",
-            sequence=58,
-            available_after_session="S6",
-            prompt="Explain what host and port mean in a URL you checked with `curl -I`.",
-            required_commands=("curl -I",),
-            practiced_skills=("sockets", "http"),
-            validation=InteractiveQuestionValidation(
-                question="In a URL, what do the host and port identify?",
-                required_concepts=(
-                    AnswerConcept(
-                        id="url-host",
-                        aliases=(r"\bhost\b", r"\bhostname\b"),
-                        rubric=(
-                            "The answer must explain that the URL host identifies the machine or "
-                            "network endpoint to contact."
-                        ),
-                    ),
-                    AnswerConcept(
-                        id="url-port",
-                        aliases=(r"\bport\b",),
-                        rubric=(
-                            "The answer must explain that the URL port identifies the service "
-                            "endpoint on that host."
-                        ),
-                    ),
-                ),
-            ),
-            goal="Connect URLs to the socket idea before reverse proxy work starts.",
-            evidence="Answer must mention both host and port.",
         ),
         _quest(
             quest_id="create-setup-page",
@@ -2962,7 +2940,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             available_after_session="S7",
             prompt="Run `curl -I` against your public `~username` URL and report the status code.",
             required_commands=("curl -I",),
-            practiced_skills=("http-inspection", "status-codes"),
+            practiced_skills=("http-inspection", "http-status-codes"),
             validation=InteractiveQuestionValidation(
                 question="What HTTP status code did your public `~username` URL return?",
                 required_concepts=(
@@ -3034,7 +3012,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             available_after_session="S7",
             prompt="Explain `200`, `404`, and `502` in one short answer.",
             required_commands=("curl -I",),
-            practiced_skills=("status-codes",),
+            practiced_skills=("http-status-codes",),
             validation=InteractiveQuestionValidation(
                 question="What do HTTP status codes 200, 404, and 502 mean?",
                 required_concepts=(
@@ -3128,7 +3106,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             available_after_session="S7",
             prompt="Save response headers from your public URL into `~/playground/headers.txt`.",
             required_commands=("curl -I", ">", "cat"),
-            practiced_skills=("http-inspection", "status-codes"),
+            practiced_skills=("http-inspection", "http-status-codes"),
             validation=FileCheckValidation(
                 path="~/playground/headers.txt",
                 required_regex=r"(?im)^HTTP/",
@@ -3175,7 +3153,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             available_after_session="S7",
             prompt="Explain why a reverse proxy returns 502 when the backend service is missing.",
             required_commands=("curl -v",),
-            practiced_skills=("reverse-proxy", "status-codes"),
+            practiced_skills=("reverse-proxy", "http-status-codes"),
             validation=InteractiveQuestionValidation(
                 question="Why does a reverse proxy return 502 for a missing backend service?",
                 required_concepts=(
@@ -3263,7 +3241,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         path="~/bin/site.sh",
                         required_regex=(
                             r"(?s)site_port\(\).+10000.+id -u.+serve\(\).+"
-                            r"python3 -m http\.server.+--bind 127\.0\.0\.1.+status\(\).+"
+                            r"python3 -m http\.server.+--bind 127\.0\.0\.1.+"
+                            r'--directory "\$HOME/public_html".+status\(\).+'
                             r"systemctl --user status.+stop\(\).+systemctl --user stop"
                         ),
                     ),
@@ -3297,7 +3276,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     CommandHistoryValidation(
                         required_patterns=(
                             r"^systemctl --user enable --now site\.service$",
-                            r'^curl -I "?http://127\.0\.0\.1:(?:[0-9]+|\$PORT|\$\{PORT\})/"?$',
+                            _LOCAL_SERVICE_COMMAND_PATTERN,
+                            _SERVICE_HOMEPAGE_COMMAND_PATTERN,
                         ),
                         observed_commands=("systemctl --user", "curl"),
                     ),
@@ -3305,7 +3285,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Make your second URL work using a user service.",
             evidence=(
-                "`site.service` must use your computed port, be enabled, and answer a local curl."
+                "`site.service` must use your computed port, with enable and local/public curl "
+                "observations. Inspect actual responses and browser access yourself."
             ),
         ),
         _quest(
@@ -3391,18 +3372,21 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Check service status",
             sequence=78,
             available_after_session="S8",
-            prompt="Run `systemctl --user status site.service` and identify whether it is active.",
+            prompt="Run `systemctl --user status site.service` and report the state you observe.",
             required_commands=("systemctl --user",),
             practiced_skills=("systemd-user-services", "service"),
             validation=InteractiveQuestionValidation(
                 question="What state did `systemctl --user status site.service` report?",
                 required_concepts=(
                     AnswerConcept(
-                        id="service-active",
-                        aliases=(r"\bactive\b", r"\brunning\b"),
+                        id="service-state",
+                        aliases=(
+                            r"\b(?:active|inactive|failed|activating|deactivating|running|dead)\b",
+                        ),
                         rubric=(
-                            "The answer must report that site.service is active or running. "
-                            "Reporting it as inactive or failed contradicts this concept."
+                            "The answer must report the observed state of site.service. "
+                            "Inactive, failed, or transitional states are valid observations; "
+                            "do not require the learner to claim the service is running."
                         ),
                     ),
                     AnswerConcept(
@@ -3563,7 +3547,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             required_commands=("curl -I", "systemctl --user"),
             practiced_skills=("http-inspection", "systemd-user-services"),
             validation=CommandHistoryValidation(
-                required_patterns=(r"^curl -I ", r"^systemctl --user status site\.service$"),
+                required_patterns=(
+                    _STATIC_HOMEPAGE_COMMAND_PATTERN,
+                    _SERVICE_HOMEPAGE_COMMAND_PATTERN,
+                    r"^systemctl --user show site\.service -p ActiveState -p SubState$",
+                ),
                 observed_commands=("curl -I", "systemctl --user"),
             ),
             goal="Collect URL and service evidence to discuss in the polish session.",
@@ -3585,7 +3573,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     FileCheckValidation(
                         path="~/crontab.after",
                         required_regex=r"(?s)^.*$",
-                        forbidden_regex=r"cron\.log",
+                        forbidden_regex=r"(?m)^[ \t]*[^#\s][^\n]*#[ \t]*cron-demo\b",
                     ),
                     CommandHistoryValidation(
                         required_patterns=(
@@ -3684,10 +3672,16 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             practiced_skills=("readme-writing", "forgejo-publishing"),
             validation=FileCheckValidation(
                 path="~/src/README.md",
-                required_regex=r"(?s)# .+site.+run",
+                required_regex=(
+                    r"(?ms)\A# \S[^\n]*\n"
+                    r"(?=.*(?:build-website|npm run build))(?=.*systemctl --user).+"
+                ),
             ),
             goal="Make your source repository understandable to another human.",
-            evidence="`~/src/README.md` needs a title, site description, and run instructions.",
+            evidence=(
+                "`~/src/README.md` needs a title, site description, and actual "
+                "build and `systemctl --user` commands."
+            ),
         ),
         _quest(
             quest_id="enable-webring",
@@ -3740,7 +3734,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         path="~/.config/systemd/user/site-build.timer",
                         required_regex=(
                             r"(?s)\[Timer\].+OnBootSec=5min.+OnUnitActiveSec=1h.+"
-                            r"Persistent=true.+\[Install\].+WantedBy=timers\.target"
+                            r"\[Install\].+WantedBy=timers\.target"
                         ),
                     ),
                     CommandHistoryValidation(
@@ -3812,14 +3806,37 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             required_commands=("curl", "git log", "systemctl --user"),
             practiced_skills=("multi-page-sites", "systemd-user-services", "readme-writing"),
             validation=InteractiveQuestionValidation(
-                question="What did you demo: site, repo, service, or README?",
+                question=(
+                    "What did you demonstrate for the static site, report, public service URL, "
+                    "source repo, and README? Include one recovery and the feedback you received."
+                ),
                 required_concepts=(
                     AnswerConcept(
                         id="demoed-site",
                         aliases=(r"\bsite\b", r"\bwebsite\b"),
                         rubric=(
                             "The answer must state that the learner demonstrated the public site "
-                            "or website to another person."
+                            "and report page to another person."
+                        ),
+                    ),
+                    AnswerConcept(
+                        id="demoed-service",
+                        aliases=(r"\bservice\b", r"\bbackend\b"),
+                        rubric=(
+                            "The answer must describe a working public service endpoint, not only "
+                            "systemctl status or the independently hosted static site."
+                        ),
+                    ),
+                    AnswerConcept(
+                        id="demoed-source",
+                        aliases=(r"\brepo(?:sitory)?\b", r"\bforgejo\b"),
+                        rubric="The answer must describe showing the source repository and commit.",
+                    ),
+                    AnswerConcept(
+                        id="demoed-readme",
+                        aliases=(r"\breadme\b",),
+                        rubric=(
+                            "The answer must describe showing the README and its run instructions."
                         ),
                     ),
                 ),
@@ -3837,25 +3854,36 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             practiced_skills=("multi-page-sites", "readme-writing"),
             validation=FileCheckValidation(
                 path="~/src/pages/next.md",
-                required_regex=r"(?s)# .+Linux.+next",
+                required_regex=(
+                    r"(?im)\A(?=#[ \t]+[^\n]*\bLinux\b)"
+                    r"(?=[\s\S]*^Next action:[ \t]*\S)[\s\S]+\Z"
+                ),
             ),
             goal="Arrive at graduation with a concrete next step already written down.",
-            evidence="`~/src/pages/next.md` needs a heading and a Linux next-step plan.",
+            evidence="`~/src/pages/next.md` needs a Linux heading and a non-empty `Next action:`.",
         ),
         _quest(
             quest_id="prepare-source-handoff",
             title="Prepare a source handoff",
             sequence=97,
             available_after_session="S9",
-            prompt="Write recent git history and status into `~/playground/source-handoff.txt`.",
-            required_commands=("git log", "git status", ">", "cat"),
-            practiced_skills=("git-basics", "readme-writing"),
-            validation=FileCheckValidation(
-                path="~/playground/source-handoff.txt",
-                required_regex=r"(?s)commit|On branch|nothing to commit|Changes",
+            prompt=(
+                "Preserve and commit the working scripts, systemd units, and README in `~/src`; "
+                "verify the pushed copies in Forgejo."
             ),
-            goal="Create a plain-text handoff showing what source state you will demo.",
-            evidence="`~/playground/source-handoff.txt` needs git log or status output.",
+            required_commands=("cp", "git add", "git commit", "git push", "git log", "git status"),
+            practiced_skills=("git-basics", "readme-writing"),
+            validation=AllOfValidation(
+                validations=tuple(
+                    GitTrackedPathValidation(repository_path="~/src", path=path)
+                    for path in _SOURCE_HANDOFF_PATHS
+                ),
+            ),
+            goal="Preserve a recoverable project with its working scripts and service units.",
+            evidence=(
+                "The six script/unit copies and README must be committed and unchanged. "
+                "Verify the remote copies in Forgejo yourself."
+            ),
         ),
         _quest(
             quest_id="use-terminal-irc",

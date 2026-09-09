@@ -4,18 +4,20 @@
 
 A Bash function gives a name to a group of shell commands that run in the current shell.
 
-Use functions when you repeat a command sequence but do not need a separate executable script yet.
+Use functions to name repeated command sequences, either in an interactive shell or inside an executable script.
 
 ## Shape
 
 ```bash
+mkdir -p "$HOME/function-demo"
+printf '<h1>Demo</h1>\n' > "$HOME/function-demo/index.html"
+
 serve() {
-  cd "$HOME/public_html"
-  python3 -m http.server "$((10000 + $(id -u)))" --bind 127.0.0.1
+  python3 -m http.server 8000 --bind 127.0.0.1 --directory "$HOME/function-demo"
 }
 ```
 
-The function name is `serve`. The body runs when you type `serve`, and the foreground server keeps running until you press `Ctrl-C`.
+The first two commands create a demo page. The function definition names the body but does not execute it. Type `serve` to start the foreground server; press `Ctrl-C` to stop it. The explicit directory prevents a failed `cd` from leaving the server exposing the caller's directory instead.
 
 ## Arguments
 
@@ -28,11 +30,11 @@ page() {
     return 1
   fi
 
-  micro "$HOME/src/pages/$1.md"
+  micro "$HOME/function-demo/$1.html"
 }
 ```
 
-Use `return` inside a function. Use `exit` only when you want to end the whole shell or script.
+With the demo directory above in place, `page about` opens `about.html` in Micro. Use `return` inside a function. Use `exit` only when you want to end the whole shell or script.
 
 ## Return Status Versus Output
 
@@ -42,12 +44,12 @@ Functions have two different channels:
 - Return status: success or failure number used by `if`, `&&`, and scripts.
 
 ```bash
-is_site_source() {
-  [[ -f "$HOME/src/pages/index.md" ]]
+has_homepage() {
+  [[ -f "$HOME/function-demo/index.html" ]]
 }
 
-if is_site_source; then
-  printf 'source exists\n'
+if has_homepage; then
+  printf 'homepage exists\n'
 fi
 ```
 
@@ -75,21 +77,24 @@ gacp() {
 
 Use aliases for fixed abbreviations. Use functions when you need arguments, tests, variables, or several commands.
 
-## Course Example
+## Service Example
+
+After creating and running `clock-note.service` with the [systemd timer card](../commands/systemd-timer.md), you can group its status and log commands:
 
 ```bash
 status() {
-  systemctl --user status site.service
-  journalctl --user -u site.service --no-pager -n 20
+  systemctl --user status clock-note.service
+  journalctl --user -u clock-note.service --no-pager -n 20
 }
 ```
 
-This turns a repeated service check into one command you can inspect and improve.
+This turns a repeated service check into one command you can inspect and improve. A oneshot service normally becomes inactive after it finishes successfully.
 
 ## Watch Out
 
 - Quote function arguments.
 - Functions run in the current shell, so `cd` inside a function can leave you in a new directory.
+- A failed `cd` does not stop the remaining commands. Prefer a program's explicit directory option when serving files.
 - Use `command name` if a function accidentally shadows a real command.
 
 ## Docs Pointers

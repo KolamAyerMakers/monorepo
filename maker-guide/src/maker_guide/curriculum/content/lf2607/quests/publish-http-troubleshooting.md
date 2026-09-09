@@ -31,6 +31,6 @@ Make sure the troubleshooting page mentions 200, 404, and 502.
 ## Related Reading
 
 - [build-website](../commands/build-website.md)
-- [status codes](../concepts/status-codes.md)
+- [HTTP status codes](../concepts/http-status-codes.md)
 - [reverse proxy](../concepts/reverse-proxy.md)
 - [multi-page sites](../concepts/multi-page-sites.md)

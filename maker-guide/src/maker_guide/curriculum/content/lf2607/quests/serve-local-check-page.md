@@ -17,8 +17,8 @@ Temporarily stop `site.service`, serve the site inside tmux, fetch it with `curl
 
 1. Stop the managed server with `systemctl --user stop site.service`.
 2. Run `tmux new -s local-server`.
-3. Inside tmux, set `PORT="$((10000 + $(id -u)))"` and run `cd ~/public_html`.
-4. Start `python3 -m http.server "$PORT" --bind 127.0.0.1`.
+3. Inside tmux, set `PORT="$((10000 + $(id -u)))"`.
+4. Start `python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$HOME/public_html"`.
 5. Detach with `Ctrl-b d`, then run `tmux ls` in your original shell.
 6. Recompute `PORT="$((10000 + $(id -u)))"` and fetch the site with `curl -I "http://127.0.0.1:$PORT/"`.
 7. Run `tmux attach -t local-server`, then stop the server with `Ctrl-C`.
@@ -28,7 +28,7 @@ Temporarily stop `site.service`, serve the site inside tmux, fetch it with `curl
 
 ## Hints
 
-1. Binding to `127.0.0.1` keeps the server local.
+1. The socket binds to `127.0.0.1`, but the course proxy can expose it publicly. Use `--directory "$HOME/public_html"` so Python never falls back to serving your current directory.
 2. The temporary server and `site.service` cannot own the same port together.
 3. The guide checks the stop, tmux lifecycle, server, curl, and service restart in order.
 

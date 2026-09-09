@@ -29,5 +29,5 @@ Answer again and include all three numbers: `200`, `404`, and `502`.
 
 ## Related Reading
 
-- [status-codes](../concepts/status-codes.md)
+- [HTTP status codes](../concepts/http-status-codes.md)
 - [curl -I](../commands/curl-head.md)

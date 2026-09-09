@@ -119,8 +119,11 @@ def test_command_history_validation_uses_sqlite_observations_not_audit(
 def test_git_tracked_path_validation_checks_head_and_working_tree(
     migrated_database_path: Path,
     temporary_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A tracked script passes only when its working copy matches HEAD."""
+    # A commit hook may export an index belonging to the parent repository.
+    monkeypatch.delenv("GIT_INDEX_FILE", raising=False)
     repository_path = temporary_path / "src"
     script_path = repository_path / "scripts" / "maker-report.sh"
     script_path.parent.mkdir(parents=True)

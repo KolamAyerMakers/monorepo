@@ -30,4 +30,4 @@ Run `build-website`, try `curl -I` again, and answer with the first status line.
 ## Related Reading
 
 - [curl -I](../commands/curl-head.md)
-- [status-codes](../concepts/status-codes.md)
+- [HTTP status codes](../concepts/http-status-codes.md)
