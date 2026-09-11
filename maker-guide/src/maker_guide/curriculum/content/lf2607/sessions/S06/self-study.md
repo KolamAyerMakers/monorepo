@@ -133,7 +133,9 @@ The script proves those page requests work from the server, not that outside cli
 
 ## Exercise 1: One Page
 
-If you already built `~/scripts/site-check.sh` live, keep it. Review the stages below without replacing your working script with an earlier version, then continue with [the final exercise](#exercise-6-predict-then-check).
+If you already started `~/scripts/site-check.sh` during the session, compare it with the [complete script](#complete-script) and finish any missing stages below. Keep your existing work rather than starting over. Only continue directly to [the final exercise](#exercise-6-predict-then-check) if your script already loops over both pages without arguments and handles HTTP results and connection failures.
+
+If your script is the one-page version below, continue from [Exercise 2](#exercise-2-capture-one-answer) through Exercise 5. Passing `bash -n` checks syntax, not whether the script is complete or runs successfully.
 
 ```bash
 mkdir -p ~/scripts

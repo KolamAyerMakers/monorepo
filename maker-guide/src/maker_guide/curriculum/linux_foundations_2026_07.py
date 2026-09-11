@@ -1384,12 +1384,14 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="check-personal-pages",
                     title="Check both personal pages",
                     prompt=(
-                        "If you built `~/scripts/site-check.sh` during the session, reuse it. "
-                        "Otherwise, follow the S6 self-study exercises to build it step by step; "
-                        "the complete script is provided there as a reference. Run "
+                        "Finish `~/scripts/site-check.sh` so it checks your homepage and "
+                        "`maker-report.html` without arguments. Compare your existing work with "
+                        "the complete S6 self-study script and finish any missing steps. If yours "
+                        'still uses `page="$1"`, it is the one-page starter: continue from '
+                        "Exercise 2 through Exercise 5. Run "
                         "`bash -n ~/scripts/site-check.sh`, then `bash ~/scripts/site-check.sh`. "
-                        "Read the results for your homepage and `maker-report.html`, fix any "
-                        "reported problems, and rerun until both pages return HTTP 200."
+                        "Read both results and fix any reported problems. Once both pages return "
+                        "HTTP 200, run `guide check`."
                     ),
                     validation=FileCheckValidation(
                         path="~/scripts/site-check.sh",
@@ -2884,12 +2886,14 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=49,
             available_after_session="S6",
             prompt=(
-                "If you built `~/scripts/site-check.sh` during the session, reuse it. "
-                "Otherwise, follow the S6 self-study exercises to build it step by step; "
-                "the complete script is provided there as a reference. Run "
+                "Finish `~/scripts/site-check.sh` so it checks your homepage and "
+                "`maker-report.html` without arguments. Compare your existing work with "
+                "the complete S6 self-study script and finish any missing steps. If yours "
+                'still uses `page="$1"`, it is the one-page starter: continue from '
+                "Exercise 2 through Exercise 5. Run "
                 "`bash -n ~/scripts/site-check.sh`, then `bash ~/scripts/site-check.sh`. "
-                "Read the results for your homepage and `maker-report.html`, fix any "
-                "reported problems, and rerun until both pages return HTTP 200."
+                "Read both results and fix any reported problems. Once both pages return "
+                "HTTP 200, run `guide check`."
             ),
             required_commands=("for", "if", "curl -I", "printf", "bash", "micro"),
             practiced_skills=("loops", "conditionals", "control-flow", "http-basics"),

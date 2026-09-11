@@ -4,7 +4,7 @@ Quest: check-personal-pages
 
 ## Mission
 
-Reuse `~/scripts/site-check.sh` if you built it live; create it only if it is missing. It checks your homepage and `maker-report.html`, prints whether each page returned HTTP 200, and explains how to rebuild a missing report page.
+Finish `~/scripts/site-check.sh` so one run without arguments checks your homepage and `maker-report.html`, prints whether each page returned HTTP 200, explains how to rebuild a missing report page, and handles connection failures. Build on your existing work; create the file only if it is missing.
 
 ## Commands You Will Use
 
@@ -17,7 +17,7 @@ Reuse `~/scripts/site-check.sh` if you built it live; create it only if it is mi
 
 ## Steps
 
-1. Inspect your existing `~/scripts/site-check.sh` and compare it with the complete [S6 self-study script](../sessions/S06/self-study.md#complete-script). Keep the working script and repair only missing or broken parts. If it does not exist, use the self-study exercises to build it.
+1. Inspect your existing `~/scripts/site-check.sh` and compare it with the complete [S6 self-study script](../sessions/S06/self-study.md#complete-script). Finish any missing stages. If it still uses `page="$1"`, continue from [Exercise 2](../sessions/S06/self-study.md#exercise-2-capture-one-answer) through Exercise 5. If it does not exist, start from Exercise 1.
 2. Run `bash -n ~/scripts/site-check.sh` and repair any syntax error.
 3. Without changing the checker, predict its diagnostics for the cases in the [final exercise](../sessions/S06/self-study.md#exercise-6-predict-then-check). Explain why a homepage `404`, a report `404`, and a curl failure produce different advice. Do not delete a real page to create a failure.
 4. Run `bash ~/scripts/site-check.sh` and read the real result for each URL.
