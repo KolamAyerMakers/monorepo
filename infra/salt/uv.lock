@@ -1545,7 +1545,7 @@ requires-dist = [
     { name = "msgpack", specifier = ">=1.0" },
     { name = "pyzmq", specifier = ">=25" },
     { name = "salt", specifier = ">=3008.2" },
-    { name = "saltstack-age", specifier = ">=0.5.0" },
+    { name = "saltstack-age", specifier = ">=0.6.0" },
     { name = "setuptools", specifier = ">=70" },
     { name = "tornado", specifier = ">=6.4" },
     { name = "typer", specifier = ">=0.16" },
@@ -1563,14 +1563,14 @@ dev = [
 
 [[package]]
 name = "saltstack-age"
-version = "0.5.0"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyrage" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/81/3ab97ee3790a5070766edb0e25f52581a5a23bbcd4d237a02b87d36122f0/saltstack_age-0.5.0.tar.gz", hash = "sha256:8428e5a8337fb4dd3bc489ec32ce63e8ed2b8465dfba1b978dfd09b36f080119", size = 167150, upload-time = "2026-04-25T04:47:29.716Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/25/1b60e204ee02cf035fd37398b624944cfa742d91acfe70f7a1230a1d6344/saltstack_age-0.6.0.tar.gz", hash = "sha256:8251fdbec82818c66e003267b8093709e7628dfbdc39f0d1e1d2c20cfb2bb2ba", size = 167628, upload-time = "2026-09-11T14:08:18.13Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/dd/960a4b82bd388f6de2782d0b9a6c12d3e5c087603e2c84de2e9a76e29fa2/saltstack_age-0.5.0-py3-none-any.whl", hash = "sha256:6c14fd759f389840edf209f02fd6b8f50c1be6e3caab88dc0365b9a725c504c0", size = 10829, upload-time = "2026-04-25T04:47:28.718Z" },
+    { url = "https://files.pythonhosted.org/packages/67/7a/9c116cd1ec0e5d7c47eff74188955b4d29b57e4243971b8ecbc9a5e65f86/saltstack_age-0.6.0-py3-none-any.whl", hash = "sha256:e8221208a2089a8297307ce4436b116d8b0e8144105a065dbd712f37a2ce4cc8", size = 10873, upload-time = "2026-09-11T14:08:17.012Z" },
 ]
 
 [[package]]
