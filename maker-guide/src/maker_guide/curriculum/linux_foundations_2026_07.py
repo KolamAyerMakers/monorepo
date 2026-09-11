@@ -1384,12 +1384,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="check-personal-pages",
                     title="Check both personal pages",
                     prompt=(
-                        "Create `~/scripts/site-check.sh`. It must loop over your homepage and "
-                        "`maker-report.html`, inspect each HTTP response with `curl -I`, and print "
-                        "whether it returned HTTP 200. For a missing report page, tell the learner "
-                        "to rerun `maker-report.sh` and `build-website`. Follow the S6 self-study "
-                        "script, including its connection-failure branch. The guide checks source "
-                        "shape only; run syntax and HTTP checks yourself."
+                        "If you built `~/scripts/site-check.sh` during the session, reuse it. "
+                        "Otherwise, follow the S6 self-study exercises to build it step by step; "
+                        "the complete script is provided there as a reference. Run "
+                        "`bash -n ~/scripts/site-check.sh`, then `bash ~/scripts/site-check.sh`. "
+                        "Read the results for your homepage and `maker-report.html`, fix any "
+                        "reported problems, and rerun until both pages return HTTP 200."
                     ),
                     validation=FileCheckValidation(
                         path="~/scripts/site-check.sh",
@@ -2884,10 +2884,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=49,
             available_after_session="S6",
             prompt=(
-                "Create `~/scripts/site-check.sh` to check your homepage and "
-                "`maker-report.html`. It must print whether each page returned HTTP 200 and "
-                "explain how to rebuild a missing report page. Follow the S6 self-study script, "
-                "including its connection-failure branch. The guide checks source shape only."
+                "If you built `~/scripts/site-check.sh` during the session, reuse it. "
+                "Otherwise, follow the S6 self-study exercises to build it step by step; "
+                "the complete script is provided there as a reference. Run "
+                "`bash -n ~/scripts/site-check.sh`, then `bash ~/scripts/site-check.sh`. "
+                "Read the results for your homepage and `maker-report.html`, fix any "
+                "reported problems, and rerun until both pages return HTTP 200."
             ),
             required_commands=("for", "if", "curl -I", "printf", "bash", "micro"),
             practiced_skills=("loops", "conditionals", "control-flow", "http-basics"),
