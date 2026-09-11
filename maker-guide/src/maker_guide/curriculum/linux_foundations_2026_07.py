@@ -117,16 +117,19 @@ _S5_UPTIME_SCRIPT_PATTERN = (
 )
 _S5_UPTIME_REPORT_PATTERN = r"(?m)^\*[ \t]+Uptime:[ \t]*(?:\S|\n[ \t]*(?![#*])\S)"
 _S5_UPTIME_HTML_PATTERN = r"(?is)Uptime:\s*[^<\n]*\bup\s+\d"
+_CLASSROOM_HOSTNAME_PATTERN = r"(?:lf2607|lf-dev)\.kolamayermakers\.org"
 _STATIC_HOMEPAGE_COMMAND_PATTERN = (
     r"""^curl -I (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)"""
-    r"""https://lf2607\.kolamayermakers\.org/~"""
+    rf"""https://{_CLASSROOM_HOSTNAME_PATTERN}/~"""
     r"""[a-z_][a-z0-9_-]*/(?P=quote)|(?P<variable_quote>"?)"""
-    r"""https://lf2607\.kolamayermakers\.org/~\$(?:USER|\{USER\})/(?P=variable_quote))$"""
+    rf"""https://{_CLASSROOM_HOSTNAME_PATTERN}/~"""
+    r"""\$(?:USER|\{USER\})/(?P=variable_quote))$"""
 )
 _SERVICE_HOMEPAGE_COMMAND_PATTERN = (
     r"""^curl -I (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)https://[a-z_][a-z0-9_-]*"""
-    r"""\.lf2607\.kolamayermakers\.org/(?P=quote)|(?P<variable_quote>"?)"""
-    r"""https://\$(?:USER|\{USER\})\.lf2607\.kolamayermakers\.org/(?P=variable_quote))$"""
+    rf"""\.{_CLASSROOM_HOSTNAME_PATTERN}/(?P=quote)|(?P<variable_quote>"?)"""
+    r"""https://\$(?:USER|\{USER\})"""
+    rf"""\.{_CLASSROOM_HOSTNAME_PATTERN}/(?P=variable_quote))$"""
 )
 _LOCAL_SERVICE_COMMAND_PATTERN = (
     r'^curl -I (?:--max-time [0-9]+ )?"?http://127\.0\.0\.1:'
@@ -146,7 +149,8 @@ _SOURCE_HANDOFF_PATHS = (
 _S6_SITE_CHECK_SCRIPT_PATTERN = (
     r"(?ms)\A"
     r"(?!.*^[ \t]*status=(?!\$\(curl[ \t]))"
-    r'.*?^[ \t]*base_url="https://lf2607\.kolamayermakers\.org/~\$(?:USER|\{USER\})"[ \t]*$'
+    rf'.*?^[ \t]*base_url="https://{_CLASSROOM_HOSTNAME_PATTERN}/~'
+    r'\$(?:USER|\{USER\})"[ \t]*$'
     r""".*?^[ \t]*for[ \t]+page[ \t]+in[ \t]+(?:""|'')[ \t]+"""
     r"""(?:maker-report\.html|"maker-report\.html"|'maker-report\.html')"""
     r"[ \t]*(?:;|\n)[ \t]*do[ \t]*$"
@@ -1360,7 +1364,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "in the output."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(r"^host lf2607\.kolamayermakers\.org$",),
+                        required_patterns=(rf"^host {_CLASSROOM_HOSTNAME_PATTERN}$",),
                         observed_commands=("host",),
                     ),
                 ),
@@ -2792,7 +2796,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         ),
                         rubric=(
                             "The answer must report one returned IP address or a complete host "
-                            "address or alias answer line for lf2607.kolamayermakers.org. "
+                            "address or alias answer line for lf2607.kolamayermakers.org "
+                            "or the development classroom lf-dev.kolamayermakers.org. "
                             "The words 'has' or 'address' without a record value are not enough."
                         ),
                     ),

@@ -21,6 +21,12 @@ IRC SASL authentication is mandatory. The implemented client supports SASL `PLAI
 
 Mentors can run `maker-guide-progress release S03` during the in-person session. It releases that session to the whole cohort, triggers `maker-guide-build-docs.service`, and leaves earlier unfinished quests available. The service reads the release from SQLite and atomically publishes release-gated session materials and quests alongside an open reference library. Command cards, concept cards, and general learner guides are available from the start so curious learners can read ahead. Every local document linked from available material must also be available.
 
+## Development Classroom
+
+Curriculum examples use `lf2607.kolamayermakers.org`. When testing on `lf-dev`, replace that hostname with `lf-dev.kolamayermakers.org` in DNS commands, page and service URLs, and the S6 checker's `base_url`. The shared validators accept both classroom hostnames, not arbitrary hosts; the course ID remains `lf2607`.
+
+After deploying a validator update, use `guide check` to check previously recorded successful commands for the current objective, or rerun the command. Failed commands do not count as completion evidence.
+
 ## Example Config
 
 ```toml

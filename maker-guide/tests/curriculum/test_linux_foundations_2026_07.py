@@ -66,7 +66,20 @@ def test_s6_site_check_requires_both_pages() -> None:
         CATALOG.quest("check-personal-pages").validation,
     ):
         assert isinstance(validation, FileCheckValidation)
-        assert re.search(validation.required_regex, reference_script)
+        for hostname in ("lf2607.kolamayermakers.org", "lf-dev.kolamayermakers.org"):
+            assert re.search(
+                validation.required_regex,
+                reference_script.replace("lf2607.kolamayermakers.org", hostname),
+            )
+        for hostname in (
+            "example.org",
+            "lf-dev.kolamayermakers.org.example.org",
+            "lf-devXkolamayermakers.org",
+        ):
+            assert not re.search(
+                validation.required_regex,
+                reference_script.replace("lf2607.kolamayermakers.org", hostname),
+            )
         assert re.search(validation.required_regex, reference_script + " \t\n")
         assert re.search(
             validation.required_regex,
@@ -150,23 +163,24 @@ def test_static_homepage_history_accepts_quoting_but_not_subpaths() -> None:
         CATALOG.session("S7").objectives[0].validation,
     ):
         assert isinstance(validation, CommandHistoryValidation)
-        for command in (
-            'curl -I "https://lf2607.kolamayermakers.org/~$USER/"',
-            'curl -I "https://lf2607.kolamayermakers.org/~${USER}/"',
-            'curl -I "https://lf2607.kolamayermakers.org/~learner/"',
-            "curl -I 'https://lf2607.kolamayermakers.org/~learner/'",
-            "curl -I https://lf2607.kolamayermakers.org/~learner/",
-        ):
-            assert re.search(validation.required_patterns[0], command)
-        for command in (
-            'curl -I "https://lf2607.kolamayermakers.org/~$USER/maker-report.html"',
-            'curl -I "https://lf2607.kolamayermakers.org/~$USER/subpath/"',
-            'curl -I "https://lf2607.kolamayermakers.org/~$USER/"/',
-            'curl -I "https://lf2607.kolamayermakers.org/~$USER/',
-            "curl -I 'https://lf2607.kolamayermakers.org/~$USER/'",
-            'curl -I "https://$USER.lf2607.kolamayermakers.org/"',
-        ):
-            assert not re.search(validation.required_patterns[0], command)
+        for hostname in ("lf2607.kolamayermakers.org", "lf-dev.kolamayermakers.org"):
+            for command in (
+                f'curl -I "https://{hostname}/~$USER/"',
+                f'curl -I "https://{hostname}/~${{USER}}/"',
+                f'curl -I "https://{hostname}/~learner/"',
+                f"curl -I 'https://{hostname}/~learner/'",
+                f"curl -I https://{hostname}/~learner/",
+            ):
+                assert re.search(validation.required_patterns[0], command)
+            for command in (
+                f'curl -I "https://{hostname}/~$USER/maker-report.html"',
+                f'curl -I "https://{hostname}/~$USER/subpath/"',
+                f'curl -I "https://{hostname}/~$USER/"/',
+                f'curl -I "https://{hostname}/~$USER/',
+                f"curl -I 'https://{hostname}/~$USER/'",
+                f'curl -I "https://$USER.{hostname}/"',
+            ):
+                assert not re.search(validation.required_patterns[0], command)
 
 
 def test_reported_results_need_values_not_just_keywords() -> None:
@@ -1042,9 +1056,26 @@ def test_s7_setup_page_requires_linked_rebuild_evidence() -> None:
                 ).splitlines()
                 if line.startswith(command_prefix)
             )
-            assert all(
-                re.search(pattern, documented_command) for pattern in validation.required_patterns
-            ), (objective_id, document_name, documented_command)
+            for hostname in ("lf2607.kolamayermakers.org", "lf-dev.kolamayermakers.org"):
+                assert all(
+                    re.search(
+                        pattern,
+                        documented_command.replace("lf2607.kolamayermakers.org", hostname),
+                    )
+                    for pattern in validation.required_patterns
+                ), (objective_id, document_name, hostname)
+            for hostname in (
+                "example.org",
+                "lf-dev.kolamayermakers.org.example.org",
+                "lf-devXkolamayermakers.org",
+            ):
+                assert not any(
+                    re.search(
+                        pattern,
+                        documented_command.replace("lf2607.kolamayermakers.org", hostname),
+                    )
+                    for pattern in validation.required_patterns
+                ), (objective_id, document_name, hostname)
             assert not any(
                 re.search(pattern, documented_command.replace('"', "'"))
                 for pattern in validation.required_patterns

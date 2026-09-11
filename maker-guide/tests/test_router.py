@@ -424,6 +424,58 @@ async def test_route_events_completes_and_announces_command_history_objectives(
     )
 
 
+async def test_route_events_completes_s6_network_objectives_on_development_host(
+    migrated_database_path: Path,
+) -> None:
+    """Development-host commands complete objectives, but a failed curl does not."""
+    with connect_database(migrated_database_path) as database_connection:
+        _write_member(
+            database_connection,
+            session_reached="S6",
+            released_at="2026-09-12T09:00:00Z",
+        )
+    ingest_queue: asyncio.Queue[ShellEvent] = asyncio.Queue()
+    router_task = asyncio.create_task(
+        route_events(ingest_queue, database_path=migrated_database_path, catalog=CATALOG),
+    )
+    try:
+        for command, exit_status, expected_objective_ids in (
+            (
+                "host lf-dev.kolamayermakers.org",
+                0,
+                ("resolve-classroom-host",),
+            ),
+            (
+                'curl -I "https://lf-dev.kolamayermakers.org/~$USER/"',
+                28,
+                ("resolve-classroom-host",),
+            ),
+            (
+                'curl -I "https://lf-dev.kolamayermakers.org/~$USER/"',
+                0,
+                ("resolve-classroom-host", "inspect-personal-site-headers"),
+            ),
+        ):
+            await ingest_queue.put(
+                _shell_event(
+                    phase="after",
+                    command=command,
+                    exit_status=exit_status,
+                    timestamp=datetime(2026, 9, 12, 9, 5, tzinfo=UTC),
+                ),
+            )
+            await asyncio.wait_for(ingest_queue.join(), timeout=1.0)
+            with connect_database(migrated_database_path) as database_connection:
+                assert list_completed_objective_ids(
+                    database_connection,
+                    "alice",
+                    CATALOG.course.id,
+                    "S6",
+                ) == frozenset(expected_objective_ids)
+    finally:
+        await _cancel_router(router_task)
+
+
 async def test_route_events_completes_composite_objectives_from_matching_commands(
     migrated_database_path: Path,
     monkeypatch: pytest.MonkeyPatch,
