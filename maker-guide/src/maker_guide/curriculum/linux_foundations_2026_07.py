@@ -1356,8 +1356,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="resolve-classroom-host",
                     title="Resolve the classroom hostname",
                     prompt=(
-                        "Run `host lf2607.kolamayermakers.org`. Read one address or answer line "
-                        "yourself; the live check records the command, not your interpretation."
+                        "Run `host lf2607.kolamayermakers.org`. Identify one IP address "
+                        "in the output."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(r"^host lf2607\.kolamayermakers\.org$",),
@@ -1368,9 +1368,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="inspect-personal-site-headers",
                     title="Inspect your site response",
                     prompt=(
-                        'Run `curl -I "https://lf2607.kolamayermakers.org/~$USER/"`. Read the '
-                        "HTTP status yourself; the live check records the command, not the status "
-                        "or your interpretation."
+                        'Run `curl -I "https://lf2607.kolamayermakers.org/~$USER/"`. Find the '
+                        "HTTP status code in the response headers."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(_STATIC_HOMEPAGE_COMMAND_PATTERN,),
