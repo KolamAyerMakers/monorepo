@@ -83,7 +83,7 @@ Saved commands, direct execution, quoted arguments, and a published report.
 
 Explore how web requests work, then write a checker that diagnoses your homepage and report page.
 
-For the current checker task, `guide now` or `guide check` in your classroom shell automatically runs your script locally under your account through seven simulated cases. Grading accepts equivalent implementations, not just the lesson's `for`/`if` example. IRC directs you back to the shell. Still run `bash ~/scripts/site-check.sh` against the live site and inspect both pages in a browser; a simulated pass does not verify live health.
+For the current checker task, `guide now` or `guide check` in your classroom shell automatically runs your script locally under your account through simulated cases with varying page arguments, including unknown-page `404` and no-argument usage help. Grading accepts equivalent implementations, not just the lesson's `for`/`if` example. IRC directs you back to the shell. Still run `bash ~/scripts/site-check.sh "" maker-report.html` against the live site and inspect both pages in a browser; a simulated pass does not verify live health. `""` selects home; no arguments must show usage and exit nonzero.
 
 - [Slides](sessions/S06/slides.md)
 - [Self-study](sessions/S06/self-study.md)

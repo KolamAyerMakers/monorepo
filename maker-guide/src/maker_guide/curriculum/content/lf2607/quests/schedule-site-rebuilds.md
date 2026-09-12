@@ -65,7 +65,7 @@ WantedBy=timers.target
 4. Run `systemctl --user start site-build.service` to trigger one build immediately.
 5. Run `systemctl --user list-timers` and find `site-build.timer` and its next run.
 6. Read logs with `journalctl --user -u site-build.service --no-pager -n 50`.
-7. Run `bash ~/scripts/site-check.sh` and inspect the actual site/report results.
+7. Run `bash ~/scripts/site-check.sh "" maker-report.html` and inspect the actual site/report results.
 8. Preserve both units alongside `site.service` using [Prepare a source handoff](prepare-source-handoff.md).
 9. Ask the guide to check both active unit files.
 

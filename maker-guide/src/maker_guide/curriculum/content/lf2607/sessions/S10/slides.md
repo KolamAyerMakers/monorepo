@@ -80,7 +80,7 @@ Required demo: site, source repo, running service, README, and one recovery stor
 In the classroom shell, reuse your checker and helper:
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 PORT="$(~/bin/site.sh site_port)"
 curl -I "https://lf2607.kolamayermakers.org/~$USER/"
 curl -I "http://127.0.0.1:$PORT/"

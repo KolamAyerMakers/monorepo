@@ -42,7 +42,7 @@ Run `guide now` before starting a quest and after practical work. It checks one 
 
 ## S06 Reinforcement
 
-Practise the observations and checker from the [S6 self-study](../sessions/S06/self-study.md). The first three quests check reported observations. For the assigned checker quest, `guide now` or `guide check` in the classroom shell automatically runs your script locally as your learner account through [seven simulated cases](../sessions/S06/self-study.md#guide-checks). Equivalent implementations are accepted, not just the reference. IRC directs you to the shell. A pass does not verify live site health: still run `bash ~/scripts/site-check.sh` and inspect both pages in your browser.
+Practise the observations and checker from the [S6 self-study](../sessions/S06/self-study.md). The first three quests check reported observations. For the assigned checker quest, `guide now` or `guide check` in the classroom shell automatically runs your script locally as your learner account through [simulated cases](../sessions/S06/self-study.md#guide-checks) with varying page arguments, including unknown-page `404` and no-argument usage help. Equivalent implementations are accepted, not just the reference. IRC directs you to the shell. A pass does not verify live site health: still run `bash ~/scripts/site-check.sh "" maker-report.html` and inspect both pages in your browser.
 
 - [resolve-hostname](resolve-hostname.md)
 - [measure-ping](measure-ping.md)

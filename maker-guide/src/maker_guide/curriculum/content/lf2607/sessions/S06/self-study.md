@@ -26,7 +26,7 @@ In the URLs below, `$USER` expands to your classroom username.
 
 Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. Use `guide answer 'your own observation'` when asked. `guide check` is an optional explicit check. Reading an answer does not record progress.
 
-For the checker task, `guide now` and `guide check` automatically run your script locally under your account through [seven simulated cases](#guide-checks). This does not replace running it against your live site and checking both pages in your browser.
+For the checker task, `guide now` and `guide check` automatically run your script locally under your account through [simulated cases](#guide-checks). This does not replace running it against your live site and checking both pages in your browser.
 
 ## Provided Report Script
 
@@ -135,7 +135,7 @@ The script proves those page requests work from the server, not that outside cli
 
 ## Exercise 1: One Page
 
-If you already started `~/scripts/site-check.sh` during the session, use the [complete script](#complete-script) as one example and finish any missing behavior below. Keep your existing work rather than starting over. Continue directly to [the final exercise](#exercise-6-predict-then-check) if your script already checks both pages without arguments and handles HTTP results and connection failures.
+If you already started `~/scripts/site-check.sh` during the session, use the [complete script](#complete-script) as one example and finish any missing behavior below. Keep your existing work rather than starting over. Continue directly to [the final exercise](#exercise-6-predict-then-check) if your script already checks arbitrary page arguments, gives usage help when none are supplied, and handles HTTP results and connection failures.
 
 If your script is the one-page version below, continue from [Exercise 2](#exercise-2-capture-one-answer) through Exercise 5. Passing `bash -n` checks syntax, not whether the script is complete or runs successfully.
 
@@ -206,16 +206,27 @@ Predict each result: `200` selects `OK`; a real `404` selects `CHECK`. Use anoth
 
 ## Exercise 4: Two Pages
 
-Keep `base_url=...` above the loop. Remove `page="$1"`; the loop will set `page` instead. Replace the single-page body with a list traversal:
+Keep `base_url=...` above the loop. Remove `page="$1"`; the loop will set `page` from each argument instead. Replace the single-page body with argument traversal:
 
 ```bash
-for page in "" maker-report.html; do
+for page in "$@"; do
   url="$base_url/$page"
   printf 'Checking %s\n' "$url"
 done
 ```
 
-The empty string is still one item: the first URL ends in `/`. The second iteration appends `maker-report.html`. Run it before proceeding and verify that the URLs differ.
+`"$@"` preserves each supplied argument, including an empty string. Run `bash ~/scripts/site-check.sh "" maker-report.html`: the first URL ends in `/`, and the second appends `maker-report.html`. You can pass one page, other paths, or reverse their order; do not hardcode the two pages in the script.
+
+Zero arguments are different from one empty argument: `""` selects the homepage, while no arguments should print usage and exit `2`. Add this guard after `set -euo pipefail`, before building URLs:
+
+```bash
+if [[ "$#" -eq 0 ]]; then
+  printf 'Usage: site-check.sh PAGE [PAGE ...] (use "" for homepage)\n' >&2
+  exit 2
+fi
+```
+
+`$#` counts arguments; `-eq` compares numbers. The interface is `site-check.sh PAGE [PAGE ...]`.
 
 Replace the loop's `printf` with your existing curl capture and `if` block. Now the same decision handles each path. Indent the body so the nesting is visible; Bash uses `do`/`done` and `then`/`fi`, not indentation, to determine structure.
 
@@ -265,9 +276,14 @@ This is one implementation, not a required copy. The lesson uses `for` and `if` 
 #!/bin/bash
 set -euo pipefail
 
+if [[ "$#" -eq 0 ]]; then
+  printf 'Usage: site-check.sh PAGE [PAGE ...] (use "" for homepage)\n' >&2
+  exit 2
+fi
+
 base_url="https://lf2607.kolamayermakers.org/~$USER"
 
-for page in "" maker-report.html; do
+for page in "$@"; do
   url="$base_url/$page"
   curl_exit_code=0
   status=$(curl -sS -I --max-time 10 -o /dev/null -w '%{http_code}' "$url") \
@@ -293,10 +309,10 @@ Save, check, and run:
 
 ```bash
 bash -n ~/scripts/site-check.sh
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 ```
 
-`bash -n` parses without executing and normally prints nothing on success. For unexpected behaviour, use `bash -x ~/scripts/site-check.sh`. Add `chmod u+x ~/scripts/site-check.sh` only if you want direct execution instead of `bash`.
+`bash -n` parses without executing and normally prints nothing on success. For unexpected behaviour, use `bash -x ~/scripts/site-check.sh "" maker-report.html`. Add `chmod u+x ~/scripts/site-check.sh` only if you want direct execution instead of `bash`.
 
 This is a human-readable checker, not a complete monitoring system. It prints each result; its process exit code does not summarize website health. A `HEAD` response of `200` does not prove the report's contents are correct or fresh. Inspect the page body and browser view too. Some other servers handle `HEAD` differently from `GET`.
 
@@ -313,9 +329,11 @@ Read the unchanged checker and predict its message and advice for these hypothet
 | Either | `6` | No response |
 | Report | `28` | `200` printed before curl failed |
 
-Explain why the two `404` cases produce different advice and why a curl failure must not claim success, even if curl printed `200`. Both pages must still be checked when either request fails. Do not change the script or delete a page to produce these cases.
+Explain why the two `404` cases produce different advice and why a curl failure must not claim success, even if curl printed `200`. Continue to the remaining supplied pages when a request fails. Do not change the script or delete a page to produce these cases.
 
-Run `bash ~/scripts/site-check.sh` against your real pages. Read the actual results, repair only observed problems, and rerun. Verify both pages in your laptop browser too.
+Exercise a real `404` through the checker with `bash ~/scripts/site-check.sh not-a-page.html`. Choose another unused path if needed. It must diagnose that page without report-regeneration advice. Also try `bash ~/scripts/site-check.sh` with no arguments: expect usage help and exit `2`, not a homepage request. Use `printf 'exit code: %s\n' "$?"` immediately afterward to read it.
+
+Run `bash ~/scripts/site-check.sh "" maker-report.html` against your real pages. Read the actual results, repair only observed problems, and rerun. Verify both pages in your laptop browser too.
 
 To observe a failed request without altering your site or checker, try at the prompt:
 
@@ -331,25 +349,29 @@ fi
 
 ## Guide Checks
 
-When the checker is your current objective or assigned quest, run `guide now` or `guide check` in your classroom shell. It automatically runs your script without arguments through seven simulated cases under your own account. Use your own script and do not use sudo. If asking through IRC, return to the classroom shell for this step.
+When the checker is your current objective or assigned quest, run `guide now` or `guide check` in your classroom shell. It automatically runs your script with selected page arguments through simulated cases under your own account, including a separate no-argument usage check. Use your own script and do not use sudo. If asking through IRC, return to the classroom shell for this step.
 
 Call `curl` through `PATH`, not an absolute path such as `/usr/bin/curl`, so the checks can supply simulated responses. The test runner is not a sandbox: your script retains your normal file permissions. Keep repairs as printed advice, not automatic file changes.
 
 | Simulated case | What your checker must do |
 |---|---|
 | Both pages return `200` | Identify each page and its HTTP `200` success. |
-| Report `404`, homepage `200` | Diagnose the missing report; suggest `maker-report.sh`, then `build-website`. |
-| Homepage `404`, report `200` | Diagnose the missing homepage without suggesting report regeneration. |
+| Report alone returns `404` | Diagnose the missing report; suggest `maker-report.sh`, then `build-website`. |
+| Homepage alone returns `404` | Diagnose the missing homepage without suggesting report regeneration. |
 | Report `500`, homepage `200` | Diagnose the report's HTTP `500` as an error. |
 | Homepage connection fails | Diagnose that failure and still check the report. |
 | Report connection fails | Diagnose that failure and still check the homepage. |
 | Report curl prints `200` but exits nonzero | Diagnose the failed request, not a success; still check both pages. |
+| An arbitrary missing page alone returns `404` | Identify that page and HTTP `404`; do not suggest report regeneration. |
+| No page arguments | Print concise usage help and exit nonzero without requesting a page. The reference uses exit `2`. |
 
-Identify each page by its URL or a `homepage`/`home page`/`report` label on its diagnosis line or a heading above it. Print the actual HTTP code with a clear diagnosis such as `OK`, `MISSING`, `CHECK`, or `ERROR`. For transport failures, use clear failure wording such as `CONNECTION FAILED`, DNS, TLS, or timeout, and do not also call the request successful. Advice can follow on separate lines; report repair advice must name both commands. Exact sentences are not required.
+The suite varies the selected arguments and their order; check only the supplied pages. `""` is an explicit homepage argument, not the same as no arguments. Controlled fixtures exercise connection failures safely; a real missing page tests HTTP `404`, not a connection failure.
+
+Identify each page by its URL or a `homepage`/`home page`/`report` label on its diagnosis line or a heading above it; identify other pages by their path or URL. Print the actual HTTP code with a clear diagnosis such as `OK`, `MISSING`, `CHECK`, or `ERROR`. For transport failures, use clear failure wording such as `CONNECTION FAILED`, DNS, TLS, or timeout, and do not also call the request successful. Advice can follow on separate lines; report repair advice must name both commands. Exact sentences are not required.
 
 The guide distinguishes simulated tests from your live website, acknowledges the two-page success test when it passes, and shows one failing case to work on next. Fix that behavior and run `guide now` again. If the script changes during checking, run the check again. If the local checker is unavailable or your CLI is too old, ask a mentor; it cannot fall back to accepting the source layout.
 
-Passing these simulations does not verify your live website. Still run `bash ~/scripts/site-check.sh` against the real pages and open both in your laptop browser. The checker should print repair advice, not regenerate or publish files automatically.
+Passing these simulations does not verify your live website. Still run `bash ~/scripts/site-check.sh "" maker-report.html` against the real pages and open both in your laptop browser. The checker should print repair advice, not regenerate or publish files automatically.
 
 ## Repair A Missing Report
 
@@ -358,7 +380,7 @@ If the real script prints the report `MISSING` line, use your working generator 
 ```bash
 ~/scripts/maker-report.sh "S5 Report"
 build-website
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 ```
 
 Generation writes Markdown; rebuilding publishes HTML. Verify `200`, then open the report in your browser. For a missing homepage, inspect `~/src/pages/index.md` and rebuild; do not overwrite that source file with the report.
@@ -387,10 +409,10 @@ Generation writes Markdown; rebuilding publishes HTML. Verify `200`, then open t
 - Explain the different questions answered by DNS, ping, and HTTP.
 - Identify an observed status and response header, then find your report title in a `GET` body.
 - Explain why curl can exit `0` after an HTTP `404`.
-- Explain how the lesson's `for` and `if` repeat checks and choose diagnoses. Your implementation checks both personal pages without arguments and handles curl failure separately from HTTP status.
+- Explain how `"$@"` extends the early `$1` exercise and how `for` and `if` repeat checks and choose diagnoses. Your implementation accepts arbitrary page arguments, distinguishes no arguments from `""`, and handles curl failure separately from HTTP status.
 - Predict the diagnostics for missing-report, other HTTP statuses, and curl failures without changing the checker.
 - Both real paths return `200` from the server and open correctly in your laptop browser.
-- Run `guide now` or `guide check` in the classroom shell to pass the seven simulated cases. This is separate from the live HTTP and browser checks.
+- Run `guide now` or `guide check` in the classroom shell to pass the simulated cases. This is separate from the live HTTP and browser checks.
 
 ## Next Session
 

@@ -4,7 +4,7 @@ Session: S6
 
 ## What You Built
 
-`~/scripts/site-check.sh` constructs your homepage and report URLs using `$USER`, checks each response, and prints a diagnosis. It does not regenerate the report or publish files automatically.
+`~/scripts/site-check.sh PAGE [PAGE ...]` constructs URLs from any supplied page paths using `$USER`, checks each response, and prints a diagnosis. It does not regenerate the report or publish files automatically.
 
 ## Three Questions
 
@@ -47,18 +47,19 @@ for each page:
 
 Keep `set -euo pipefail`. Handling the failed capture with `||` lets the script report the error and continue the loop under `set -e`.
 
-`for` visits the two known paths. `elif` tries another condition. The report repair requires both the report filename and `404`, using `&&`.
+`for page in "$@"` extends the early `page="$1"` exercise to all supplied arguments. `""` selects the homepage; zero arguments print usage and exit `2`. `elif` tries another condition. The report repair requires both the report filename and `404`, using `&&`.
 
-That describes the lesson example, not a required source layout. Equivalent functions, `case` statements, variable names, conditional nesting, page order, and curl flag order are accepted. Identify each page by URL or homepage/report label and print its HTTP code with a diagnosis, or a clear transport-failure diagnosis. Never call a failed request successful, even if curl printed `200` before exiting nonzero.
+That describes the lesson example, not a required source layout. Equivalent functions, `case` statements, variable names, conditional nesting, page order, and curl flag order are accepted. Identify each page by URL, path, or homepage/report label and print its HTTP code with a diagnosis, or a clear transport-failure diagnosis. Never call a failed request successful, even if curl printed `200` before exiting nonzero.
 
 ## Run And Repair
 
 ```bash
 bash -n ~/scripts/site-check.sh
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
+bash ~/scripts/site-check.sh not-a-page.html
 ```
 
-For a missing report, run `~/scripts/maker-report.sh "S5 Report"`, then `build-website`, then the checker again.
+Use an unused path for a real `404`, without editing statuses or deleting files. That path must not trigger report-regeneration advice. For a missing report, run `~/scripts/maker-report.sh "S5 Report"`, then `build-website`, then the checker again.
 
 If the generator is missing, use the [provided report script](self-study.md#provided-report-script). Your S5 version in `~/src` stays untouched.
 
@@ -68,9 +69,9 @@ Each request has a ten-second timeout. Keep certificate verification enabled. Th
 
 You can explain the three network questions, inspect headers and a body, and explain which branch handles an HTTP response versus a command failure. Both real paths return `200`, and the pages open in your laptop browser.
 
-For the current checker objective or assigned quest, `guide now` or `guide check` in the classroom shell automatically runs your script locally under your own account. IRC directs you back to that shell. The [seven simulated cases](self-study.md#guide-checks) cover both `200`, report `404` with `maker-report.sh` then `build-website` advice, homepage `404` without report-regeneration advice, report `500`, each page's connection failure while still checking the other, and a printed `200` with a nonzero curl exit.
+For the current checker objective or assigned quest, `guide now` or `guide check` in the classroom shell automatically runs your script locally under your own account with varying page arguments. IRC directs you back to that shell. The [simulated cases](self-study.md#guide-checks) cover both `200`, report `404` with `maker-report.sh` then `build-website` advice, homepage or arbitrary-page `404` without report-regeneration advice, report `500`, each page's connection failure while still checking the other, a printed `200` with a nonzero curl exit, and no-argument usage help. Controlled fixtures test connection failures safely; a real `404` is an HTTP response, not a connection failure.
 
-Follow the fixed case feedback and rerun after edits. A pass verifies simulated behavior, not live health: still run `bash ~/scripts/site-check.sh` and inspect both pages in your browser. An unavailable or older CLI needs mentor help, not a reference-source workaround.
+Follow the fixed case feedback and rerun after edits. A pass verifies simulated behavior, not live health: still run `bash ~/scripts/site-check.sh "" maker-report.html` and inspect both pages in your browser. An unavailable or older CLI needs mentor help, not a reference-source workaround.
 
 ## Next Session
 

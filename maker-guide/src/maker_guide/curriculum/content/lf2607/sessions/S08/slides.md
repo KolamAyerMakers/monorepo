@@ -23,7 +23,7 @@ On the classroom server, as your own account:
 ```bash
 whoami
 printf '%s\n' "$USER"
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 guide now
 ```
 
@@ -334,7 +334,7 @@ An enabled unit can start again on login. Compare both `MainPID` and `ExecMainSt
 # Preflight Both Public URLs
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 curl -I "https://lf2607.kolamayermakers.org/~$USER/"
 curl -I "https://$USER.lf2607.kolamayermakers.org/"
 systemctl --user show site.service -p ActiveState -p SubState

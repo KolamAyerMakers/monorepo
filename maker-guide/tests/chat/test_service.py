@@ -81,6 +81,8 @@ from maker_guide.repositories.session_objective_completion import (
 from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckError, SiteCheckReport
 from maker_guide.validation_paths import UnixAccount, UnixAccountLookup, lookup_unix_account
 
+SITE_CHECK_SIMULATED_RUN = "ran locally against simulated responses, not your live website"
+
 FREEFORM_TUTOR_DISABLED_TEXT = (
     dedent(
         """\
@@ -588,7 +590,7 @@ def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
         assert objective.title in response.text
         assert finding in response.text
         if failure_reason == "site-check-failed":
-            assert "simulated tests, not results from your live website" in response.text
+            assert SITE_CHECK_SIMULATED_RUN in response.text
             assert "Next step:" in response.text
             assert "guide now" in response.text
         else:
@@ -684,7 +686,7 @@ def test_site_check_prepares_before_writes_and_completes_only_bound_task(  # noq
                 assert "Handle a missing report" in response.text
                 assert "Start here:" not in response.text
                 assert "Prompt:" not in response.text
-                assert "simulated tests, not results from your live website" in response.text
+                assert SITE_CHECK_SIMULATED_RUN in response.text
             if outcome in {"stale", "wrong-digest"}:
                 assert "changed during the check" in response.text
             assert _attempt_count(database_connection) == (1 if target_type == "quest" else 0)

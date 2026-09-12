@@ -155,7 +155,9 @@ def site_check_feedback(validation_result: QuestValidationResult) -> str | None:
         else None
     )
     if next_step is not None:
-        response_parts = ["These are simulated tests, not results from your live website."]
+        response_parts = [
+            "Your script ran locally against simulated responses, not your live website."
+        ]
         cases = validation_result.evidence.get("cases")
         if isinstance(cases, list) and any(
             isinstance(case, dict)

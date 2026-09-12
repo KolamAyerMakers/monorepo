@@ -30,6 +30,7 @@ from maker_guide.repositories.helpers import connect_database
 from maker_guide.repositories.learner import Learner, upsert_learner
 from maker_guide.site_check import (
     SITE_CHECK_CASES,
+    SITE_CHECK_VERSION,
     SiteCheckError,
     SiteCheckReport,
     site_check_report_payload,
@@ -42,7 +43,9 @@ _SITE_CHECK_REPORT = SiteCheckReport(
     error=None,
 )
 _SITE_CHECK_ACTION = (
-    json.dumps({"ok": True, "site_check": {"version": 1, "source_sha256": "a" * 64}}).encode()
+    json.dumps(
+        {"ok": True, "site_check": {"version": SITE_CHECK_VERSION, "source_sha256": "a" * 64}}
+    ).encode()
     + b"\n"
 )
 
@@ -516,14 +519,15 @@ async def test_help_site_check_handshake_uses_same_connection(
         (_SITE_CHECK_ACTION, "help"),
         (_SITE_CHECK_ACTION, "explain check"),
         (_SITE_CHECK_ACTION, "answer now"),
-        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 2'), "check"),
-        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": true'), "check"),
-        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 1.0'), "check"),
-        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 1, "version": 1'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 2', b'"version": 1'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 2', b'"version": 3'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 2', b'"version": true'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 2', b'"version": 2.0'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 2', b'"version": 2, "version": 2'), "check"),
         (_SITE_CHECK_ACTION.replace(b"a" * 64, b"A" * 64), "now"),
         (_SITE_CHECK_ACTION.replace(b"a" * 64, b"short"), "now"),
         (_SITE_CHECK_ACTION.replace(b'"' + b"a" * 64 + b'"', b"null"), "now"),
-        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 1, "path": "/tmp/x"'), "now"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 2', b'"version": 2, "path": "/tmp/x"'), "now"),
         (_SITE_CHECK_ACTION.replace(b'"ok": true', b'"ok": true, "execute": true'), "now"),
         (_SITE_CHECK_ACTION.replace(b'"ok": true', b'"ok": false'), "now"),
         (_SITE_CHECK_ACTION[:-1], "check"),

@@ -30,7 +30,7 @@ Run `guide now` before starting a quest. Use `guide answer 'your answer'` when a
 ## Keep The Same Project
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 ~/bin/site.sh site_port
 systemctl --user status site.service
 git -C ~/src status
@@ -88,7 +88,7 @@ systemctl --user enable --now site-build.timer
 systemctl --user start site-build.service
 systemctl --user list-timers
 journalctl --user -u site-build.service --no-pager -n 50
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 ```
 
 Find the next run and a completed build in the actual output. A successful `Type=oneshot` service normally becomes inactive after finishing. If automation stops at logout, inspect `loginctl show-user "$USER" -p Linger` and ask the instructor; do not change system settings yourself.
@@ -167,7 +167,7 @@ guide now
 Open `micro ~/src/README.md` and preserve useful existing content. Add a Markdown title and explain:
 
 - What the site and report show, with links to both public URLs. In the classroom shell the URL forms are `"https://lf2607.kolamayermakers.org/~$USER/"` and `"https://$USER.lf2607.kolamayermakers.org/"`; use your actual username in Markdown links.
-- How to generate fresh facts with `~/scripts/maker-report.sh "My Maker Report"`, render them with `build-website`, and verify with `bash ~/scripts/site-check.sh`.
+- How to generate fresh facts with `~/scripts/maker-report.sh "My Maker Report"`, render them with `build-website`, and verify with `bash ~/scripts/site-check.sh "" maker-report.html`.
 - How to inspect the service with `systemctl --user status site.service` and `journalctl --user -u site.service --no-pager -n 20`.
 - How to inspect `site-build.timer`, and why rebuilding alone does not collect new report facts or catch up missed calendar runs.
 - What `pages/`, `scripts/`, and `services/` contain, and where the working scripts and units must be restored.

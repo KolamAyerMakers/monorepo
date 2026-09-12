@@ -16,13 +16,13 @@ Reuse the static checker, request both the static homepage and the service hostn
 On the classroom server, confirm `$USER` matches your course login, then run:
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 curl -I "https://lf2607.kolamayermakers.org/~$USER/"
 curl -I "https://$USER.lf2607.kolamayermakers.org/"
 systemctl --user show site.service -p ActiveState -p SubState
 ```
 
-Keep `~/scripts/site-check.sh` unchanged: it checks the static homepage and report. It does not check the service hostname. The explicit curl commands request two different hostnames; requesting the static URL twice does not cover the service.
+Keep `~/scripts/site-check.sh` unchanged: these arguments check the static homepage and report. It does not check the service hostname. The explicit curl commands request two different hostnames; requesting the static URL twice does not cover the service.
 
 Read each response's HTTP status line and the unit's `ActiveState` and `SubState`. `show` reports these properties without treating an inactive or failed state as a failed query. Record that state honestly instead of assuming success because a command ran. Curl can exit `0` after `404` or `502`.
 

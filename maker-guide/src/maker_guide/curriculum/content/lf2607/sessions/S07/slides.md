@@ -23,7 +23,7 @@ Run on the classroom server in your personal SSH account, not in your laptop's l
 ```bash
 whoami
 printf '%s\n' "$USER"
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 guide now
 ```
 

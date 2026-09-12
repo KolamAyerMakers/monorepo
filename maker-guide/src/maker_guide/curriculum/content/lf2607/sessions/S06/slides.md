@@ -312,18 +312,33 @@ Trace the missing-page check with `bash -x ~/scripts/site-check.sh not-a-page.ht
 
 # Repeat The Working Check
 
-`for` iterates over a known list:
+Extend `$1` (the first argument) to `"$@"` (all arguments):
 
 ```bash
-for page in "" maker-report.html; do
+for page in "$@"; do
   url="$base_url/$page"
   printf 'Checking %s\n' "$url"
 done
 ```
 
-Try it at the prompt; set `base_url` there first.
+Put this in your script below `base_url`, replacing the one-page body.
 
-`""` gives the homepage. The next value gives the report path.
+Run `bash ~/scripts/site-check.sh "" maker-report.html`. `""` is one argument for the homepage. Any other supplied path is accepted too.
+
+<!-- end_slide -->
+
+# No Arguments Is Not The Homepage
+
+Add this after `set -euo pipefail`, before building URLs:
+
+```bash
+if [[ "$#" -eq 0 ]]; then
+  printf 'Usage: site-check.sh PAGE [PAGE ...] (use "" for homepage)\n' >&2
+  exit 2
+fi
+```
+
+`$#` counts arguments. Zero prints help and exits `2`; one empty argument checks the homepage.
 
 <!-- end_slide -->
 
@@ -347,13 +362,12 @@ Run it: two URLs, two results.
 
 # Solution: Check Both Pages
 
-```bash
-#!/bin/bash
-set -euo pipefail
+Keep the usage guard above `base_url`; the body is now:
 
+```bash
 base_url="https://lf2607.kolamayermakers.org/~$USER"
 
-for page in "" maker-report.html; do
+for page in "$@"; do
   url="$base_url/$page"
   status=$(curl -sS -I --max-time 10 -o /dev/null -w '%{http_code}' "$url")
   if [[ "$status" == "200" ]]; then
@@ -364,7 +378,7 @@ for page in "" maker-report.html; do
 done
 ```
 
-Run `bash ~/scripts/site-check.sh`. No argument needed: the loop sets `page`.
+Run `bash ~/scripts/site-check.sh "" maker-report.html`. Reverse the arguments or supply just one page; the loop visits the supplied paths.
 
 <!-- end_slide -->
 
@@ -465,10 +479,11 @@ Then check your real pages:
 
 ```bash
 bash -n ~/scripts/site-check.sh
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
+bash ~/scripts/site-check.sh not-a-page.html
 ```
 
-Then open both pages in your laptop browser. Reference: [complete script](self-study.md#complete-script).
+Use an unused path for a real `404`, without changing statuses or deleting files. No report repair advice belongs to that path. Then open both real pages in your laptop browser. Reference: [complete script](self-study.md#complete-script).
 
 <!-- end_slide -->
 
@@ -480,12 +495,16 @@ It automatically runs your script locally as your learner account. IRC sends you
 | Simulated case | Expected result |
 |---|---|
 | Both `200` | Identify both successes |
-| Report `404` | Missing report; advise `maker-report.sh`, then `build-website` |
-| Homepage `404` | Missing homepage; no report-regeneration advice |
-| Report `500` | HTTP error, not success |
+| Report alone, `404` | Missing report; advise `maker-report.sh`, then `build-website` |
+| Homepage alone, `404` | Missing homepage; no report-regeneration advice |
+| Report `500`, homepage `200` | HTTP error, not success |
 | Homepage connection fails | Diagnose failure; still check report |
 | Report connection fails | Diagnose failure; still check homepage |
 | Curl prints `200` but exits nonzero | Failure, not success |
+| Arbitrary missing page alone, `404` | Identify that path; no report-regeneration advice |
+| No arguments | Usage help and nonzero exit; no page request |
+
+The suite varies arguments and order. Controlled fixtures test connection failures safely; a live `404` is different.
 
 <!-- end_slide -->
 
@@ -493,10 +512,10 @@ It automatically runs your script locally as your learner account. IRC sends you
 
 - `for` and `if` are our teaching path, not required grading syntax.
 - The reference is one example. Functions, `case`, variable names, nesting, page order, and curl flag order can vary.
-- Identify each page by URL or homepage/report label. Include the HTTP code and diagnosis, or a clear connection-failure diagnosis.
+- Identify each page by URL, path, or homepage/report label. Include the HTTP code and diagnosis, or a clear connection-failure diagnosis.
 - Do not claim a failed request succeeded. Follow the fixed case feedback and retry.
 
-Simulations do not verify live health. Still run `bash ~/scripts/site-check.sh` and open both pages in your browser.
+Simulations do not verify live health. Still run `bash ~/scripts/site-check.sh "" maker-report.html` and open both pages in your browser.
 
 <!-- end_slide -->
 

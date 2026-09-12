@@ -143,7 +143,7 @@ def test_site_check_feedback_focuses_on_one_next_step(both_ok: bool) -> None:
         )
     )
     assert feedback is not None
-    assert "simulated tests, not results from your live website" in feedback
+    assert "ran locally against simulated responses, not your live website" in feedback
     assert ("Passed:" in feedback) is both_ok
     assert "Next step: Handle a missing report." in feedback
     assert "Check curl's exit status" not in feedback

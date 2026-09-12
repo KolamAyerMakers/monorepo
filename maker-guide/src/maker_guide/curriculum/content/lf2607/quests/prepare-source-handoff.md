@@ -60,6 +60,8 @@ No diff output means they match. If they differ, decide which changes to keep be
 
 Edit `~/src/README.md`, keeping useful existing text. Include a Markdown title, the site's purpose, both public links, build/run/log commands, and the path table above. Use your actual username in links; `$USER` does not expand inside Markdown.
 
+Document static preflight as `bash ~/scripts/site-check.sh "" maker-report.html`: the checker accepts page arguments, `""` selects home, and no arguments show usage rather than checking the site.
+
 Explain the recovery order: obtain the source as `~/src`, install its required tools/dependencies, copy scripts and units back to their working paths with overwrite prompts, restore executable permissions where needed, build, reload user systemd, then enable `site.service` and `site-build.timer`. On another machine, review the numeric port in `site.service`, installed executable paths, and hostnames before starting anything. The classroom port is `10000 + uid`, which `~/bin/site.sh site_port` prints.
 
 Record that `maker-report.sh` collects facts into `~/src/pages/maker-report.md`; the build only renders that existing Markdown. Keep the report page and other site source in the same repository. Do not rely on local `.backup` files or automatic source commits to preserve files outside `~/src`, especially systemd units.

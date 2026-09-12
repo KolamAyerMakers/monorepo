@@ -22,13 +22,13 @@ Reconnect to the classroom server as your own account:
 ```bash
 whoami
 printf '%s\n' "$USER"
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 guide now
 ```
 
 `$USER` should match your login. If not, ask staff before constructing URLs. You already have the site, report generator, and static checker; do not recreate or overwrite them. Read both checker results and repair missing pages using the [existing checker workflow](../S06/self-study.md#repair-a-missing-report).
 
-Keep `~/scripts/site-check.sh` unchanged. It checks your static homepage and report, not your service hostname. The platform serves the static URL; your new process will serve the same `~/public_html` files through the reverse proxy at the service hostname.
+Keep `~/scripts/site-check.sh` unchanged. These arguments check your static homepage and report, not your service hostname. The platform serves the static URL; your new process will serve the same `~/public_html` files through the reverse proxy at the service hostname.
 
 Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback. Use `guide answer 'your observation'` when asked; `guide check` is an optional explicit check. A passing check records file and command observations, not independent proof of HTTP 200 or outside reachability.
 
@@ -246,7 +246,7 @@ An enabled service can start again when you reconnect. `active` after login alon
 ## Preflight Both Public URLs
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 curl -I "https://lf2607.kolamayermakers.org/~$USER/"
 curl -I "https://$USER.lf2607.kolamayermakers.org/"
 systemctl --user show site.service -p ActiveState -p SubState

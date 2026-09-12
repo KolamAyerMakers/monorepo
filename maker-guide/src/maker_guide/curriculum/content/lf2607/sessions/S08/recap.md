@@ -32,7 +32,7 @@ The live milestone includes:
 On the classroom server:
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 PORT="$((10000 + $(id -u)))"
 curl -I "http://127.0.0.1:$PORT/"
 curl -I "https://lf2607.kolamayermakers.org/~$USER/"

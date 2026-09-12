@@ -146,10 +146,13 @@ _SOURCE_HANDOFF_PATHS = (
     "services/site-build.timer",
 )
 _S6_SITE_CHECK_PROMPT = (
-    "Finish `~/scripts/site-check.sh` to query your personal homepage and "
-    "`maker-report.html` without arguments. Report HTTP 200 as OK only when curl succeeds; "
+    "Finish `~/scripts/site-check.sh PAGE [PAGE ...]` to query any supplied page paths. "
+    'Use `bash ~/scripts/site-check.sh "" maker-report.html` for homepage and report; '
+    "an empty argument selects home, while no arguments must print usage and exit nonzero. "
+    "Report HTTP 200 as OK only when curl succeeds; "
     "diagnose other statuses and suggest maker-report.sh plus build-website for report 404. "
-    "Handle either connection failure and still check the other page, even if curl prints 200 "
+    "For other missing pages, do not suggest report regeneration. "
+    "Handle connection failures and still check remaining pages, even if curl prints 200 "
     "but exits nonzero. Equivalent variables, functions, case statements, and page order are "
     "accepted; the reference example is not mandatory. Run `guide now` or `guide check` in "
     "the classroom shell to run simulated checks locally. Separately run the script against "
@@ -2851,9 +2854,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             validation=SiteCheckValidation(),
             goal="Diagnose both pages correctly across simulated HTTP and connection failures.",
             evidence=(
-                "Pass all seven simulated cases with `guide now` in the classroom shell: "
+                "Pass all simulated cases with `guide now` in the classroom shell: "
                 "both pages OK, report missing, homepage missing, HTTP error, either page's "
-                "connection failure, and misleading 200 with a failed curl exit. "
+                "connection failure, misleading 200 with a failed curl exit, an arbitrary "
+                "missing page, and no-argument usage help. Check only supplied page arguments. "
                 "Then check live HTTP results and browser access yourself."
             ),
         ),

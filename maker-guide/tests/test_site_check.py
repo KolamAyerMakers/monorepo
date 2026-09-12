@@ -9,6 +9,7 @@ import pytest
 
 from maker_guide.site_check import (
     SITE_CHECK_CASES,
+    SITE_CHECK_VERSION,
     SiteCheckError,
     SiteCheckReport,
     parse_site_check_report,
@@ -26,7 +27,8 @@ _SENTINEL = "private-source-sentinel"
     "replacement",
     [
         {"version": True},
-        {"version": 1.0},
+        {"version": 1},
+        {"version": 2.0},
         {"source_sha256": "A" * 64},
         {"source_sha256": "b" * 64},
         {"source_sha256": _SENTINEL},
@@ -44,7 +46,7 @@ def test_report_rejects_untrusted_values_without_echoing_them(
 ) -> None:
     """Only exact schema values can cross the learner-to-bot boundary."""
     payload: dict[str, object] = {
-        "version": 1,
+        "version": SITE_CHECK_VERSION,
         "source_sha256": _DIGEST,
         "cases": dict.fromkeys(SITE_CHECK_CASES, True),
         "error": None,

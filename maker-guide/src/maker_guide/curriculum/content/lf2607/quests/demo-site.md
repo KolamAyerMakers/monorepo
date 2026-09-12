@@ -21,7 +21,7 @@ The commands below run in the classroom, where your project, scripts, and user s
 ## Check The Existing Project
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 PORT="$(~/bin/site.sh site_port)"
 printf 'Service port: %s\n' "$PORT"
 curl -I "https://lf2607.kolamayermakers.org/~$USER/"

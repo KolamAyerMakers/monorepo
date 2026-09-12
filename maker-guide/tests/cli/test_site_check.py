@@ -28,6 +28,10 @@ from maker_guide.validation_paths import UnixAccount
 
 _SENTINEL = "private-output-sentinel"
 _EQUIVALENT_SCRIPT = r"""set -uo pipefail
+if (( $# == 0 )); then
+    printf 'Usage: site-check.sh PAGE [PAGE ...]\n' >&2
+    exit 2
+fi
 root="https://lf-dev.kolamayermakers.org/~$(id -un)"
 probe() {
     local endpoint="$1" label="$2" observed outcome=0
@@ -40,7 +44,7 @@ probe() {
         printf '%s: hTtP 200 sUcCeSs\n' "$label"
     elif [[ "$observed" == 404 ]]; then
         printf '%s: not found, HTTP 404\n' "$label"
-        if [[ "${label,,}" == report ]]; then
+        if [[ "$endpoint" == */maker-report.html ]]; then
             printf 'Generate with maker-report.sh, then publish with build-website\n'
         fi
         return 1
@@ -50,12 +54,22 @@ probe() {
     fi
 }
 failed=0
-probe "$root/maker-report.html" RePoRt || failed=1
-probe "$root/" HoMePaGe || failed=1
+for page in "$@"; do
+    case "$page" in
+        "") label=HoMePaGe ;;
+        maker-report.html) label=RePoRt ;;
+        *) label="$page" ;;
+    esac
+    probe "$root/$page" "$label" || failed=1
+done
 exit "$failed"
 """
 _URL_WRITEOUT_SCRIPT = r"""set -uo pipefail
-for page in maker-report.html ""; do
+if (( $# == 0 )); then
+    printf 'Usage: supply one or more pages\n' >&2
+    exit 1
+fi
+for page in "$@"; do
     url="https://lf-dev.kolamayermakers.org/~$USER/$page"
     capture_file="$HOME/$url.headers"
     mkdir -p "$(dirname "$capture_file")"
@@ -119,7 +133,7 @@ def learner_script(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     "variant",
     [
         "reference",
-        "renamed-report-first",
+        "reversed-pages",
         "head-pipeline",
         "positional-url",
         "url-writeout",
@@ -127,14 +141,28 @@ def learner_script(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         "url-writeout-combined",
     ],
 )
-def test_equivalent_checkers_pass_all_outcomes(learner_script: Path, variant: str) -> None:
+@pytest.mark.parametrize("missing_page", ["not-a-page.html", "nested/another-missing-page.html"])
+def test_equivalent_checkers_pass_all_outcomes(
+    learner_script: Path, monkeypatch: pytest.MonkeyPatch, variant: str, missing_page: str
+) -> None:
     """Variable names, functions, letter case, page/flag order and HEAD parsing may vary."""
     source = _EQUIVALENT_SCRIPT
+    monkeypatch.setitem(
+        runner._CASE_ARGUMENTS,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        "missing-page",
+        (missing_page,),
+    )
     if variant == "reference":
         source = (
             files("maker_guide.curriculum")
             .joinpath("content/lf2607/mentors/s06-solutions/site-check.sh")
             .read_text(encoding="utf-8")
+        )
+    elif variant == "reversed-pages":
+        source = source.replace(
+            'for page in "$@"; do',
+            'pages=()\nfor page in "$@"; do pages=("$page" "${pages[@]}"); done\n'  # noqa: ISC003 - explicit concatenation required by Basedpyright
+            + 'for page in "${pages[@]}"; do',
         )
     elif variant == "head-pipeline":
         source = source.replace(
@@ -177,22 +205,42 @@ def test_equivalent_checkers_pass_all_outcomes(learner_script: Path, variant: st
     [
         ("one-page", "report-missing"),
         ("unconditional", "report-missing"),
-        ("abort-first", "report-missing"),
+        ("abort-first", "homepage-connection-failed"),
+        ("hardcoded-pages", "report-missing"),
+        ("known-pages-only", "missing-page"),
+        ("usage-success", "usage"),
+        ("usage-no-hint", "usage"),
+        ("usage-requests", "usage"),
         ("bypass", "report-missing"),
         ("wrong-user", "report-missing"),
+        ("homepage-alias", "both-ok"),
+        ("report-alias", "both-ok"),
         ("extra-url", "both-ok"),
         ("bare-extra-url", "both-ok"),
         ("ignore-exit", "misleading-status"),
     ],
 )
-def test_incomplete_or_unobserved_checks_fail(
+def test_incomplete_or_unobserved_checks_fail(  # noqa: C901, PLR0912 - variance matrix
     learner_script: Path, variant: str, failed_case: str
 ) -> None:
     """Checking source-like text or one page cannot substitute for actual outcomes."""
     source = _EQUIVALENT_SCRIPT
     match variant:
         case "one-page":
-            source = source.replace('probe "$root/" HoMePaGe || failed=1', "")
+            source = source.replace('for page in "$@"; do', 'for page in ""; do')
+        case "hardcoded-pages":
+            source = source.replace('for page in "$@"; do', 'for page in "" maker-report.html; do')
+        case "known-pages-only":
+            source = source.replace('*) label="$page" ;;', "*) continue ;;")
+        case "usage-success":
+            source = source.replace("exit 2", "exit 0")
+        case "usage-no-hint":
+            source = source.replace("Usage: site-check.sh PAGE [PAGE ...]", "Error")
+        case "usage-requests":
+            source = source.replace(
+                "    exit 2",
+                '    curl -sSI "https://lf-dev.kolamayermakers.org/~$USER/"\n    exit 2',
+            )
         case "unconditional":
             source = r"""for page in "" maker-report.html; do
     curl -sSI -o /dev/null "https://lf2607.kolamayermakers.org/~$USER/$page"
@@ -205,6 +253,12 @@ done
             source = "curl() { printf 200; }\n" + source
         case "wrong-user":
             source = source.replace("~$(id -un)", "~not-the-actual-learner")
+        case "homepage-alias":
+            source = source.replace('probe "$root/$page"', 'probe "$root/${page:-homepage}"')
+        case "report-alias":
+            source = source.replace(
+                'probe "$root/$page"', 'probe "$root/${page/maker-report.html/report}"'
+            )
         case "extra-url" | "bare-extra-url":
             source = source.replace(
                 'curl --url "$endpoint"',
@@ -224,8 +278,6 @@ done
     assert not dict(report.cases)[failed_case]
     if variant in {"unconditional", "abort-first", "ignore-exit"}:
         assert dict(report.cases)["both-ok"]
-    else:
-        assert not any(passed for _case, passed in report.cases)
 
 
 @pytest.mark.parametrize(
@@ -333,18 +385,19 @@ def _assert_children_stopped(children: Path) -> None:
             time.sleep(0.01)
 
 
-def test_clean_environment_and_no_script_arguments(
+def test_clean_environment_and_case_arguments(
     learner_script: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Caller startup hooks, credentials and identity variables are not inherited."""
+    """Only case arguments reach the snapshot; caller hooks and secrets stay out."""
     for name in ("BASH_ENV", "PYTHONPATH", "API_TOKEN", "USER", "LOGNAME", "HOME"):
         monkeypatch.setenv(name, _SENTINEL)
     source = (
-        r"""[[ $# == 0 && "$USER" == "$(id -un)" && "$LOGNAME" == "$USER" ]] || exit 90
+        r"""[[ "$USER" == "$(id -un)" && "$LOGNAME" == "$USER" ]] || exit 90
 [[ -z ${BASH_ENV+x} && -z ${PYTHONPATH+x} && -z ${API_TOKEN+x} ]] || exit 91
 [[ -d "$HOME/scripts" ]] || exit 92
 [[ $(stat -c %a .) == 700 && $(stat -Lc %a "$0") == 400 ]] || exit 93
 [[ $(stat -Lc %h "$0") == 0 && $(stat -Lc %u "$0") == "$(id -u)" ]] || exit 94
+printf '%s\0' "$#" "$@" >> "$HOME/arguments"
 """
         + _EQUIVALENT_SCRIPT
     )
@@ -352,6 +405,12 @@ def test_clean_environment_and_no_script_arguments(
     report = runner.run_site_check(hashlib.sha256(source.encode()).hexdigest())
     assert report.error is None
     assert all(passed for _case, passed in report.cases)
+    assert (learner_script.parent.parent / "arguments").read_bytes().split(b"\0")[:-1] == [
+        value.encode()
+        for case in SITE_CHECK_CASES
+        for arguments in [runner._CASE_ARGUMENTS[case]]  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        for value in (str(len(arguments)), *arguments)
+    ]
 
 
 @pytest.mark.parametrize(
@@ -433,14 +492,13 @@ https://lf2607.kolamayermakers.org/~report-home-user/maker-report.html HTTP 200
         ),
         (
             "homepage-missing",
-            "Homepage: HTTP404 missing; the report is unaffected\nReport: HTTP200\n",
+            "Homepage: HTTP404 missing; the report is unaffected\n",
             True,
         ),
         ("http-error", "Homepage\n200\nReport\nHTTP500\nServer error\n", True),
         (
             "report-missing",
-            """Homepage: 200
-Report: 404
+            """Report: 404
 Run maker-report.sh then build-website to bring the report back up
 """,
             True,
@@ -465,27 +523,27 @@ Report: HTTP500
         ),
         (
             "homepage-missing",
-            "Homepage: 404\nReport: 200\nmaker-report.sh output is published\n",
+            "Homepage: 404\nmaker-report.sh output is published\n",
             True,
         ),
         (
             "report-missing",
-            "Homepage: 200\nReport: 404\nDo not run maker-report.sh or build-website\n",
+            "Report: 404\nDo not run maker-report.sh or build-website\n",
             False,
         ),
         (
             "report-missing",
-            "Homepage: 200\nRun maker-report.sh then build-website\nReport: 404\n",
+            "Run maker-report.sh then build-website\nReport: 404\n",
             False,
         ),
         (
             "homepage-missing",
-            "Homepage: 404\nDo not run maker-report.sh\nReport: 200\n",
+            "Homepage: 404\nDo not run maker-report.sh\n",
             True,
         ),
         (
             "homepage-missing",
-            "Homepage: 404\nRun maker-report.sh then build-website\nReport: 200\n",
+            "Homepage: 404\nRun maker-report.sh then build-website\n",
             False,
         ),
         ("both-ok", "Homepage: HTTP200 OK\nConnection failed\nReport: 200\n", False),
@@ -494,16 +552,29 @@ Report: HTTP500
             "Homepage: 200\nReport: connection failed; HTTP200 SUCCESS\n",
             False,
         ),
-        ("report-missing", "Homepage: 200\nReport: 404\n", False),
+        ("report-missing", "Report: 404\n", False),
         (
             "report-missing",
-            "Homepage: 200\nReport: 404\n~/scripts/maker-report.sh 'Report'\nbuild-website\n",
+            "Report: 404\n~/scripts/maker-report.sh 'Report'\nbuild-website\n",
             True,
         ),
         (
             "report-missing",
-            "Homepage: 200\nReport: HTTP404. Run maker-report.sh then build-website\n",
+            "Report: HTTP404. Run maker-report.sh then build-website\n",
             True,
+        ),
+        ("report-missing", "Homepage: 200\nReport: 404\n", False),
+        ("missing-page", "not-a-page.html: HTTP404 missing\n", True),
+        (
+            "missing-page",
+            "https://lf-dev.kolamayermakers.org/~learner/not-a-page.html: HTTP404\n",
+            True,
+        ),
+        ("missing-page", "Homepage: HTTP404\n", False),
+        (
+            "missing-page",
+            "not-a-page.html: HTTP404\nRun maker-report.sh then build-website\n",
+            False,
         ),
     ],
 )

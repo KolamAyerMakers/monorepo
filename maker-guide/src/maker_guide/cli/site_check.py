@@ -3,13 +3,13 @@
 Output matching uses page labels, headings, or URLs, not a prescribed layout.
 Page records must show the observed HTTP code, or explain a transport failure
 without claiming success. Report 404 needs positive advice to run maker-report.sh
-and build-website; homepage 404 must not prompt report regeneration. Matching is
+and build-website; other 404s must not prompt report regeneration. Matching is
 case-insensitive; diagnoses and advice can span lines and pages can appear in
 either order. This recognizes simple observable output, not arbitrary prose.
 
-The PATH shim preserves real curl option handling and redirects only the two
+The PATH shim preserves real curl option handling and redirects personal
 learner URLs on lf2607 or lf-dev to loopback fixtures. Observed fixture requests
-are required for both pages. This is not a sandbox: scripts retain the learner's
+must match the supplied pages. This is not a sandbox: scripts retain the learner's
 permissions, and deliberate PATH bypasses are not prevented. Never invoke this
 runner in the bot, as root, or remotely on behalf of a learner.
 """
@@ -45,6 +45,17 @@ from maker_guide.site_check import (
 
 _OUTPUT_LIMIT = 64 * 1024
 _CASE_TIMEOUT_SECONDS = 3.0
+_CASE_ARGUMENTS: dict[str, tuple[str, ...]] = {
+    "both-ok": ("", "maker-report.html"),
+    "report-missing": ("maker-report.html",),
+    "homepage-missing": ("",),
+    "http-error": ("maker-report.html", ""),
+    "homepage-connection-failed": ("", "maker-report.html"),
+    "report-connection-failed": ("maker-report.html", ""),
+    "misleading-status": ("maker-report.html", ""),
+    "missing-page": ("not-a-page.html",),
+    "usage": (),
+}
 _STATUS = re.compile(r"\b(?:http\s*)?(?P<status>[1-5]\d\d)\b")
 _SUCCESS = re.compile(
     r"(?<!not )(?<!no )\b(?:ok|success\w*|healthy|available|reachable|working|passed)\b"
@@ -101,14 +112,15 @@ for argument in "$@"; do
         "https://lf2607.kolamayermakers.org/~$learner/"|\
         "https://lf-dev.kolamayermakers.org/~$learner"|\
         "https://lf-dev.kolamayermakers.org/~$learner/")
-            value=FIXTURE_ORIGIN/homepage
+            value=FIXTURE_ORIGIN/
             observed=1
             ;;
-        "https://lf2607.kolamayermakers.org/~$learner/maker-report.html"|\
-        "https://lf-dev.kolamayermakers.org/~$learner/maker-report.html")
-            value=FIXTURE_ORIGIN/report
+        "https://lf2607.kolamayermakers.org/~$learner/"*|\
+        "https://lf-dev.kolamayermakers.org/~$learner/"*)
+            page="${value#*/~$learner/}"
+            value="FIXTURE_ORIGIN/$page"
             observed=1
-            report_requested=1
+            [[ "$page" == maker-report.html ]] && report_requested=1
             ;;
         *://*) exit 2 ;;
     esac
@@ -129,6 +141,10 @@ exit "$curl_status"
 class _FixtureServer(HTTPServer):
     def __init__(self, case: str) -> None:
         self.case: str = case
+        self.pages: set[str] = {
+            {"": "homepage", "maker-report.html": "report"}.get(page, page)
+            for page in _CASE_ARGUMENTS[case]
+        }
         self.observed: set[str] = set()
         self.unexpected: bool = False
         super().__init__(("127.0.0.1", 0), _FixtureHandler)
@@ -154,20 +170,22 @@ class _FixtureHandler(BaseHTTPRequestHandler):
 
     def _respond(self) -> None:
         fixture = cast("_FixtureServer", self.server)
-        page = self.path.removeprefix("/")
         if (
-            page not in {"homepage", "report"}
+            self.path.removeprefix("/") not in _CASE_ARGUMENTS[fixture.case]
             or self.headers.get("Host") != f"127.0.0.1:{fixture.server_port}"
         ):
             fixture.unexpected = True
             self.send_error(404)
             return
+        page = {"/": "homepage", "/maker-report.html": "report"}.get(
+            self.path, self.path.removeprefix("/")
+        )
         fixture.observed.add(page)
         if fixture.case == f"{page}-connection-failed":
             self.close_connection = True
             return
         status = 200
-        if fixture.case == f"{page}-missing":
+        if fixture.case in {f"{page}-missing", "missing-page"}:
             status = 404
         elif fixture.case == "http-error" and page == "report":
             status = 500
@@ -224,19 +242,25 @@ def _learner_account() -> pwd.struct_passwd:
     return account
 
 
-def _run_bash(
+def _run_bash(  # noqa: PLR0913 - bounded learner subprocess setup
     source_descriptor: int,
     directory: Path,
     environment: dict[str, str],
     deadline: float,
     *,
+    arguments: tuple[str, ...] = (),
     syntax_only: bool = False,
 ) -> tuple[int, str]:
     """Drain bounded output in memory and kill the child group while unwinding."""
     _learner_account()
     os.lseek(source_descriptor, 0, os.SEEK_SET)
     with subprocess.Popen(  # noqa: S603 - intentional learner-owned script execution
-        ["/bin/bash", *(["-n"] if syntax_only else []), f"/proc/self/fd/{source_descriptor}"],
+        [
+            "/bin/bash",
+            *(["-n"] if syntax_only else []),
+            f"/proc/self/fd/{source_descriptor}",
+            *arguments,
+        ],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -276,9 +300,12 @@ def _run_bash(
     return exit_status, output.decode("utf-8", errors="replace")
 
 
-def _passed_output(output: str, case: str, handle: str) -> bool:  # noqa: C901, PLR0912
-    diagnoses: dict[str, list[str]] = {"homepage": [], "report": []}
-    repairs: dict[str, set[str]] = {"homepage": set(), "report": set()}
+def _passed_output(output: str, case: str, handle: str) -> bool:  # noqa: C901, PLR0912, PLR0911 - output matcher
+    diagnoses: dict[str, list[str]] = {
+        {"": "homepage", "maker-report.html": "report"}.get(page, page).lower(): []
+        for page in _CASE_ARGUMENTS[case]
+    }
+    repairs: dict[str, set[str]] = {page: set() for page in diagnoses}
     current_page: str | None = None
     for record in re.split(r"[\n;]|&&", output.lower()):
         line = record.strip()
@@ -293,17 +320,33 @@ def _passed_output(output: str, case: str, handle: str) -> bool:  # noqa: C901, 
             "".join(
                 (
                     r"https://(?:lf2607|lf-dev)\.kolamayermakers\.org/",
-                    rf"~{re.escape(handle.lower())}(?P<page>/maker-report\.html|/?)",
+                    rf"~{re.escape(handle.lower())}(?P<page>/[^\s:),\]\"']*|)",
                     r"(?=[\s:),\]\"']|$)",
                 )
             ),
             line,
         )
-        if label is not None:
+        path_label = next(
+            (
+                page
+                for page in diagnoses
+                if page not in {"homepage", "report"}
+                and re.search(rf"(?<![\w/.-])/?{re.escape(page)}(?=[:\s]|$)", line)
+            ),
+            None,
+        )
+        if page_url is not None:
+            current_page = {"": "homepage", "maker-report.html": "report"}.get(
+                page_url["page"].removeprefix("/"), page_url["page"].removeprefix("/")
+            )
+        elif path_label is not None:
+            current_page = path_label
+            line = line.replace(path_label, "")
+        elif label is not None:
             current_page = "homepage" if label["page"].startswith("home") else "report"
             line = line[label.end() :]
-        elif page_url is not None:
-            current_page = "report" if page_url["page"] == "/maker-report.html" else "homepage"
+        if current_page is not None and current_page not in diagnoses:
+            return False
         if page_url is not None:
             line = line.replace(page_url[0], "")
         commands = {command for command in ("maker-report.sh", "build-website") if command in line}
@@ -318,11 +361,18 @@ def _passed_output(output: str, case: str, handle: str) -> bool:  # noqa: C901, 
             line = line[: advice.start()]
             if not (_STATUS.search(line) or _FAILURE.search(line)):
                 continue
-        if label is None and page_url is None and (_STATUS.search(line) or _FAILURE.search(line)):
+        if (
+            label is None
+            and page_url is None
+            and path_label is None
+            and (_STATUS.search(line) or _FAILURE.search(line))
+        ):
             mention = re.search(r"\b(?P<page>home(?:\s*page)?|report)\b", line)
             if mention is not None:
                 current_page = "homepage" if mention["page"].startswith("home") else "report"
         if current_page is not None:
+            if current_page not in diagnoses:
+                return False
             diagnoses[current_page].append(line)
     for page, lines in diagnoses.items():
         text = re.sub(
@@ -344,7 +394,9 @@ def _passed_output(output: str, case: str, handle: str) -> bool:  # noqa: C901, 
         if transport_failure:
             if _FAILURE.search(text) is None or success_claim:
                 return False
-        elif case == f"{page}-missing" or (case == "http-error" and page == "report"):
+        elif case in {f"{page}-missing", "missing-page"} or (
+            case == "http-error" and page == "report"
+        ):
             status = "500" if case == "http-error" else "404"
             if status not in statuses or success_claim:
                 return False
@@ -352,17 +404,15 @@ def _passed_output(output: str, case: str, handle: str) -> bool:  # noqa: C901, 
             return False
     if case == "report-missing":
         return {"maker-report.sh", "build-website"} <= repairs["report"]
-    return case != "homepage-missing" or not any(
-        "maker-report.sh" in commands for commands in repairs.values()
-    )
+    return not any("maker-report.sh" in commands for commands in repairs.values())
 
 
 def run_site_check(expected_digest: str) -> SiteCheckReport:  # noqa: C901, PLR0912, PLR0915
     """Run the fixed local suite, returning only booleans and static failures.
 
     Bash parses and executes the same unlinked, read-only source snapshot, with
-    no script arguments. This does not attest against same-learner tampering.
-    An unhealthy script exit status is not itself failure.
+    each case's page arguments. This does not attest against same-learner tampering.
+    An unhealthy script exit status is not itself failure; usage must exit nonzero.
     The 25-second suite budget includes a three-second limit for each subprocess.
     Main-thread execution is required for temporary SIGTERM/SIGHUP cleanup.
     """
@@ -433,19 +483,28 @@ def run_site_check(expected_digest: str) -> SiteCheckReport:  # noqa: C901, PLR0
                         )
                         worker.start()
                         try:
-                            _status, output = _run_bash(
+                            status, output = _run_bash(
                                 source_descriptor,
                                 directory,
                                 environment,
                                 min(deadline, time.monotonic() + _CASE_TIMEOUT_SECONDS),
+                                arguments=_CASE_ARGUMENTS[case],
                             )
                         finally:
                             fixture.shutdown()
                             worker.join()
                         results[case] = (
-                            fixture.observed == {"homepage", "report"}
+                            fixture.observed == fixture.pages
                             and not fixture.unexpected
-                            and _passed_output(output, case, account.pw_name)
+                            and (
+                                (
+                                    status != 0
+                                    and re.search(r"\busage\b", output, re.IGNORECASE) is not None
+                                    and re.search(r"\bpages?\b", output, re.IGNORECASE) is not None
+                                )
+                                if case == "usage"
+                                else _passed_output(output, case, account.pw_name)
+                            )
                         )
             finally:
                 os.close(source_descriptor)

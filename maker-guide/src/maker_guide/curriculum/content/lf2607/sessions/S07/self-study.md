@@ -22,11 +22,11 @@ Run these commands in your personal SSH account on the classroom server, not in 
 ```bash
 whoami
 printf '%s\n' "$USER"
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 guide now
 ```
 
-`$USER` must match `whoami`; reconnect with the correct account if not. Keep `site-check.sh` unchanged. Its two URLs are the homepage and `maker-report.html`, two paths on the same static host. Read both results; its exit code is not an overall health verdict.
+`$USER` must match `whoami`; reconnect with the correct account if not. Keep `site-check.sh` unchanged. These arguments select the homepage and `maker-report.html`, two paths on the same static host. Read both results; its exit code is not an overall health verdict.
 
 If the checker or report is missing, use the [S6 self-study guide](../S06/self-study.md). Repair static failures before proceeding. Do not replace your source project or add the service URL to the checker.
 

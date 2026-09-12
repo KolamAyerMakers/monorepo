@@ -31,7 +31,11 @@ from maker_guide.config import (
     load_socket_path,
 )
 from maker_guide.llm_tutor import DEFAULT_TUTOR_TIMEOUT_SECONDS
-from maker_guide.site_check import parse_site_check_report, site_check_report_payload
+from maker_guide.site_check import (
+    SITE_CHECK_VERSION,
+    parse_site_check_report,
+    site_check_report_payload,
+)
 
 try:
     import readline
@@ -572,7 +576,7 @@ def _site_check_reply(
     if (
         set(action_object) != {"version", "source_sha256"}
         or type(action_object["version"]) is not int
-        or action_object["version"] != 1
+        or action_object["version"] != SITE_CHECK_VERSION
         or not isinstance(source_sha256, str)
         or re.fullmatch("[0-9a-f]{64}", source_sha256) is None
     ):

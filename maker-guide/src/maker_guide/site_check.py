@@ -17,6 +17,7 @@ from maker_guide.validation_paths import (
     open_validation_file,
 )
 
+SITE_CHECK_VERSION = 2
 SITE_CHECK_CASES = (
     "both-ok",
     "report-missing",
@@ -25,27 +26,29 @@ SITE_CHECK_CASES = (
     "homepage-connection-failed",
     "report-connection-failed",
     "misleading-status",
+    "missing-page",
+    "usage",
 )
 SITE_CHECK_TIMEOUT_SECONDS = 25.0
 _SOURCE_LIMIT = 1024 * 1024
 _ERROR_FEEDBACK = {
     "syntax-error": "Fix the Bash syntax in ~/scripts/site-check.sh (use bash -n).",
     "timeout": "Make site-check.sh finish promptly, with bounded curl requests.",
-    "output-limit": "Reduce site-check.sh output to brief diagnoses for both pages.",
+    "output-limit": "Reduce site-check.sh output to brief diagnoses for the supplied pages.",
     "script-changed": "The script changed during checking; rerun the check.",
     "unsafe-user": "Run the check from your own learner account, without sudo.",
     "runner-unavailable": "The local checker is unavailable; ask a mentor for help.",
     "unreadable-script": "Keep ~/scripts/site-check.sh readable, plain text, and at most 1 MiB.",
 }
 _CASE_FEEDBACK = {
-    "both-ok": "Check both pages without arguments and identify each HTTP 200 success.",
+    "both-ok": "Check each supplied page argument and identify each HTTP 200 success.",
     "report-missing": (
-        "Handle a missing report. The test makes maker-report.html return HTTP 404. "
+        "Handle a missing report: only the supplied report page is checked and returns HTTP 404. "
         "Print that it is missing and advise running `maker-report.sh`, then `build-website`. "
         "See S6 Exercise 4; do not delete your real report."
     ),
     "homepage-missing": (
-        "Handle a missing homepage. The test returns HTTP 404 for the homepage, not the report. "
+        "Check only the supplied homepage. The test returns HTTP 404 for it. "
         "Identify the failed page without advising report regeneration."
     ),
     "http-error": (
@@ -63,6 +66,15 @@ _CASE_FEEDBACK = {
     "misleading-status": (
         "Check curl's exit status before reporting success. This test prints 200 but makes "
         "curl exit nonzero, so the request must be reported as failed. See S6 Exercise 5."
+    ),
+    "missing-page": (
+        "Handle arbitrary page arguments: `bash ~/scripts/site-check.sh not-a-page.html` "
+        "must report HTTP 404 for that page, without editing the code or advising report "
+        "regeneration."
+    ),
+    "usage": (
+        "With no page arguments, exit nonzero and print a useful usage hint explaining "
+        "that page arguments are required, without making HTTP requests."
     ),
 }
 
@@ -133,7 +145,7 @@ def parse_site_check_report(value: object, expected_digest: str) -> SiteCheckRep
     payload = cast("dict[object, object]", value)
     if set(payload) != {"version", "source_sha256", "cases", "error"}:
         raise SiteCheckError("invalid-report")
-    if type(payload["version"]) is not int or payload["version"] != 1:
+    if type(payload["version"]) is not int or payload["version"] != SITE_CHECK_VERSION:
         raise SiteCheckError("invalid-report")
     digest = payload["source_sha256"]
     if (
@@ -162,7 +174,7 @@ def parse_site_check_report(value: object, expected_digest: str) -> SiteCheckRep
 def site_check_report_payload(report: SiteCheckReport) -> dict[str, object]:
     """Serialize the fixed report schema, never captured source or output."""
     payload: dict[str, object] = {
-        "version": 1,
+        "version": SITE_CHECK_VERSION,
         "source_sha256": report.source_sha256,
         "cases": dict(report.cases),
         "error": report.error,

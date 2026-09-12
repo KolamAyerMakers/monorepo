@@ -21,6 +21,7 @@ from maker_guide.config import SocketConfig
 from maker_guide.events import EventParseError, PeerCredentials, ShellEvent, parse_shell_event
 from maker_guide.site_check import (
     SITE_CHECK_TIMEOUT_SECONDS,
+    SITE_CHECK_VERSION,
     SiteCheckError,
     SiteCheckReport,
     parse_site_check_report,
@@ -236,7 +237,10 @@ class UnixSocketServer:
                         json.dumps(
                             {
                                 "ok": True,
-                                "site_check": {"version": 1, "source_sha256": source_sha256},
+                                "site_check": {
+                                    "version": SITE_CHECK_VERSION,
+                                    "source_sha256": source_sha256,
+                                },
                             },
                             separators=(",", ":"),
                         ).encode("utf-8")

@@ -71,7 +71,7 @@ systemctl --user enable --now site-build.timer
 systemctl --user start site-build.service
 systemctl --user list-timers
 journalctl --user -u site-build.service --no-pager -n 50
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 ```
 
 Find the next timer run and the completed build in the real output. An inactive oneshot service after success is normal; a failed build is not.

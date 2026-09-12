@@ -17,7 +17,7 @@ You now know enough Linux to keep learning without waiting for a class.
 ## Live Core
 
 - Show the same static site and report, reachable Forgejo repo, working personal service, and useful README.
-- Reuse `bash ~/scripts/site-check.sh`, then verify the local service port and `"https://$USER.lf2607.kolamayermakers.org/"` from your classroom shell. The static URL is `"https://lf2607.kolamayermakers.org/~$USER/"`.
+- Reuse `bash ~/scripts/site-check.sh "" maker-report.html`, then verify the local service port and `"https://$USER.lf2607.kolamayermakers.org/"` from your classroom shell. The static URL is `"https://lf2607.kolamayermakers.org/~$USER/"`.
 - Compare fetched report bodies with generated HTML, inspect actual request logs, and open both public URLs in your laptop browser. Service status alone is not end-to-end proof.
 - Explain one real debugging recovery and the method recorded in your classroom Bandit notes, without sharing passwords.
 - Publish `~/src/pages/next.md` with a Markdown heading containing Linux and an explicit dated `Next action:`. Link, build, commit, and push it.

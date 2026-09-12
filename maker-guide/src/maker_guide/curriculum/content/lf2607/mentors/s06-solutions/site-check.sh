@@ -1,9 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+if [[ "$#" -eq 0 ]]; then
+  printf 'Usage: site-check.sh PAGE [PAGE ...] (use "" for homepage)\n' >&2
+  exit 2
+fi
+
 base_url="https://lf2607.kolamayermakers.org/~$USER"
 
-for page in "" maker-report.html; do
+for page in "$@"; do
   url="$base_url/$page"
   curl_exit_code=0
   status=$(curl -sS -I --max-time 10 -o /dev/null -w '%{http_code}' "$url") \

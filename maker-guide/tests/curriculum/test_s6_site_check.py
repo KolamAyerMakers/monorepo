@@ -17,6 +17,18 @@ import pytest
 )
 @pytest.mark.parametrize("homepage_curl_exit_status", [0, 6])
 @pytest.mark.parametrize(
+    "pages",
+    [
+        ("", "maker-report.html"),
+        ("maker-report.html", ""),
+        ("",),
+        ("maker-report.html",),
+        ("not-a-page.html",),
+        ("other/nested-page.html", "", "maker-report.html"),
+        (),
+    ],
+)
+@pytest.mark.parametrize(
     "report_response",
     [
         ("200", 0, "OK:"),
@@ -29,10 +41,11 @@ import pytest
         ("200", 28, "CONNECTION FAILED:"),
     ],
 )
-def test_reference_checker_diagnoses_both_pages(
+def test_reference_checker_diagnoses_supplied_pages(  # noqa: C901, PLR0912, PLR0915 - page matrix
     temporary_path: Path,
     script_path: str,
     homepage_curl_exit_status: int,
+    pages: tuple[str, ...],
     report_response: tuple[str, int, str],
 ) -> None:
     """A response code is interpreted only after a successful curl invocation."""
@@ -57,6 +70,10 @@ def test_reference_checker_diagnoses_both_pages(
             "  fi\n"
             '  exit "$TEST_CURL_EXIT"\n'
             "fi\n"
+            'if [[ "${!#}" != "https://lf2607.kolamayermakers.org/~s6-learner/" ]]; then\n'
+            "  printf '404'\n"
+            "  exit 0\n"
+            "fi\n"
             'if [[ "$TEST_HOMEPAGE_CURL_EXIT" != "0" ]]; then\n'
             "  printf '000'\n"
             "  printf 'simulated homepage failure\\n' >&2\n"
@@ -68,7 +85,7 @@ def test_reference_checker_diagnoses_both_pages(
     )
     temporary_path.joinpath("curl").chmod(0o755)
     completed_process = subprocess.run(
-        [bash_path, "-c", reference_script],
+        [bash_path, "-c", reference_script, "site-check.sh", *pages],
         cwd=temporary_path,
         env=os.environ
         | {
@@ -84,31 +101,54 @@ def test_reference_checker_diagnoses_both_pages(
         check=False,
         timeout=5,
     )
+    if not pages:
+        assert completed_process.returncode == 2
+        assert "usage:" in (completed_process.stdout + completed_process.stderr).lower()
+        assert "PAGE" in completed_process.stdout + completed_process.stderr
+        assert not temporary_path.joinpath("calls.txt").exists()
+        return
     assert completed_process.returncode == 0, completed_process.stderr
-    output_lines = completed_process.stdout.splitlines()
-    assert "https://lf2607.kolamayermakers.org/~s6-learner/" in output_lines[0]
-    if homepage_curl_exit_status:
-        assert output_lines[0].startswith("CONNECTION FAILED:")
-        assert "returned HTTP" not in output_lines[0]
-    else:
-        assert output_lines[0].startswith("OK:")
-        assert "HTTP 200" in output_lines[0]
-    report_line_index = 2 if homepage_curl_exit_status else 1
-    assert output_lines[report_line_index].startswith(expected_message)
-    assert completed_process.stderr == (
-        ("simulated homepage failure\n" if homepage_curl_exit_status else "")
-        + ("simulated curl failure\n" if curl_exit_status else "")
-    )
-    if curl_exit_status:
-        assert "returned HTTP" not in output_lines[report_line_index]
-    else:
-        assert f"HTTP {http_status}" in output_lines[report_line_index]
-    if expected_message == "MISSING:":
-        repair_message = output_lines[report_line_index + 1]
-        assert repair_message.index("maker-report.sh") < repair_message.index("build-website")
+    output_lines = iter(completed_process.stdout.splitlines())
+    expected_errors = ""
+    for page in pages:
+        diagnosis = next(output_lines)
+        if page == "maker-report.html":
+            assert "maker-report.html" in diagnosis
+            assert diagnosis.startswith(expected_message)
+            if curl_exit_status:
+                assert "returned HTTP" not in diagnosis
+                expected_errors += "simulated curl failure\n"
+                next(output_lines)
+            else:
+                assert f"HTTP {http_status}" in diagnosis
+                if expected_message == "MISSING:":
+                    repair_message = next(output_lines)
+                    assert repair_message.index("maker-report.sh") < repair_message.index(
+                        "build-website"
+                    )
+                elif expected_message == "CHECK:":
+                    next(output_lines)
+        else:
+            assert f"https://lf2607.kolamayermakers.org/~s6-learner/{page}" in diagnosis
+            if page:
+                assert diagnosis.startswith("CHECK:")
+                assert "HTTP 404" in diagnosis
+                assert "maker-report.sh" not in next(output_lines)
+            elif homepage_curl_exit_status:
+                assert diagnosis.startswith("CONNECTION FAILED:")
+                assert "returned HTTP" not in diagnosis
+                expected_errors += "simulated homepage failure\n"
+                next(output_lines)
+            else:
+                assert diagnosis.startswith("OK:")
+                assert "HTTP 200" in diagnosis
+    assert list(output_lines) == []
+    assert completed_process.stderr == expected_errors
+    if "maker-report.html" not in pages or expected_message != "MISSING:":
+        assert "maker-report.sh" not in completed_process.stdout
     assert temporary_path.joinpath("calls.txt").read_text(encoding="utf-8").splitlines() == [
         argument
-        for page in ("", "maker-report.html")
+        for page in pages
         for argument in (
             "-sS",
             "-I",

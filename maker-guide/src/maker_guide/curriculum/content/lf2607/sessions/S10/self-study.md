@@ -118,7 +118,7 @@ Switch to the classroom SSH tab you kept open. If that connection has closed, re
 In the classroom shell, reuse the checker and helper you already built:
 
 ```bash
-bash ~/scripts/site-check.sh
+bash ~/scripts/site-check.sh "" maker-report.html
 PORT="$(~/bin/site.sh site_port)"
 printf 'Service port: %s\n' "$PORT"
 curl -I "https://lf2607.kolamayermakers.org/~$USER/"

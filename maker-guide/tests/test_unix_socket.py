@@ -19,6 +19,7 @@ from maker_guide.config import SocketConfig
 from maker_guide.events import ShellEvent
 from maker_guide.site_check import (
     SITE_CHECK_CASES,
+    SITE_CHECK_VERSION,
     SiteCheckError,
     SiteCheckReport,
     site_check_report_payload,
@@ -524,7 +525,7 @@ async def test_site_check_rejects_bad_results(
         await writer.drain()
         assert cast("object", json.loads(await reader.readline())) == {
             "ok": True,
-            "site_check": {"version": 1, "source_sha256": "a" * 64},
+            "site_check": {"version": SITE_CHECK_VERSION, "source_sha256": "a" * 64},
         }
         writer.write(result)
         await writer.drain()
@@ -692,7 +693,7 @@ async def test_site_check_stays_on_original_connection_and_preserves_help(
         }
         assert cast("object", json.loads(await reader.readline())) == {
             "ok": True,
-            "site_check": {"version": 1, "source_sha256": "a" * 64},
+            "site_check": {"version": SITE_CHECK_VERSION, "source_sha256": "a" * 64},
         }
         for payload, expected in (
             (result, {"ok": False, "execute": True, "error": "unsupported request kind"}),

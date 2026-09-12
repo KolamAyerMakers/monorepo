@@ -8,7 +8,7 @@ S6 checked whether your existing pages respond. S7 compares what you build with 
 
 ## Remember
 
-- Reuse `bash ~/scripts/site-check.sh` unchanged for static preflight. Its two URLs are the homepage and `maker-report.html` on one host.
+- Reuse `bash ~/scripts/site-check.sh "" maker-report.html` unchanged for static preflight. These arguments select the homepage and report on one host.
 - `curl -I` reuses S6's `HEAD` request: headers, no page body. `GET` fetches the body.
 - Compare `~/public_html/index.html` with the successfully fetched body, not with response headers. `diff` prints nothing and exits `0` for identical files; `1` means differences and `2` means an error. These files should match: investigate any mismatch, rebuild, and refetch.
 - Markdown source and generated HTML are related, not identical. Edit source and rebuild; do not repair generated HTML by hand.
