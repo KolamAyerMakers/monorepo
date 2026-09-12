@@ -19,7 +19,7 @@ def format_today_quest(quest: Quest) -> str:
     response_parts = [
         f"Today's quest: {quest.title}",
         f"Goal:\n{quest.learner_goal}",
-        f"Prompt:\n{quest.prompt}",
+        f"Task:\n{quest.prompt}",
     ]
     if quest.docs:
         response_parts.append(
