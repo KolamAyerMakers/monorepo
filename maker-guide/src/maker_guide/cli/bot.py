@@ -25,6 +25,7 @@ from maker_guide.llm_tutor import (
 )
 from maker_guide.repositories.helpers import connect_database
 from maker_guide.router import route_events
+from maker_guide.site_check import SITE_CHECK_TIMEOUT_SECONDS, SiteCheckError, SiteCheckReport
 from maker_guide.unix_socket import HelpChunkWriter, SocketHelpRequest, UnixSocketServer
 
 app = typer.Typer(
@@ -132,6 +133,21 @@ async def _handle_socket_help_request(
     chunk_writer: HelpChunkWriter | None,
     outbound_queue: asyncio.Queue[IrcOutboundMessage],
 ) -> str:
+    loop = asyncio.get_running_loop()
+
+    def run_site_check(source_sha256: str) -> SiteCheckReport:
+        async def receive_report() -> SiteCheckReport:
+            if request.site_check_runner is None:
+                raise SiteCheckError("runner-unavailable")
+            return await request.site_check_runner(source_sha256)
+
+        pending = asyncio.run_coroutine_threadsafe(receive_report(), loop)
+        try:
+            return pending.result(timeout=SITE_CHECK_TIMEOUT_SECONDS + 3.0)
+        except TimeoutError as error:
+            pending.cancel()
+            raise SiteCheckError("timeout") from error
+
     def handle_request() -> ChatResponse:
         with connect_database(configuration.database.path) as database_connection:
             try:
@@ -158,6 +174,7 @@ async def _handle_socket_help_request(
                             else configuration.llm_tutor.max_tokens
                         ),
                         response_chunk_writer=chunk_writer,
+                        site_check_runner=(run_site_check if request.site_check_runner else None),
                     ),
                 )
             except sqlite3.Error as error:

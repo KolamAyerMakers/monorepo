@@ -15,6 +15,7 @@ from maker_guide.chat.presenter import (
 )
 from maker_guide.chat.snapshot import build_learner_snapshot
 from maker_guide.curriculum.models import CommandHistoryValidation
+from maker_guide.progress.feedback import site_check_feedback
 from maker_guide.progress.models import (
     CurrentSessionObjectiveResult,
     QuestAttemptInput,
@@ -240,7 +241,14 @@ def _current_response(  # noqa: PLR0913 - Display reuses request context and che
                     else None
                 ),
             )
-        return _format_session_objective(objective_result, dependencies, validation_result)
+        return _format_session_objective(
+            objective_result,
+            dependencies,
+            validation_result,
+            include_instructions=(
+                validation_result is None or validation_result.failure_reason != "site-check-failed"
+            ),
+        )
     return _current_quest_response(dependencies, learner_handle, source, timestamp)
 
 
@@ -257,7 +265,7 @@ def _is_current_directory(cwd: str | None, expected_directory: Path | None) -> b
         return False
 
 
-def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context directly.
+def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evidence to one task.
     dependencies: ChatDependencies,
     learner_handle: str,
     source: str,
@@ -276,6 +284,22 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
         handle=learner_handle,
     )
     if objective_result.objective is not None:
+        if dependencies.site_check_result is not None and (
+            dependencies.site_check_result.course_id,
+            dependencies.site_check_result.target_type,
+            dependencies.site_check_result.target_id,
+            dependencies.site_check_result.target_session_id,
+            dependencies.site_check_result.evidence_since,
+        ) != (
+            dependencies.catalog.course.id,
+            "session_objective",
+            objective_result.objective.id,
+            objective_result.session_id,
+            objective_result.evidence_since,
+        ):
+            return CheckResponse(
+                text=_current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
+            )
         if prepared_answer_interpretation is not None and (
             prepared_answer_interpretation.target_type != "session_objective"
             or prepared_answer_interpretation.target_id != objective_result.objective.id
@@ -312,6 +336,20 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
         )
     if current_quest_result.assignment is None:
         raise ChatError("current quest assignment was not written")
+    if dependencies.site_check_result is not None and (
+        dependencies.site_check_result.course_id,
+        dependencies.site_check_result.target_type,
+        dependencies.site_check_result.target_id,
+        dependencies.site_check_result.target_session_id,
+        dependencies.site_check_result.evidence_since,
+    ) != (
+        dependencies.catalog.course.id,
+        "quest",
+        current_quest_result.quest.id,
+        None,
+        current_quest_result.assignment.assigned_at,
+    ):
+        return CheckResponse(text=format_today_quest(current_quest_result.quest))
     if refresh_current and current_quest_result.assigned_now:
         return CheckResponse(text=format_today_quest(current_quest_result.quest))
     if prepared_answer_interpretation is not None and (
@@ -340,6 +378,16 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
                 else ()
             ),
             account_lookup=dependencies.account_lookup,
+            site_check_report=(
+                dependencies.site_check_result.report
+                if dependencies.site_check_result is not None
+                else None
+            ),
+            site_check_failure_reason=(
+                dependencies.site_check_result.failure_reason
+                if dependencies.site_check_result is not None
+                else None
+            ),
         ),
     )
     attempt_result = record_attempt(
@@ -360,7 +408,11 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
     if not validation_result.passed:
         return CheckResponse(
             text=(
-                (format_today_quest(current_quest_result.quest) + "\n\n" if refresh_current else "")
+                (
+                    format_today_quest(current_quest_result.quest) + "\n\n"
+                    if refresh_current and validation_result.failure_reason != "site-check-failed"
+                    else ""
+                )
                 + format_failed_check(
                     current_quest_result.quest,
                     validation_result,
@@ -448,6 +500,16 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
                 else ()
             ),
             account_lookup=dependencies.account_lookup,
+            site_check_report=(
+                dependencies.site_check_result.report
+                if dependencies.site_check_result is not None
+                else None
+            ),
+            site_check_failure_reason=(
+                dependencies.site_check_result.failure_reason
+                if dependencies.site_check_result is not None
+                else None
+            ),
         ),
         objective.validation,
     )
@@ -571,6 +633,8 @@ def _objective_status(  # noqa: C901, PLR0911 - Each validation failure has one 
     tutor_feedback: str | None = None,
 ) -> str:
     """Format concise missing evidence for a session objective."""
+    if (feedback := site_check_feedback(validation_result)) is not None:
+        return feedback
     if validation_result.failure_reason == "missing-ssh-publickey":
         return "No SSH key login observed. Reconnect using your SSH key, then run `guide check`."
     if validation_result.failure_reason == "missing-irc-channel-join":

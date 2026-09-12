@@ -29,6 +29,7 @@ from maker_guide.curriculum.models import (
     QuestValidation,
     Session,
     SessionObjective,
+    SiteCheckValidation,
     SshPublicKeyObservedValidation,
     Tier,
     UserPortFileValidation,
@@ -144,42 +145,16 @@ _SOURCE_HANDOFF_PATHS = (
     "services/site-build.service",
     "services/site-build.timer",
 )
-# ponytail: source shape only, not a Bash parser or proof of runtime behavior.
-# Learners run syntax and HTTP checks themselves; the bot never runs their scripts.
-_S6_SITE_CHECK_SCRIPT_PATTERN = (
-    r"(?ms)\A"
-    r"(?!.*^[ \t]*status=(?!\$\(curl[ \t]))"
-    rf'.*?^[ \t]*base_url="https://{_CLASSROOM_HOSTNAME_PATTERN}/~'
-    r'\$(?:USER|\{USER\})"[ \t]*$'
-    r""".*?^[ \t]*for[ \t]+page[ \t]+in[ \t]+(?:""|'')[ \t]+"""
-    r"""(?:maker-report\.html|"maker-report\.html"|'maker-report\.html')"""
-    r"[ \t]*(?:;|\n)[ \t]*do[ \t]*$"
-    r'.*?^[ \t]*url="\$base_url/\$page"[ \t]*$'
-    r"\n[ \t]*curl_exit_code=0[ \t]*$"
-    r"\n[ \t]*status=\$\(curl[ \t]+"
-    r"(?=[^\n)]*(?<!\S)-I[ \t])"
-    r"""(?=[^\n)]*(?<!\S)-o[ \t]+(?:/dev/null|"/dev/null"|'/dev/null')[ \t])"""
-    r"""(?=[^\n)]*-w[ \t]+(?:'%\{http_code\}'|"%\{http_code\}")[ \t])"""
-    r'[^\n)]*[ \t]+"\$url"[ \t]*\)[ \t]*(?:\\\n[ \t]*)?'
-    r"\|\|[ \t]+curl_exit_code=\$\?[ \t]*$"
-    r'\n[ \t]*if[ \t]+\[\[[ \t]+"\$curl_exit_code"[ \t]+-eq[ \t]+0'
-    r"[ \t]+\]\][ \t]*;[ \t]*then[ \t]*$"
-    r'\n[ \t]*if[ \t]+\[\[[ \t]+"\$status"[ \t]+==[ \t]+'
-    r"""(?:"200"|'200'|200)[ \t]+\]\][ \t]*;[ \t]*then[ \t]*$"""
-    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
-    r'.*?^[ \t]*elif[ \t]+\[\[[ \t]+"\$page"[ \t]+==[ \t]+'
-    r"""(?:"maker-report\.html"|'maker-report\.html'|maker-report\.html)[ \t]+&&[ \t]+"""
-    r""""\$status"[ \t]+==[ \t]+(?:"404"|'404'|404)[ \t]+\]\][ \t]*;[ \t]*then[ \t]*$"""
-    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
-    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]*maker-report\.sh[^\n]*"
-    r"(?:\n[ \t]*(?:printf|echo)[ \t]+[^\n]*)*?build-website[^\n]*$"
-    r".*?^[ \t]*else[ \t]*$"
-    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
-    r".*?^[ \t]*fi[ \t]*$"
-    r"\s*else[ \t]*$"
-    r".*?^[ \t]*(?:printf|echo)[ \t]+[^\n]+$"
-    r".*?^[ \t]*fi[ \t]*$"
-    r"\s*done\s*\Z"
+_S6_SITE_CHECK_PROMPT = (
+    "Finish `~/scripts/site-check.sh` to query your personal homepage and "
+    "`maker-report.html` without arguments. Report HTTP 200 as OK only when curl succeeds; "
+    "diagnose other statuses and suggest maker-report.sh plus build-website for report 404. "
+    "Handle either connection failure and still check the other page, even if curl prints 200 "
+    "but exits nonzero. Equivalent variables, functions, case statements, and page order are "
+    "accepted; the reference example is not mandatory. Run `guide now` or `guide check` in "
+    "the classroom shell to run simulated checks locally. Separately run the script against "
+    "your live site and inspect both pages in a browser; simulated completion does not prove "
+    "the live site works."
 )
 _EXECUTABLE_NOT_FILE_PATTERN = (
     r"\b(executable|program|binary)\b.{0,12}\b(isn't|is not|means not|never)\s+"
@@ -431,6 +406,7 @@ _QUEST_SPECIFIC_FAILURE_REASONS_BY_VALIDATION_TYPE = MappingProxyType(
         ExecutablePathValidation: ("missing-path", "not-executable", "wrong-owner"),
         OwnedPathValidation: ("missing-path", "wrong-owner"),
         FileMatchesPathValidation: ("missing-path", "file-content-mismatch"),
+        SiteCheckValidation: ("missing-path",),
         GitTrackedPathValidation: (
             "missing-path",
             "git-path-not-committed",
@@ -536,8 +512,6 @@ def _quest_specific_failure_reasons(validation: QuestValidation) -> tuple[str, .
             for child_validation in validation.validations
             for failure_reason in _quest_specific_failure_reasons(child_validation)
         )
-    if isinstance(validation, CommandHistoryValidation):
-        return ("missing-command",)
     if isinstance(validation, InteractiveQuestionValidation):
         return (
             "missing-answer",
@@ -550,8 +524,6 @@ def _quest_specific_failure_reasons(validation: QuestValidation) -> tuple[str, .
             "file-content-mismatch",
             *_forbidden_content_failure_reason(validation),
         )
-    if isinstance(validation, FileMatchesPathValidation):
-        return ("missing-path", "file-content-mismatch")
     return _QUEST_SPECIFIC_FAILURE_REASONS_BY_VALIDATION_TYPE.get(type(validation), ())
 
 
@@ -1351,7 +1323,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "Inspect an HTTP response with curl.",
                 (
                     "Use a for loop and if statement to verify two personal website pages "
-                    "return HTTP 200."
+                    "return HTTP 200. Grading accepts equivalent control flow."
                 ),
             ),
             content=_session_content("S6", "Is your site actually working?"),
@@ -1383,20 +1355,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 SessionObjective(
                     id="check-personal-pages",
                     title="Check both personal pages",
-                    prompt=(
-                        "Finish `~/scripts/site-check.sh` so it checks your homepage and "
-                        "`maker-report.html` without arguments. Compare your existing work with "
-                        "the complete S6 self-study script and finish any missing steps. If yours "
-                        'still uses `page="$1"`, it is the one-page starter: continue from '
-                        "Exercise 2 through Exercise 5. Run "
-                        "`bash -n ~/scripts/site-check.sh`, then `bash ~/scripts/site-check.sh`. "
-                        "Read both results and fix any reported problems. Once both pages return "
-                        "HTTP 200, run `guide check`."
-                    ),
-                    validation=FileCheckValidation(
-                        path="~/scripts/site-check.sh",
-                        required_regex=_S6_SITE_CHECK_SCRIPT_PATTERN,
-                    ),
+                    prompt=_S6_SITE_CHECK_PROMPT,
+                    validation=SiteCheckValidation(),
                 ),
             ),
         ),
@@ -2885,29 +2845,16 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Check your personal pages",
             sequence=49,
             available_after_session="S6",
-            prompt=(
-                "Finish `~/scripts/site-check.sh` so it checks your homepage and "
-                "`maker-report.html` without arguments. Compare your existing work with "
-                "the complete S6 self-study script and finish any missing steps. If yours "
-                'still uses `page="$1"`, it is the one-page starter: continue from '
-                "Exercise 2 through Exercise 5. Run "
-                "`bash -n ~/scripts/site-check.sh`, then `bash ~/scripts/site-check.sh`. "
-                "Read both results and fix any reported problems. Once both pages return "
-                "HTTP 200, run `guide check`."
-            ),
+            prompt=_S6_SITE_CHECK_PROMPT,
             required_commands=("for", "if", "curl -I", "printf", "bash", "micro"),
             practiced_skills=("loops", "conditionals", "control-flow", "http-basics"),
-            validation=FileCheckValidation(
-                path="~/scripts/site-check.sh",
-                required_regex=_S6_SITE_CHECK_SCRIPT_PATTERN,
-            ),
-            goal="Turn two manual HTTP checks into one reusable diagnosis.",
+            validation=SiteCheckValidation(),
+            goal="Diagnose both pages correctly across simulated HTTP and connection failures.",
             evidence=(
-                "`~/scripts/site-check.sh` needs a personal base_url using $USER, a loop over "
-                'both pages, url="$base_url/$page", a curl status capture, a == 200 branch, '
-                "a report-specific 404 repair with maker-report.sh and build-website, and "
-                "closed if/for blocks. Run syntax and HTTP checks yourself; the bot does not "
-                "execute the script or verify live HTTP results."
+                "Pass all seven simulated cases with `guide now` in the classroom shell: "
+                "both pages OK, report missing, homepage missing, HTTP error, either page's "
+                "connection failure, and misleading 200 with a failed curl exit. "
+                "Then check live HTTP results and browser access yourself."
             ),
         ),
         _quest(

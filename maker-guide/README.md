@@ -23,7 +23,7 @@ Mentors can run `maker-guide-progress release S03` during the in-person session.
 
 ## Development Classroom
 
-Curriculum examples use `lf2607.kolamayermakers.org`. When testing on `lf-dev`, replace that hostname with `lf-dev.kolamayermakers.org` in DNS commands, page and service URLs, and the S6 checker's `base_url`. The shared validators accept both classroom hostnames, not arbitrary hosts; the course ID remains `lf2607`.
+Curriculum examples use `lf2607.kolamayermakers.org`. When testing on `lf-dev`, replace that hostname with `lf-dev.kolamayermakers.org` in DNS commands, page and service URLs, and the S6 checker's URLs (`base_url` in the reference example). The shared validators accept both classroom hostnames, not arbitrary hosts; the course ID remains `lf2607`.
 
 After deploying a validator update, use `guide now` to check previously recorded successful commands for the current practical objective and show the next task if it passes. `guide check` remains an explicit validation option, or you can rerun the command. Failed commands do not count as completion evidence.
 
@@ -137,6 +137,12 @@ make 2>&1 | guide --config /etc/maker-guide/config.toml
 Chat requests from IRC and `guide` use the same handler. `now` and its `today` and `next` aliases check at most one current practical item: the current released incomplete session objective, or the current quest if it was already assigned. A passing check records completion and displays the next task without validating it or walking a chain of tasks. Incomplete work keeps its current guidance. A newly assigned quest is displayed without checking it, so run `guide now` before starting quest work.
 
 Answer-based and mixed questions still require `answer <your answer>`; `now` does not bypass the answer. `check` and `check my work` remain explicit validation requests. Failed check responses are concise and deterministic. LLM explanations are available only when the learner asks, never automatically after a check.
+
+For the current S6 checker objective or already assigned checker quest, `guide now` and `guide check` automatically request a local simulated test suite. The CLI announces the run and executes `~/scripts/site-check.sh` without arguments as the invoking learner. IRC cannot run it and directs the learner to these commands in the classroom shell. Older CLI clients without this capability cannot complete this check; there is no source-only fallback. Deploy the updated CLI and daemon together.
+
+The reference checker is one implementation, not a required copy. Grading accepts equivalent functions, `case` statements, variable names, page order, and curl flag order. Output must identify each page by URL or homepage/report label, give its HTTP code and diagnosis or a transport-failure diagnosis, and never claim a failed request succeeded. Report-404 advice must name `maker-report.sh` followed by `build-website`; homepage-404 advice must not recommend report regeneration. See the [seven cases and output contract](src/maker_guide/curriculum/content/lf2607/sessions/S06/self-study.md#guide-checks).
+
+A simulated pass is not a live website health check. Learners must still run `bash ~/scripts/site-check.sh` against their real pages and inspect both in a browser. Existing stored completions remain historical records; they are not rerun or reinterpreted as passes of the new suite.
 
 When LLM support is configured, private conceptual answers use a forced tool call to assess each catalog rubric as demonstrated, contradicted, or not demonstrated. Strict application code validates that tool payload and remains solely responsible for progress writes. Provider failures fall back to the deterministic regex checks. Private fallback questions can use the optional LLM tutor with read-only learner context. Public IRC fallback and public answers do not call the LLM because they could expose learner data. The CLI response prompt uses the configured IRC nickname so local terminal conversations match the bot identity seen in IRC. In interactive mode, type `exit` or `quit` to leave.
 
@@ -264,13 +270,19 @@ uv run salt-runner ssh-apply lf2607 roles.kam-classroom
 
 ## Validation Security
 
-Deterministic validation runs as the unprivileged bot user. Operators must not run validation as root, add privileged wrappers, or bypass Unix permissions to make a quest pass.
+Daemon-side deterministic validation runs as the unprivileged bot user. The S6 behavioral suite executes only in the invoking learner's CLI under that learner's UID, never in the daemon. Operators must not run validation as root, add privileged wrappers, or bypass Unix permissions to make a quest pass.
 
 Learner home directories must be traversable by the bot UID, and quest artifacts must be readable through normal Unix permissions. A `permission-denied` validation failure is learner feedback about ownership, directory execute bits, and file read bits. It is not an operator incident to fix with elevated access.
 
-Validators inspect only the active catalog paths for the current quest. They resolve paths, follow symlinks, inspect file metadata, and read bounded UTF-8 text. They never execute learner files. Regex validators read at most the configured validation byte limit before matching, so large files fail as validation feedback instead of being read without bound.
+Daemon-side artifact validators inspect only the active catalog paths for the current task. They resolve paths, follow symlinks, inspect file metadata, and read bounded UTF-8 text; the daemon never executes learner files. Regex validators read at most the configured validation byte limit before matching, so large files fail as validation feedback instead of being read without bound.
 
 Relative paths and `~/...` paths are scoped to the learner home after symlink resolution. If a learner-home symlink points outside that home, validation fails with `path-escapes-scope` unless the catalog intentionally declares the exact absolute path.
+
+The Linux-only S6 CLI runner reads at most 1 MiB of source, parses and runs a private, read-only, unlinked temporary source snapshot with Bash via `/proc/self/fd`, uses a sanitized environment and temporary working directory, and bounds each subprocess to three seconds and 64 KiB of combined output within a 25-second suite budget. It rejects root, mismatched real/effective UIDs, and the daemon account. Its PATH-based curl shim delegates option handling to native `/usr/bin/curl` and redirects the two allowed learner URLs on `lf2607` or `lf-dev` to loopback fixtures.
+
+This is not a sandbox. Scripts retain the learner's filesystem and process permissions, can have side effects, and can bypass the PATH shim. Neither URL redirection nor time/output limits isolate untrusted code. Do not run another learner's script, or run the suite as the bot or through sudo. The daemon authenticates the CLI through the existing socket peer credentials, but the local outcome report is not tamper-proof attestation.
+
+Results return on the same authenticated connection and are bound to the selected task, its evidence window, and the source SHA-256. A changed source requires a fresh run; a changed task cannot receive the old result. Raw stdout, stderr, and script source are not sent as result evidence, stored in validation evidence, or passed to the LLM by this flow. Reports carry the digest, fixed case booleans, and a fixed error token; learner feedback uses fixed case messages. See [S6 Behavioral Grading](DESIGN.md#s6-behavioral-grading) for the full trust contract.
 
 ## LLM Audit Logs
 
@@ -295,6 +307,8 @@ timestamp so each release remains distinct. Salt installs it and atomically upda
 symlink. Salt extracts the venv into the immutable release and uses its console
 scripts for the public commands. The target must provide `/usr/bin/python3.13`;
 Salt retargets the venv to that interpreter before activation.
+
+The S6 runner ships inside this existing venv and is called by `guide`; it adds no CLI entrypoint, privileged helper, or sudo rule. Existing Salt packaging and classroom Bash/curl tools cover it, so the behavioral replacement needs no infrastructure edits. Building, deploying, and validating the updated artifact remain explicit operator work tracked in [TODO](../TODO.md).
 
 ## Runtime Directory
 

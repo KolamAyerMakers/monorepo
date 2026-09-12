@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import pwd
+import re
 import socket
 import sys
 from collections.abc import Callable
@@ -22,12 +23,15 @@ from maker_guide.chat.contract import (
     CHAT_INPUT_TOO_LONG_TEXT,
     DEFAULT_CHAT_MAX_INPUT_CHARS,
 )
+from maker_guide.chat.intents import chat_intent
+from maker_guide.cli.site_check import run_site_check
 from maker_guide.config import (
     DEFAULT_CONFIG_PATH,
     load_bot_name,
     load_socket_path,
 )
 from maker_guide.llm_tutor import DEFAULT_TUTOR_TIMEOUT_SECONDS
+from maker_guide.site_check import parse_site_check_report, site_check_report_payload
 
 try:
     import readline
@@ -38,6 +42,8 @@ _HELP_SOCKET_TIMEOUT_SECONDS = DEFAULT_TUTOR_TIMEOUT_SECONDS + 2.0
 _HELP_TIMEOUT_TEXT = "My remote brain is still thinking. Try me again in a moment."
 _HELP_UNAVAILABLE_TEXT = "I can't reach my remote brain right now. Try me again in a moment."
 _BAD_HELP_RESPONSE_TEXT = "My remote brain sent static. Try again in a moment."
+_HELP_MAX_FRAME_BYTES = 128 * 1024
+_SITE_CHECK_MAX_FRAME_BYTES = 4096
 _THINKING_BLOCK_WIDTH = 8
 _THINKING_HOLD_START_FRAMES = 30
 _THINKING_HOLD_END_FRAMES = 9
@@ -120,6 +126,10 @@ class _StreamingMarkdown:
 class _SocketReader(Protocol):
     def recv(self, size: int, /) -> bytes:
         """Read bytes from a socket-like object."""
+        ...
+
+    def sendall(self, data: bytes, /) -> None:
+        """Send a site check result on the original connection."""
         ...
 
 
@@ -325,6 +335,7 @@ def _send_help_request(
                 "cwd": str(Path.cwd()),
                 "ssh_connection": os.environ.get("SSH_CONNECTION"),
                 "stream": chunk_writer is not None,
+                "supports_site_check": True,
             },
             separators=(",", ":"),
         ).encode("utf-8")
@@ -335,7 +346,7 @@ def _send_help_request(
             client_socket.settimeout(_HELP_SOCKET_TIMEOUT_SECONDS)
             client_socket.connect(str(socket_path))
             client_socket.sendall(payload)
-            return _read_help_response(client_socket, chunk_writer)
+            return _read_help_response(client_socket, chunk_writer, message)
     except TimeoutError:
         return _HELP_TIMEOUT_TEXT
     except OSError:
@@ -494,46 +505,93 @@ def _help_response_text(response: bytes) -> str:
     return text
 
 
-def _read_help_response(
+def _read_help_response(  # noqa: C901 - Keep the one-shot action in the existing read loop.
     client_socket: _SocketReader,
     chunk_writer: Callable[[str], None] | None,
+    message: str = "",
 ) -> str:
     buffered = b""
+    site_check_allowed = chat_intent(message) in {"now", "check"}
     while True:
-        received = client_socket.recv(4096)
-        if received == b"":
-            break
-        buffered += received
-        while b"\n" in buffered:
-            response_line, buffered = buffered.split(b"\n", 1)
-            response_text = _handle_help_response_line(response_line, chunk_writer)
-            if response_text is not None:
-                return response_text
-    if buffered:
-        response_text = _handle_help_response_line(buffered, chunk_writer)
-        if response_text is not None:
-            return response_text
-    return _BAD_HELP_RESPONSE_TEXT
+        if b"\n" not in buffered:
+            received = client_socket.recv(4096)
+            buffered += received
+            if len(buffered.split(b"\n", 1)[0]) > _HELP_MAX_FRAME_BYTES:
+                return _BAD_HELP_RESPONSE_TEXT
+            if received:
+                continue
+        response_line, separator, buffered = buffered.partition(b"\n")
+        if len(response_line) > _HELP_MAX_FRAME_BYTES:
+            return _BAD_HELP_RESPONSE_TEXT
+        try:
+            loaded = cast(
+                "object",
+                json.loads(response_line.decode("utf-8"), object_pairs_hook=_unique_json_fields),
+            )
+            if not isinstance(loaded, dict):
+                return _BAD_HELP_RESPONSE_TEXT
+            response_object = cast("dict[object, object]", loaded)
+            if "site_check" in response_object:
+                if (
+                    not site_check_allowed
+                    or not separator
+                    or len(response_line) + 1 > _SITE_CHECK_MAX_FRAME_BYTES
+                ):
+                    return _BAD_HELP_RESPONSE_TEXT
+                site_check_allowed = False
+                client_socket.sendall(_site_check_reply(response_object, chunk_writer))
+                continue
+        except (ValueError, TypeError, RecursionError):
+            return _BAD_HELP_RESPONSE_TEXT
+        chunk = response_object.get("chunk")
+        if response_object.get("ok") is True and isinstance(chunk, str):
+            if chunk_writer is not None:
+                chunk_writer(chunk)
+            continue
+        return _help_response_text(response_line)
 
 
-def _handle_help_response_line(
-    response: bytes,
+def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    fields = dict(pairs)
+    if len(fields) != len(pairs):
+        raise ValueError("duplicate JSON fields")
+    return fields
+
+
+def _site_check_reply(
+    response: dict[object, object],
     chunk_writer: Callable[[str], None] | None,
-) -> str | None:
-    if chunk_writer is None:
-        return _help_response_text(response)
-    try:
-        loaded = cast("object", json.loads(response.decode("utf-8")))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        return _BAD_HELP_RESPONSE_TEXT
-    if not isinstance(loaded, dict):
-        return _BAD_HELP_RESPONSE_TEXT
-    response_object = cast("dict[object, object]", loaded)
-    chunk = response_object.get("chunk")
-    if isinstance(chunk, str):
-        chunk_writer(chunk)
-        return None
-    return _help_response_text(response)
+) -> bytes:
+    if set(response) != {"ok", "site_check"} or response["ok"] is not True:
+        raise ValueError("invalid site check action")
+    action = response["site_check"]
+    if not isinstance(action, dict):
+        raise ValueError("invalid site check action")
+    action_object = cast("dict[object, object]", action)
+    source_sha256 = action_object.get("source_sha256")
+    if (
+        set(action_object) != {"version", "source_sha256"}
+        or type(action_object["version"]) is not int
+        or action_object["version"] != 1
+        or not isinstance(source_sha256, str)
+        or re.fullmatch("[0-9a-f]{64}", source_sha256) is None
+    ):
+        raise ValueError("invalid site check action")
+    if chunk_writer is not None:
+        chunk_writer("Running your S6 site check locally...\n")
+    else:
+        sys.stderr.write("Running your S6 site check locally...\n")
+    report = site_check_report_payload(run_site_check(source_sha256))
+    parse_site_check_report(report, source_sha256)
+    reply = (
+        json.dumps({"kind": "site_check_result", "report": report}, separators=(",", ":")).encode(
+            "utf-8",
+        )
+        + b"\n"
+    )
+    if len(reply) > _SITE_CHECK_MAX_FRAME_BYTES:
+        raise ValueError("site check result too large")
+    return reply
 
 
 def _write_bot_response(

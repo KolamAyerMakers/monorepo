@@ -26,6 +26,8 @@ In the URLs below, `$USER` expands to your classroom username.
 
 Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. Use `guide answer 'your own observation'` when asked. `guide check` is an optional explicit check. Reading an answer does not record progress.
 
+For the checker task, `guide now` and `guide check` automatically run your script locally under your account through [seven simulated cases](#guide-checks). This does not replace running it against your live site and checking both pages in your browser.
+
 ## Provided Report Script
 
 Your S5 version stays in `~/src`. A ready-to-use reference is available on the classroom server at `/docs/guides/resources/maker-report.sh`:
@@ -123,7 +125,7 @@ curl -I "http://lf2607.kolamayermakers.org/~$USER/"
 curl -I -L "http://lf2607.kolamayermakers.org/~$USER/"
 ```
 
-Caddy normally returns `308` with a `Location` header. `-L` follows it, showing another response. Our final checker deliberately does not follow redirects: it requires the exact HTTPS paths to return `200`.
+Caddy normally returns `308` with a `Location` header. `-L` follows it, showing another response. The lesson's final example deliberately does not follow redirects: it reports whether the exact HTTPS paths return `200`.
 
 ## Know The Viewpoint
 
@@ -133,7 +135,7 @@ The script proves those page requests work from the server, not that outside cli
 
 ## Exercise 1: One Page
 
-If you already started `~/scripts/site-check.sh` during the session, compare it with the [complete script](#complete-script) and finish any missing stages below. Keep your existing work rather than starting over. Only continue directly to [the final exercise](#exercise-6-predict-then-check) if your script already loops over both pages without arguments and handles HTTP results and connection failures.
+If you already started `~/scripts/site-check.sh` during the session, use the [complete script](#complete-script) as one example and finish any missing behavior below. Keep your existing work rather than starting over. Continue directly to [the final exercise](#exercise-6-predict-then-check) if your script already checks both pages without arguments and handles HTTP results and connection failures.
 
 If your script is the one-page version below, continue from [Exercise 2](#exercise-2-capture-one-answer) through Exercise 5. Passing `bash -n` checks syntax, not whether the script is complete or runs successfully.
 
@@ -257,6 +259,8 @@ Do not add `-f`: it would turn `404` into a command failure before our explicit 
 
 ## Complete Script
 
+This is one implementation, not a required copy. The lesson uses `for` and `if` to teach repetition and decisions. Grading checks behavior, not variable names or exact `if` nesting; equivalent functions, `case` statements, page order, and curl flag order can differ.
+
 ````bash
 #!/bin/bash
 set -euo pipefail
@@ -307,8 +311,9 @@ Read the unchanged checker and predict its message and advice for these hypothet
 | Report | `0` | `404` |
 | Either | `0` | `302` or `500` |
 | Either | `6` | No response |
+| Report | `28` | `200` printed before curl failed |
 
-Explain why the two `404` cases produce different advice and why a curl failure skips the HTTP decision. Do not change the script or delete a page to produce these cases.
+Explain why the two `404` cases produce different advice and why a curl failure must not claim success, even if curl printed `200`. Both pages must still be checked when either request fails. Do not change the script or delete a page to produce these cases.
 
 Run `bash ~/scripts/site-check.sh` against your real pages. Read the actual results, repair only observed problems, and rerun. Verify both pages in your laptop browser too.
 
@@ -323,6 +328,28 @@ fi
 ```
 
 `.invalid` is reserved for names that should not resolve. A configured proxy may instead return a response; explain what you actually see. Do not disable TLS checks, alter DNS, or open firewall rules yourself.
+
+## Guide Checks
+
+When the checker is your current objective or assigned quest, run `guide now` or `guide check` in your classroom shell. It automatically runs your script without arguments through seven simulated cases under your own account. Use your own script and do not use sudo. If asking through IRC, return to the classroom shell for this step.
+
+Call `curl` through `PATH`, not an absolute path such as `/usr/bin/curl`, so the checks can supply simulated responses. The test runner is not a sandbox: your script retains your normal file permissions. Keep repairs as printed advice, not automatic file changes.
+
+| Simulated case | What your checker must do |
+|---|---|
+| Both pages return `200` | Identify each page and its HTTP `200` success. |
+| Report `404`, homepage `200` | Diagnose the missing report; suggest `maker-report.sh`, then `build-website`. |
+| Homepage `404`, report `200` | Diagnose the missing homepage without suggesting report regeneration. |
+| Report `500`, homepage `200` | Diagnose the report's HTTP `500` as an error. |
+| Homepage connection fails | Diagnose that failure and still check the report. |
+| Report connection fails | Diagnose that failure and still check the homepage. |
+| Report curl prints `200` but exits nonzero | Diagnose the failed request, not a success; still check both pages. |
+
+Identify each page by its URL or a `homepage`/`home page`/`report` label on its diagnosis line or a heading above it. Print the actual HTTP code with a clear diagnosis such as `OK`, `MISSING`, `CHECK`, or `ERROR`. For transport failures, use clear failure wording such as `CONNECTION FAILED`, DNS, TLS, or timeout, and do not also call the request successful. Advice can follow on separate lines; report repair advice must name both commands. Exact sentences are not required.
+
+The guide distinguishes simulated tests from your live website, acknowledges the two-page success test when it passes, and shows one failing case to work on next. Fix that behavior and run `guide now` again. If the script changes during checking, run the check again. If the local checker is unavailable or your CLI is too old, ask a mentor; it cannot fall back to accepting the source layout.
+
+Passing these simulations does not verify your live website. Still run `bash ~/scripts/site-check.sh` against the real pages and open both in your laptop browser. The checker should print repair advice, not regenerate or publish files automatically.
 
 ## Repair A Missing Report
 
@@ -352,17 +379,18 @@ Generation writes Markdown; rebuilding publishes HTML. Verify `200`, then open t
 | `403`, `500`, or `502` | Preserve the response and URL | Ask the instructor; do not change shared-service permissions or configuration. |
 | `syntax error` | Run `bash -n` | Check both `if`/`fi` pairs, `do`/`done`, quotes, and bracket spaces. |
 | Both iterations show the same URL | Inspect the loop body | Use `url="$base_url/$page"`, not a fixed homepage URL. |
-| Guide accepts source but a page fails | Read the actual output | Guide checks source shape, not public reachability. Repair and retest manually. |
+| Guide passes simulations but a live page fails | Run the script against the live site and read both results | Simulations do not verify live health or public reachability. Repair and retest manually, including the browser. |
+| Guide reports a failed simulated case | Read the named case and fixed advice | Check page labels, HTTP codes, failure handling, and report-only repair advice; you do not need to copy the reference. |
 
 ## Proof Checklist
 
 - Explain the different questions answered by DNS, ping, and HTTP.
 - Identify an observed status and response header, then find your report title in a `GET` body.
 - Explain why curl can exit `0` after an HTTP `404`.
-- The checker uses `$USER`, two page paths, `for`, status capture, and conditional diagnostics.
+- Explain how the lesson's `for` and `if` repeat checks and choose diagnoses. Your implementation checks both personal pages without arguments and handles curl failure separately from HTTP status.
 - Predict the diagnostics for missing-report, other HTTP statuses, and curl failures without changing the checker.
 - Both real paths return `200` from the server and open correctly in your laptop browser.
-- Run `guide check`. This records source/command evidence, not independent execution of your script or proof of live HTTP success.
+- Run `guide now` or `guide check` in the classroom shell to pass the seven simulated cases. This is separate from the live HTTP and browser checks.
 
 ## Next Session
 

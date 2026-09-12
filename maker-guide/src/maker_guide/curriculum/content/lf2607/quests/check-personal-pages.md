@@ -8,6 +8,8 @@ Finish `~/scripts/site-check.sh` so one run without arguments checks your homepa
 
 ## Commands You Will Use
 
+The lesson uses these commands to teach the checker. They are not a required source layout; equivalent implementations are accepted.
+
 - `for`
 - `if`
 - `curl -I`
@@ -17,17 +19,23 @@ Finish `~/scripts/site-check.sh` so one run without arguments checks your homepa
 
 ## Steps
 
-1. Inspect your existing `~/scripts/site-check.sh` and compare it with the complete [S6 self-study script](../sessions/S06/self-study.md#complete-script). Finish any missing stages. If it still uses `page="$1"`, continue from [Exercise 2](../sessions/S06/self-study.md#exercise-2-capture-one-answer) through Exercise 5. If it does not exist, start from Exercise 1.
+1. Inspect your existing `~/scripts/site-check.sh`. The complete [S6 self-study script](../sessions/S06/self-study.md#complete-script) is one implementation, not a required copy. Finish any missing behavior. If it still requires a page argument, continue from [Exercise 2](../sessions/S06/self-study.md#exercise-2-capture-one-answer) through Exercise 5. If it does not exist, start from Exercise 1.
 2. Run `bash -n ~/scripts/site-check.sh` and repair any syntax error.
 3. Without changing the checker, predict its diagnostics for the cases in the [final exercise](../sessions/S06/self-study.md#exercise-6-predict-then-check). Explain why a homepage `404`, a report `404`, and a curl failure produce different advice. Do not delete a real page to create a failure.
 4. Run `bash ~/scripts/site-check.sh` and read the real result for each URL.
 5. If the real report is missing, run `~/scripts/maker-report.sh "S5 Report"`, then `build-website`. If the generator was moved, first follow [S6 preflight recovery](../sessions/S06/self-study.md#preflight); do not replace an existing script.
 6. Run the checker again, confirm that both pages return HTTP 200, and open both pages in your laptop browser.
-7. Run `guide check` to record the completed quest.
+7. Run `guide now` or `guide check` in the classroom shell. For this assigned quest, it automatically runs the seven simulated cases locally as your learner account. Follow the fixed case feedback, edit, and retry until all pass.
 
-The guide checks source shape only. It does not parse Bash, execute learner scripts, observe their output, or prove that either page currently works. Run the syntax and HTTP checks yourself. This core script displays results for a human; its exit code is not an aggregate health result.
+The [seven cases](../sessions/S06/self-study.md#guide-checks) cover both pages returning `200`, report `404` with repair advice, homepage `404` without report-regeneration advice, report `500`, each page's connection failure while still checking the other, and curl printing `200` but exiting nonzero. A simulated pass does not prove either live page works. Keep the manual script and browser checks above; the reference script's exit code is not an aggregate health result.
+
+Output must identify each page by its URL or a homepage/report label, include the HTTP code and diagnosis or a transport-failure diagnosis, and never claim a failed request succeeded. Report-404 advice must name `maker-report.sh`, then `build-website`. Exact sentences, variable names, `if` nesting, functions versus `case`, page order, and curl flag order are not prescribed.
+
+IRC cannot run the local suite and directs you to the classroom shell. Do not use sudo. An older CLI without local-check support cannot complete this quest by accepting the source instead; ask a mentor to update it.
 
 ## Hints
+
+These hints build the lesson's `for`/`if` example; use them to understand the decisions, not to satisfy a source-pattern check.
 
 1. `for page in "" maker-report.html` lets one loop test both paths.
 2. Set `base_url="https://lf2607.kolamayermakers.org/~$USER"`, then `url="$base_url/$page"` inside the loop.
@@ -38,7 +46,7 @@ The guide checks source shape only. It does not parse Bash, execute learner scri
 
 ## If Check Fails
 
-Compare the source with the self-study script: personal base URL, both loop items, per-page URL, curl status capture, equality tests, report repair output, and closing `fi`/`done`. The source check follows that documented structure, not every equivalent Bash program; it does not require exact message wording. A passing guide check does not replace your manual run.
+Read the failed case and fixed advice. Check that both personal URLs are requested without arguments, each diagnosis identifies the page, HTTP failures include their codes, and curl failures cannot print success or skip the other page. For report `404`, name both repair commands; do not suggest report regeneration for homepage `404`. Use `bash -n` for syntax errors. If the script changed during checking, rerun `guide now` or `guide check`. You do not need to replace working code with the reference example.
 
 ## Related Reading
 

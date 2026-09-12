@@ -11,6 +11,7 @@ from typing import Literal
 from maker_guide.chat.snapshot import LearnerSnapshot
 from maker_guide.curriculum.models import AnswerConceptAssessment, CourseCatalog
 from maker_guide.llm_tutor import DEFAULT_TUTOR_MAX_TOKENS, AnswerInterpreter, TutorClient
+from maker_guide.site_check import SiteCheckReport
 from maker_guide.validation_paths import UnixAccountLookup, lookup_unix_account
 
 ChatVisibility = Literal["public", "private"]
@@ -91,6 +92,10 @@ class ChatDependencies:
     """Unix account lookup used by filesystem validation rules."""
     response_chunk_writer: Callable[[str], None] | None = None
     """Optional learner-facing stream sink for private tutor chunks."""
+    site_check_runner: Callable[[str], SiteCheckReport] | None = None
+    """Authenticated CLI bridge, called with the expected source SHA-256 before writes."""
+    site_check_result: PreparedSiteCheck | None = None
+    """One server-selected task result prepared for this request only."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -123,6 +128,19 @@ class ResponseDraft:
     """Whether IRC should request client evidence and retry the original request."""
     public_announcements: tuple[str, ...] = ()
     """Promotion notices for IRC public channels."""
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
+class PreparedSiteCheck:
+    """Local simulated outcomes bound to the task selected before the transaction."""
+
+    course_id: str
+    target_type: Literal["quest", "session_objective"]
+    target_id: str
+    target_session_id: str | None
+    evidence_since: str
+    report: SiteCheckReport | None
+    failure_reason: str | None = None
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)

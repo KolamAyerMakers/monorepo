@@ -8,7 +8,7 @@ from maker_guide.chat.contract import ChatError
 from maker_guide.chat.doc_selection import learner_document_path
 from maker_guide.curriculum.models import CourseCatalog, Quest
 from maker_guide.curriculum.tiers import current_tier_id
-from maker_guide.progress.feedback import failure_explanation
+from maker_guide.progress.feedback import failure_explanation, site_check_feedback
 from maker_guide.progress.models import QuestCompletionResult
 from maker_guide.progress.validation import QuestValidationResult, validation_answer_question
 from maker_guide.repositories.tier_promotion import TierPromotion
@@ -110,6 +110,8 @@ def format_failed_check(
 
 
 def _found_text(fallback_text: str, validation_result: QuestValidationResult) -> str:
+    if (feedback := site_check_feedback(validation_result)) is not None:
+        return feedback
     if validation_result.failure_reason != "missing-command":
         return fallback_text
     matched_commands = _string_list_evidence(validation_result, "matched_commands")

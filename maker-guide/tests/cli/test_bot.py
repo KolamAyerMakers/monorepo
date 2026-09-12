@@ -3,25 +3,59 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
+import threading
+from contextlib import closing
 from pathlib import Path
-from typing import TYPE_CHECKING
+
+import pytest
 
 import maker_guide.cli.bot as bot_cli
 from maker_guide.chat.contract import ChatDependencies, ChatRequest, ChatResponse, CliChatContext
 from maker_guide.chat.snapshot import LearnerSnapshot
 from maker_guide.config import AppConfig, DatabaseConfig, IrcConfig, SaslConfig, SocketConfig
 from maker_guide.events import IrcOutboundMessage
+from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckError, SiteCheckReport
 from maker_guide.unix_socket import SocketHelpRequest
 
-if TYPE_CHECKING:
-    import pytest
 
-
+@pytest.mark.parametrize(
+    "site_check_mode", ["unsupported", "unused", "success", "error", "timeout"]
+)
 async def test_socket_help_broadcasts_public_announcements(
     temporary_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    site_check_mode: str,
 ) -> None:
-    """The daemon preserves public announcements from private CLI responses."""
+    """The worker bridge is opt-in, bounded, transaction-free, and preserves announcements."""
+    loop = asyncio.get_running_loop()
+    loop_thread_id = threading.get_ident()
+    calls: list[str] = []
+    cancelled = asyncio.Event()
+    report = SiteCheckReport(
+        source_sha256="a" * 64,
+        cases=tuple((case, True) for case in SITE_CHECK_CASES),
+        error=None,
+    )
+    if site_check_mode == "timeout":
+        monkeypatch.setattr(bot_cli, "SITE_CHECK_TIMEOUT_SECONDS", -2.8)
+
+    async def run_site_check(source_sha256: str) -> SiteCheckReport:
+        assert asyncio.get_running_loop() is loop
+        assert threading.get_ident() == loop_thread_id
+        calls.append(source_sha256)
+        with closing(
+            sqlite3.connect(temporary_path / "state.db", timeout=0)
+        ) as database_connection:
+            database_connection.execute("create table bridge_check (result text)")
+        if site_check_mode == "error":
+            raise SiteCheckError("invalid-report")
+        if site_check_mode == "timeout":
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+        return report
 
     def handle_chat_request(
         request: ChatRequest,
@@ -29,6 +63,21 @@ async def test_socket_help_broadcasts_public_announcements(
     ) -> ChatResponse:
         assert request.context == CliChatContext(username="alice", terminal="/dev/pts/1")
         assert dependencies.bot_name == "guide"
+        assert threading.get_ident() != loop_thread_id
+        assert not dependencies.database_connection.in_transaction
+        assert calls == []
+        if site_check_mode == "unsupported":
+            assert dependencies.site_check_runner is None
+        else:
+            assert dependencies.site_check_runner is not None
+            if site_check_mode in {"error", "timeout"}:
+                with pytest.raises(
+                    SiteCheckError,
+                    match="invalid-report" if site_check_mode == "error" else "timeout",
+                ):
+                    dependencies.site_check_runner("a" * 64)
+            elif site_check_mode == "success":
+                assert dependencies.site_check_runner("a" * 64) is report
         return ChatResponse(
             text="next objective",
             learner_snapshot=LearnerSnapshot(
@@ -68,6 +117,8 @@ async def test_socket_help_broadcasts_public_announcements(
                 username="alice",
                 terminal="/dev/pts/1",
                 text="check",
+                supports_site_check=site_check_mode != "unsupported",
+                site_check_runner=(run_site_check if site_check_mode != "unsupported" else None),
             ),
             configuration,
             None,
@@ -80,3 +131,6 @@ async def test_socket_help_broadcasts_public_announcements(
         IrcOutboundMessage(channel="#lf2607", text="alice became an apprentice"),
         IrcOutboundMessage(channel="#staff", text="alice became an apprentice"),
     )
+    assert calls == ([] if site_check_mode in {"unsupported", "unused"} else ["a" * 64])
+    if site_check_mode == "timeout":
+        await asyncio.wait_for(cancelled.wait(), timeout=1)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import sqlite3
@@ -10,6 +11,7 @@ import subprocess
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from maker_guide.curriculum.models import (
     AllOfValidation,
@@ -31,6 +33,7 @@ from maker_guide.curriculum.models import (
     QuestValidation,
     QuestValidationLeaf,
     SessionObjectiveValidation,
+    SiteCheckValidation,
     SshPublicKeyObservedValidation,
     UserPortFileValidation,
 )
@@ -40,6 +43,13 @@ from maker_guide.repositories.command_observation import (
     list_recent_command_observations,
 )
 from maker_guide.repositories.helpers import JsonPayload
+from maker_guide.site_check import (
+    SITE_CHECK_CASES,
+    SiteCheckError,
+    SiteCheckReport,
+    read_site_check_source,
+    site_check_failure_messages,
+)
 from maker_guide.validation_paths import (
     UnixAccountLookup,
     ValidationPathResolution,
@@ -102,10 +112,16 @@ GENERIC_VALIDATION_FAILURE_REASONS = frozenset(
         "unsupported-port-formula",
         "missing-irc-ctcp-version",
         "unsupported-irc-client",
+        "site-check-required",
+        "site-check-stale",
+        "site-check-failed",
     },
 )
 """Failure reasons with generic learner-facing fallback copy."""
 _VALIDATION_FAILURE_REASONS_BY_ID = {
+    "site_check": _PATH_RESOLUTION_FAILURE_REASONS
+    | _FILE_READ_FAILURE_REASONS
+    | frozenset({"site-check-required", "site-check-stale", "site-check-failed"}),
     "command_history": frozenset({"missing-command"}),
     "path_exists": _PATH_RESOLUTION_FAILURE_REASONS,
     "executable_path": _PATH_RESOLUTION_FAILURE_REASONS
@@ -133,6 +149,7 @@ _VALIDATION_FAILURE_REASONS_BY_ID = {
 _SUPPORTED_VALIDATION_TYPE_IDS = frozenset(
     {
         "command_history",
+        "site_check",
         "path_exists",
         "executable_path",
         "owned_path",
@@ -169,6 +186,10 @@ class QuestValidationInput:
     """Strictly validated semantic assessments from the read-only interpreter."""
     account_lookup: UnixAccountLookup = lookup_unix_account
     """Unix account lookup used by filesystem validation rules."""
+    site_check_report: SiteCheckReport | None = None
+    """Prepared outcomes; validation itself never executes learner code."""
+    site_check_failure_reason: str | None = None
+    """Source or transport failure encountered before the progress transaction."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -335,7 +356,7 @@ def validation_failure_reasons(validation: QuestValidation) -> frozenset[str]:
     )
 
 
-def _validate_rule(  # noqa: C901
+def _validate_rule(  # noqa: C901, PLR0912 - exhaustive validation dispatch
     validation_input: QuestValidationInput,
     validation: QuestValidationLeaf | AllOfValidation,
 ) -> QuestValidationResult:
@@ -350,6 +371,8 @@ def _validate_rule(  # noqa: C901
             result = _validate_owned_path(validation_input, validation)
         case FileCheckValidation():
             result = _validate_file_check(validation_input, validation)
+        case SiteCheckValidation():
+            result = _validate_site_check(validation_input)
         case FileMatchesPathValidation():
             result = _validate_file_matches_path(validation_input, validation)
         case GitTrackedPathValidation():
@@ -766,6 +789,79 @@ def _validate_file_check(
             forbidden_regex=validation.forbidden_regex,
         ),
     )
+
+
+def _validate_site_check(validation_input: QuestValidationInput) -> QuestValidationResult:
+    source_sha256: str | None = None
+    failure_reason = validation_input.site_check_failure_reason
+    try:
+        source_sha256 = hashlib.sha256(
+            read_site_check_source(
+                validation_input.handle, account_lookup=validation_input.account_lookup
+            )
+        ).hexdigest()
+    except SiteCheckError as error:
+        failure_reason = failure_reason or str(error)
+    report = validation_input.site_check_report
+    cases = _site_check_cases(report)
+    if failure_reason is None:
+        if report is None:
+            failure_reason = "site-check-required"
+        elif cases is None:
+            failure_reason = "site-check-failed"
+        elif report.source_sha256 != source_sha256:
+            failure_reason = "site-check-stale"
+        elif report.error is not None or not all(case_result[1] for case_result in cases):
+            failure_reason = "site-check-failed"
+    return _file_validation_result(
+        "site_check",
+        "~/scripts/site-check.sh",
+        failure_reason is None,
+        failure_reason,
+        source_sha256=(
+            report.source_sha256 if report is not None and cases is not None else source_sha256
+        ),
+        cases=[{"id": case_id, "passed": passed} for case_id, passed in cases or ()],
+        failed_cases=[case_id for case_id, passed in cases or () if not passed],
+        failure_messages=(
+            list(site_check_failure_messages(report))
+            if report is not None and cases is not None and failure_reason == "site-check-failed"
+            else []
+        ),
+    )
+
+
+def _site_check_cases(report: object) -> tuple[tuple[str, bool], ...] | None:
+    """Treat even typed reports as untrusted, retaining only the exact bounded case set."""
+    if not isinstance(report, SiteCheckReport):
+        return None
+    raw_digest = cast("object", report.source_sha256)
+    raw_error = cast("object", report.error)
+    if (
+        not isinstance(raw_digest, str)
+        or re.fullmatch(r"[0-9a-f]{64}", raw_digest) is None
+        or (raw_error is not None and not isinstance(raw_error, str))
+    ):
+        return None
+    raw_cases = cast("object", report.cases)
+    if not isinstance(raw_cases, tuple) or len(cast("tuple[object, ...]", raw_cases)) != len(
+        SITE_CHECK_CASES
+    ):
+        return None
+    cases: dict[str, bool] = {}
+    for item in cast("tuple[object, ...]", raw_cases):
+        if not isinstance(item, tuple) or len(cast("tuple[object, ...]", item)) != 2:
+            return None
+        case_id, passed = cast("tuple[object, object]", item)
+        if (
+            not isinstance(case_id, str)
+            or case_id not in SITE_CHECK_CASES
+            or case_id in cases
+            or not isinstance(passed, bool)
+        ):
+            return None
+        cases[case_id] = passed
+    return tuple((case_id, cases[case_id]) for case_id in SITE_CHECK_CASES)
 
 
 def _validate_file_matches_path(

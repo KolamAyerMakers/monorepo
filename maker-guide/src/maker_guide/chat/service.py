@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from dataclasses import replace
 
 from maker_guide.chat.answer_interpretation import prepare_answer_interpretation
 from maker_guide.chat.contract import (
@@ -18,6 +19,7 @@ from maker_guide.chat.contract import (
     UnknownLearnerError,
 )
 from maker_guide.chat.router import build_response_draft
+from maker_guide.chat.site_check import prepare_site_check
 from maker_guide.chat.snapshot import build_learner_snapshot
 from maker_guide.chat.tutor import (
     append_response_draft_side_effects,
@@ -64,6 +66,10 @@ def handle_chat_request(request: ChatRequest, dependencies: ChatDependencies) ->
             )
 
     _require_learner(dependencies.database_connection, learner_handle)
+    dependencies = replace(
+        dependencies,
+        site_check_result=prepare_site_check(request, dependencies, learner_handle),
+    )
     prepared_answer_interpretation = prepare_answer_interpretation(
         request,
         dependencies,

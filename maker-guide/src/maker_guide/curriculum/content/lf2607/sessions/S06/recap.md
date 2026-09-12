@@ -21,7 +21,7 @@ On the classroom server, curl can use `/etc/hosts` to reach local Caddy. Open th
 - `curl URL`: `GET`, prints the response body.
 - `curl -i URL`: `GET`, prints headers and body.
 - `curl -I URL`: `HEAD`, prints headers without a body.
-- `-L`: follow redirects. Our exact-URL checker deliberately does not use it.
+- `-L`: follow redirects. The lesson's exact-URL example deliberately does not use it.
 
 | Family | Meaning | Examples |
 |---|---|---|
@@ -49,6 +49,8 @@ Keep `set -euo pipefail`. Handling the failed capture with `||` lets the script 
 
 `for` visits the two known paths. `elif` tries another condition. The report repair requires both the report filename and `404`, using `&&`.
 
+That describes the lesson example, not a required source layout. Equivalent functions, `case` statements, variable names, conditional nesting, page order, and curl flag order are accepted. Identify each page by URL or homepage/report label and print its HTTP code with a diagnosis, or a clear transport-failure diagnosis. Never call a failed request successful, even if curl printed `200` before exiting nonzero.
+
 ## Run And Repair
 
 ```bash
@@ -66,7 +68,9 @@ Each request has a ten-second timeout. Keep certificate verification enabled. Th
 
 You can explain the three network questions, inspect headers and a body, and explain which branch handles an HTTP response versus a command failure. Both real paths return `200`, and the pages open in your laptop browser.
 
-`guide check` records command and source-shape evidence; it does not execute your script or independently verify live responses.
+For the current checker objective or assigned quest, `guide now` or `guide check` in the classroom shell automatically runs your script locally under your own account. IRC directs you back to that shell. The [seven simulated cases](self-study.md#guide-checks) cover both `200`, report `404` with `maker-report.sh` then `build-website` advice, homepage `404` without report-regeneration advice, report `500`, each page's connection failure while still checking the other, and a printed `200` with a nonzero curl exit.
+
+Follow the fixed case feedback and rerun after edits. A pass verifies simulated behavior, not live health: still run `bash ~/scripts/site-check.sh` and inspect both pages in your browser. An unavailable or older CLI needs mentor help, not a reference-source workaround.
 
 ## Next Session
 

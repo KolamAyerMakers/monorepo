@@ -8,19 +8,27 @@ import json
 import logging
 import os
 import pwd
+import re
 import socket
 import stat
 import struct
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol, Self, cast, runtime_checkable
 
 from maker_guide.config import SocketConfig
 from maker_guide.events import EventParseError, PeerCredentials, ShellEvent, parse_shell_event
+from maker_guide.site_check import (
+    SITE_CHECK_TIMEOUT_SECONDS,
+    SiteCheckError,
+    SiteCheckReport,
+    parse_site_check_report,
+)
 
 LOGGER = logging.getLogger(__name__)
 LINUX_PEER_CREDENTIAL_FORMAT = "3i"
+_SITE_CHECK_MAX_FRAME_BYTES = 4096
 type HelpChunkWriter = Callable[[str], None]
 type HelpRequestHandler = Callable[["SocketHelpRequest", HelpChunkWriter | None], Awaitable[str]]
 
@@ -35,6 +43,9 @@ class SocketHelpRequest:
     cwd: str | None = None
     ssh_connection: str | None = None
     stream: bool = False
+    supports_site_check: bool = False
+    site_check_runner: Callable[[str], Awaitable[SiteCheckReport]] | None = None
+    """Server-only, one-shot continuation on this authenticated connection."""
 
 
 @runtime_checkable
@@ -156,7 +167,7 @@ class UnixSocketServer:
                 await _write_response(writer, False, "payload too large")
                 return
 
-            await self._handle_payload(payload.rstrip(b"\n"), credentials, writer)
+            await self._handle_payload(payload.rstrip(b"\n"), credentials, reader, writer)
         except TimeoutError:
             await _write_response(writer, False, "timed out")
         except (EventParseError, OSError) as error:
@@ -169,10 +180,11 @@ class UnixSocketServer:
         self,
         payload: bytes,
         credentials: PeerCredentials,
+        reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
     ) -> None:
         if _is_help_request(payload):
-            await self._handle_help_request(payload, credentials, writer)
+            await self._handle_help_request(payload, credentials, reader, writer)
             return
 
         response_requested = _response_requested(payload)
@@ -196,26 +208,80 @@ class UnixSocketServer:
         if response_requested:
             await _write_response(writer, True, None)
 
-    async def _handle_help_request(
+    async def _handle_help_request(  # noqa: C901 - Keep continuation state with its connection.
         self,
         payload: bytes,
         credentials: PeerCredentials,
+        reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
     ) -> None:
         if self._help_handler is None:
             await _write_response(writer, False, "help handler is not configured")
             return
+        site_check_used = False
+        request_active = True
+
+        async def run_site_check(source_sha256: str) -> SiteCheckReport:
+            nonlocal site_check_used
+            if site_check_used or not request_active:
+                raise SiteCheckError("invalid-report")
+            site_check_used = True
+            if re.fullmatch("[0-9a-f]{64}", source_sha256) is None:
+                raise SiteCheckError("invalid-report")
+            try:
+                if _peer_credentials(writer) != credentials:
+                    raise SiteCheckError("invalid-report")
+                async with asyncio.timeout(SITE_CHECK_TIMEOUT_SECONDS + 2.0):
+                    writer.write(
+                        json.dumps(
+                            {
+                                "ok": True,
+                                "site_check": {"version": 1, "source_sha256": source_sha256},
+                            },
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                        + b"\n",
+                    )
+                    await writer.drain()
+                    result = await reader.readline()
+                if not result.endswith(b"\n") or len(result) > min(
+                    self._config.max_line_bytes, _SITE_CHECK_MAX_FRAME_BYTES
+                ):
+                    raise SiteCheckError("invalid-report")
+                loaded = cast(
+                    "object",
+                    json.loads(result.decode("utf-8"), object_pairs_hook=_unique_json_fields),
+                )
+                if not isinstance(loaded, dict):
+                    raise SiteCheckError("invalid-report")
+                result_object = cast("dict[object, object]", loaded)
+                if (
+                    set(result_object) != {"kind", "report"}
+                    or result_object["kind"] != "site_check_result"
+                ):
+                    raise SiteCheckError("invalid-report")
+                return parse_site_check_report(result_object["report"], source_sha256)
+            except (ValueError, OSError, RecursionError):
+                raise SiteCheckError("invalid-report") from None
+
         try:
             await self._ingest_queue.join()
             help_request = _parse_help_request(payload, self._authorizer.username_for(credentials))
+            if help_request.supports_site_check:
+                help_request = replace(help_request, site_check_runner=run_site_check)
             chunk_writer = _help_chunk_writer(writer) if help_request.stream else None
             response_text = await self._help_handler(help_request, chunk_writer)
+        except SiteCheckError:
+            await _write_response(writer, False, "site check failed")
+            return
         except EventParseError as error:
             await _write_response(writer, False, str(error))
             return
         except RuntimeError as error:
             await _write_response(writer, False, str(error))
             return
+        finally:
+            request_active = False
         await _write_response(writer, True, None, text=response_text)
 
 
@@ -326,23 +392,53 @@ def _response_requested(payload: bytes) -> bool:
 
 def _is_help_request(payload: bytes) -> bool:
     try:
-        loaded = cast("object", json.loads(payload.decode("utf-8")))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        return False
+        loaded = cast(
+            "object",
+            json.loads(payload.decode("utf-8"), object_pairs_hook=_unique_json_fields),
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as error:
+        raise EventParseError("payload must be valid UTF-8 JSON") from error
     if not isinstance(loaded, dict):
         return False
-    return cast("dict[object, object]", loaded).get("kind") == "help"
+    request_object = cast("dict[object, object]", loaded)
+    if "kind" in request_object and request_object["kind"] != "help":
+        raise EventParseError("unsupported request kind")
+    return request_object.get("kind") == "help"
 
 
-def _parse_help_request(payload: bytes, username: str) -> SocketHelpRequest:
+def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    fields = dict(pairs)
+    if len(fields) != len(pairs):
+        raise EventParseError("duplicate JSON fields")
+    return fields
+
+
+def _parse_help_request(  # noqa: C901 - Validate the small, fixed request directly.
+    payload: bytes,
+    username: str,
+) -> SocketHelpRequest:
     try:
-        loaded = cast("object", json.loads(payload.decode("utf-8")))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        loaded = cast(
+            "object",
+            json.loads(payload.decode("utf-8"), object_pairs_hook=_unique_json_fields),
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as error:
         raise EventParseError("payload must be valid UTF-8 JSON") from error
     if not isinstance(loaded, dict):
         raise EventParseError("payload must be a JSON object")
     request_object = cast("dict[object, object]", loaded)
-    if request_object.get("version") != 1:
+    if request_object.keys() - {
+        "version",
+        "kind",
+        "text",
+        "terminal",
+        "cwd",
+        "ssh_connection",
+        "stream",
+        "supports_site_check",
+    }:
+        raise EventParseError("unknown help request fields")
+    if type(request_object.get("version")) is not int or request_object["version"] != 1:
         raise EventParseError("version must be 1")
     if request_object.get("kind") != "help":
         raise EventParseError("kind must be help")
@@ -358,6 +454,9 @@ def _parse_help_request(payload: bytes, username: str) -> SocketHelpRequest:
     ssh_connection = request_object.get("ssh_connection")
     if ssh_connection is not None and not isinstance(ssh_connection, str):
         raise EventParseError("ssh_connection must be null or a string")
+    for field in ("stream", "supports_site_check"):
+        if not isinstance(request_object.get(field, False), bool):
+            raise EventParseError("help capabilities must be booleans")
     return SocketHelpRequest(
         username=username,
         terminal=terminal,
@@ -365,4 +464,5 @@ def _parse_help_request(payload: bytes, username: str) -> SocketHelpRequest:
         cwd=cwd,
         ssh_connection=ssh_connection,
         stream=request_object.get("stream") is True,
+        supports_site_check=request_object.get("supports_site_check") is True,
     )

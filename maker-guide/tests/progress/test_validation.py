@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 import subprocess
 from dataclasses import replace
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -24,6 +26,7 @@ from maker_guide.curriculum.models import (
     LearnerHandleQuestionValidation,
     PathExistsValidation,
     QuestValidation,
+    SiteCheckValidation,
     SshPublicKeyObservedValidation,
     UserPortFileValidation,
 )
@@ -37,6 +40,7 @@ from maker_guide.progress.validation import (
 from maker_guide.repositories.audit_event import AuditEvent, append_audit_event
 from maker_guide.repositories.command_observation import CommandObservation, add_command_observation
 from maker_guide.repositories.helpers import connect_database
+from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckReport
 from maker_guide.validation_paths import UnixAccount, UnixAccountLookup
 from tests.repositories.helpers import write_learner
 
@@ -56,6 +60,9 @@ _GENERIC_FALLBACK_ALLOWED_VALIDATION_FAILURE_REASONS = frozenset(
         "file-decode-error",
         "invalid-regex",
         "unsupported-port-formula",
+        "site-check-required",
+        "site-check-stale",
+        "site-check-failed",
     },
 )
 
@@ -114,6 +121,79 @@ def test_command_history_validation_uses_sqlite_observations_not_audit(
             "required_count": 3,
             "validation_type": "command_history",
         }
+
+
+@pytest.mark.parametrize(
+    ("report_kind", "failure_reason"),
+    [
+        ("success", None),
+        ("required", "site-check-required"),
+        ("failed-case", "site-check-failed"),
+        ("missing-case", "site-check-failed"),
+        ("duplicate-case", "site-check-failed"),
+        ("unknown-case", "site-check-failed"),
+        ("nonboolean", "site-check-failed"),
+        ("runner-error", "site-check-failed"),
+        ("invalid-error", "site-check-failed"),
+        ("stale", "site-check-stale"),
+        ("missing-source", "missing-path"),
+    ],
+)
+def test_site_check_requires_complete_source_bound_outcomes(
+    migrated_database_path: Path,
+    tmp_path: Path,
+    report_kind: str,
+    failure_reason: str | None,
+) -> None:
+    """Typed reports cannot bypass the case set, booleans, source binding, or passive grading."""
+    script_path = tmp_path / "scripts" / "site-check.sh"
+    script_path.parent.mkdir()
+    source = b"#!/bin/bash\nprintf 'private source, never execute or persist me'\n"
+    if report_kind != "missing-source":
+        script_path.write_bytes(source)
+    cases: tuple[tuple[str, bool], ...] = tuple(
+        (case_id, True) for case_id in reversed(SITE_CHECK_CASES)
+    )
+    match report_kind:
+        case "failed-case":
+            cases = tuple((case_id, case_id != "misleading-status") for case_id in SITE_CHECK_CASES)
+        case "missing-case":
+            cases = cases[:-1]
+        case "duplicate-case":
+            cases = (cases[1], *cases[1:])
+        case "unknown-case":
+            cases = (("untrusted-output", True), *cases[1:])
+        case "nonboolean":
+            cases = ((cases[0][0], cast("bool", 1)), *cases[1:])
+        case _:
+            pass
+    report = SiteCheckReport(
+        source_sha256="0" * 64 if report_kind == "stale" else hashlib.sha256(source).hexdigest(),
+        cases=cases,
+        error=(
+            "untrusted-output"
+            if report_kind == "runner-error"
+            else cast("str", {"untrusted-output": True})
+            if report_kind == "invalid-error"
+            else None
+        ),
+    )
+    with connect_database(migrated_database_path) as database_connection:
+        validation_input = replace(
+            _filesystem_validation_input(database_connection, SiteCheckValidation(), tmp_path),
+            site_check_report=None if report_kind == "required" else report,
+        )
+        for result in (
+            validate_quest(validation_input),
+            validate_session_objective(validation_input, SiteCheckValidation()),
+        ):
+            assert result.passed is (failure_reason is None)
+            assert result.failure_reason == failure_reason
+            assert "private source" not in str(result.evidence)
+            assert "untrusted-output" not in str(result.evidence)
+            assert "content_excerpt" not in result.evidence
+            if report_kind == "failed-case":
+                assert result.evidence["failed_cases"] == ["misleading-status"]
 
 
 def test_git_tracked_path_validation_checks_head_and_working_tree(
@@ -689,6 +769,7 @@ def test_validation_support_treats_filesystem_validators_as_supported() -> None:
                 PathExistsValidation(paths=("~/public_html/index.html",)),
                 ExecutablePathValidation(paths=("~/bin/run",)),
                 FileCheckValidation(path="~/notes.txt", required_regex=r"ready"),
+                SiteCheckValidation(),
                 UserPortFileValidation(path="~/site.service", required_regex_template=r"{port}"),
             ),
         ),

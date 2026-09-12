@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import MappingProxyType
+from typing import cast
 
 from maker_guide.curriculum.models import Quest
-from maker_guide.progress.validation import GENERIC_VALIDATION_FAILURE_REASONS
+from maker_guide.progress.validation import (
+    GENERIC_VALIDATION_FAILURE_REASONS,
+    QuestValidationResult,
+)
 
 _DEFAULT_CHECK_DESCRIPTION = "The latest deterministic validation attempt."
 _DEFAULT_FAILURE_FINDING = "The available evidence is not enough to complete the quest."
@@ -43,6 +47,9 @@ _CHECK_DESCRIPTIONS = MappingProxyType(
         "unsupported-port-formula": "The automatic checker configuration for this quest.",
         "missing-irc-ctcp-version": "The terminal IRC client evidence for this quest.",
         "unsupported-irc-client": "The terminal IRC client evidence for this quest.",
+        "site-check-required": "Simulated behavior of ~/scripts/site-check.sh.",
+        "site-check-stale": "The script digest bound to the simulated checks.",
+        "site-check-failed": "The seven simulated site-check outcomes.",
     },
 )
 _FALLBACK_FAILURE_FINDINGS = MappingProxyType(
@@ -87,6 +94,18 @@ _FALLBACK_FAILURE_FINDINGS = MappingProxyType(
         "unsupported-irc-client": (
             "The IRC client I saw is not accepted for this quest. Use WeeChat."
         ),
+        "site-check-required": (
+            "`~/scripts/site-check.sh` needs simulated checks. Run `guide now` or `guide check` "
+            "in the classroom shell; IRC cannot run local checks."
+        ),
+        "site-check-stale": (
+            "`~/scripts/site-check.sh` changed during the check. Run `guide now` or `guide check` "
+            "again in the classroom shell."
+        ),
+        "site-check-failed": (
+            "`~/scripts/site-check.sh` has not passed all simulated cases. "
+            "Run `guide now` or `guide check` again in the classroom shell."
+        ),
     },
 )
 
@@ -112,6 +131,46 @@ def failure_explanation(quest: Quest, failure_reason: str | None) -> FailureExpl
 def generic_failure_reason_coverage() -> frozenset[str]:
     """Return generic validation reasons that have complete fallback explanations."""
     return frozenset(_CHECK_DESCRIPTIONS) & frozenset(_FALLBACK_FAILURE_FINDINGS)
+
+
+def site_check_feedback(validation_result: QuestValidationResult) -> str | None:
+    """Share safe case-specific feedback between objective and quest presentation."""
+    if validation_result.failure_reason not in {
+        "site-check-required",
+        "site-check-stale",
+        "site-check-failed",
+    }:
+        return None
+    messages = validation_result.evidence.get("failure_messages")
+    next_step = (
+        next(
+            (
+                message
+                for message in cast("list[object]", messages)
+                if isinstance(message, str) and message.strip()
+            ),
+            None,
+        )
+        if isinstance(messages, list)
+        else None
+    )
+    if next_step is not None:
+        response_parts = ["These are simulated tests, not results from your live website."]
+        cases = validation_result.evidence.get("cases")
+        if isinstance(cases, list) and any(
+            isinstance(case, dict)
+            and cast("dict[str, object]", case).get("id") == "both-ok"
+            and cast("dict[str, object]", case).get("passed") is True
+            for case in cast("list[object]", cases)
+        ):
+            response_parts.append(
+                "Passed: your script reports success for both pages returning HTTP 200."
+            )
+        response_parts.extend(
+            (f"Next step: {next_step}", "Then run `guide now` again in the classroom shell.")
+        )
+        return "\n\n".join(response_parts)
+    return _fallback_finding(validation_result.failure_reason)
 
 
 def _check_description(failure_reason: str | None) -> str:

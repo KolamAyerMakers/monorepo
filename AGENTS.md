@@ -2,6 +2,7 @@
 
 ## Repository
 
+- Runtime support is Linux only. Do not add cross-platform portability code or fallbacks for macOS, Windows, or other operating systems.
 - `maker-guide/` is the learner-support application. Read `maker-guide/AGENTS.md` before changing it.
 - Reference cards (`commands/`, `concepts/`) must stay session-agnostic; session-specific material belongs in `sessions/` and `mentors/`.
 - `website/` is the public Astro website.

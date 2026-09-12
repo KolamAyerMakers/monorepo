@@ -7,7 +7,6 @@ import re
 import shutil
 import sqlite3
 import subprocess
-import sys
 from datetime import UTC, date, datetime
 from importlib.resources import files
 from importlib.resources.abc import Traversable
@@ -33,6 +32,7 @@ from maker_guide.curriculum.models import (
     IrcCtcpVersionValidation,
     OwnedPathValidation,
     PathExistsValidation,
+    SiteCheckValidation,
     SshPublicKeyObservedValidation,
     UserPortFileValidation,
     validate_courses,
@@ -50,13 +50,8 @@ def test_linux_foundations_catalog_is_valid() -> None:
     validate_courses((LINUX_FOUNDATIONS_2026_07,))
 
 
-def test_s6_site_check_requires_both_pages() -> None:
-    """Source checks reject realistic checker edits without running learner code."""
-    reference_script = (
-        _content_text(f"content/{COURSE_ID}/sessions/S06/self-study.md")
-        .split("````bash\n", 1)[1]
-        .split("\n````", 1)[0]
-    )
+def test_s6_site_check_uses_outcomes_for_objective_and_quest() -> None:
+    """Both S6 tasks require local simulated outcomes, never reference source shape."""
     for validation in (
         next(
             objective.validation
@@ -65,95 +60,7 @@ def test_s6_site_check_requires_both_pages() -> None:
         ),
         CATALOG.quest("check-personal-pages").validation,
     ):
-        assert isinstance(validation, FileCheckValidation)
-        for hostname in ("lf2607.kolamayermakers.org", "lf-dev.kolamayermakers.org"):
-            assert re.search(
-                validation.required_regex,
-                reference_script.replace("lf2607.kolamayermakers.org", hostname),
-            )
-        for hostname in (
-            "example.org",
-            "lf-dev.kolamayermakers.org.example.org",
-            "lf-devXkolamayermakers.org",
-        ):
-            assert not re.search(
-                validation.required_regex,
-                reference_script.replace("lf2607.kolamayermakers.org", hostname),
-            )
-        assert re.search(validation.required_regex, reference_script + " \t\n")
-        assert re.search(
-            validation.required_regex,
-            reference_script.replace(" \\\n    ||", " ||"),
-        )
-        assert re.search(
-            validation.required_regex,
-            reference_script.replace(
-                'for page in "" maker-report.html; do',
-                'for page in "" maker-report.html\ndo',
-            ),
-        )
-        for original, replacement in (
-            ('for page in "" maker-report.html;', "for page in maker-report.html;"),
-            ('for page in "" maker-report.html;', 'for page in "";'),
-            ('~$USER"', '~someone-else"'),
-            ('url="$base_url/$page"', 'url="$base_url/"'),
-            ("  curl_exit_code=0\n", ""),
-            ("curl_exit_code=0", "curl_exit_code=1"),
-            (
-                (
-                    'for page in "" maker-report.html; do\n'
-                    '  url="$base_url/$page"\n  curl_exit_code=0'
-                ),
-                ('curl_exit_code=0\nfor page in "" maker-report.html; do\n  url="$base_url/$page"'),
-            ),
-            ('"$url")', '"$base_url/")'),
-            ("status=$(curl ", "status=$(printf "),
-            (" \\\n    || curl_exit_code=$?", ""),
-            ("|| curl_exit_code=$?", "&& curl_exit_code=$?"),
-            ("curl_exit_code=$?", "status=$?"),
-            ("curl_exit_code=$?", "curl_exit_code=0"),
-            ("curl_exit_code=$?", "printf 'failed\\n'; curl_exit_code=$?"),
-            ('"$curl_exit_code" -eq 0', '"$curl_exit_code" -ne 0'),
-            ('"$curl_exit_code" -eq 0', '"$curl_exit_code" == 0'),
-            ('"$curl_exit_code" -eq 0', '"$curl_exit_code" -eq 200'),
-            (" -I ", " "),
-            (" -o /dev/null", ""),
-            ("%{http_code}", "%{size_download}"),
-            ('"$status" == "200"', '"$status" != "200"'),
-            ('    if [[ "$status"', '    status=200\n    if [[ "$status"'),
-            ('for page in ""', 'status=404\nfor page in ""'),
-            ('"$page" == "maker-report.html" && ', ""),
-            ('"$status" == "404"', '"$status" == "403"'),
-            ("maker-report.sh", "missing-script.sh"),
-            ("build-website", "missing-build"),
-            ("; then", ";"),
-            ("; do", ";"),
-            ("\n    fi\n", "\n    broken-fi\n"),
-            ("\n  fi\n", "\n  broken-fi\n"),
-            ("done", "broken-done"),
-        ):
-            assert not re.search(
-                validation.required_regex,
-                reference_script.replace(original, replacement),
-            )
-        # A child process bounds a near-match regression without risking a stuck pytest.
-        completed_process = subprocess.run(
-            [
-                sys.executable,
-                "-c",
-                (
-                    "import re\nimport sys\n"
-                    "sys.exit(re.search(sys.argv[1], sys.stdin.read()) is not None)"
-                ),
-                validation.required_regex,
-            ],
-            input=reference_script.rstrip() + " " * 250_000 + "# note\n",
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=5,
-        )
-        assert completed_process.returncode == 0, completed_process.stderr
+        assert isinstance(validation, SiteCheckValidation)
 
 
 def test_static_homepage_history_accepts_quoting_but_not_subpaths() -> None:
@@ -286,7 +193,7 @@ def test_sessions_expose_independent_objective_validators() -> None:
         "S6": (
             CommandHistoryValidation,
             CommandHistoryValidation,
-            FileCheckValidation,
+            SiteCheckValidation,
         ),
         "S7": (
             CommandHistoryValidation,

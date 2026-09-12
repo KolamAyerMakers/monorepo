@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from textwrap import dedent
 from typing import cast
@@ -20,6 +22,7 @@ from maker_guide.chat.contract import (
 )
 from maker_guide.chat.service import handle_chat_request
 from maker_guide.curriculum.catalogs import DEFAULT_CATALOG as CATALOG
+from maker_guide.curriculum.models import CourseCatalog
 from maker_guide.llm_tutor import (
     AnswerComponentAnalysis,
     AnswerInterpretation,
@@ -75,6 +78,7 @@ from maker_guide.repositories.session_objective_completion import (
     complete_session_objective,
     list_completed_objective_ids,
 )
+from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckError, SiteCheckReport
 from maker_guide.validation_paths import UnixAccount, UnixAccountLookup, lookup_unix_account
 
 FREEFORM_TUTOR_DISABLED_TEXT = (
@@ -89,6 +93,24 @@ FREEFORM_TUTOR_DISABLED_TEXT = (
     .strip()
 )
 PROVE_SHELL_QUEST_DOC_PATH = "/docs/quests/prove-shell-alive.md"
+_ALTERNATE_SITE_CHECK_SOURCE = b"""#!/bin/bash
+inspect() {
+    if response=$(curl -I -s -o /dev/null -w '%{http_code}' "$1"); then
+        case "$response" in
+            200) printf '%s OK 200\\n' "$1" ;;
+            404) case "$1" in
+                */maker-report.html) printf 'report 404: maker-report.sh then build-website\\n' ;;
+                *) printf 'homepage 404\\n' ;;
+            esac ;;
+            *) printf '%s HTTP error %s\\n' "$1" "$response" ;;
+        esac
+    else
+        printf '%s connection failed\\n' "$1"
+    fi
+}
+inspect "https://lf2607.kolamayermakers.org/~$USER/maker-report.html"
+inspect "https://lf2607.kolamayermakers.org/~$USER/"
+"""
 
 
 def test_handle_chat_request_builds_snapshot_and_records_help(
@@ -500,7 +522,8 @@ def test_session_objective_reports_missing_command_from_composite_evidence(
     ("script_content", "failure_reason", "finding"),
     [
         (None, "missing-path", "cannot find"),
-        ('#!/bin/bash\npage="$1"\n', "file-content-mismatch", "contents do not match"),
+        ('#!/bin/bash\npage="$1"\n', "site-check-required", "needs simulated checks"),
+        ('#!/bin/bash\npage="$1"\n', "site-check-failed", "Handle a missing report"),
     ],
 )
 def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
@@ -510,7 +533,7 @@ def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
     failure_reason: str,
     finding: str,
 ) -> None:
-    """A standalone file check reports its missing or mismatched artifact concisely."""
+    """Missing files and absent or failed behavior checks never fall back to source grading."""
     learner_home = tmp_path / "alice"
     script_path = learner_home / "scripts" / "site-check.sh"
     script_path.parent.mkdir(parents=True)
@@ -518,6 +541,15 @@ def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
         script_path.write_text(script_content, encoding="utf-8")
     tutor_client = _RecordingTutorClient("should not be used")
     objective = CATALOG.session("S6").objectives[-1]
+    runner_calls: list[str] = []
+
+    def run_site_check(source_sha256: str) -> SiteCheckReport:
+        runner_calls.append(source_sha256)
+        return SiteCheckReport(
+            source_sha256=source_sha256,
+            cases=tuple((case_id, case_id != "report-missing") for case_id in SITE_CHECK_CASES),
+        )
+
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection, session_reached="S6")
         for prerequisite in CATALOG.session("S6").objectives[:-1]:
@@ -532,6 +564,7 @@ def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
                     evidence_json="{}",
                 ),
             )
+        database_connection.commit()
 
         response = handle_chat_request(
             ChatRequest(
@@ -539,24 +572,35 @@ def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
                 visibility="private",
                 text="check",
             ),
-            _chat_dependencies(
-                database_connection,
-                account_lookup=_account_lookup(learner_home),
-                tutor_client=tutor_client,
-                timestamp="2026-09-12T09:01:00Z",
+            replace(
+                _chat_dependencies(
+                    database_connection,
+                    account_lookup=_account_lookup(learner_home),
+                    tutor_client=tutor_client,
+                    timestamp="2026-09-12T09:01:00Z",
+                ),
+                site_check_runner=(
+                    run_site_check if failure_reason != "site-check-required" else None
+                ),
             ),
         )
 
         assert objective.title in response.text
-        assert "`~/scripts/site-check.sh`" in response.text
         assert finding in response.text
-        assert "guide check" in response.text
+        if failure_reason == "site-check-failed":
+            assert "simulated tests, not results from your live website" in response.text
+            assert "Next step:" in response.text
+            assert "guide now" in response.text
+        else:
+            assert "`~/scripts/site-check.sh`" in response.text
+            assert "guide check" in response.text
         assert objective.prompt not in response.text
         assert "Start here:" not in response.text
         assert "Explanation:" not in response.text
         assert "ask privately" not in response.text
         assert "I cannot verify that yet" not in response.text
         assert tutor_client.requests == []
+        assert len(runner_calls) == (1 if failure_reason == "site-check-failed" else 0)
         assert list_llm_audit_logs(database_connection, "alice", limit=10) == []
         assert objective.id not in list_completed_objective_ids(
             database_connection, "alice", CATALOG.course.id, "S6"
@@ -570,6 +614,291 @@ def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
         assert (
             cast("dict[str, object]", failure_event.payload["evidence"])["catalog_path"]
             == "~/scripts/site-check.sh"
+        )
+
+
+@pytest.mark.parametrize("target_type", ["objective", "quest"])
+@pytest.mark.parametrize(
+    "outcome",
+    ["passed", "failed", "stale", "wrong-digest", "disconnect", "runner-error", "rollback"],
+)
+def test_site_check_prepares_before_writes_and_completes_only_bound_task(  # noqa: C901, PLR0915 - transaction outcome matrix
+    migrated_database_path: Path,
+    tmp_path: Path,
+    target_type: str,
+    outcome: str,
+) -> None:
+    """Only fresh complete outcomes grant progress; transport and transaction failures do not."""
+    script_path = tmp_path / "scripts" / "site-check.sh"
+    script_path.parent.mkdir()
+    script_path.write_bytes(_ALTERNATE_SITE_CHECK_SOURCE)
+    runner_calls: list[str] = []
+    with connect_database(migrated_database_path) as database_connection:
+        _prepare_site_check_task(database_connection, target_type)
+
+        def run_site_check(source_sha256: str) -> SiteCheckReport:
+            assert not database_connection.in_transaction
+            assert source_sha256 == hashlib.sha256(_ALTERNATE_SITE_CHECK_SOURCE).hexdigest()
+            runner_calls.append(source_sha256)
+            if outcome == "disconnect":
+                raise ConnectionError("private transport detail")
+            if outcome == "runner-error":
+                raise SiteCheckError("private runner detail")
+            if outcome == "stale":
+                script_path.write_bytes(_ALTERNATE_SITE_CHECK_SOURCE + b"# changed\n")
+            return SiteCheckReport(
+                source_sha256="0" * 64 if outcome == "wrong-digest" else source_sha256,
+                cases=tuple(
+                    (case_id, outcome != "failed" or case_id != "report-missing")
+                    for case_id in reversed(SITE_CHECK_CASES)
+                ),
+            )
+
+        dependencies = replace(
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(tmp_path),
+                timestamp="2026-09-12T09:01:00Z",
+            ),
+            site_check_runner=run_site_check,
+        )
+        request = ChatRequest(
+            context=CliChatContext(username="alice", terminal="/dev/pts/1"),
+            visibility="private",
+            text="next",
+        )
+        if outcome == "rollback":
+            audit_count = len(list_unexported_audit_events(database_connection, 100))
+            outbox_count = len(list_pending_outbox_items(database_connection, 100))
+            _block_help_interaction_inserts(database_connection)
+            with pytest.raises(sqlite3.IntegrityError, match="help interaction insert blocked"):
+                handle_chat_request(request, dependencies)
+            assert len(list_unexported_audit_events(database_connection, 100)) == audit_count
+            assert len(list_pending_outbox_items(database_connection, 100)) == outbox_count
+            assert _attempt_count(database_connection) == 0
+        else:
+            response = handle_chat_request(request, dependencies)
+            assert "private transport detail" not in response.text
+            assert "private runner detail" not in response.text
+            if outcome == "failed":
+                assert "Handle a missing report" in response.text
+                assert "Start here:" not in response.text
+                assert "Prompt:" not in response.text
+                assert "simulated tests, not results from your live website" in response.text
+            if outcome in {"stale", "wrong-digest"}:
+                assert "changed during the check" in response.text
+            assert _attempt_count(database_connection) == (1 if target_type == "quest" else 0)
+        assert len(runner_calls) == 1
+        assert (
+            "check-personal-pages"
+            in list_completed_objective_ids(database_connection, "alice", CATALOG.course.id, "S6")
+        ) is (target_type == "quest" or outcome == "passed")
+        assert (
+            get_quest_completion(
+                database_connection, "alice", CATALOG.course.id, "check-personal-pages"
+            )
+            is not None
+        ) is (target_type == "quest" and outcome == "passed")
+        assert (total_score_for_course(database_connection, "alice", CATALOG.course.id) > 0) is (
+            outcome == "passed"
+        )
+        if target_type == "quest" and outcome != "rollback":
+            evidence = load_json(_latest_attempt_record(database_connection)[2])
+            assert "content_excerpt" not in evidence
+            assert "inspect()" not in str(evidence)
+            if outcome == "passed":
+                assert evidence["source_sha256"] == runner_calls[0]
+                assert len(cast("list[object]", evidence["cases"])) == len(SITE_CHECK_CASES)
+        if target_type == "objective" and outcome == "passed":
+            evidence = load_json(
+                cast(
+                    "tuple[str]",
+                    database_connection.execute(
+                        """select evidence_json from session_objective_completions
+                        where handle = 'alice' and course_id = ? and session_id = 'S6'
+                        and objective_id = 'check-personal-pages'""",
+                        (CATALOG.course.id,),
+                    ).fetchone(),
+                )[0]
+            )
+            assert evidence["source_sha256"] == runner_calls[0]
+            assert len(cast("list[object]", evidence["cases"])) == len(SITE_CHECK_CASES)
+            assert "inspect()" not in str(evidence)
+
+
+@pytest.mark.parametrize(
+    ("target_type", "change"),
+    [
+        ("objective", "task-type"),
+        ("objective", "evidence-boundary"),
+        ("objective", "session"),
+        ("quest", "evidence-boundary"),
+        ("quest", "session"),
+    ],
+)
+def test_site_check_does_not_validate_successor_when_target_changes(
+    migrated_database_path: Path,
+    tmp_path: Path,
+    target_type: str,
+    change: str,
+) -> None:
+    """A concurrent task or evidence-window change displays current work without rechecking it."""
+    script_path = tmp_path / "scripts" / "site-check.sh"
+    script_path.parent.mkdir()
+    script_path.write_bytes(_ALTERNATE_SITE_CHECK_SOURCE)
+    with connect_database(migrated_database_path) as database_connection:
+        _prepare_site_check_task(database_connection, target_type)
+
+        def run_site_check(source_sha256: str) -> SiteCheckReport:
+            assert not database_connection.in_transaction
+            if change == "task-type":
+                _complete_current_session_objectives(database_connection, "S6")
+            elif target_type == "quest" and change == "evidence-boundary":
+                database_connection.execute(
+                    """update quest_assignments set assigned_at = '2026-09-12T09:00:30Z'
+                    where handle = 'alice' and course_id = ?
+                    and quest_id = 'check-personal-pages'""",
+                    (CATALOG.course.id,),
+                )
+                database_connection.commit()
+            else:
+                upsert_course_release(
+                    database_connection,
+                    CourseRelease(
+                        course_id=CATALOG.course.id,
+                        session_reached="S7" if change == "session" else "S6",
+                        released_at="2026-09-11T09:00:00Z",
+                    ),
+                )
+                add_command_observation(
+                    database_connection,
+                    _command_observation(
+                        'curl -I "https://lf2607.kolamayermakers.org/~alice/"',
+                        observed_at="2026-09-12T09:00:00Z",
+                    ),
+                )
+                database_connection.commit()
+            return SiteCheckReport(
+                source_sha256=source_sha256,
+                cases=tuple((case_id, True) for case_id in SITE_CHECK_CASES),
+            )
+
+        response = handle_chat_request(
+            ChatRequest(
+                context=CliChatContext(username="alice", terminal=None),
+                visibility="private",
+                text="now",
+            ),
+            replace(
+                _chat_dependencies(
+                    database_connection,
+                    account_lookup=_account_lookup(tmp_path),
+                    timestamp="2026-09-12T09:01:00Z",
+                ),
+                site_check_runner=run_site_check,
+            ),
+        )
+        assert "Not yet" not in response.text
+        assert _attempt_count(database_connection) == 0
+        assert total_score_for_course(database_connection, "alice", CATALOG.course.id) == 0
+        assert (
+            get_quest_completion(
+                database_connection, "alice", CATALOG.course.id, "check-personal-pages"
+            )
+            is None
+        )
+        assert not list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S7"
+        )
+        assert not any(
+            event.event_type == "session_objective_validation_failed"
+            for event in list_unexported_audit_events(database_connection, 100)
+        )
+
+
+@pytest.mark.parametrize(
+    ("scenario", "message"),
+    [
+        ("irc", "check"),
+        ("public-cli", "now"),
+        ("other-intent", "progress"),
+        ("other-intent", "answer done"),
+        ("question", "now"),
+        ("new-quest", "now"),
+        ("new-quest", "check"),
+        ("outer-transaction", "now"),
+    ],
+)
+def test_site_check_callback_requires_private_capable_current_practical_task(
+    migrated_database_path: Path,
+    tmp_path: Path,
+    scenario: str,
+    message: str,
+) -> None:
+    """No local execution for IRC, other intents, questions, new quests, or active transactions."""
+    script_path = tmp_path / "scripts" / "site-check.sh"
+    script_path.parent.mkdir()
+    script_path.write_bytes(_ALTERNATE_SITE_CHECK_SOURCE)
+
+    def unexpected_site_check(source_sha256: str) -> SiteCheckReport:
+        raise AssertionError(f"unexpected runner call: {source_sha256}")
+
+    with connect_database(migrated_database_path) as database_connection:
+        _prepare_site_check_task(
+            database_connection, "new-quest" if scenario == "new-quest" else "objective"
+        )
+        dependencies = replace(
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(tmp_path),
+                timestamp="2026-09-12T09:01:00Z",
+            ),
+            site_check_runner=unexpected_site_check,
+        )
+        if scenario == "question":
+            dependencies = replace(
+                dependencies,
+                catalog=CourseCatalog(
+                    replace(
+                        CATALOG.course,
+                        sessions=tuple(
+                            replace(
+                                session,
+                                objectives=(
+                                    *session.objectives[:-1],
+                                    replace(
+                                        session.objectives[-1],
+                                        validation=CATALOG.quest("name-system").validation,
+                                    ),
+                                ),
+                            )
+                            if session.id == "S6"
+                            else session
+                            for session in CATALOG.course.sessions
+                        ),
+                    ),
+                ),
+            )
+        if scenario == "outer-transaction":
+            database_connection.execute("begin")
+        handle_chat_request(
+            ChatRequest(
+                context=(
+                    IrcChatContext(nickname="alice", target="guide", reply_target="alice")
+                    if scenario == "irc"
+                    else CliChatContext(username="alice", terminal=None)
+                ),
+                visibility="public" if scenario == "public-cli" else "private",
+                text=message,
+            ),
+            dependencies,
+        )
+        assert total_score_for_course(database_connection, "alice", CATALOG.course.id) == 0
+        assert (
+            get_quest_completion(
+                database_connection, "alice", CATALOG.course.id, "check-personal-pages"
+            )
+            is None
         )
 
 
@@ -2838,6 +3167,42 @@ def _write_member(
                 evidence_json="{}",
             ),
         )
+
+
+def _prepare_site_check_task(database_connection: sqlite3.Connection, target_type: str) -> None:
+    """Leave the S6 objective or quest current with all earlier work already complete."""
+    _write_member(database_connection, session_reached="S6")
+    _complete_current_session_objectives(database_connection, "S5")
+    for objective in CATALOG.session("S6").objectives:
+        if target_type == "objective" and objective.id == "check-personal-pages":
+            continue
+        complete_session_objective(
+            database_connection,
+            SessionObjectiveCompletion(
+                handle="alice",
+                course_id=CATALOG.course.id,
+                session_id="S6",
+                objective_id=objective.id,
+                completed_at="2026-09-12T09:00:00Z",
+                evidence_json="{}",
+            ),
+        )
+    _write_completed_quests(
+        database_connection, _completed_quest_ids_before("check-personal-pages")
+    )
+    if target_type != "new-quest":
+        assign_quest(
+            database_connection,
+            QuestAssignment(
+                id=None,
+                handle="alice",
+                course_id=CATALOG.course.id,
+                quest_id="check-personal-pages",
+                assigned_at="2026-09-12T09:00:00Z",
+                source="test",
+            ),
+        )
+    database_connection.commit()
 
 
 def _chat_request(text: str) -> ChatRequest:

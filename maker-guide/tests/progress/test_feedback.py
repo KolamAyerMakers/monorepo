@@ -5,9 +5,14 @@ from __future__ import annotations
 import pytest
 
 from maker_guide.curriculum.catalogs import DEFAULT_CATALOG as CATALOG
-from maker_guide.progress.feedback import failure_explanation, generic_failure_reason_coverage
+from maker_guide.progress.feedback import (
+    failure_explanation,
+    generic_failure_reason_coverage,
+    site_check_feedback,
+)
 from maker_guide.progress.validation import (
     GENERIC_VALIDATION_FAILURE_REASONS,
+    QuestValidationResult,
     validation_failure_reasons,
 )
 
@@ -121,3 +126,28 @@ def test_every_catalog_validation_failure_reason_renders_feedback() -> None:
 
             assert explanation.checked.strip(), (quest.id, failure_reason)
             assert explanation.found.strip(), (quest.id, failure_reason)
+
+
+@pytest.mark.parametrize("both_ok", [True, False])
+def test_site_check_feedback_focuses_on_one_next_step(both_ok: bool) -> None:
+    """Acknowledge proven success without confusing simulations with live site health."""
+    feedback = site_check_feedback(
+        QuestValidationResult(
+            passed=False,
+            failure_reason="site-check-failed",
+            evidence={
+                "failed_cases": ["report-missing", "misleading-status"],
+                "cases": [{"id": "both-ok", "passed": both_ok}],
+                "failure_messages": ["Handle a missing report.", "Check curl's exit status."],
+            },
+        )
+    )
+    assert feedback is not None
+    assert "simulated tests, not results from your live website" in feedback
+    assert ("Passed:" in feedback) is both_ok
+    assert "Next step: Handle a missing report." in feedback
+    assert "Check curl's exit status" not in feedback
+    assert "Failed cases:" not in feedback
+    assert "\n\nThen run" in feedback
+    assert "guide now" in feedback
+    assert "classroom shell" in feedback

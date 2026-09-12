@@ -28,6 +28,7 @@ from maker_guide.curriculum.models import (
     QuestValidation,
     Session,
     SessionObjective,
+    SiteCheckValidation,
     Tier,
     UserPortFileValidation,
     validate_courses,
@@ -711,6 +712,7 @@ def test_course_catalog_rejects_bad_user_port_file_validation() -> None:
     "validation",
     [
         FileCheckValidation(path="/etc/passwd", required_regex=r"."),
+        SiteCheckValidation(),
         FileCheckValidation(path="public_html/index.html", required_regex=r"."),
         FileCheckValidation(path="~", required_regex=r"."),
         UserPortFileValidation(path="~", required_regex_template=r"{port}"),

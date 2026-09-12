@@ -220,6 +220,11 @@ class FileCheckValidation:
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
+class SiteCheckValidation:
+    """Validate simulated outcomes of the fixed ~/scripts/site-check.sh script."""
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
 class FileMatchesPathValidation:
     """Validation based on exact byte equality with a system file."""
 
@@ -308,6 +313,7 @@ type QuestValidationLeaf = (
     CommandHistoryValidation
     | InteractiveQuestionValidation
     | FileCheckValidation
+    | SiteCheckValidation
     | FileMatchesPathValidation
     | GitTrackedPathValidation
     | UserPortFileValidation
@@ -706,7 +712,7 @@ def _validate_file_based_validation(validation: object) -> bool:
             validation.required_regex_template.replace("{port}", "12345"),
         )
         return True
-    return False
+    return isinstance(validation, SiteCheckValidation)
 
 
 def _validate_path_based_validation(validation: object) -> bool:

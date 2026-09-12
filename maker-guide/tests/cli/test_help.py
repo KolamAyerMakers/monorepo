@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import builtins
 import io
+import json
+import os
 import sqlite3
 import sys
 from collections.abc import Callable
@@ -18,12 +21,30 @@ from rich.console import Console
 
 import maker_guide.cli.help as help_cli
 from maker_guide.chat.contract import CHAT_INPUT_TOO_LONG_TEXT
+from maker_guide.config import SocketConfig
 from maker_guide.curriculum.catalogs import DEFAULT_CATALOG as CATALOG
 from maker_guide.repositories.cohort_membership import CohortMembership, upsert_membership
 from maker_guide.repositories.course_release import CourseRelease, upsert_course_release
 from maker_guide.repositories.help_interaction import list_recent_help_interactions
 from maker_guide.repositories.helpers import connect_database
 from maker_guide.repositories.learner import Learner, upsert_learner
+from maker_guide.site_check import (
+    SITE_CHECK_CASES,
+    SiteCheckError,
+    SiteCheckReport,
+    site_check_report_payload,
+)
+from maker_guide.unix_socket import HelpChunkWriter, SocketHelpRequest, UnixSocketServer
+
+_SITE_CHECK_REPORT = SiteCheckReport(
+    source_sha256="a" * 64,
+    cases=tuple((case, True) for case in SITE_CHECK_CASES),
+    error=None,
+)
+_SITE_CHECK_ACTION = (
+    json.dumps({"ok": True, "site_check": {"version": 1, "source_sha256": "a" * 64}}).encode()
+    + b"\n"
+)
 
 FREEFORM_TUTOR_DISABLED_TEXT = (
     dedent(
@@ -426,11 +447,149 @@ def test_terminal_chat_response_requests_streaming(
 class _ChunkedSocket:
     def __init__(self, response: bytes) -> None:
         self._response = response
+        self.sent_payloads: list[bytes] = []
 
     def recv(self, size: int) -> bytes:
         response = self._response[:size]
         self._response = self._response[size:]
         return response
+
+    def sendall(self, data: bytes) -> None:
+        self.sent_payloads.append(data)
+
+
+@pytest.mark.parametrize("message", ["now", "check", "today", "next", "check my work", "DONE"])
+async def test_help_site_check_handshake_uses_same_connection(
+    temporary_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    message: str,
+) -> None:
+    """A capable CLI runs locally once and resumes the original streamed response."""
+    runs: list[str] = []
+    chunks: list[str] = []
+
+    def run_site_check(source_sha256: str) -> SiteCheckReport:
+        runs.append(source_sha256)
+        return _SITE_CHECK_REPORT
+
+    async def handle_help_request(
+        request: SocketHelpRequest,
+        chunk_writer: HelpChunkWriter | None,
+    ) -> str:
+        assert request.supports_site_check is True
+        assert request.site_check_runner is not None
+        assert request.text == message
+        assert chunk_writer is not None
+        chunk_writer("before\n")
+        assert await request.site_check_runner("a" * 64) == _SITE_CHECK_REPORT
+        chunk_writer("after\n")
+        return "final grading"
+
+    monkeypatch.setattr(help_cli, "run_site_check", run_site_check)
+    socket_path = temporary_path / "site-check.sock"
+    unix_socket_server = UnixSocketServer(
+        SocketConfig(path=socket_path, allowed_user_ids=frozenset({os.getuid()})),
+        asyncio.Queue(),
+        help_handler=handle_help_request,
+    )
+    await unix_socket_server.start()
+    try:
+        response = await asyncio.to_thread(
+            help_cli._send_help_request,  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+            socket_path,
+            message,
+            None,
+            chunks.append,
+        )
+    finally:
+        await unix_socket_server.close()
+    assert response == "final grading"
+    assert runs == ["a" * 64]
+    assert chunks[0] == "before\n"
+    assert "locally" in chunks[1]
+    assert chunks[2] == "after\n"
+
+
+@pytest.mark.parametrize(
+    ("action", "message"),
+    [
+        (_SITE_CHECK_ACTION, "help"),
+        (_SITE_CHECK_ACTION, "explain check"),
+        (_SITE_CHECK_ACTION, "answer now"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 2'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": true'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 1.0'), "check"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 1, "version": 1'), "check"),
+        (_SITE_CHECK_ACTION.replace(b"a" * 64, b"A" * 64), "now"),
+        (_SITE_CHECK_ACTION.replace(b"a" * 64, b"short"), "now"),
+        (_SITE_CHECK_ACTION.replace(b'"' + b"a" * 64 + b'"', b"null"), "now"),
+        (_SITE_CHECK_ACTION.replace(b'"version": 1', b'"version": 1, "path": "/tmp/x"'), "now"),
+        (_SITE_CHECK_ACTION.replace(b'"ok": true', b'"ok": true, "execute": true'), "now"),
+        (_SITE_CHECK_ACTION.replace(b'"ok": true', b'"ok": false'), "now"),
+        (_SITE_CHECK_ACTION[:-1], "check"),
+        (b'{"ok":true,"site_check":null}\n', "check"),
+        (b'{"ok":true,"execute":true,"command":"private source"}\n', "check"),
+        (b'{"ok":true,"site_check":' + b" " * 4096 + b"{}}\n", "check"),
+        (b"[" * 1500 + b"]" * 1500 + b"\n", "check"),
+    ],
+)
+def test_help_rejects_unrequested_or_malformed_site_check_actions(
+    monkeypatch: pytest.MonkeyPatch,
+    action: bytes,
+    message: str,
+) -> None:
+    """Server frames cannot turn arbitrary help into local execution."""
+
+    def run_site_check(source_sha256: str) -> SiteCheckReport:
+        del source_sha256
+        pytest.fail("unrequested local execution")
+
+    monkeypatch.setattr(help_cli, "run_site_check", run_site_check)
+    client_socket = _ChunkedSocket(action)
+    response = help_cli._read_help_response(client_socket, None, message)  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+    assert response == help_cli._BAD_HELP_RESPONSE_TEXT  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+    assert client_socket.sent_payloads == []
+
+
+def test_help_rejects_repeated_site_check_without_running_twice(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A duplicate action cannot execute again, even after a valid first report."""
+    runs: list[str] = []
+
+    def run_site_check(source_sha256: str) -> SiteCheckReport:
+        runs.append(source_sha256)
+        return _SITE_CHECK_REPORT
+
+    monkeypatch.setattr(help_cli, "run_site_check", run_site_check)
+    client_socket = _ChunkedSocket(_SITE_CHECK_ACTION * 2)
+    response = help_cli._read_help_response(client_socket, None, "check")  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+    assert response == help_cli._BAD_HELP_RESPONSE_TEXT  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+    assert runs == ["a" * 64]
+    assert len(client_socket.sent_payloads) == 1
+    assert cast("object", json.loads(client_socket.sent_payloads[0])) == {
+        "kind": "site_check_result",
+        "report": site_check_report_payload(_SITE_CHECK_REPORT),
+    }
+    assert "locally" in capsys.readouterr().err
+
+
+def test_help_site_check_failure_does_not_expose_raw_error(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Runner failures close the exchange without echoing exception details."""
+
+    def run_site_check(source_sha256: str) -> SiteCheckReport:
+        del source_sha256
+        raise SiteCheckError("private source")
+
+    monkeypatch.setattr(help_cli, "run_site_check", run_site_check)
+    client_socket = _ChunkedSocket(_SITE_CHECK_ACTION)
+    response = help_cli._read_help_response(client_socket, None, "check")  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+    assert "private source" not in response + capsys.readouterr().err
+    assert client_socket.sent_payloads == []
 
 
 def test_help_rejects_oversized_argument_message(

@@ -195,7 +195,7 @@ content-type: text/html; charset=utf-8
 
 Example excerpts use `$USER` in place of the returned username.
 
-Our checker will require `200` without following redirects.
+Our lesson example checks for `200` without following redirects.
 
 <!-- end_slide -->
 
@@ -459,6 +459,7 @@ Without editing the script, predict the message for each case:
 | Report | `0` | `404` |
 | Either | `0` | `302` or `500` |
 | Either | `6` | No response |
+| Report | `28` | `200` printed before curl failed |
 
 Then check your real pages:
 
@@ -468,6 +469,34 @@ bash ~/scripts/site-check.sh
 ```
 
 Then open both pages in your laptop browser. Reference: [complete script](self-study.md#complete-script).
+
+<!-- end_slide -->
+
+# Check Behavior With Guide
+
+For your current checker task, run `guide now` or `guide check` in the classroom shell.
+It automatically runs your script locally as your learner account. IRC sends you back to the shell.
+
+| Simulated case | Expected result |
+|---|---|
+| Both `200` | Identify both successes |
+| Report `404` | Missing report; advise `maker-report.sh`, then `build-website` |
+| Homepage `404` | Missing homepage; no report-regeneration advice |
+| Report `500` | HTTP error, not success |
+| Homepage connection fails | Diagnose failure; still check report |
+| Report connection fails | Diagnose failure; still check homepage |
+| Curl prints `200` but exits nonzero | Failure, not success |
+
+<!-- end_slide -->
+
+# Your Implementation
+
+- `for` and `if` are our teaching path, not required grading syntax.
+- The reference is one example. Functions, `case`, variable names, nesting, page order, and curl flag order can vary.
+- Identify each page by URL or homepage/report label. Include the HTTP code and diagnosis, or a clear connection-failure diagnosis.
+- Do not claim a failed request succeeded. Follow the fixed case feedback and retry.
+
+Simulations do not verify live health. Still run `bash ~/scripts/site-check.sh` and open both pages in your browser.
 
 <!-- end_slide -->
 

@@ -510,6 +510,42 @@ class SystemdUserUnitValidation:
     expected_active: bool
 ```
 
+### S6 Behavioral Grading
+
+`SiteCheckValidation` replaces source-pattern grading for both the S6 `check-personal-pages` session objective and its reinforcement quest. The fixed artifact is `~/scripts/site-check.sh`. `for` and `if` remain the lesson's teaching path, not grading requirements. The reference script is one implementation: equivalent functions, `case` statements, variable names, conditional nesting, page order, and curl flag order are accepted when they produce the required outcomes.
+
+For a private CLI `now` or `check` request, the daemon selects the current incomplete objective or already assigned quest and reads a bounded source digest before opening the progress transaction. A capable CLI advertises `supports_site_check`; the daemon requests one local run using the existing Unix-socket connection. The CLI accepts that action only for a `now`/`check` intent, announces execution, and runs the suite under the invoking learner's UID. Newly assigned quests are displayed first, and a successful check does not execute the next task. IRC directs the learner to `guide now` or `guide check` in the classroom shell. Older CLI clients are unsupported for this check: no local capability means no behavioral completion and no source-pattern fallback.
+
+The Linux-only suite parses the same private, read-only, unlinked temporary source snapshot with `bash -n` via `/proc/self/fd`, then runs it without arguments for each case:
+
+| Case ID | Simulated requests | Required behavior |
+|---|---|---|
+| `both-ok` | Both pages return HTTP `200` | Identify both pages and their successful `200` results. |
+| `report-missing` | Homepage `200`, report `404` | Diagnose report `404`; name `maker-report.sh`, then `build-website` as repair advice. |
+| `homepage-missing` | Homepage `404`, report `200` | Diagnose homepage `404` without recommending report regeneration. |
+| `http-error` | Homepage `200`, report `500` | Diagnose report `500` as an error, not success. |
+| `homepage-connection-failed` | Homepage transport failure, report `200` | Diagnose the failure and still check the report. |
+| `report-connection-failed` | Homepage `200`, report transport failure | Diagnose the failure and still check the homepage. |
+| `misleading-status` | Both emit `200`, but report curl exits nonzero | Treat the failed curl request as failure despite the emitted `200`. |
+
+Both fixture endpoints must receive requests in every passing case. Output identifies each page by its learner URL or a homepage/home page/report label, on the diagnosis line or a preceding heading. Matching is case-insensitive and independent of page order. A healthy page needs `200` without failure wording. An HTTP failure needs the actual code and a diagnosis such as `missing`, `check`, `error`, or `unexpected`; a transport failure needs error, failure, connection, DNS, TLS, or timeout wording. Failures must not also claim success. Repair advice can follow on separate lines but must include the command names. These are deterministic output rules, not arbitrary prose interpretation or LLM grading. A nonzero script exit status is not itself a grading failure; the reference script does not provide an aggregate health verdict through its exit status.
+
+#### Execution And Trust
+
+The daemon never executes learner scripts. It reads source only for the bounded artifact and digest checks through normal Unix permissions. Execution belongs exclusively to `maker_guide.cli.site_check` in the learner's CLI, with root, mismatched real/effective UIDs, and daemon accounts rejected. The source must be a regular UTF-8 text file, at most 1 MiB, within the learner's home after path resolution. The runner uses a temporary working directory, no script arguments or interactive input, and a sanitized environment containing account-derived `HOME`, `USER`, `LOGNAME`, a fixed PATH with the shim first, and the C locale. Each Bash subprocess has a three-second limit and a 64 KiB combined stdout/stderr limit; the whole suite has a 25-second budget. Cleanup kills the child process group.
+
+The PATH-based curl shim redirects only the learner's homepage and report URLs on `lf2607.kolamayermakers.org` or `lf-dev.kolamayermakers.org` to local HTTP fixtures. It delegates option handling to native `/usr/bin/curl`, rather than recognizing a reference command's flag order. This is URL substitution for simulated testing, not a sandbox: learner scripts retain their UID's permissions and can write files, launch processes, or bypass the shim. Sanitized environment, process cleanup, and time/output bounds do not promise isolation or absence of side effects. Never execute this runner as the bot, through sudo, or remotely on a learner's behalf.
+
+The daemon authenticates the local caller with `SO_PEERCRED` and accepts at most one bounded continuation report on the same active connection. The strict report schema contains a version, source SHA-256, exactly seven fixed case IDs with boolean results, and an optional fixed error token. Duplicate keys, unknown fields/cases, malformed values, and a mismatched digest are rejected. The daemon retains the selected course, task type/ID, session ID, and assignment/objective evidence window, then reselects the task and rehashes the source before recording completion. The CLI also checks the digest before execution and compares the file afterward. A changed source requires a fresh run; a changed task cannot receive the old result. No database transaction is held while the local suite runs.
+
+Authentication and digest binding prevent accidental cross-user, cross-task, or stale-result reuse; they do not attest that a learner-controlled client honestly executed the suite. Trust the installed CLI for classroom feedback, not as a hostile-code isolation or anti-cheating boundary. Keep the socket and deployed artifact under their existing ownership policy.
+
+Raw stdout/stderr are consumed locally for deterministic matching and are not returned to the daemon. Script source is not report evidence. Neither source nor captured output is stored in validation evidence or forwarded to the LLM by this grading flow. Durable evidence contains the task's fixed artifact metadata, digest, case outcomes, failed case IDs, and fixed feedback messages. Failure responses use the same fixed feedback for objectives and quests; the suite does not call the LLM.
+
+Passing records simulated behavior, not live website health, content freshness, or external reachability. Learners still run `bash ~/scripts/site-check.sh` against the live site and inspect both pages in a browser. Existing stored completions remain historical and authoritative; the replacement neither regrades them nor treats them as evidence of passing this new suite.
+
+The runner is packaged in the existing venv and invoked through the existing `guide` entrypoint. Current Salt packaging and classroom Bash/curl installation require no new entrypoint, sudo rule, daemon privilege, or infrastructure edit. Deploy the updated daemon and CLI together; pending operator validation is tracked in [TODO](../TODO.md), not assumed complete from earlier source-based validation.
+
 ### Quest Data Generation
 
 The catalog defines the generation strategy. Per-learner generated data lives in SQLite.
@@ -1599,7 +1635,7 @@ Adopt these defaults unless implementation proves they are wrong:
 4. Tier thresholds: use the first threshold set from the Score, Help, and Tiers section unless the final score budget changes materially. Keep current tier derived from course score.
 5. Instructor corrections: store corrections as SQLite mutations with audit rows and source `instructor`. Do not edit old audit rows.
 6. Learner renames: avoid them initially. If needed, add an identity alias table instead of changing primary keys in historical rows.
-7. Catalog versioning: avoid changing quest score, validation, and ordering during a live cohort. If that becomes necessary, add `catalog_version` to assignment and completion rows first.
+7. Catalog versioning: avoid changing quest score, validation, and ordering during a live cohort. The S6 behavioral replacement preserves existing completions as historical records without regrading them or adding a schema migration. If future changes require interpreting old rows against an exact catalog revision, add `catalog_version` to the relevant assignment and completion rows.
 
 ## Recommendation
 
