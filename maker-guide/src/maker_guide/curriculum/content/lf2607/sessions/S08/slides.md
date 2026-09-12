@@ -29,7 +29,7 @@ guide now
 
 `$USER` must match your login. Read both checker results; repair missing pages before continuing. Keep the checker unchanged: it checks the static homepage and report, not the service hostname.
 
-Use `guide now` before and after each objective. If the just-finished task remains current, run `guide check`, then `guide now`; otherwise it already advanced. Do not check the next, unfinished task. Submit prompted answers with `guide answer 'your observation'`. Checks record evidence, not proof of HTTP 200.
+Run `guide now` before starting a quest and after practical work: it checks one task and shows the next on success. Otherwise, follow the feedback. Use `guide answer` when asked; `guide check` is an optional explicit check. Checks record evidence, not proof of HTTP 200.
 
 <!-- end_slide -->
 
@@ -124,7 +124,7 @@ tmux kill-session -t workbench
 
 Detaching is not stopping. Release the port before systemd takes ownership.
 
-Run `guide now`. Check only if a tmux or manual-server objective remains, using the completed lab's evidence. Continue at "Wrap service actions in shell functions" without checking that unfinished helper yet.
+Run `guide now`. If it advances from tmux to the manual-server task, run it again for that completed work. Follow any feedback, then continue at "Wrap service actions in shell functions".
 
 <!-- end_slide -->
 
@@ -192,7 +192,7 @@ bash -x ~/bin/site.sh site_port
 
 The helper always selects `public_html`; an unchecked `cd` could fail and leave Python exposing unrelated files.
 
-Run `guide now`. If the helper objective remains current, run `guide check`, then `guide now` before the user-unit exercise.
+Run `guide now` and follow any feedback. Continue at the user-unit objective.
 
 <!-- end_slide -->
 
@@ -263,7 +263,7 @@ Read the status line from each response. Curl can exit `0` after a `404` or `502
 
 Local curl tests Python directly. The service hostname tests the reverse-proxy route from the server. Neither establishes access from your laptop's network.
 
-Run `guide now`; check only if the service-unit objective remains current. Continue with the journal exercise.
+Run `guide now` and follow any feedback before the journal exercise.
 
 <!-- end_slide -->
 
@@ -283,7 +283,7 @@ curl -I "https://$USER.lf2607.kolamayermakers.org/"
 
 Find the request and HTTP status in the journal. `-f` follows new messages; `Ctrl-C` stops the follower, not the service.
 
-After stopping it, run `journalctl --user -u site.service --no-pager -n 20`, then `guide now`. Check only if "Read service logs" remains current. Continue with logout and browser checks even if the guide has moved to reinforcement.
+After stopping it, run `journalctl --user -u site.service --no-pager -n 20`, then `guide now` and follow any feedback. Continue with logout and browser checks even if the guide has moved to reinforcement.
 
 <!-- end_slide -->
 

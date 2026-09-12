@@ -30,7 +30,7 @@ guide now
 
 Keep `~/scripts/site-check.sh` unchanged. It checks your static homepage and report, not your service hostname. The platform serves the static URL; your new process will serve the same `~/public_html` files through the reverse proxy at the service hostname.
 
-Run `guide now` before and after each objective. Some objectives advance automatically. If the task you just finished remains current, run `guide check`, then `guide now`; otherwise continue without checking the next, unfinished task. Use `guide answer 'your observation'` when prompted. A passing check records file and command observations, not independent proof of HTTP 200 or outside reachability.
+Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback. Use `guide answer 'your observation'` when asked; `guide check` is an optional explicit check. A passing check records file and command observations, not independent proof of HTTP 200 or outside reachability.
 
 ## Port Arithmetic
 
@@ -90,7 +90,7 @@ tmux kill-session -t workbench
 
 Detaching preserves the session; `tmux kill-session` ends it. The manual server owns its port while running, so stop Python before enabling `site.service` or systemd will fail with `Address already in use`.
 
-Run `guide now`. If the tmux objective or "Start a web server manually" remains current, run `guide check`, then inspect `guide now` again. The completed lab supplies evidence for both objectives. Continue when it shows "Wrap service actions in shell functions", without checking that unfinished helper yet.
+Run `guide now`. If it advances from tmux to "Start a web server manually", run it again for that completed lab work. Follow any feedback, then continue at "Wrap service actions in shell functions".
 
 ## Minimal `~/bin/site.sh`
 
@@ -144,7 +144,7 @@ For `~/bin/site.sh site_port`, Bash first reads the definitions. The script's `$
 
 With the port free, run `~/bin/site.sh serve` in one SSH shell. In another, recompute `PORT` and run `curl -I "http://127.0.0.1:$PORT/"`. Stop the helper's foreground server with `Ctrl-C` before proceeding.
 
-Run `guide now`. If the helper objective remains current, run `guide check`, then `guide now` before creating the service unit.
+Run `guide now` and follow any feedback. Continue when it shows the service-unit objective.
 
 ## Minimal `site.service`
 
@@ -196,7 +196,7 @@ Read `Active:` and report the actual state, including `inactive (dead)` or `fail
 
 Inspect each HTTP status line. A response from the local URL tests Python directly; a response from the public service URL tests the reverse-proxy route from this server. An HTTP error is still a response, and neither command proves access from an outside network.
 
-Run `guide now`. Check only if the service-unit objective remains current, then continue with the journal exercise.
+Run `guide now` and follow any feedback before continuing with the journal exercise.
 
 ## Follow The Journal
 
@@ -214,7 +214,7 @@ curl -I "https://$USER.lf2607.kolamayermakers.org/"
 
 Match the request and status to the new journal line. `-f` follows new messages. `Ctrl-C` stops only the log follower; the service stays under systemd. The [log quest](../../quests/watch-service-logs.md) adds a named tmux workflow for the same observation.
 
-After stopping the follower, run `journalctl --user -u site.service --no-pager -n 20` to read the saved request lines, then `guide now`. Run `guide check` only if "Read service logs" remains current. Finish the lingering and browser checks below even if the guide has moved to optional reinforcement.
+After stopping the follower, run `journalctl --user -u site.service --no-pager -n 20` to read the saved request lines, then `guide now` and follow any feedback. Finish the lingering and browser checks below even if the guide has moved to optional reinforcement.
 
 ## Lingering Check
 

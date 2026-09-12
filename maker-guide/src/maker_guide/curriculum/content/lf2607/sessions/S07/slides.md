@@ -29,7 +29,7 @@ guide now
 
 `$USER` must match `whoami`. Keep the S6 checker unchanged: it checks the homepage and `maker-report.html`, two paths on the same static host. Read both results and repair static failures before continuing.
 
-Checkpoint routine: successful commands can auto-complete command-history objectives. After each task, run `guide now` first. If the task you just finished is still current, run `guide check`, then `guide now`. If the next task is already current, continue without checking that unfinished task.
+Run `guide now` before starting a quest and after practical work: it checks one task and shows the next on success. Otherwise, follow the feedback. Use `guide answer` when asked; `guide check` is an optional explicit check.
 
 <!-- end_slide -->
 
@@ -173,7 +173,7 @@ cat ~/public_html/setup.html
 curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/setup.html"
 ```
 
-Open your homepage in your laptop browser and follow the setup link, then the link back. Link to `.html`, not source `.md`. Use the checkpoint routine: `guide now` first. Check the completed setup task only if it remains current.
+Open your homepage in your laptop browser and follow the setup link, then the link back. Link to `.html`, not source `.md`. Run `guide now` and follow its feedback.
 
 <!-- end_slide -->
 

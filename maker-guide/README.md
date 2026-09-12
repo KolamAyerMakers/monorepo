@@ -25,7 +25,7 @@ Mentors can run `maker-guide-progress release S03` during the in-person session.
 
 Curriculum examples use `lf2607.kolamayermakers.org`. When testing on `lf-dev`, replace that hostname with `lf-dev.kolamayermakers.org` in DNS commands, page and service URLs, and the S6 checker's `base_url`. The shared validators accept both classroom hostnames, not arbitrary hosts; the course ID remains `lf2607`.
 
-After deploying a validator update, use `guide check` to check previously recorded successful commands for the current objective, or rerun the command. Failed commands do not count as completion evidence.
+After deploying a validator update, use `guide now` to check previously recorded successful commands for the current practical objective and show the next task if it passes. `guide check` remains an explicit validation option, or you can rerun the command. Failed commands do not count as completion evidence.
 
 ## Example Config
 
@@ -134,7 +134,11 @@ Use pipeline input:
 make 2>&1 | guide --config /etc/maker-guide/config.toml
 ```
 
-Chat requests from IRC and `guide` use the same handler. `now` and its `today` alias display the current released incomplete session objective without validation; otherwise they display the current quest, writing only a deterministic first assignment. `check my work` validates practical work, while `answer <your answer>` validates conceptual answers. When LLM support is configured, private conceptual answers use a forced tool call to assess each catalog rubric as demonstrated, contradicted, or not demonstrated. Strict application code validates that tool payload and remains solely responsible for progress writes. Provider failures fall back to the deterministic regex checks. Private fallback questions can use the optional LLM tutor with read-only learner context. Public IRC fallback and public answers do not call the LLM because they could expose learner data. The CLI response prompt uses the configured IRC nickname so local terminal conversations match the bot identity seen in IRC. In interactive mode, type `exit` or `quit` to leave.
+Chat requests from IRC and `guide` use the same handler. `now` and its `today` and `next` aliases check at most one current practical item: the current released incomplete session objective, or the current quest if it was already assigned. A passing check records completion and displays the next task without validating it or walking a chain of tasks. Incomplete work keeps its current guidance. A newly assigned quest is displayed without checking it, so run `guide now` before starting quest work.
+
+Answer-based and mixed questions still require `answer <your answer>`; `now` does not bypass the answer. `check` and `check my work` remain explicit validation requests. Failed check responses are concise and deterministic. LLM explanations are available only when the learner asks, never automatically after a check.
+
+When LLM support is configured, private conceptual answers use a forced tool call to assess each catalog rubric as demonstrated, contradicted, or not demonstrated. Strict application code validates that tool payload and remains solely responsible for progress writes. Provider failures fall back to the deterministic regex checks. Private fallback questions can use the optional LLM tutor with read-only learner context. Public IRC fallback and public answers do not call the LLM because they could expose learner data. The CLI response prompt uses the configured IRC nickname so local terminal conversations match the bot identity seen in IRC. In interactive mode, type `exit` or `quit` to leave.
 
 Mentor identities are initialized with `maker-guide-initialize-learner --no-enroll`. They can use `guide` and receive IRC replies, but have no course membership or learner progress.
 

@@ -1,6 +1,8 @@
 # Quest Index
 
-Quests are highly recommended reinforcement. Use them for extra practice or catch-up. Run `guide now` to see your current session objective. After you complete it, `guide now` shows your current quest. Ask the guide for help when stuck, submit prompted answers with `guide answer 'your answer'`, and run `guide check` after practical work. A passing check records your score and progress. Live sessions remain the primary course path.
+Quests are highly recommended reinforcement. Use them for extra practice or catch-up. Live sessions remain the primary course path.
+
+Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. Use `guide answer 'your answer'` when asked. `guide check` is an optional explicit check. Ask the guide for help when stuck.
 
 ## S01 Reinforcement
 

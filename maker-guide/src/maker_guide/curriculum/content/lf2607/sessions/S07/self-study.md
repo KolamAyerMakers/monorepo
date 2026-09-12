@@ -32,7 +32,7 @@ If the checker or report is missing, use the [S6 self-study guide](../S06/self-s
 
 Run `guide now` before each objective. When prompted for an answer, use `guide answer 'your own observation'`. The guide records command/file evidence, not independent proof that a request succeeded or that two bodies match.
 
-Checkpoint routine: successful commands can auto-complete command-history objectives. After each task, run `guide now` first. If the task you just finished is still current, run `guide check`, then `guide now`. If the next task is already current, continue without checking that unfinished task.
+Checkpoint routine: run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. `guide check` is an optional explicit check.
 
 ## 1. Inspect Headers
 
@@ -171,7 +171,7 @@ cat ~/public_html/setup.html
 curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/setup.html"
 ```
 
-Stop on a build failure rather than trusting old output. Open your homepage in your laptop browser, follow the setup link, and return using the homepage link. Terminal checks from the server do not prove access from outside. Once the heading, link, build, and generated output are present, use the checkpoint routine: `guide now` first. Check the completed setup task only if it remains current.
+Stop on a build failure rather than trusting old output. Open your homepage in your laptop browser, follow the setup link, and return using the homepage link. Terminal checks from the server do not prove access from outside. Once the heading, link, build, and generated output are present, run `guide now` and follow its feedback.
 
 ## Troubleshooting
 

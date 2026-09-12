@@ -24,7 +24,7 @@ guide now
 
 In the URLs below, `$USER` expands to your classroom username.
 
-Run `guide now` before a scored activity and again after the work. Command objectives can advance automatically. If the task you just completed remains current, run `guide check`, then `guide now`; if the next task is already current, continue without checking unfinished work. Use `guide answer 'your own observation'` when prompted. Reading an answer does not record progress.
+Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. Use `guide answer 'your own observation'` when asked. `guide check` is an optional explicit check. Reading an answer does not record progress.
 
 ## Provided Report Script
 

@@ -19,7 +19,11 @@ Use this page when a quest says "your server", "your first URL", "your second UR
 
 ## guide checks
 
-Use the guide throughout the course for help, objectives, quests, answer submission, and progress checks. In a terminal, run `guide now` to see your current session objective. After you complete it, `guide now` shows your current quest. Submit a prompted answer with `guide answer 'your answer'`; after practical work, run `guide check`. In an IRC DM to `guide`, send only `now`, `answer <your answer>`, or `check`. The guide checks explicit evidence such as command history, files, and answers, then records score and progress when the check passes. Chat responses can help you understand what to do, but progress requires a passing check. Read [scoring and rankings](scoring.md) for every score award, tier, ranking tie-breaker, and the points ledger.
+Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. `guide today` and `guide next` do the same.
+
+Use `guide answer 'your answer'` when asked. `guide check` is an optional explicit check. Ask the guide for help when stuck. In an IRC DM to `guide`, omit the `guide` prefix: send `now`, `today`, `next`, `answer <your answer>`, or `check`.
+
+The guide checks explicit evidence such as command history, files, and answers, then records score and progress when the check passes. Chat responses can help you understand what to do, but progress requires a passing check. Read [scoring and rankings](scoring.md) for every score award, tier, ranking tie-breaker, and the points ledger.
 
 The guide uses only course-approved evidence for checks. Do not paste secrets into IRC or chat: no passwords, private keys, access tokens, or private setup links.
 

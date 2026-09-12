@@ -632,14 +632,16 @@ async def test_run_once_pongs_while_channel_join_persistence_is_blocked(
     assert responses == ["PONG :server"]
 
 
+@pytest.mark.parametrize("message", ["check", "now"])
 async def test_run_once_retries_check_after_irc_client_version(
     migrated_database_path: Path,
+    message: str,
 ) -> None:
     """IRC check waits for terminal-client evidence instead of showing a failed check."""
     _write_terminal_irc_quest(migrated_database_path)
     responses: list[str] = []
     server, port = await _start_fake_server(
-        _ctcp_check_retry_handler(responses),
+        _ctcp_check_retry_handler(responses, message),
     )
     outbound_queue: asyncio.Queue[IrcOutboundMessage] = asyncio.Queue()
     client = IrcClient(
@@ -658,6 +660,8 @@ async def test_run_once_retries_check_after_irc_client_version(
     assert responses[0] == "PRIVMSG alice :\x01VERSION\x01"
     assert responses[1].startswith("PRIVMSG alice :Done.")
     assert all("Not yet." not in response for response in responses)
+    if message == "now":
+        assert "All currently available quests are complete." in "\n".join(responses)
 
 
 async def test_run_once_pongs_while_slow_tutor_requests_are_bounded(
@@ -1346,14 +1350,14 @@ def _ctcp_version_handler(responses: list[str]) -> ServerHandler:
     return handle_client
 
 
-def _ctcp_check_retry_handler(responses: list[str]) -> ServerHandler:
+def _ctcp_check_retry_handler(responses: list[str], message: str) -> ServerHandler:
     async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         while True:
             line = await _read_client_line(reader)
             if not line:
                 break
             if line == "JOIN #kolam":
-                _write_server_line(writer, ":alice!user@example PRIVMSG maker-guide :check")
+                _write_server_line(writer, f":alice!user@example PRIVMSG maker-guide :{message}")
                 await writer.drain()
                 responses.append(await asyncio.wait_for(_read_client_line(reader), timeout=1.0))
                 _write_server_line(

@@ -98,34 +98,14 @@ def format_failed_check(
 ) -> str:
     """Format deterministic validation failure feedback."""
     explanation = failure_explanation(quest, validation_result.failure_reason)
-    next_step = (
-        f"Let's work through your answer:\n{tutor_feedback}"
-        if tutor_feedback is not None
-        else (
-            "Let's work through it:\nReview the quest prompt and checklist, do the work "
-            "yourself, then ask me to check again. For an explanation, ask privately: "
-            "why did my check fail?"
-        )
-    )
-    return (
-        f"Not yet.\n\nQuest: {quest.title}\n\n"
-        f"What I checked:\n{explanation.checked}\n\n"
-        f"Found:\n{_found_text(explanation.found, validation_result)}\n\n"
-        f"{next_step}"
-    )
-
-
-def format_preflight_status(quest: Quest, validation_result: QuestValidationResult) -> str:
-    """Format concise non-recording validation feedback for guide now."""
-    explanation = failure_explanation(quest, validation_result.failure_reason)
-    response_parts = [f"Status: not ready yet. {explanation.found}"]
-    if quest.docs:
-        response_parts.append(
-            "Read quest instructions:\n"
-            + "\n".join(
-                f"glow -p {learner_document_path(reference.path)}" for reference in quest.docs
-            ),
-        )
+    response_parts = [
+        f"Not yet.\n\nQuest: {quest.title}",
+        _found_text(explanation.found, validation_result),
+    ]
+    if tutor_feedback is not None:
+        response_parts.append(f"Let's work through your answer:\n{tutor_feedback}")
+    elif quest.docs:
+        response_parts.append(f"Reference: glow -p {learner_document_path(quest.docs[0].path)}")
     return "\n\n".join(response_parts)
 
 

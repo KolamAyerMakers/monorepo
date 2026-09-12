@@ -123,7 +123,6 @@ class CheckResponse:
     text: str
     retry_after_irc_client_verification: bool = False
     tier_promotions: tuple[TierPromotion, ...] = ()
-    failed: bool = False
 
 
 def _current_quest_response(
@@ -131,7 +130,7 @@ def _current_quest_response(
     learner_handle: str,
     source: str,
     timestamp: str,
-) -> tuple[str, tuple[TierPromotion, ...]]:
+) -> str:
     """Assign or return the current deterministic quest."""
     current_quest_result = current_quest(
         dependencies.database_connection,
@@ -141,8 +140,8 @@ def _current_quest_response(
         source=source,
     )
     if current_quest_result.quest is None:
-        return _NO_CURRENT_QUEST_TEXT, ()
-    return format_today_quest(current_quest_result.quest), ()
+        return _NO_CURRENT_QUEST_TEXT
+    return format_today_quest(current_quest_result.quest)
 
 
 def now_response(
@@ -152,8 +151,29 @@ def now_response(
     timestamp: str,
     *,
     cwd: str | None = None,
-) -> tuple[str, tuple[TierPromotion, ...]]:
-    """Show the current objective or deterministically assigned quest without validation."""
+) -> CheckResponse:
+    """Check at most one current practical task, then display the current work."""
+    return check_response(
+        dependencies,
+        learner_handle,
+        source,
+        timestamp,
+        is_answer=False,
+        refresh_current=True,
+        cwd=cwd,
+    )
+
+
+def _current_response(  # noqa: PLR0913 - Display reuses request context and checked evidence.
+    dependencies: ChatDependencies,
+    learner_handle: str,
+    source: str,
+    timestamp: str,
+    *,
+    cwd: str | None = None,
+    validation_result: QuestValidationResult | None = None,
+) -> str:
+    """Display current work, optionally reusing its already-checked evidence."""
     objective_result = current_session_objective(
         dependencies.database_connection,
         dependencies.catalog,
@@ -170,36 +190,29 @@ def now_response(
                 )
                 if path_resolution.target_path is None or not path_resolution.target_path.is_dir():
                     if objective.working_directory_creation_step is None:
-                        return _format_session_objective(objective_result, dependencies), ()
-                    return (
-                        _format_session_objective(
+                        return _format_session_objective(
                             objective_result,
                             dependencies,
-                            next_step=f"Run `{objective.working_directory_creation_step}`.",
-                        ),
-                        (),
+                            validation_result,
+                        )
+                    return _format_session_objective(
+                        objective_result,
+                        dependencies,
+                        validation_result,
+                        next_step=f"Run `{objective.working_directory_creation_step}`.",
                     )
                 if not _is_current_directory(cwd, path_resolution.target_path):
-                    return (
-                        _format_session_objective(
-                            objective_result,
-                            dependencies,
-                            next_step=f"Run `cd {objective.working_directory}`.",
-                        ),
-                        (),
+                    return _format_session_objective(
+                        objective_result,
+                        dependencies,
+                        validation_result,
+                        next_step=f"Run `cd {objective.working_directory}`.",
                     )
-            validation_result = validate_session_objective(
-                QuestValidationInput(
-                    database_connection=dependencies.database_connection,
-                    catalog=dependencies.catalog,
-                    handle=learner_handle,
-                    checked_at=timestamp,
-                    assigned_at=objective_result.evidence_since,
-                    account_lookup=dependencies.account_lookup,
-                ),
-                objective.validation,
+            missing_pattern_indexes = (
+                validation_result.evidence.get("missing_pattern_indexes")
+                if validation_result is not None
+                else None
             )
-            missing_pattern_indexes = validation_result.evidence.get("missing_pattern_indexes")
             next_step = (
                 (
                     objective.next_steps[missing_pattern_indexes[0]],
@@ -210,26 +223,24 @@ def now_response(
                 and isinstance(missing_pattern_indexes[0], int)
                 else None
             )
-            return (
-                _format_session_objective(
-                    objective_result,
-                    dependencies,
-                    next_step=(
-                        "\n\n".join(
-                            (
-                                "Let's work through this one step at a time.",
-                                next_step[1],
-                                f"Run `{next_step[0]}` now.",
-                                "Then run `guide now` and we will continue.",
-                            )
+            return _format_session_objective(
+                objective_result,
+                dependencies,
+                validation_result,
+                next_step=(
+                    "\n\n".join(
+                        (
+                            "Let's work through this one step at a time.",
+                            next_step[1],
+                            f"Run `{next_step[0]}` now.",
+                            "Then run `guide now` and we will continue.",
                         )
-                        if next_step is not None
-                        else "Run `guide check` to record completion."
-                    ),
+                    )
+                    if next_step is not None
+                    else None
                 ),
-                (),
             )
-        return _format_session_objective(objective_result, dependencies), ()
+        return _format_session_objective(objective_result, dependencies, validation_result)
     return _current_quest_response(dependencies, learner_handle, source, timestamp)
 
 
@@ -255,8 +266,10 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
     prepared_answer_interpretation: PreparedAnswerInterpretation | None = None,
     *,
     is_answer: bool,
+    refresh_current: bool = False,
+    cwd: str | None = None,
 ) -> CheckResponse:
-    """Run deterministic validation and record progress side effects."""
+    """Check one task; refresh mode skips answers and newly assigned quests."""
     objective_result = current_session_objective(
         dependencies.database_connection,
         dependencies.catalog,
@@ -269,7 +282,7 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
             or prepared_answer_interpretation.target_session_id != objective_result.session_id
         ):
             return CheckResponse(
-                text=now_response(dependencies, learner_handle, source, timestamp)[0],
+                text=_current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
             )
         return _check_session_objective(
             dependencies,
@@ -279,6 +292,8 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
             answer_text,
             prepared_answer_interpretation,
             is_answer,
+            refresh_current=refresh_current,
+            cwd=cwd,
         )
     current_quest_result = current_quest(
         dependencies.database_connection,
@@ -288,9 +303,17 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
         source=source,
     )
     if current_quest_result.quest is None:
-        return CheckResponse(text="There is no currently available quest to check.")
+        return CheckResponse(
+            text=(
+                _NO_CURRENT_QUEST_TEXT
+                if refresh_current
+                else "There is no currently available quest to check."
+            ),
+        )
     if current_quest_result.assignment is None:
         raise ChatError("current quest assignment was not written")
+    if refresh_current and current_quest_result.assigned_now:
+        return CheckResponse(text=format_today_quest(current_quest_result.quest))
     if prepared_answer_interpretation is not None and (
         prepared_answer_interpretation.target_type != "quest"
         or prepared_answer_interpretation.target_id != current_quest_result.quest.id
@@ -336,19 +359,21 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
         raise ChatError("quest attempt was not written")
     if not validation_result.passed:
         return CheckResponse(
-            text=format_failed_check(
-                current_quest_result.quest,
-                validation_result,
-                (
-                    prepared_answer_interpretation.feedback
-                    if prepared_answer_interpretation is not None
-                    else None
-                ),
+            text=(
+                (format_today_quest(current_quest_result.quest) + "\n\n" if refresh_current else "")
+                + format_failed_check(
+                    current_quest_result.quest,
+                    validation_result,
+                    (
+                        prepared_answer_interpretation.feedback
+                        if prepared_answer_interpretation is not None
+                        else None
+                    ),
+                )
             ),
             retry_after_irc_client_verification=(
                 validation_result.failure_reason == IRC_CLIENT_VERIFICATION_FAILURE_REASON
             ),
-            failed=True,
         )
     return CheckResponse(
         text=format_completed_quest(
@@ -365,6 +390,13 @@ def check_response(  # noqa: PLR0911, PLR0913 - Routing supplies request context
                     source=source,
                 ),
             ),
+            include_next_instruction=not refresh_current,
+        )
+        + (
+            "\n\nNext:\n\n"
+            + _current_response(dependencies, learner_handle, source, timestamp, cwd=cwd)
+            if refresh_current
+            else ""
         ),
     )
 
@@ -377,6 +409,9 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
     answer_text: str | None,
     prepared_answer_interpretation: PreparedAnswerInterpretation | None,
     is_answer: bool,
+    *,
+    refresh_current: bool = False,
+    cwd: str | None = None,
 ) -> CheckResponse:
     """Validate a current practical or answer-bearing session objective."""
     objective_result = current_session_objective(
@@ -388,8 +423,14 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
         raise ChatError("current session objective was not found")
     objective = objective_result.objective
     expects_answer = validation_answer_question(objective.validation) is not None
-    if (is_answer and not expects_answer) or (answer_text is None and is_answer):
-        return CheckResponse(text=now_response(dependencies, learner_handle, source, timestamp)[0])
+    if (
+        (refresh_current and expects_answer)
+        or (is_answer and not expects_answer)
+        or (answer_text is None and is_answer)
+    ):
+        return CheckResponse(
+            text=_current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
+        )
     validation_result = validate_session_objective(
         QuestValidationInput(
             database_connection=dependencies.database_connection,
@@ -422,17 +463,31 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
             validation_result=validation_result,
         )
         return CheckResponse(
-            text=_format_session_objective(
-                objective_result,
-                dependencies,
-                validation_result,
-                (
-                    prepared_answer_interpretation.feedback
-                    if prepared_answer_interpretation is not None
-                    else None
-                ),
+            text=(
+                _current_response(
+                    dependencies,
+                    learner_handle,
+                    source,
+                    timestamp,
+                    cwd=cwd,
+                    validation_result=validation_result,
+                )
+                if refresh_current
+                else _format_session_objective(
+                    objective_result,
+                    dependencies,
+                    validation_result,
+                    (
+                        prepared_answer_interpretation.feedback
+                        if prepared_answer_interpretation is not None
+                        else None
+                    ),
+                    include_instructions=is_answer,
+                )
             ),
-            failed=True,
+            retry_after_irc_client_verification=(
+                validation_result.failure_reason == IRC_CLIENT_VERIFICATION_FAILURE_REASON
+            ),
         )
     completion_result = complete_session_objective(
         dependencies.database_connection,
@@ -450,31 +505,32 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
                 (
                     f"Answer accepted. Objective complete: {objective.title}.",
                     "Next:",
-                    now_response(dependencies, learner_handle, source, timestamp)[0],
+                    _current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
                 ),
             )
             if is_answer
-            else now_response(dependencies, learner_handle, source, timestamp)[0]
+            else _current_response(dependencies, learner_handle, source, timestamp, cwd=cwd)
         ),
         tier_promotions=completion_result.tier_promotions,
     )
 
 
-def _format_session_objective(
+def _format_session_objective(  # noqa: PLR0913 - Check and display share objective formatting.
     objective_result: CurrentSessionObjectiveResult,
     dependencies: ChatDependencies,
     validation_result: QuestValidationResult | None = None,
     tutor_feedback: str | None = None,
     next_step: str | None = None,
+    *,
+    include_instructions: bool = True,
 ) -> str:
     """Format a practical session objective and its incomplete evidence."""
     objective = objective_result.objective
     if objective is None:
         raise ChatError("current session objective was not found")
-    response_parts = [
-        f"Current session objective: {objective.title}",
-        next_step or f"Start here:\n{objective.prompt}",
-    ]
+    response_parts = [f"Current session objective: {objective.title}"]
+    if include_instructions:
+        response_parts.append(next_step or f"Start here:\n{objective.prompt}")
     self_study_reference = next(
         (
             reference
@@ -483,16 +539,7 @@ def _format_session_objective(
         ),
         None,
     )
-    if self_study_reference is not None:
-        response_parts.append(
-            "\n".join(
-                (
-                    "Read self-study guide:",
-                    f"glow -p {learner_document_path(self_study_reference.path)}",
-                ),
-            ),
-        )
-    if validation_result is not None:
+    if validation_result is not None and next_step is None:
         if (
             validation_result.failure_reason == "missing-answer"
             and (answer_question := validation_answer_question(objective.validation)) is not None
@@ -507,16 +554,30 @@ def _format_session_objective(
             )
         else:
             response_parts.append(_objective_status(validation_result, tutor_feedback))
-            if tutor_feedback is None:
-                response_parts.append("For an explanation, ask privately: why did my check fail?")
+    if self_study_reference is not None:
+        response_parts.append(
+            "\n".join(
+                (
+                    "Read self-study guide:",
+                    f"glow -p {learner_document_path(self_study_reference.path)}",
+                ),
+            ),
+        )
     return "\n\n".join(response_parts)
 
 
-def _objective_status(  # noqa: PLR0911 - Each validation failure has one direct response.
+def _objective_status(  # noqa: C901, PLR0911 - Each validation failure has one direct response.
     validation_result: QuestValidationResult,
     tutor_feedback: str | None = None,
 ) -> str:
     """Format concise missing evidence for a session objective."""
+    if validation_result.failure_reason == "missing-ssh-publickey":
+        return "No SSH key login observed. Reconnect using your SSH key, then run `guide check`."
+    if validation_result.failure_reason == "missing-irc-channel-join":
+        return (
+            f"No join observed for `{validation_result.evidence.get('channel')}`. "
+            "Join that IRC channel, then run `guide check`."
+        )
     missing_commands = _objective_evidence_strings(validation_result, "missing_commands")
     if missing_commands:
         if (
@@ -556,6 +617,10 @@ def _objective_status(  # noqa: PLR0911 - Each validation failure has one direct
                 f"`{catalog_path}` exists, but its contents do not match this objective. "
                 "Recheck the required structure, then run `guide check`."
             )
+        return (
+            f"Cannot verify `{catalog_path}`: {failure_reason.replace('-', ' ')}. "
+            "Check the file against the objective reference, then run `guide check`."
+        )
     concept_nudges = tuple(
         _CONCEPT_ASSOCIATION_NUDGES[concept_id]
         for concept_id in _objective_evidence_strings(
@@ -583,11 +648,18 @@ def _objective_status(  # noqa: PLR0911 - Each validation failure has one direct
                 ),
             )
         )
-    return "I cannot verify that yet. Do the objective, then run `guide now`."
+    return (
+        "Check failed: "
+        + (validation_result.failure_reason or "incomplete-evidence").replace("-", " ")
+        + ". Review the objective reference, then run `guide check`."
+    )
 
 
 def _objective_failed_artifact(validation_result: QuestValidationResult) -> tuple[str, str] | None:
     """Return the first failed file check with its learner-facing path."""
+    catalog_path = validation_result.evidence.get("catalog_path")
+    if validation_result.failure_reason is not None and isinstance(catalog_path, str):
+        return validation_result.failure_reason, catalog_path
     checks = validation_result.evidence.get("checks")
     if not isinstance(checks, list):
         return None

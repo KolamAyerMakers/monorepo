@@ -28,7 +28,7 @@ All four guide objectives are required core work:
 
 Also explain the raw request and its observed redirect. Inspect real results yourself, because the guide does not independently verify HTTP success or body equality.
 
-Checkpoint routine: successful commands can auto-complete command-history objectives. After each task, run `guide now` first. If the task you just finished is still current, run `guide check`, then `guide now`. If the next task is already current, continue without checking that unfinished task. Use this for all four core tasks, including setup once its files, link, and build are ready.
+Checkpoint routine: run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback. Use `guide answer 'your own observation'` when asked; `guide check` is an optional explicit check. Use this for all four core tasks, including setup once its files, link, and build are ready.
 
 ## Optional Reinforcement
 

@@ -10,12 +10,12 @@ Start with the [docs navigation guide](guides/docs-map.md) to learn how to move 
 
 The self-guided loop is always the same:
 
-1. Ask the guide: `progress` to see your recorded course progress, or `now` to see your current session objective. After you complete it, `now` shows your current quest.
+1. Run `guide now` to find your current task. Always run it before starting a quest.
 2. Read the linked guide page.
 3. Do the work in your shell.
-4. If it asks for an answer, submit it with `guide answer 'your answer'`; otherwise run `guide check`.
-5. If the guide says `Not yet`, read exactly what it checked, fix that one thing, and submit or check again.
-6. If the guide says `Done`, your progress is recorded. Read your score, tier, and next action.
+4. After practical work, run `guide now`. It checks one task and shows the next on success. Use `guide answer 'your answer'` when asked; `guide check` is an optional explicit check.
+5. If work is incomplete, follow the feedback, fix the problem, and try again. Ask for help when stuck.
+6. Read the next task before continuing. Use `guide progress` to see your recorded progress.
 
 Feeling stuck still counts as progress if you can describe what changed. Post the command you ran, the output you got, and what you expected in `#lf2607`.
 

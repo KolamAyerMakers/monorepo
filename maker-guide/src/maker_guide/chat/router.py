@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
-
 from maker_guide.chat.contract import (
     ChatDependencies,
     ChatRequest,
@@ -41,7 +39,7 @@ def build_response_draft(  # noqa: PLR0911 - Each chat intent has one direct res
                 topic_tags=("progress",),
             )
         case "now":
-            response_text, tier_promotions = now_response(
+            response = now_response(
                 dependencies,
                 learner_handle,
                 request.context.source,
@@ -49,9 +47,10 @@ def build_response_draft(  # noqa: PLR0911 - Each chat intent has one direct res
                 cwd=request.context.cwd if isinstance(request.context, CliChatContext) else None,
             )
             return ResponseDraft(
-                text=response_text,
+                text=response.text,
                 topic_tags=(chat_intent(request.text),),
-                public_announcements=format_tier_promotion_announcements(tier_promotions),
+                retry_after_irc_client_verification=response.retry_after_irc_client_verification,
+                public_announcements=format_tier_promotion_announcements(response.tier_promotions),
             )
         case "check":
             response = check_response(
@@ -61,27 +60,6 @@ def build_response_draft(  # noqa: PLR0911 - Each chat intent has one direct res
                 timestamp,
                 is_answer=False,
             )
-            if (
-                response.failed
-                and dependencies.tutor_client is not None
-                and request.visibility == "private"
-            ):
-                diagnostic = freeform_response_draft(
-                    replace(
-                        request,
-                        text="Explain this failed check from the validation evidence.",
-                    ),
-                    dependencies,
-                    learner_handle,
-                    timestamp,
-                )
-                return ResponseDraft(
-                    text=f"{response.text}\n\nExplanation:\n{diagnostic.text}",
-                    topic_tags=("check", "diagnostic"),
-                    restricted_llm_audit_log=diagnostic.restricted_llm_audit_log,
-                    tutor_audit_event=diagnostic.tutor_audit_event,
-                    retry_after_irc_client_verification=response.retry_after_irc_client_verification,
-                )
             return ResponseDraft(
                 text=response.text,
                 topic_tags=("check",),

@@ -675,7 +675,9 @@ Rule:
 
 `available_after_session` is a gate. The current session has priority; `sequence` orders quests within that session and resumes the earlier-session backlog. Future quests remain unavailable.
 
-The `now` chat intent first displays the current released incomplete session objective without validation or progress writes. Only when that objective is complete does it call current quest selection and display its prompt, writing only a first deterministic assignment. `today` remains its compatibility alias. The `check my work` intent validates practical work, while `answer <your answer>` validates conceptual answers for the current assigned incomplete quest. The LLM may phrase the response, but it does not choose a different quest or mark it complete.
+The `now` chat intent and its `today` and `next` aliases check at most one current practical item: the current released incomplete session objective, or the current quest if it was already assigned. A passing check records completion and displays the next objective or quest without validating that next item. It never validates a chain in one request. Incomplete work retains its current guidance. A newly assigned quest is stored and displayed without checking it; learners must still run `guide now` before starting quest work.
+
+Answer-based and mixed questions still require `answer <your answer>`; `now` does not bypass answer submission. `check` and `check my work` remain explicit validation intents. Failed check responses are concise and deterministic. LLM explanations require a learner request and never run automatically after a check. The LLM does not choose a different quest or mark it complete.
 
 ### LLM Guardrails From Catalog
 
@@ -1277,7 +1279,7 @@ resolve learner from CliChatContext.username
 build LearnerSnapshot
 classify chat intent from request plus context
 call shared chat handler
-later: call LLM with snapshot
+call LLM with snapshot only for a learner-requested explanation or tutoring question
 print response
 record help_interaction
 ```
@@ -1292,7 +1294,7 @@ resolve learner from IrcChatContext.nickname
 build LearnerSnapshot
 classify chat intent from request plus context
 call shared chat handler
-later: call LLM with snapshot
+call LLM with snapshot only for a private learner-requested explanation or tutoring question
 send response to reply_target
 record help_interaction
 ```
@@ -1302,8 +1304,13 @@ record help_interaction
 ```text
 learner says: "what should I do today?"
   resolve learner
-  load current quest
-  respond with prompt and allowed hints
+  load current released incomplete objective, otherwise select current quest
+  if practical and an objective or already assigned quest:
+    check this one item and record completion if it passes
+    on success, display the next item without checking it
+    otherwise, retain current guidance
+  if newly assigned quest: display it without checking
+  if answer-based or mixed: prompt for answer submission
 
 learner says: "done" / "check my work" / "am I finished?"
   resolve learner
@@ -1321,11 +1328,11 @@ if success:
     export JSONL audit row
 if failure:
   record quest_attempt and audit row in SQLite
-  explain the failed check
-  give deterministic hint or ask a follow-up question
+  return concise deterministic feedback
+  do not automatically call the LLM for an explanation
 ```
 
-There should not be a separate learner-facing validation command in the initial design. The user interface is chat. Validation is a backend intent, not a command learners must remember.
+The user interface is chat. `guide now` combines a practical checkpoint with current guidance; `guide check` remains available for explicit validation. Learners can ask why a check failed when they want an explanation.
 
 The LLM may help classify free text into intents such as `show_current_quest`, `validate_current_quest`, `explain_failure`, or `show_progress`. For private conceptual answers, it may call one forced tool to classify each catalog-owned rubric as demonstrated, contradicted, or not demonstrated and quote the supporting answer text. Application code validates the exact component set and literal quotes, preserves deterministic forbidden-pattern vetoes, derives the final validation result, and performs every completion or score mutation. Missing, malformed, or failed tool calls contribute no semantic evidence.
 
@@ -1341,7 +1348,7 @@ export audit row after commit
 
 Do not store every shell command forever without pruning. Keep enough for validation and recent context, then summarize or expire.
 
-Bash hooks and introspection are evidence sources. They can prove facts like "the learner ran `man ls`" or "this file exists". They should not silently award progress for every observed command unless the quest explicitly allows auto-completion. In most cases, the learner should express intent by asking the bot to check their work.
+Bash hooks and introspection are evidence sources. They can prove facts like "the learner ran `man ls`" or "this file exists". They should not silently award progress for every observed command unless the quest explicitly allows auto-completion. In most cases, the learner should express intent with `guide now` or an explicit request to check their work.
 
 ## Progress UX
 
@@ -1499,7 +1506,7 @@ Done when:
 
 ### M7: Quest Chat Intents (complete)
 
-- [x] Add deterministic intent handling for `now` (`today` remains an alias).
+- [x] Add deterministic intent handling for `now` (`today` and `next` are aliases).
 - [x] Add deterministic intent handling for `check my work` and `am I finished`.
 - [x] Add failure explanation using the latest quest attempt.
 - [x] Keep learner-facing failure feedback from exposing validator internals or solution commands.
@@ -1509,7 +1516,7 @@ Done when:
 
 Done when:
 
-- [x] `guide now` returns the assigned current quest.
+- [x] `guide now` checks one current practical objective or already assigned practical quest, records completion if it passes, and displays the next item without checking it; otherwise it retains current guidance.
 - [x] `guide check my work` validates the assigned incomplete quest.
 - [x] Score and completion are awarded only through deterministic services.
 - [x] The LLM is not required for quest completion.

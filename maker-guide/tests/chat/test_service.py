@@ -216,7 +216,7 @@ def test_handle_chat_request_rejects_oversized_private_input_before_tutor(
 def test_today_alias_displays_current_objective_without_assigning_quest(
     migrated_database_path: Path,
 ) -> None:
-    """Today remains a compatibility alias for the display-only now flow."""
+    """Today checks the current objective without skipping ahead to a quest."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
 
@@ -296,10 +296,10 @@ def test_progress_and_tutor_support_enrollment_before_first_release(
     assert tutor_client.requests[0].context.quests == ()
 
 
-def test_now_displays_current_prompt_without_progress_side_effects(
+def test_now_checks_incomplete_objective_without_assigning_quest(
     migrated_database_path: Path,
 ) -> None:
-    """Now displays an incomplete objective without validation or quest assignment."""
+    """Now records missing evidence but leaves an incomplete objective current."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
 
@@ -322,6 +322,14 @@ def test_now_displays_current_prompt_without_progress_side_effects(
         )
         assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
         assert response.learner_snapshot.pending_quests == ("prove-shell-alive",)
+        failure_events = [
+            event
+            for event in list_unexported_audit_events(database_connection, 10)
+            if event.event_type == "session_objective_validation_failed"
+        ]
+        assert len(failure_events) == 1
+        assert failure_events[0].payload["objective_id"] == "prove-shell-alive"
+        assert failure_events[0].payload["failure_reason"] == "missing-command"
 
 
 def test_now_preserves_non_command_objective_prompt(
@@ -488,6 +496,83 @@ def test_session_objective_reports_missing_command_from_composite_evidence(
     assert "I cannot verify that yet" not in response.text
 
 
+@pytest.mark.parametrize(
+    ("script_content", "failure_reason", "finding"),
+    [
+        (None, "missing-path", "cannot find"),
+        ('#!/bin/bash\npage="$1"\n', "file-content-mismatch", "contents do not match"),
+    ],
+)
+def test_check_names_s6_root_file_failure_without_instructions_or_tutor(
+    migrated_database_path: Path,
+    tmp_path: Path,
+    script_content: str | None,
+    failure_reason: str,
+    finding: str,
+) -> None:
+    """A standalone file check reports its missing or mismatched artifact concisely."""
+    learner_home = tmp_path / "alice"
+    script_path = learner_home / "scripts" / "site-check.sh"
+    script_path.parent.mkdir(parents=True)
+    if script_content is not None:
+        script_path.write_text(script_content, encoding="utf-8")
+    tutor_client = _RecordingTutorClient("should not be used")
+    objective = CATALOG.session("S6").objectives[-1]
+    with connect_database(migrated_database_path) as database_connection:
+        _write_member(database_connection, session_reached="S6")
+        for prerequisite in CATALOG.session("S6").objectives[:-1]:
+            complete_session_objective(
+                database_connection,
+                SessionObjectiveCompletion(
+                    handle="alice",
+                    course_id=CATALOG.course.id,
+                    session_id="S6",
+                    objective_id=prerequisite.id,
+                    completed_at="2026-09-12T09:00:00Z",
+                    evidence_json="{}",
+                ),
+            )
+
+        response = handle_chat_request(
+            ChatRequest(
+                context=CliChatContext(username="alice", terminal="/dev/pts/1"),
+                visibility="private",
+                text="check",
+            ),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                tutor_client=tutor_client,
+                timestamp="2026-09-12T09:01:00Z",
+            ),
+        )
+
+        assert objective.title in response.text
+        assert "`~/scripts/site-check.sh`" in response.text
+        assert finding in response.text
+        assert "guide check" in response.text
+        assert objective.prompt not in response.text
+        assert "Start here:" not in response.text
+        assert "Explanation:" not in response.text
+        assert "ask privately" not in response.text
+        assert "I cannot verify that yet" not in response.text
+        assert tutor_client.requests == []
+        assert list_llm_audit_logs(database_connection, "alice", limit=10) == []
+        assert objective.id not in list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S6"
+        )
+        failure_event = next(
+            event
+            for event in list_unexported_audit_events(database_connection, 10)
+            if event.event_type == "session_objective_validation_failed"
+        )
+        assert failure_event.payload["failure_reason"] == failure_reason
+        assert (
+            cast("dict[str, object]", failure_event.payload["evidence"])["catalog_path"]
+            == "~/scripts/site-check.sh"
+        )
+
+
 def test_failed_session_objective_check_writes_operational_audit(
     migrated_database_path: Path,
 ) -> None:
@@ -541,8 +626,8 @@ def test_failed_session_objective_check_writes_operational_audit(
     }
 
 
-def test_now_does_not_announce_or_complete_session_objective(migrated_database_path: Path) -> None:
-    """Now does not validate objectives or award their score and tier effects."""
+def test_now_completes_objective_and_preserves_promotion(migrated_database_path: Path) -> None:
+    """Now returns the successor and the completed objective's promotion announcement."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
         add_score_entry(
@@ -566,11 +651,13 @@ def test_now_does_not_announce_or_complete_session_objective(migrated_database_p
             _chat_dependencies(database_connection),
         )
 
-    assert response.public_announcements == ()
+        assert total_score_for_course(database_connection, "alice", CATALOG.course.id) == 500
+
+    assert response.public_announcements == ("alice became an apprentice",)
+    assert response.learner_snapshot.tier == "apprentice"
     assert response.text.startswith(
-        "Current session objective: Confirm that your shell is working",
+        "Current session objective: Navigate and inspect your home directory",
     )
-    assert total_score_for_course(database_connection, "alice", CATALOG.course.id) == 445
 
 
 def test_session_objective_completion_returns_tier_announcement(
@@ -644,10 +731,10 @@ def test_quest_promotion_stays_in_private_learner_response(
     assert response.public_announcements == ()
 
 
-def test_now_does_not_complete_proven_quest(
+def test_now_completes_proven_quest_and_displays_unanswered_successor(
     migrated_database_path: Path,
 ) -> None:
-    """Now displays the current prompt even when practical evidence is already present."""
+    """Now completes an assigned practical quest without grading the next question."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
         _complete_current_session_objectives(database_connection)
@@ -666,17 +753,28 @@ def test_now_does_not_complete_proven_quest(
             _chat_dependencies(database_connection, timestamp="2026-07-19T09:02:00Z"),
         )
 
-        assert response.text.startswith("Today's quest: Prove the shell is alive")
-        assert _attempt_count(database_connection) == 0
-        assert response.learner_snapshot.completed_quests == ()
-        assert response.learner_snapshot.pending_quests == ("prove-shell-alive",)
+        assert "Completed quest: Prove the shell is alive" in response.text
+        assert "Today's quest: Name the system" in response.text
+        assert "guide answer" in response.text
+        assert _attempt_count(database_connection) == 1
+        assert _latest_attempt_record(database_connection)[:2] == ("passed", None)
+        assert load_json(_latest_attempt_record(database_connection)[2])["matched_commands"] == [
+            "whoami",
+            "date",
+            "uptime",
+        ]
+        assert response.learner_snapshot.completed_quests == ("prove-shell-alive",)
+        assert response.learner_snapshot.pending_quests == ("name-system",)
+        assert response.learner_snapshot.score == 30
 
 
-def test_now_does_not_validate_existing_evidence(
+@pytest.mark.parametrize("message", ["now", "today", "next", "check"])
+def test_progress_request_completes_only_one_proven_objective(
     migrated_database_path: Path,
     tmp_path: Path,
+    message: str,
 ) -> None:
-    """Now leaves existing objective and quest evidence untouched."""
+    """Evidence for several tasks cannot cascade through the displayed successor."""
     learner_home = tmp_path / "alice"
     public_html_path = learner_home / "public_html"
     public_html_path.mkdir(parents=True)
@@ -698,7 +796,7 @@ def test_now_does_not_validate_existing_evidence(
             )
 
         response = handle_chat_request(
-            _chat_request("now"),
+            _chat_request(message),
             _chat_dependencies(
                 database_connection,
                 account_lookup=_account_lookup(learner_home),
@@ -707,10 +805,30 @@ def test_now_does_not_validate_existing_evidence(
         )
 
         assert response.text.startswith(
-            "Current session objective: Confirm that your shell is working",
+            "Current session objective: Navigate and inspect your home directory",
         )
         assert _attempt_count(database_connection) == 0
         assert response.learner_snapshot.completed_quests == ()
+        assert list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S1"
+        ) == frozenset({"join-course-irc", "prove-shell-alive"})
+        assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
+        completion_evidence = load_json(
+            cast(
+                "tuple[str]",
+                database_connection.execute(
+                    """select evidence_json from session_objective_completions
+                    where handle = ? and course_id = ? and session_id = ? and objective_id = ?""",
+                    ("alice", CATALOG.course.id, "S1", "prove-shell-alive"),
+                ).fetchone(),
+            )[0],
+        )
+        assert completion_evidence["passed"] is True
+        assert completion_evidence["matched_commands"] == ["whoami", "date", "uptime"]
+        assert not any(
+            event.event_type == "session_objective_validation_failed"
+            for event in list_unexported_audit_events(database_connection, 20)
+        )
 
 
 def test_now_shows_current_s2_objective_before_quest(
@@ -790,6 +908,8 @@ def test_answer_intent_displays_current_session_objective_without_validation(
     """Answers cannot bypass or validate a practical current session objective."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
+        for command in ("whoami", "date", "uptime"):
+            add_command_observation(database_connection, _command_observation(command))
 
         response = handle_chat_request(
             _chat_request("answer whoami"),
@@ -800,6 +920,10 @@ def test_answer_intent_displays_current_session_objective_without_validation(
             "Current session objective: Confirm that your shell is working",
         )
         assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
+        assert list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S1"
+        ) == frozenset({"join-course-irc"})
+        assert list_unexported_audit_events(database_connection, 10) == []
 
 
 def test_answer_intent_validates_answer_bearing_session_objective(
@@ -1015,9 +1139,11 @@ def test_answer_interpreter_tool_verdicts_gate_completion(
         assert len(accepted_interpreter.requests) == 1
 
 
+@pytest.mark.parametrize("session_reached", ["S3", "S4"])
 def test_stale_answer_interpretation_is_not_applied_to_next_objective(
     migrated_database_path: Path,
     tmp_path: Path,
+    session_reached: str,
 ) -> None:
     """Concurrent progress invalidates semantic analysis prepared for the old target."""
     learner_home = tmp_path / "alice"
@@ -1036,6 +1162,20 @@ def test_stale_answer_interpretation_is_not_applied_to_next_objective(
                     evidence_json="{}",
                 ),
             )
+            if session_reached == "S4":
+                upsert_course_release(
+                    database_connection,
+                    CourseRelease(
+                        course_id=CATALOG.course.id,
+                        session_reached="S4",
+                        released_at="2026-08-08T09:00:00Z",
+                    ),
+                )
+                for command in CATALOG.session("S4").objectives[0].next_steps:
+                    add_command_observation(
+                        database_connection,
+                        _command_observation(command, observed_at="2026-08-08T09:01:00Z"),
+                    )
             database_connection.commit()
 
         interpreter = _RecordingAnswerInterpreter(
@@ -1050,12 +1190,68 @@ def test_stale_answer_interpretation_is_not_applied_to_next_objective(
                 database_connection,
                 account_lookup=_account_lookup(learner_home),
                 answer_interpreter=interpreter,
-                timestamp="2026-08-01T09:03:00Z",
+                timestamp="2026-08-08T09:03:00Z",
             ),
         )
 
-    assert response.text.startswith("Current session objective: Explain redirection order")
+        assert (
+            list_completed_objective_ids(database_connection, "alice", CATALOG.course.id, "S4")
+            == frozenset()
+        )
+        assert "read-redirections-left-to-right" not in list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S3"
+        )
+        assert not any(
+            event.event_type == "session_objective_validation_failed"
+            for event in list_unexported_audit_events(database_connection, 10)
+        )
+
+    assert response.text.startswith(
+        "Current session objective: Explain redirection order"
+        if session_reached == "S3"
+        else "Current session objective: Read and change file permissions",
+    )
     assert "I still need" not in response.text
+
+
+def test_now_does_not_validate_mixed_answer_objective(
+    migrated_database_path: Path,
+    tmp_path: Path,
+) -> None:
+    """Practical evidence in a mixed tree cannot trigger an unanswered check."""
+
+    def unexpected_account_lookup(handle: str) -> UnixAccount | None:
+        raise AssertionError(f"Now must not inspect artifacts for {handle}'s unanswered objective")
+
+    with connect_database(migrated_database_path) as database_connection:
+        _prepare_combine_streams_objective(database_connection, tmp_path / "alice")
+        completed_objectives = list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S3"
+        )
+        interpreter = _RecordingAnswerInterpreter(database_connection, ())
+        tutor_client = _RecordingTutorClient("should not be used")
+
+        response = handle_chat_request(
+            _private_chat_request("now"),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=unexpected_account_lookup,
+                answer_interpreter=interpreter,
+                tutor_client=tutor_client,
+                timestamp="2026-08-01T09:02:00Z",
+            ),
+        )
+
+        assert "Identify descriptor 2's stream" in response.text
+        assert "guide answer" in response.text
+        assert (
+            list_completed_objective_ids(database_connection, "alice", CATALOG.course.id, "S3")
+            == completed_objectives
+        )
+        assert list_unexported_audit_events(database_connection, 10) == []
+        assert _attempt_count(database_connection) == 0
+        assert interpreter.requests == []
+        assert tutor_client.requests == []
 
 
 def test_answer_objective_explains_early_answer_and_check_transition(
@@ -1195,6 +1391,66 @@ def test_releasing_s4_prioritizes_s4_before_unfinished_s3_objective(
         assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
 
 
+@pytest.mark.parametrize(
+    ("directory_state", "expected_step"),
+    [
+        ("missing", "Run `mkdir -p ~/playground`."),
+        ("outside", "Run `cd ~/playground`."),
+        ("inside", "Run `ls -l permission-demo.txt` now."),
+    ],
+)
+def test_now_preserves_guided_steps_from_partial_check_evidence(
+    migrated_database_path: Path,
+    tmp_path: Path,
+    directory_state: str,
+    expected_step: str,
+) -> None:
+    """Now keeps directory guidance and skips commands already proven successful."""
+    learner_home = tmp_path / "alice"
+    learner_home.mkdir()
+    playground_path = learner_home / "playground"
+    if directory_state != "missing":
+        playground_path.mkdir()
+    with connect_database(migrated_database_path) as database_connection:
+        _write_member(database_connection, session_reached="S4")
+        add_command_observation(
+            database_connection,
+            _command_observation("touch permission-demo.txt", observed_at="2026-08-08T09:01:00Z"),
+        )
+
+        response = handle_chat_request(
+            ChatRequest(
+                context=CliChatContext(
+                    username="alice",
+                    terminal="/dev/pts/1",
+                    cwd=str(playground_path if directory_state == "inside" else learner_home),
+                ),
+                visibility="private",
+                text="now",
+            ),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                timestamp="2026-08-08T09:02:00Z",
+            ),
+        )
+
+        assert expected_step in response.text
+        assert (
+            list_completed_objective_ids(database_connection, "alice", CATALOG.course.id, "S4")
+            == frozenset()
+        )
+        failure_event = next(
+            event
+            for event in list_unexported_audit_events(database_connection, 10)
+            if event.event_type == "session_objective_validation_failed"
+        )
+        assert failure_event.payload["objective_id"] == "read-permissions"
+        assert cast("dict[str, object]", failure_event.payload["evidence"])[
+            "missing_pattern_indexes"
+        ] == [1, 2]
+
+
 def test_cli_bare_statement_reaches_tutor_during_practical_objective(
     migrated_database_path: Path,
 ) -> None:
@@ -1240,6 +1496,10 @@ def test_failed_check_lists_seen_and_missing_commands(migrated_database_path: Pa
 
         assert "Seen: `whoami`" in response.text
         assert "Missing: `date`, `uptime`" in response.text
+        assert "Prove the shell is alive" in response.text
+        assert CATALOG.quest("prove-shell-alive").prompt not in response.text
+        assert "Let's work through" not in response.text
+        assert "ask privately" not in response.text
 
 
 def test_check_intent_completes_current_quest_from_command_observations(
@@ -1287,10 +1547,16 @@ def test_check_intent_completes_current_quest_from_command_observations(
 
 
 def test_answer_does_not_validate_practical_quest(migrated_database_path: Path) -> None:
-    """Answers leave practical quest validation to guide check."""
+    """Wrong-mode answers cannot complete an already proven practical quest."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
         _complete_current_session_objectives(database_connection)
+        handle_chat_request(
+            _chat_request("now"),
+            _chat_dependencies(database_connection, timestamp="2026-07-19T08:59:00Z"),
+        )
+        for command in ("whoami", "date", "uptime"):
+            add_command_observation(database_connection, _command_observation(command))
 
         response = handle_chat_request(
             _chat_request("answer I ran the commands"),
@@ -1397,21 +1663,23 @@ def test_check_rolls_back_attempt_when_completion_fails_before_help_logging(
 def test_now_shows_answer_question_for_interactive_current_quest(
     migrated_database_path: Path,
 ) -> None:
-    """Today prompts for explicit answers when the current quest needs one."""
+    """Now never attempts an unanswered quest, whether newly assigned or already current."""
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
         _complete_current_session_objectives(database_connection)
         _complete_first_quest(database_connection)
 
-        response = handle_chat_request(
-            _chat_request("now"),
-            _chat_dependencies(database_connection),
-        )
+        for message in ("now", "next"):
+            response = handle_chat_request(
+                _chat_request(message),
+                _chat_dependencies(database_connection),
+            )
 
-        assert response.text.startswith("Today's quest: Name the system")
-        assert "PRETTY_NAME value" in response.text
-        assert "When ready, run: guide answer 'your answer'" in response.text
-        assert _attempt_count(database_connection) == 1
+            assert response.text.startswith("Today's quest: Name the system")
+            assert "PRETTY_NAME value" in response.text
+            assert "When ready, run: guide answer 'your answer'" in response.text
+            assert _attempt_count(database_connection) == 1
+            assert response.learner_snapshot.completed_quests == ("prove-shell-alive",)
 
 
 def test_check_without_answer_returns_missing_answer_feedback_without_recording_attempt(
@@ -1731,16 +1999,22 @@ def test_guide_check_completes_ownership_proof(
         assert _latest_attempt_record(database_connection)[:2] == ("passed", None)
 
 
-def test_check_intent_completes_path_exists_quest_from_filesystem(
+def test_now_assigns_then_completes_only_current_practical_quest(
     migrated_database_path: Path,
     tmp_path: Path,
 ) -> None:
-    """Chat check can complete a catalog path-existence quest from filesystem evidence."""
+    """New assignments and successors are display-only even with passing file evidence."""
     learner_home = tmp_path / "alice"
     playground_path = learner_home / "playground"
     playground_path.mkdir(parents=True)
     for playground_file_name in ("one.txt", "two.txt", "three.txt"):
         (playground_path / playground_file_name).write_text("ready\n", encoding="utf-8")
+    (playground_path / "micro-note.txt").write_text("edited with micro\n", encoding="utf-8")
+    account_lookups: list[str] = []
+
+    def account_lookup(handle: str) -> UnixAccount | None:
+        account_lookups.append(handle)
+        return _account_lookup(learner_home)(handle)
 
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection, session_reached="S2")
@@ -1756,12 +2030,23 @@ def test_check_intent_completes_path_exists_quest_from_filesystem(
             ),
         )
 
-        response = handle_chat_request(
-            _chat_request("check my work"),
-            _chat_dependencies(database_connection, account_lookup=_account_lookup(learner_home)),
+        assignment_response = handle_chat_request(
+            _chat_request("now"),
+            _chat_dependencies(database_connection, account_lookup=account_lookup),
         )
 
-        assert response.text == _completed_quest_text("Build a playground", 30)
+        assert "Today's quest: Build a playground" in assignment_response.text
+        assert account_lookups == []
+        assert _attempt_count(database_connection) == 0
+
+        response = handle_chat_request(
+            _chat_request("now"),
+            _chat_dependencies(database_connection, account_lookup=account_lookup),
+        )
+
+        assert "Completed quest: Build a playground" in response.text
+        assert "Today's quest: Edit with micro" in response.text
+        assert _attempt_count(database_connection) == 1
         attempt_record = _latest_attempt_record(database_connection)
         assert attempt_record[:2] == ("passed", None)
         assert load_json(attempt_record[2]) == {
@@ -1801,6 +2086,10 @@ def test_check_intent_completes_path_exists_quest_from_filesystem(
                 "build-playground",
             )
             is not None
+        )
+        assert (
+            get_quest_completion(database_connection, "alice", CATALOG.course.id, "edit-with-micro")
+            is None
         )
 
 
@@ -2114,7 +2403,7 @@ def test_private_fallback_reports_tutor_failure_in_character(
 def test_private_tutor_receives_read_only_validation_status(
     migrated_database_path: Path,
 ) -> None:
-    """LLM context can explain current evidence without recording progress."""
+    """Only an explicit diagnostic request calls the tutor and leaves progress unchanged."""
     tutor_client = _RecordingTutorClient("You still need date and uptime.")
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
@@ -2127,18 +2416,33 @@ def test_private_tutor_receives_read_only_validation_status(
             database_connection,
             _command_observation("whoami", observed_at="2026-07-19T09:02:00Z"),
         )
-
-        response = handle_chat_request(
-            _private_chat_request("how am I doing?"),
+        handle_chat_request(
+            _private_chat_request("check"),
             _chat_dependencies(
                 database_connection,
                 tutor_client=tutor_client,
                 timestamp="2026-07-19T09:03:00Z",
             ),
         )
+        assert tutor_client.requests == []
+        assert _attempt_count(database_connection) == 1
+        failed_attempt = _latest_attempt_record(database_connection)
+
+        response = handle_chat_request(
+            _private_chat_request("why did my check fail?"),
+            _chat_dependencies(
+                database_connection,
+                tutor_client=tutor_client,
+                timestamp="2026-07-19T09:04:00Z",
+            ),
+        )
 
         validation_status = tutor_client.requests[0].context.validation_status
         assert response.text == "You still need date and uptime."
+        assert len(tutor_client.requests) == 1
+        assert tutor_client.requests[0].message == "why did my check fail?"
+        assert _attempt_count(database_connection) == 1
+        assert _latest_attempt_record(database_connection) == failed_attempt
         assert validation_status is not None
         assert validation_status.target_type == "quest"
         assert validation_status.target_id == "prove-shell-alive"
@@ -2342,34 +2646,59 @@ def test_public_fallback_does_not_call_llm_or_expose_private_state(
         assert list_group_grants(database_connection, "alice") == []
 
 
+@pytest.mark.parametrize("message", ["now", "check"])
+@pytest.mark.parametrize("objectives_complete", [False, True])
 @pytest.mark.parametrize(
-    ("message", "expected_prefix"),
+    "context",
     [
-        ("today", "Current session objective: Confirm that your shell is working"),
-        ("check my work", "Current session objective: Confirm that your shell is working"),
+        CliChatContext(username="alice", terminal="/dev/pts/1"),
+        IrcChatContext(nickname="alice", target="maker-guide", reply_target="alice"),
     ],
 )
 def test_deterministic_intents_bypass_llm(
     migrated_database_path: Path,
     message: str,
-    expected_prefix: str,
+    objectives_complete: bool,
+    context: CliChatContext | IrcChatContext,
 ) -> None:
     """Deterministic chat intents do not call the LLM provider."""
     tutor_client = _RecordingTutorClient("should not be used")
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
+        if objectives_complete:
+            _complete_current_session_objectives(database_connection)
+            handle_chat_request(_chat_request("now"), _chat_dependencies(database_connection))
+        interpreter = _RecordingAnswerInterpreter(database_connection, ())
 
         response = handle_chat_request(
-            _chat_request(message),
-            _chat_dependencies(database_connection, tutor_client=tutor_client),
+            ChatRequest(context=context, visibility="private", text=message),
+            _chat_dependencies(
+                database_connection,
+                tutor_client=tutor_client,
+                answer_interpreter=interpreter,
+            ),
         )
 
-        assert response.text.startswith(expected_prefix)
+        assert (
+            "Prove the shell is alive"
+            if objectives_complete
+            else "Confirm that your shell is working"
+        ) in response.text
+        assert "Explanation:" not in response.text
+        assert list_llm_audit_logs(database_connection, "alice", limit=10) == []
+        assert interpreter.requests == []
+        if message == "check":
+            assert "Start here:" not in response.text
+            assert "Prompt:" not in response.text
+            assert "ask privately" not in response.text
+            assert all(command in response.text for command in ("whoami", "date", "uptime"))
     assert tutor_client.requests == []
 
 
+@pytest.mark.parametrize("message", ["check", "now", "today", "next"])
 def test_irc_check_marks_missing_client_evidence_as_retryable(
     migrated_database_path: Path,
+    message: str,
 ) -> None:
     """IRC check can ask for client evidence and retry without showing a failed check."""
     with connect_database(migrated_database_path) as database_connection:
@@ -2392,12 +2721,11 @@ def test_irc_check_marks_missing_client_evidence_as_retryable(
         )
 
         response = handle_chat_request(
-            _chat_request("check"),
+            _private_chat_request(message),
             _chat_dependencies(database_connection, timestamp="2026-10-24T09:01:00Z"),
         )
 
     assert response.retry_after_irc_client_verification is True
-    assert "Not yet." in response.text
 
 
 def test_check_intent_names_stale_s5_report_html(

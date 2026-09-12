@@ -40,10 +40,10 @@ After completing a step, start with:
 guide now
 ```
 
-- If it still names the objective you just worked on, run `guide check`, then `guide now`.
-- If it already names the next goal, continue with that goal without checking its unfinished work.
+- It checks one task and shows the next on success.
+- Otherwise, follow the feedback and try again.
 
-Successful commands can record completion automatically, including objectives that also require files. File-only goals still need an explicit check when they remain current. If a check reports a problem, address the named objective and return to `guide now` first.
+Run `guide now` before starting a quest. Use `guide answer` when asked; `guide check` is an optional explicit check.
 
 <!-- end_slide -->
 
@@ -76,7 +76,7 @@ bash ~/scripts/site-check.sh
 
 Find the next timer run and the completed build in the real output. An inactive oneshot service after success is normal; a failed build is not.
 
-Checkpoint: run `guide now`, then use the checkpoint routine before sed.
+Checkpoint: use the checkpoint routine with `guide now` before sed.
 
 <!-- end_slide -->
 
@@ -96,7 +96,7 @@ printf '%s\n' '# My report' 'ordinary line' | sed 's/^# \(.*\)$/<h1>\1<\/h1>/'
 
 Only the heading changes. This is a regex exercise, not a replacement for the site's Markdown builder.
 
-Checkpoint: run `guide now`, then use the checkpoint routine before awk.
+Checkpoint: use the checkpoint routine with `guide now` before awk.
 
 <!-- end_slide -->
 
@@ -110,7 +110,7 @@ awk -F: '{print $1}' /etc/passwd
 
 Change `$1` to `$7` to inspect shell paths, like the fields used in your report.
 
-Checkpoint: run `guide now`, then use the checkpoint routine before vim.
+Checkpoint: use the checkpoint routine with `guide now` before vim.
 
 <!-- end_slide -->
 
@@ -125,7 +125,7 @@ For a new file, press `i`, type `My timer rebuilds existing site source.`, press
 
 Back at the shell, run `cat ~/playground/vim-note.txt`. Esc then `:q!` and Enter quits without saving; `:w` saves without quitting.
 
-Checkpoint: run `guide now`, then use the checkpoint routine before the README.
+Checkpoint: use the checkpoint routine with `guide now` before the README.
 
 <!-- end_slide -->
 
@@ -137,7 +137,7 @@ micro ~/src/README.md
 
 Explain the site, both public URLs, report generation, build, service, logs, and recovery. Save with `Ctrl-S` and quit with `Ctrl-Q`; the source handoff and Git steps follow after the webring.
 
-Checkpoint: run `guide now`, then use the checkpoint routine before the webring.
+Checkpoint: use the checkpoint routine with `guide now` before the webring.
 
 <!-- end_slide -->
 
@@ -155,7 +155,7 @@ grep -i webring ~/public_html/index.html
 
 Open the homepage in your laptop browser after each build; keep one set of navigation links.
 
-Checkpoint: run `guide now`, then use the checkpoint routine before the source handoff.
+Checkpoint: use the checkpoint routine with `guide now` before the source handoff.
 
 <!-- end_slide -->
 
@@ -170,7 +170,7 @@ Follow [Prepare a source handoff](../../quests/prepare-source-handoff.md) now:
 
 A Git log listing is not a backup of files outside the repo.
 
-Final checkpoint: run `guide now`, then use the checkpoint routine. Once all seven core steps are complete, it shows your current quest. Remaining quests are optional reinforcement.
+Final checkpoint: use the checkpoint routine with `guide now`. Once all seven core steps are complete, it shows your current quest. Remaining quests are optional reinforcement.
 
 <!-- end_slide -->
 

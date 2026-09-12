@@ -17,12 +17,12 @@ The site is now a small system. Systems need automation and documentation.
 
 ## Checkpoint Routine
 
-After completing a step, run `guide now` first:
+After completing a step, run `guide now`:
 
-- If it still names the objective you just worked on, run `guide check`, then `guide now`.
-- If it already names the next goal, continue with that goal without checking its unfinished work.
+- It checks one task and shows the next on success.
+- Otherwise, follow the feedback, fix the problem, and try again.
 
-Successful commands can record completion automatically, including objectives that also require files. File-only goals still need an explicit check when they remain current. If a check reports a problem, address the named objective and return to `guide now` first.
+Run `guide now` before starting a quest. Use `guide answer 'your answer'` when asked; `guide check` is an optional explicit check.
 
 ## Live Core
 
