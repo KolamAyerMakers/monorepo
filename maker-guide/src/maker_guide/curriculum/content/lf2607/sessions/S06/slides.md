@@ -308,9 +308,9 @@ Trace the missing-page check with `bash -x ~/scripts/site-check.sh not-a-page.ht
 
 <!-- end_slide -->
 
-# Repeat The Working Check
+# Check Every Page In One Loop
 
-Extend `$1` (the first argument) to `"$@"` (all arguments):
+Extend `$1` (the first argument) to `"$@"` (all arguments). The loop makes `page` from each supplied argument:
 
 ```bash
 for page in "$@"; do
@@ -319,13 +319,13 @@ for page in "$@"; do
 done
 ```
 
-Put this in your script below `base_url`, replacing the one-page body.
+Put this in your script below `base_url`, replacing the one-page body. Run `bash ~/scripts/site-check.sh "" maker-report.html`: `""` is a real argument that selects the homepage; any other supplied path is accepted too.
 
-Run `bash ~/scripts/site-check.sh "" maker-report.html`. `""` is one argument for the homepage. Any other supplied path is accepted too.
+Replace the `printf` with your curl capture and your `if` decision, inside the loop. `page` comes from the loop now, not `$1`.
 
 <!-- end_slide -->
 
-# No Arguments Is Not The Homepage
+# No Arguments: Print Usage
 
 Add this after `set -euo pipefail`, before building URLs:
 
@@ -340,25 +340,7 @@ fi
 
 <!-- end_slide -->
 
-# Put The Decision Inside The Loop
-
-Keep `base_url` above the loop. Move curl and the decision inside:
-
-```text
-for each page:
-  build its URL
-  capture its HTTP status
-  choose the message with if / else / fi
-done
-```
-
-Remove `page="$1"`: the loop now sets `page`. Move `url="$base_url/$page"` inside it.
-
-Run it: two URLs, two results.
-
-<!-- end_slide -->
-
-# Solution: Check Both Pages
+# The Complete Checker
 
 Keep the usage guard above `base_url`; the body is now:
 
@@ -481,39 +463,11 @@ bash ~/scripts/site-check.sh "" maker-report.html
 bash ~/scripts/site-check.sh not-a-page.html
 ```
 
-Use an unused path for a real `404`, without changing statuses or deleting files. No report repair advice belongs to that path. Then open both real pages in your laptop browser. Reference: [complete script](self-study.md#complete-script).
-
 <!-- end_slide -->
 
-# Check Behavior With Guide
+# Check With Guide
 
-For your current checker task, run `guide now` or `guide check` in the classroom shell.
-It automatically runs your script locally as your learner account. IRC sends you back to the shell.
-
-| Simulated case | Expected result |
-|---|---|
-| Both `200` | Identify both successes |
-| Report alone, `404` | Missing report; advise `maker-report.sh`, then `build-website` |
-| Homepage alone, `404` | Missing homepage; no report-regeneration advice |
-| Report `500`, homepage `200` | HTTP error, not success |
-| Homepage connection fails | Diagnose failure; still check report |
-| Report connection fails | Diagnose failure; still check homepage |
-| Curl prints `200` but exits nonzero | Failure, not success |
-| Arbitrary missing page alone, `404` | Identify that path; no report-regeneration advice |
-| No arguments | Usage help and nonzero exit; no page request |
-
-The suite varies arguments and order. Controlled fixtures test connection failures safely; a live `404` is different.
-
-<!-- end_slide -->
-
-# Your Implementation
-
-- `for` and `if` are our teaching path, not required grading syntax.
-- The reference is one example. Functions, `case`, variable names, nesting, page order, and curl flag order can vary.
-- Identify each page by URL, path, or homepage/report label. Include the HTTP code and diagnosis, or a clear connection-failure diagnosis.
-- Do not claim a failed request succeeded. Follow the fixed case feedback and retry.
-
-Simulations do not verify live health. Still run `bash ~/scripts/site-check.sh "" maker-report.html` and open both pages in your browser.
+`guide now` or `guide check` runs your script locally as your learner account, varying page arguments and order. It tells you the next case to fix; the cases are the ones from the exercise above.
 
 <!-- end_slide -->
 
