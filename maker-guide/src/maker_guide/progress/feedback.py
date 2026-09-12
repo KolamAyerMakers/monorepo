@@ -166,7 +166,7 @@ def site_check_feedback(validation_result: QuestValidationResult) -> str | None:
             for case in cast("list[object]", cases)
         ):
             response_parts.append(
-                "Passed: your script reports success for both pages returning HTTP 200."
+                "Passed: your script handles the homepage and report both returning HTTP 200."
             )
         response_parts.extend(
             (f"Next step: {next_step}", "Then run `guide now` again in the classroom shell.")

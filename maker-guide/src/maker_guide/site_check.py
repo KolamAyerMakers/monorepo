@@ -43,9 +43,9 @@ _ERROR_FEEDBACK = {
 _CASE_FEEDBACK = {
     "both-ok": "Check each supplied page argument and identify each HTTP 200 success.",
     "report-missing": (
-        "Handle a missing report: only the supplied report page is checked and returns HTTP 404. "
-        "Print that it is missing and advise running `maker-report.sh`, then `build-website`. "
-        "See S6 Exercise 4; do not delete your real report."
+        "Handle a missing report: your 404 handling already works. The remaining gap is only "
+        "for maker-report.html: when it returns HTTP 404, also advise running `maker-report.sh`, "
+        "then `build-website`. See S6 Exercise 4; do not delete your real report."
     ),
     "homepage-missing": (
         "Check only the supplied homepage. The test returns HTTP 404 for it. "
