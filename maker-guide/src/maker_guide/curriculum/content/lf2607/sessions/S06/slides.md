@@ -41,11 +41,9 @@ traceroute -m 8 1.1.1.1
 
 # Start On The Classroom Server
 
-Open your classroom SSH session:
+Open your classroom SSH session and load the objective:
 
 ```bash
-whoami
-hostname
 guide now
 ```
 
