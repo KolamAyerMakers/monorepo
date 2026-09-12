@@ -586,7 +586,10 @@ def _quest(  # noqa: PLR0913
             "Ask the guide to check your work.",
         ),
         hints=(
-            Hint(level=1, text="If you need help, read the related command cards."),
+            Hint(
+                level=1,
+                text="Open the quest guide above and run its smallest command step first.",
+            ),
             Hint(level=2, text="Run the smallest command that proves one part of the task."),
             Hint(level=3, text=evidence),
         ),

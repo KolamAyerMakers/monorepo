@@ -35,7 +35,7 @@ def format_today_quest(quest: Quest) -> str:
             ),
         )
     if quest.hints:
-        response_parts.append(f"First nudge:\n{quest.hints[0].text}")
+        response_parts.append(f"Hint:\n{quest.hints[0].text}")
     if (question := validation_answer_question(quest.validation)) is not None:
         response_parts.append(f"Question:\n{question}")
         response_parts.append("When ready, run: guide answer 'your answer'")
