@@ -8,7 +8,7 @@ S7: 2026-09-19
 
 <!-- end_slide -->
 
-# Today's Story
+# Your Page On The Wire
 
 S6 read HTTP responses and automated two page checks. Today we compare served bytes with your files and investigate the separate service route.
 

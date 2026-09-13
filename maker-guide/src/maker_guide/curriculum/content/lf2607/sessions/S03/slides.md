@@ -6,7 +6,7 @@ Streams, pipes, processes
 
 <!-- end_slide -->
 
-# Today's Story
+# Pieces That Fit Together
 
 Unix tools become powerful when their input and output fit together.
 

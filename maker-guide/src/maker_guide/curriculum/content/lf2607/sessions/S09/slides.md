@@ -6,7 +6,7 @@ Polish the same project: timers, text, README, webring
 
 <!-- end_slide -->
 
-# Today's Story
+# Still Running Tomorrow
 
 Useful systems run again tomorrow without you remembering.
 

@@ -6,7 +6,7 @@ Boss fight, demos, graduation
 
 <!-- end_slide -->
 
-# Today's Story
+# The Real Point
 
 The point was never the checklist.
 

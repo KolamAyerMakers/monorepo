@@ -6,7 +6,7 @@ Your own web service
 
 <!-- end_slide -->
 
-# Today's Story
+# Serve It Yourself
 
 The platform already serves your static homepage and report.
 

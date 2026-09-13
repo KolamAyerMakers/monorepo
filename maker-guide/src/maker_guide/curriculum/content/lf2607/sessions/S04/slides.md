@@ -6,7 +6,7 @@ Permissions, Git, Forgejo
 
 <!-- end_slide -->
 
-# Today's Story
+# Your Page And History
 
 This is a shared Linux server.
 
