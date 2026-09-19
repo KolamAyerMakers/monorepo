@@ -73,24 +73,12 @@ nc() {
 
 
 @pytest.mark.parametrize(
-    ("document_name", "input_paths"),
-    [
-        ("compare-source-and-output.md", ("src/pages/index.md", "public_html/index.html")),
-        (
-            "compare-page-fetches.md",
-            ("playground/home-fetch.html", "playground/report-fetch.html"),
-        ),
-    ],
-)
-@pytest.mark.parametrize(
     "second_content",
     ["same\n", "different\n", None],
     ids=("identical", "different", "missing"),
 )
 def test_documented_diff_commands_accept_differences_but_preserve_errors(
     temporary_path: Path,
-    document_name: str,
-    input_paths: tuple[str, str],
     second_content: str | None,
 ) -> None:
     """Accept diff status 1 for observation without swallowing file-reading errors."""
@@ -99,8 +87,8 @@ def test_documented_diff_commands_accept_differences_but_preserve_errors(
     diff_path = shutil.which("diff")
     assert diff_path is not None
     temporary_path.joinpath("diff").symlink_to(diff_path)
-    first_path = temporary_path / input_paths[0]
-    second_path = temporary_path / input_paths[1]
+    first_path = temporary_path / "src/pages/index.md"
+    second_path = temporary_path / "public_html/index.html"
     first_path.parent.mkdir(parents=True, exist_ok=True)
     second_path.parent.mkdir(parents=True, exist_ok=True)
     first_path.write_text("same\n", encoding="utf-8")
@@ -116,7 +104,7 @@ def test_documented_diff_commands_accept_differences_but_preserve_errors(
                 line
                 for line in (
                     files("maker_guide.curriculum")
-                    .joinpath(f"content/lf2607/quests/{document_name}")
+                    .joinpath("content/lf2607/quests/compare-source-and-output.md")
                     .read_text(encoding="utf-8")
                     .splitlines()
                 )

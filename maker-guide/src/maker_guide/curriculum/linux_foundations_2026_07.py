@@ -3259,21 +3259,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             evidence="The source page and an index link to `links.html` must exist.",
         ),
         _quest(
-            quest_id="compare-page-fetches",
-            title="Compare two page fetches",
-            sequence=66,
-            available_after_session="S7",
-            prompt="Fetch two site pages with `curl`, save them, and compare them with `diff`.",
-            required_commands=("curl", "diff", ">"),
-            practiced_skills=("http-inspection", "html-on-the-wire"),
-            validation=CommandHistoryValidation(
-                required_patterns=(r"^curl ", r"^diff "),
-                observed_commands=("curl", "diff"),
-            ),
-            goal="Use command-line evidence to compare what the web server returns.",
-            evidence="The guide needs to see `curl` and `diff` commands.",
-        ),
-        _quest(
             quest_id="publish-http-troubleshooting",
             title="Publish troubleshooting notes",
             sequence=80,
