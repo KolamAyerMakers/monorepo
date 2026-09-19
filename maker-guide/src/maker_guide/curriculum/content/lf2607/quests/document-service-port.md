@@ -4,7 +4,7 @@ Quest: document-service-port
 
 ## Mission
 
-Improve `setup.md` so you or a peer can find the backend endpoint and understand why that port was chosen. This is optional publishing reinforcement. If `~/src/pages/setup.md` is absent, follow [Create a setup page](create-setup-page.md) first, creating source before building. Preserve existing files and links. A separate service page is optional, not another required artifact.
+Improve `setup.md` so you or a peer can find the backend endpoint and understand why that port was chosen. This is optional publishing reinforcement. If `~/src/pages/setup.md` is absent, create it with a heading and link it from `index.md` first, creating source before building. Preserve existing files and links. A separate service page is optional, not another required artifact.
 
 ## Calculate And Explain
 

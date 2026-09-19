@@ -367,7 +367,6 @@ Do not use `git add .` or stage generated output. There is no required commit or
 
 - [Serve a local check page](../../quests/serve-local-check-page.md)
 - [Diagnose the service URL](../../quests/diagnose-second-url.md)
-- [Publish troubleshooting notes](../../quests/publish-http-troubleshooting.md)
 - [Caddy file-server command](https://caddyserver.com/docs/command-line#caddy-file-server)
 - [Reverse proxy](../../concepts/reverse-proxy.md)
 

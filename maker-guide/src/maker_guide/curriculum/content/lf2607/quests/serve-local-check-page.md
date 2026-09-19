@@ -46,9 +46,7 @@ Success means local curl received your recognizable page from your own running b
 
 ## Optional Publishing Extension
 
-For extra practice while Caddy runs, edit an existing page source, run `build-website`, and reload after success without restarting Caddy. The explicit root path lets new requests find the newly replaced `public_html` tree.
-
-If you want published operating notes, follow [Create a setup page](create-setup-page.md) first when `~/src/pages/setup.md` is absent. Preserve existing files and links, add useful observations, then build. You can [preserve intended source changes in Git](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or raw private logs.
+For extra practice while Caddy runs, edit an existing page source, run `build-website`, and reload after success without restarting Caddy. The explicit root path lets new requests find the newly replaced `public_html` tree. You can [preserve intended source changes in Git](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or raw private logs.
 
 ## If It Does Not Work
 

@@ -1064,31 +1064,6 @@ def test_s1_site_build_is_not_repeated_as_a_quest() -> None:
     )
 
 
-def test_s7_optional_setup_page_requires_linked_rebuild_evidence() -> None:
-    """The optional setup quest retains linked publication evidence."""
-    setup_validation = CATALOG.quest("create-setup-page").validation
-
-    assert isinstance(setup_validation, AllOfValidation)
-    assert any(
-        isinstance(validation, FileCheckValidation)
-        and validation.path == "~/src/pages/setup.md"
-        and "#" in validation.required_regex
-        for validation in setup_validation.validations
-    )
-    assert any(
-        isinstance(validation, FileCheckValidation)
-        and validation.path == "~/src/pages/index.md"
-        and "setup" in validation.required_regex
-        for validation in setup_validation.validations
-    )
-    assert any(
-        isinstance(validation, CommandHistoryValidation)
-        and r"^(?:build-website|maker-guide-build-personal-website)$"
-        in validation.required_patterns
-        for validation in setup_validation.validations
-    )
-
-
 def test_s7_manual_server_checks_do_not_require_foreground_or_failed_commands() -> None:
     """Successful HTTP history checks requests, not foreground lifecycle or response output."""
     assert tuple(objective.id for objective in CATALOG.session("S7").objectives) == (
@@ -1138,8 +1113,6 @@ def test_s7_manual_server_checks_do_not_require_foreground_or_failed_commands() 
 def test_s7_companion_notes_reuse_setup() -> None:
     """Companion quests accept shared notes instead of requiring separate pages."""
     for quest_id, notes in (
-        ("publish-http-troubleshooting", "200 works; 502 needs a backend check; 404 is missing"),
-        ("publish-http-troubleshooting", "[Existing diagnosis](troubleshooting.html)"),
         ("document-service-port", "My UID is 1234; 10000 + UID gives port 11234."),
         ("document-service-port", "[My port explanation](service.html)"),
     ):

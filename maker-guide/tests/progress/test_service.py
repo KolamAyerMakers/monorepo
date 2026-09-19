@@ -224,15 +224,15 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
                     id=None,
                     handle=HANDLE,
                     course_id=CATALOG.course.id,
-                    quest_id="create-setup-page",
+                    quest_id="record-http-headers",
                     assigned_at=JOINED_AT,
                     source=SOURCE,
                 ),
             )
-            setup_assignment = get_assignment(
-                database_connection, HANDLE, CATALOG.course.id, "create-setup-page"
+            stale_assignment = get_assignment(
+                database_connection, HANDLE, CATALOG.course.id, "record-http-headers"
             )
-            assert setup_assignment is not None
+            assert stale_assignment is not None
 
             quest_result = current_quest(
                 database_connection,
@@ -245,12 +245,14 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
             assert quest_result.quest == CATALOG.quest("serve-local-check-page")
             assert quest_result.assigned_now is True
             assert (
-                get_assignment(database_connection, HANDLE, CATALOG.course.id, "create-setup-page")
-                == setup_assignment
+                get_assignment(
+                    database_connection, HANDLE, CATALOG.course.id, "record-http-headers"
+                )
+                == stale_assignment
             )
             assert (
                 get_quest_completion(
-                    database_connection, HANDLE, CATALOG.course.id, "create-setup-page"
+                    database_connection, HANDLE, CATALOG.course.id, "record-http-headers"
                 )
                 is None
             )

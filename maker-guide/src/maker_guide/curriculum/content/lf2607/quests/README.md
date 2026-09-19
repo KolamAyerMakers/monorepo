@@ -61,12 +61,6 @@ The S7 reinforcement order puts core server work and diagnosis before publishing
 - [probe-closed-port](probe-closed-port.md)
 - [inspect-first-url-headers](inspect-first-url-headers.md)
 - [record-http-headers](record-http-headers.md)
-- [create-setup-page](create-setup-page.md)
-- [publish-ascii-art](publish-ascii-art.md)
-- [compare-source-and-output](compare-source-and-output.md)
-- [inspect-generated-html](inspect-generated-html.md)
-- [create-links-page](create-links-page.md)
-- [publish-http-troubleshooting](publish-http-troubleshooting.md)
 - [document-service-port](document-service-port.md)
 
 ## S08 Reinforcement

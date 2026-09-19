@@ -50,7 +50,7 @@ If no backend is running, follow [Serve a local check page](serve-local-check-pa
 
 After recovery, request locally and try the [service homepage](https://your-handle.lf2607.kolamayermakers.org/) from your laptop, replacing `your-handle`. Ask a peer to try too. Explain which observation located the failure, what changed, and what remains unresolved. If access already worked, say so; if DNS or TLS fails, explain that no HTTP response was received.
 
-Record actual results, not an expected answer or a command list. Published notes are optional: if you want them and `~/src/pages/setup.md` is absent, follow [Create a setup page](create-setup-page.md) before building. Otherwise extend the existing file without replacing its content. You may then build and [preserve the intended source change](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or private logs.
+Record actual results, not an expected answer or a command list. Published notes are optional: extend `~/src/pages/setup.md` without replacing its content, then build and [preserve the intended source change](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or private logs.
 
 ## Related Reading
 

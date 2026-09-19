@@ -2966,39 +2966,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
         ),
         _quest(
-            quest_id="create-setup-page",
-            title="Create a setup page",
-            sequence=67,
-            available_after_session="S7",
-            prompt="Create `~/src/pages/setup.md`, link to it from `index.md`, and rebuild.",
-            required_commands=("micro", "build-website"),
-            practiced_skills=("multi-page-sites", "html-on-the-wire"),
-            validation=AllOfValidation(
-                validations=(
-                    FileCheckValidation(
-                        path="~/src/pages/setup.md",
-                        required_regex=r"(?s)# .+",
-                    ),
-                    FileCheckValidation(
-                        path="~/src/pages/index.md",
-                        required_regex=r"setup\.html",
-                    ),
-                    FileCheckValidation(
-                        path="~/public_html/setup.html",
-                        required_regex=r"(?is)setup",
-                    ),
-                    CommandHistoryValidation(
-                        required_patterns=(
-                            r"^(?:build-website|maker-guide-build-personal-website)$",
-                        ),
-                        observed_commands=("build-website",),
-                    ),
-                ),
-            ),
-            goal="Add a new page to your website and link to it.",
-            evidence="Source heading, index link, generated page, and build command must exist.",
-        ),
-        _quest(
             quest_id="inspect-first-url-headers",
             title="Inspect your static URL headers",
             sequence=64,
@@ -3049,21 +3016,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "The guide needs one completed local request; inspect the service and static "
                 "routes yourself."
             ),
-        ),
-        _quest(
-            quest_id="publish-ascii-art",
-            title="Publish ASCII art",
-            sequence=68,
-            available_after_session="S7",
-            prompt="Create `~/src/pages/art.md` with a fenced code block and rebuild.",
-            required_commands=("micro", "build-website"),
-            practiced_skills=("multi-page-sites", "html-on-the-wire"),
-            validation=FileCheckValidation(
-                path="~/src/pages/art.md",
-                required_regex=r"(?s)# .+```.+```",
-            ),
-            goal="Publish preformatted text on your website.",
-            evidence="`~/src/pages/art.md` needs a heading and fenced code block.",
         ),
         _quest(
             quest_id="explain-status-codes",
@@ -3132,42 +3084,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Describe common HTTP status codes without panic.",
             evidence="Answer with all three codes and their meanings.",
-        ),
-        _quest(
-            quest_id="compare-source-and-output",
-            title="Compare source and output",
-            sequence=69,
-            available_after_session="S7",
-            prompt="Use `diff` to compare one source Markdown page with generated HTML output.",
-            required_commands=("diff", "build-website"),
-            practiced_skills=("html-on-the-wire", "multi-page-sites"),
-            validation=CommandHistoryValidation(
-                required_patterns=(
-                    r"^(?:build-website|maker-guide-build-personal-website)$",
-                    r"^diff ",
-                ),
-                observed_commands=("build-website", "diff"),
-            ),
-            goal="Notice that generated HTML is related to source, not identical to it.",
-            evidence="The guide needs to see a build and a `diff` command.",
-        ),
-        _quest(
-            quest_id="inspect-generated-html",
-            title="Inspect generated HTML",
-            sequence=70,
-            available_after_session="S7",
-            prompt=(
-                "After the optional create-setup-page quest, inspect `~/public_html/setup.html` "
-                "and find generated HTML tags. Rebuilding alone cannot create missing source."
-            ),
-            required_commands=("cat", "grep"),
-            practiced_skills=("html-on-the-wire", "text-search"),
-            validation=FileCheckValidation(
-                path="~/public_html/setup.html",
-                required_regex=r"(?is)<html|<h1|setup",
-            ),
-            goal="Read generated output as the browser receives it.",
-            evidence="`~/public_html/setup.html` must exist and contain generated HTML.",
         ),
         _quest(
             quest_id="probe-closed-port",
@@ -3240,48 +3156,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Keep HTTP evidence that can be compared later.",
             evidence="`~/playground/headers.txt` needs an HTTP status line.",
-        ),
-        _quest(
-            quest_id="create-links-page",
-            title="Create a links page",
-            sequence=71,
-            available_after_session="S7",
-            prompt="Create `~/src/pages/links.md`, link it from `index.md`, and rebuild.",
-            required_commands=("micro", "build-website"),
-            practiced_skills=("multi-page-sites", "html-on-the-wire"),
-            validation=AllOfValidation(
-                validations=(
-                    FileCheckValidation(path="~/src/pages/links.md", required_regex=r"(?s)# .+"),
-                    FileCheckValidation(path="~/src/pages/index.md", required_regex=r"links\.html"),
-                ),
-            ),
-            goal="Make navigation between your own pages explicit.",
-            evidence="The source page and an index link to `links.html` must exist.",
-        ),
-        _quest(
-            quest_id="publish-http-troubleshooting",
-            title="Publish troubleshooting notes",
-            sequence=80,
-            available_after_session="S7",
-            prompt=(
-                "Complete the optional create-setup-page quest first if setup.md is absent, "
-                "then improve `~/src/pages/setup.md` with your HTTP troubleshooting observations, "
-                "including 200, 404, and 502. Explain a real incident and recovery to a peer; "
-                "a separate troubleshooting page is optional."
-            ),
-            required_commands=("micro", "build-website"),
-            practiced_skills=("multi-page-sites", "reverse-proxy"),
-            validation=FileCheckValidation(
-                path="~/src/pages/setup.md",
-                required_regex=(
-                    r"(?s)(?=.*\b200\b)(?=.*\b404\b)(?=.*\b502\b).+|troubleshooting\.html"
-                ),
-            ),
-            goal="Turn HTTP failure modes into notes you can use during service work.",
-            evidence=(
-                "The guide checks status references or a troubleshooting link in setup.md, not "
-                "the incident, recovery, or whether a peer could use the advice."
-            ),
         ),
         _quest(
             quest_id="keep-tmux-workbench",
@@ -3541,9 +3415,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=82,
             available_after_session="S7",
             prompt=(
-                "Complete the optional create-setup-page quest first if setup.md is absent, "
-                "then improve `~/src/pages/setup.md` with your UID-derived backend port "
-                "explanation."
+                "If `~/src/pages/setup.md` is absent, create it with a heading and link it from "
+                "`index.md`, then improve it with your UID-derived backend port explanation."
             ),
             required_commands=("id -u", "micro", "build-website"),
             practiced_skills=("manual-web-service", "multi-page-sites"),
