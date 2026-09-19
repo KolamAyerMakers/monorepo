@@ -273,20 +273,6 @@ What is the same? What did curl save you from writing?
 
 <!-- end_slide -->
 
-# What If Two Servers Use The Same Port?
-
-Keep your server running. Try starting another one from the second terminal:
-
-```bash
-caddy file-server --listen :$PORT --root ~/public_html --access-log
-```
-
-Why did this launch fail? Use `ps` and `ss` to identify the process already listening.
-
-Does the original server still answer curl? Do not change the port or stop the existing process to hide the error.
-
-<!-- end_slide -->
-
 # What If The Server Has No Files?
 
 Stop your server with `Ctrl-C`. In that terminal, serve a new empty practice directory:
