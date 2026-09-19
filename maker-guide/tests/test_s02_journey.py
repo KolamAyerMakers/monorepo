@@ -54,6 +54,7 @@ async def test_s2_learner_journey(
                 database_connection=database_connection,
                 catalog=CATALOG,
                 bot_name="guide-test",
+                public_hostname="lf2607.kolamayermakers.org",
                 timestamp_factory=lambda: timestamp,
                 account_lookup=account_lookup,
             ),

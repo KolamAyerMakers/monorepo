@@ -120,6 +120,7 @@ def test_cli_thank_records_cli_audit_provenance(migrated_database_path: Path) ->
                 database_connection=database_connection,
                 catalog=CATALOG,
                 bot_name="guide-test",
+                public_hostname="lf2607.kolamayermakers.org",
                 timestamp_factory=lambda: "2026-07-19T09:00:00Z",
             ),
         )
@@ -251,6 +252,7 @@ def _thank(
             database_connection=database_connection,
             catalog=CATALOG,
             bot_name="guide-test",
+            public_hostname="lf2607.kolamayermakers.org",
             timestamp_factory=lambda: timestamp,
         ),
     )

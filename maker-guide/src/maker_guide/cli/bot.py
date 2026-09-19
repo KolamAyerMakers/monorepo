@@ -166,6 +166,7 @@ async def _handle_socket_help_request(
                         database_connection=database_connection,
                         catalog=DEFAULT_CATALOG,
                         bot_name=configuration.irc.nickname,
+                        public_hostname=configuration.irc.server,
                         tutor_client=tutor_client,
                         answer_interpreter=tutor_client,
                         tutor_max_tokens=(

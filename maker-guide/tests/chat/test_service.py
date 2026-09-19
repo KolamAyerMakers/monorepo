@@ -149,6 +149,7 @@ def test_handle_chat_request_builds_snapshot_and_records_help(
                 database_connection=database_connection,
                 catalog=CATALOG,
                 bot_name="guide-test",
+                public_hostname="lf2607.kolamayermakers.org",
                 timestamp_factory=lambda: "2026-07-19T09:01:00Z",
             ),
         )
@@ -1500,6 +1501,18 @@ def test_s7_local_request_and_honest_diagnosis_unlock_server_quest(
                     ),
                 )
 
+        now_response = handle_chat_request(
+            _private_chat_request("now"),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                timestamp="2026-09-19T09:00:30Z",
+            ),
+        )
+
+        assert "http://127.0.0.1:14242/" in now_response.text
+        assert "alice.lf2607.kolamayermakers.org" in now_response.text
+
         check_response = handle_chat_request(
             _private_chat_request("check"),
             _chat_dependencies(
@@ -1512,6 +1525,9 @@ def test_s7_local_request_and_honest_diagnosis_unlock_server_quest(
         assert check_response.text.startswith(
             "Current session objective: Explain what stops and what keeps working",
         )
+        assert "http://127.0.0.1:14242/" in check_response.text
+        assert "alice.lf2607.kolamayermakers.org" in check_response.text
+        assert "lf2607.kolamayermakers.org/~alice/" in check_response.text
         assert list_completed_objective_ids(
             database_connection, "alice", CATALOG.course.id, "S7"
         ) == frozenset({"inspect-first-url-headers"})
@@ -3350,6 +3366,7 @@ def _chat_dependencies(
         database_connection=database_connection,
         catalog=CATALOG,
         bot_name="guide-test",
+        public_hostname="lf2607.kolamayermakers.org",
         tutor_client=tutor_client,
         answer_interpreter=answer_interpreter,
         timestamp_factory=lambda: timestamp,

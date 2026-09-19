@@ -42,6 +42,7 @@ from maker_guide.repositories.tier_promotion import TierPromotion
 from maker_guide.validation_paths import resolve_validation_path
 
 IRC_CLIENT_VERIFICATION_FAILURE_REASON = "missing-irc-ctcp-version"
+_USER_PORT_OFFSET = 10_000
 _NO_CURRENT_QUEST_TEXT = """All currently available quests are complete.
 
 Ask again after the next session unlocks more work."""
@@ -165,6 +166,19 @@ def now_response(
     )
 
 
+def _learner_prompt(prompt: str, dependencies: ChatDependencies, learner_handle: str) -> str:
+    """Render learner handle, UID-derived port, and classroom hostname tokens."""
+    if "{" not in prompt:
+        return prompt
+    unix_account = dependencies.account_lookup(learner_handle)
+    port = "$PORT" if unix_account is None else str(_USER_PORT_OFFSET + unix_account.user_id)
+    return (
+        prompt.replace("{handle}", learner_handle)
+        .replace("{port}", port)
+        .replace("{host}", dependencies.public_hostname)
+    )
+
+
 def _current_response(  # noqa: PLR0913 - Display reuses request context and checked evidence.
     dependencies: ChatDependencies,
     learner_handle: str,
@@ -195,12 +209,14 @@ def _current_response(  # noqa: PLR0913 - Display reuses request context and che
                             objective_result,
                             dependencies,
                             validation_result,
+                            learner_handle=learner_handle,
                         )
                     return _format_session_objective(
                         objective_result,
                         dependencies,
                         validation_result,
                         next_step=f"Run `{objective.working_directory_creation_step}`.",
+                        learner_handle=learner_handle,
                     )
                 if not _is_current_directory(cwd, path_resolution.target_path):
                     return _format_session_objective(
@@ -208,6 +224,7 @@ def _current_response(  # noqa: PLR0913 - Display reuses request context and che
                         dependencies,
                         validation_result,
                         next_step=f"Run `cd {objective.working_directory}`.",
+                        learner_handle=learner_handle,
                     )
             missing_pattern_indexes = (
                 validation_result.evidence.get("missing_pattern_indexes")
@@ -240,6 +257,7 @@ def _current_response(  # noqa: PLR0913 - Display reuses request context and che
                     if next_step is not None
                     else None
                 ),
+                learner_handle=learner_handle,
             )
         return _format_session_objective(
             objective_result,
@@ -248,6 +266,7 @@ def _current_response(  # noqa: PLR0913 - Display reuses request context and che
             include_instructions=(
                 validation_result is None or validation_result.failure_reason != "site-check-failed"
             ),
+            learner_handle=learner_handle,
         )
     return _current_quest_response(dependencies, learner_handle, source, timestamp)
 
@@ -545,6 +564,7 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
                         else None
                     ),
                     include_instructions=is_answer,
+                    learner_handle=learner_handle,
                 )
             ),
             retry_after_irc_client_verification=(
@@ -584,6 +604,7 @@ def _format_session_objective(  # noqa: PLR0913 - Check and display share object
     tutor_feedback: str | None = None,
     next_step: str | None = None,
     *,
+    learner_handle: str,
     include_instructions: bool = True,
 ) -> str:
     """Format a practical session objective and its incomplete evidence."""
@@ -592,7 +613,8 @@ def _format_session_objective(  # noqa: PLR0913 - Check and display share object
         raise ChatError("current session objective was not found")
     response_parts = [f"Current session objective: {objective.title}"]
     if include_instructions:
-        response_parts.append(next_step or f"Start here:\n{objective.prompt}")
+        prompt = _learner_prompt(objective.prompt, dependencies, learner_handle)
+        response_parts.append(next_step or f"Start here:\n{prompt}")
     self_study_reference = next(
         (
             reference

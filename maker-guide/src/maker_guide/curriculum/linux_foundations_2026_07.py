@@ -1535,11 +1535,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="inspect-first-url-headers",
                     title="Request your server locally and compare the routes",
                     prompt=(
-                        "Set `PORT=$((10000 + $(id -u)))` and run "
-                        '`caddy file-server --listen ":$PORT" '
-                        '--root "$HOME/public_html" --access-log` in one terminal. In another '
-                        "terminal, request `http://127.0.0.1:$PORT/` with `curl -i` and find that "
-                        "request in the access log."
+                        "Set `PORT=$((10000 + $(id -u)))`; yours is {port}. Run "
+                        '`caddy file-server --listen ":$PORT" --root "$HOME/public_html" '
+                        "--access-log` in one terminal. In another, request "
+                        "`http://127.0.0.1:{port}/` with `curl -i`, note that "
+                        "`https://{handle}.{host}/` also answers while it runs, and find both "
+                        "requests in the access log."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(_LOCAL_SERVICE_COMMAND_PATTERN,),
@@ -1550,11 +1551,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="diagnose-second-url",
                     title="Explain what stops and what keeps working",
                     prompt=(
-                        "Stop your foreground server with Ctrl-C. Compare expected localhost "
-                        "refusal, public service 502, and independent static delivery with your "
-                        "actual results. Explain the three routes with `guide answer`, including "
-                        "unexpected DNS or TLS failures. This checks your explanation, not "
-                        "failed command history or captured output."
+                        "Stop your foreground server with `Ctrl-C`, then request "
+                        "`http://127.0.0.1:{port}/` (refused), `https://{handle}.{host}/` "
+                        "(expected 502), and `https://{host}/~{handle}/` with `curl -i`. Explain "
+                        "what each returned and why with `guide answer`, including any DNS or TLS "
+                        "failure you saw."
                     ),
                     validation=InteractiveQuestionValidation(
                         question=(

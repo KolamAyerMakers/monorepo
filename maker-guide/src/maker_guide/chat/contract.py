@@ -80,6 +80,8 @@ class ChatDependencies:
     """Course catalog used to build deterministic learner snapshots."""
     bot_name: str
     """Configured bot name visible to learners."""
+    public_hostname: str
+    """Classroom hostname used to render learner service and static URLs."""
     tutor_client: TutorClient | None = None
     """Optional read-only LLM tutor for private fallback help."""
     answer_interpreter: AnswerInterpreter | None = None

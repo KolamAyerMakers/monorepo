@@ -765,6 +765,7 @@ class IrcClient:
                         database_connection=database_connection,
                         catalog=self._catalog,
                         bot_name=self._config.nickname,
+                        public_hostname=self._config.server,
                         tutor_client=self._tutor_client,
                         answer_interpreter=self._answer_interpreter,
                         tutor_max_tokens=self._tutor_max_tokens,
