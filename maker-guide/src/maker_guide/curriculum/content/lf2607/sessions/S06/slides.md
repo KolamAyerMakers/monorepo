@@ -496,8 +496,6 @@ When does it stop? Without the update, it loops forever. `Ctrl-C` cancels.
 
 <!-- end_slide -->
 
-<a id="next-session-your-page-on-the-wire"></a>
-
 # Next Session: Run Your Own Web Server
 
 S7: 2026-09-19
