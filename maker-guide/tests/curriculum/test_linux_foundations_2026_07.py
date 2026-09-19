@@ -1180,6 +1180,9 @@ def test_s7_manual_server_checks_do_not_require_foreground_or_failed_commands() 
         'curl -i --max-time 10 "http://127.0.0.1:$PORT/"',
         'curl -I "http://127.0.0.1:${PORT}/"',
         "curl -i http://127.0.0.1:11234/",
+        "curl -I localhost:11234",
+        "curl -i http://localhost:11234/",
+        "curl -i http://[::1]:11234/",
     ):
         assert re.search(local_validation.required_patterns[0], command)
     for command in (

@@ -143,8 +143,8 @@ _SERVICE_HOMEPAGE_COMMAND_PATTERN = (
     rf"""\.{_CLASSROOM_HOSTNAME_PATTERN}/(?P=variable_quote))$"""
 )
 _LOCAL_SERVICE_COMMAND_PATTERN = (
-    r'^curl -[Ii] (?:--max-time [0-9]+ )?"?http://127\.0\.0\.1:'
-    r'(?:[0-9]+|\$PORT|\$\{PORT\})/"?$'
+    r'^curl -[Ii] (?:--max-time [0-9]+ )?"?(?:http://)?(?:127\.0\.0\.1|localhost|\[::1\]):'
+    r'(?:[0-9]+|\$PORT|\$\{PORT\})/?"?$'
 )
 _LOCAL_REFUSAL_PATTERN = (
     # ponytail: conservative fallback phrases; semantic assessment handles other explanations.
@@ -1537,17 +1537,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     prompt=(
                         "Set `PORT=$((10000 + $(id -u)))` and run "
                         '`caddy file-server --listen ":$PORT" '
-                        '--root "$HOME/public_html" --access-log` in one terminal. This listens on '
-                        "all interfaces; the classroom firewall blocks new external connections "
-                        "to assigned ports over IPv4 and IPv6. In another terminal, "
-                        "request localhost with `curl -i` while your server runs, then attempt the "
-                        "public service homepage with `curl -i` and static homepage with "
-                        "`curl -I`. Inspect running and stopped responses and structured access "
-                        "logs (request.method, request.uri, status, and ts) yourself. The guide "
-                        "checks only a successful completed local curl request. Public DNS or TLS "
-                        "failures do not block the explanation objective: report what happened, "
-                        "not an invented HTTP status. This check cannot prove service outcomes, "
-                        "a foreground process, response status, log contents, or browser access."
+                        '--root "$HOME/public_html" --access-log` in one terminal. In another '
+                        "terminal, request `http://127.0.0.1:$PORT/` with `curl -i` and find that "
+                        "request in the access log."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(_LOCAL_SERVICE_COMMAND_PATTERN,),
