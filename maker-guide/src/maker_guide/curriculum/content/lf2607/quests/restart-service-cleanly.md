@@ -16,7 +16,7 @@ Restart your own `site.service` deliberately and verify its actual local respons
 
 Use your classroom SSH account and the existing unit from [Enable your site service](enable-site-service.md). Confirm `$USER` is your classroom login and agree to the brief interruption before restarting your own service. Do not start a competing manual server.
 
-If you changed the unit, first inspect it with `systemctl --user cat site.service` and run `systemctl --user daemon-reload`. Its Caddy file-server configuration should keep `WorkingDirectory=%h`, the all-interface listener on the assigned port, explicit `--root %h/public_html`, and `--access-log`. Use systemd, not `caddy stop` or `caddy reload`, which use the admin API and might target shared Caddy. Then:
+If you changed the unit, first inspect it with `systemctl --user cat site.service` and run `systemctl --user daemon-reload`. Its Caddy file-server configuration should keep `WorkingDirectory=%h`, the all-interface listener on the assigned port, explicit `--root %h/public_html`, and `--access-log`. Use systemd, not `caddy stop` or `caddy reload`, which might target shared Caddy. Then:
 
 ```bash
 systemctl --user restart site.service

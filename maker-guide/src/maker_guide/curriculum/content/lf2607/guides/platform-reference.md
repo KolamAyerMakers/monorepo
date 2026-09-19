@@ -126,7 +126,7 @@ Check the computed port against the range above before starting. Stop an existin
 
 For systemd, keep `WorkingDirectory=%h` and use `ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log`, replacing `12345` with your numeric port. The stable working directory and explicit root let requests resolve the new tree after publication replaces `public_html`.
 
-No Caddy configuration file is needed. `file-server` disables the admin API. Use `Ctrl-C` for the foreground process and `systemctl --user` for your unit, never `caddy stop` or `caddy reload`, which might target shared Caddy. Do not alter shared configuration. This setup uses neither a domain option nor directory browsing.
+No Caddy configuration file is needed. Use `Ctrl-C` for the foreground process and `systemctl --user` for your unit, never `caddy stop` or `caddy reload`, which might target shared Caddy. Do not alter shared configuration. This setup uses neither a domain option nor directory browsing.
 
 `--access-log` enables structured request logs in the terminal or service journal. Match `request.method`, `request.uri`, `status`, and time (`ts` in JSON); `request.remote_ip` may be the shared loopback proxy, not the visitor. A missing index returns `404` with browsing disabled even when the server is healthy. Keep only public files in the root: Caddy follows symlinks, so `--root` is not a filesystem sandbox.
 

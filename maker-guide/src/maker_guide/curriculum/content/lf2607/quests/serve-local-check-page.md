@@ -23,7 +23,7 @@ This course assigns port `10000 + uid`. If the number exceeds `65535`, stop and 
 caddy file-server --listen ":$PORT" --root "$HOME/public_html" --access-log
 ```
 
-Keep this terminal visible. Your personal Caddy listens for plain HTTP on all interfaces; the classroom firewall blocks new direct external connections to its port. Shared Caddy handles public HTTPS and proxies to `127.0.0.1` at that port. Same software, two processes. Do not add `--domain`. No configuration file is needed, and `file-server` disables the admin API. The explicit root prevents accidental serving of your shell's current directory. Caddy follows symlinks, so `--root` is not a filesystem sandbox: keep credentials and links to private files out of the published tree, which remains public through the shared proxy.
+Keep this terminal visible. Your personal Caddy listens for plain HTTP on all interfaces; the classroom firewall blocks new direct external connections to its port. Shared Caddy handles public HTTPS and proxies to `127.0.0.1` at that port. Same software, two processes. Do not add `--domain`. No configuration file is needed. The explicit root prevents accidental serving of your shell's current directory. Caddy follows symlinks, so `--root` is not a filesystem sandbox: keep credentials and links to private files out of the published tree, which remains public through the shared proxy.
 
 ## Request In Another SSH Shell
 
@@ -40,7 +40,7 @@ If public access fails, keep the actual error and compare it with the successful
 
 After any optional extension below, press `Ctrl-C` in your server terminal when finished. The manual process can end; your static site remains available.
 
-Do not use `caddy stop` or `caddy reload`: these admin-API commands might target the shared Caddy instead of your file server. Do not edit shared configuration.
+Do not use `caddy stop` or `caddy reload`: they might target the shared Caddy instead of your file server. Do not edit shared configuration.
 
 Success means local curl received your recognizable page from your own running backend and you can identify the matching request log. Public and peer attempts provide additional observations; publishing, notes, and Git are not required for this practical result.
 

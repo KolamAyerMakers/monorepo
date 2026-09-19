@@ -43,7 +43,7 @@ Replace `12345` with your actual numeric result of `10000 + uid`. If the result 
 
 `Restart=on-failure` retries failures, not intentional stops. `Ctrl-C` stops a journal follower, not the service. Keep `--user`; no `sudo`, shared routing changes, or TLS bypasses.
 
-`file-server` disables its admin API. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint. Stop the supervised personal process with `systemctl --user stop site.service` only.
+Never use `caddy stop` or `caddy reload`: they can target shared Caddy. Stop the supervised personal process with `systemctl --user stop site.service` only.
 
 ## Observe Real Outcomes
 
@@ -65,7 +65,7 @@ After restoration, use `daemon-reload`, `reset-failed`, and `restart`, then conf
 
 ## Logout Is A Separate Experiment
 
-The instructor must confirm lingering and the logout observation interval:
+Check lingering and the logout observation interval:
 
 ```bash
 loginctl show-user "$USER" -p Linger

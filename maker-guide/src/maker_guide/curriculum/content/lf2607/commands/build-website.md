@@ -8,7 +8,7 @@ build-website
 
 ## What It Does
 
-`build-website` is a platform-provided Bash alias, not a standard Linux command. It must already be installed in your shell; see the [platform reference](../guides/platform-reference.md) for availability. On its first run, it creates your user-owned Astro project in `~/src` and installs its pinned dependencies. Later runs call that project's `npm run build` command.
+`build-website` is a platform-provided Bash alias, not a standard Linux command. On its first run, it creates your user-owned Astro project in `~/src` and installs its pinned dependencies. Later runs call that project's `npm run build` command.
 
 The platform reference gives the public URL for your account. This command publishes files; it does not start a separate HTTP backend process.
 

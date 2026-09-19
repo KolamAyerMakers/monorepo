@@ -6,7 +6,7 @@ A web service is a process listening for network requests.
 
 ## Practice Alone
 
-Follow the complete [Caddy file-server example](../commands/caddy.md): create its demo directory, serve that explicit root over loopback HTTP in one shell, and request it with curl from a second shell. The foreground server occupies the first shell until you stop it with `Ctrl-C`. No configuration file is needed; `file-server` disables the admin API, so do not use `caddy stop` or `caddy reload`.
+Follow the complete [Caddy file-server example](../commands/caddy.md): create its demo directory, serve that explicit root over loopback HTTP in one shell, and request it with curl from a second shell. The foreground server occupies the first shell until you stop it with `Ctrl-C`. No configuration file is needed; do not use `caddy stop` or `caddy reload`.
 
 The manual server keeps the port busy while it runs. Stop it before starting a systemd service on the same port.
 

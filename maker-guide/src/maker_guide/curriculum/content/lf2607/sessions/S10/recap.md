@@ -24,7 +24,7 @@ Explain recovery as symptom, observation, cause, repair, and confirming evidence
 
 Keep site source and the operations README in `~/src`. Preserve `scripts/maker-report.sh`, `scripts/site-check.sh`, `services/site.service`, `services/site-build.service`, and `services/site-build.timer` in the pushed repository. Active scripts remain in `~/scripts`; active units remain in `~/.config/systemd/user`.
 
-Use the [source handoff and restoration instructions](../../quests/prepare-source-handoff.md), keeping the serving unit aligned with the [S8 Caddy unit](../S08/self-study.md#2-create-the-user-unit). Personal Caddy uses `WorkingDirectory=%h`, an explicit `--root %h/public_html`, and `--access-log`; shared Caddy handles public HTTPS and forwards to the personal process over loopback HTTP. Same software, two processes. Use `systemctl --user` for your service, never `caddy stop` or `caddy reload`, which can target shared Caddy's admin endpoint.
+Use the [source handoff and restoration instructions](../../quests/prepare-source-handoff.md), keeping the serving unit aligned with the [S8 Caddy unit](../S08/self-study.md#2-create-the-user-unit). Personal Caddy uses `WorkingDirectory=%h`, an explicit `--root %h/public_html`, and `--access-log`; shared Caddy handles public HTTPS and forwards to the personal process over loopback HTTP. Same software, two processes. Use `systemctl --user` for your service, never `caddy stop` or `caddy reload`, which can target shared Caddy.
 
 The timer's service refreshes report Markdown first, then builds; npm alone does not collect facts. Failed collection must preserve the last valid report and prevent the build.
 

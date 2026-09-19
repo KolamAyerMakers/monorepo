@@ -14,7 +14,7 @@ Allow 25 minutes for manual restart and handover, 45 for the unit and source pre
 
 Use your own classroom account, existing source in `~/src`, and published site in `~/public_html`. Confirm `whoami` agrees with `$USER`. Keep the static homepage and existing report available; do not replace the project or rewrite an existing checker.
 
-Before class, the instructor must confirm the public route, installed `/usr/bin/caddy`, user manager, and `Linger` for each account. The instructor also needs to establish a logout observation interval longer than the configured logout delay. If lingering is disabled, the instructor must arrange a policy decision or explicitly treat the exercise as observing shutdown, not promise that enabling a unit guarantees uptime. Learners do not run `sudo`, install packages, enable lingering, change shared routing, or bypass TLS verification.
+Learners do not run `sudo`, install software, enable lingering, change shared routing, or bypass TLS verification.
 
 Use the [S7 self-study route](../S07/self-study.md) if the backend and its two routes are unfamiliar. A working service hostname means a peer can actually load the page, not merely that a process exists.
 
@@ -50,7 +50,7 @@ curl -i --max-time 10 "http://127.0.0.1:$PORT/"
 
 Reload your [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in the laptop browser, replacing `your-handle`. Watch the request in the first terminal. The foreground process occupies that shell and has no reliable service supervision across disconnects or reboots.
 
-Now press `Ctrl-C` in the server terminal. This is the handover: **stop the manual server before systemd takes the same port**. Detaching from an optional tmux session does not stop it. `file-server` disables its admin API, avoiding an admin-port conflict with shared Caddy. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint, not personal Caddy. Once supervised, control your process with `systemctl --user` only.
+Now press `Ctrl-C` in the server terminal. This is the handover: **stop the manual server before systemd takes the same port**. Detaching from an optional tmux session does not stop it. Never use `caddy stop` or `caddy reload`: they can target shared Caddy, not personal Caddy. Once supervised, control your process with `systemctl --user` only.
 
 ## 2. Create The User Unit
 
@@ -71,7 +71,7 @@ systemctl --user cat site.service
 micro ~/.config/systemd/user/site.service
 ```
 
-Exit without changing it until you understand the existing content and agree to the changes. If there are custom drop-ins or a different application, ask the instructor to adapt the exercise rather than replacing it with this template. Preserve an existing unit in a new private backup directory:
+Exit without changing it until you understand the existing content and agree to the changes. If there are custom settings or a different application, ask the instructor to adapt the exercise rather than replacing it with this template. Preserve an existing unit in a new private backup directory:
 
 ```bash
 UNIT_BACKUP="$(mktemp -d "$HOME/site-unit-original.XXXXXX")"
@@ -224,7 +224,7 @@ Review and commit only the intended page source changes using the S7 Git workflo
 
 ## 7. Break And Read The Error
 
-Take a break first. This is a brief, agreed interruption to **your own working course unit only**. If you do not consent to an outage, observe a consenting peer or the instructor's demonstration instead. Do not break another learner's service. If your unit has custom content or drop-ins, ask the instructor to choose a safe equivalent rather than overwriting it.
+Take a break first. This is a brief, agreed interruption to **your own working course unit only**. If you do not consent to an outage, observe a consenting peer or the instructor's demonstration instead. Do not break another learner's service. If your unit has custom content, ask the instructor to choose a safe equivalent rather than overwriting it.
 
 Confirm the service and public page work. In one SSH shell, inspect the effective unit and create a unique backup:
 

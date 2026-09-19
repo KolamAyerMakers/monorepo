@@ -6,11 +6,10 @@ User services let your account run supervised processes without root access.
 
 ## Practice Alone
 
-Use a Linux login with a running systemd user manager, `/usr/bin/caddy`, curl, and `ss`. This independent example serves only a generated test page, not an existing website. Check the tools, user manager, and candidate loopback port first:
+Use your classroom login. This independent example serves only a generated test page, not an existing website. Check the user manager and candidate loopback port first:
 
 ```bash
 command -v caddy systemctl journalctl curl ss
-/usr/bin/caddy version
 systemctl --user list-units --type=service
 ss -H -ltn 'sport = :18080'
 ```
@@ -26,7 +25,7 @@ mkdir -p ~/.config/systemd/user
 systemctl --user cat sample-web.service
 ```
 
-`No files found` for the new unit is expected. If the unit already exists, inspect its file and any drop-ins before proceeding; do not replace unrelated work. Save this complete file at `~/.config/systemd/user/sample-web.service` using your editor:
+`No files found` for the new unit is expected. If the unit already exists, inspect its file and any custom settings before proceeding; do not replace unrelated work. Save this complete file at `~/.config/systemd/user/sample-web.service` using your editor:
 
 ```ini
 [Unit]
@@ -42,7 +41,7 @@ WantedBy=default.target
 
 `%h` expands to your absolute home path. Keep the working directory stable and select the served directory explicitly: if a publisher replaces that directory, new requests resolve the current path rather than remaining in an old working directory. Never omit `--root` here, which would expose home-directory content. Only serve intended public files; Caddy follows symlinks, so this root is not a security sandbox. Loopback restricts direct connections, but a configured reverse proxy could still expose the listener.
 
-This serves plain HTTP without a configuration file. `file-server` disables the admin API; operate the process with `systemctl --user`, never `caddy stop` or `caddy reload`, which might target another Caddy process. A separate shared Caddy can handle public HTTPS: same software, different process.
+This serves plain HTTP without a configuration file. Operate the process with `systemctl --user`, never `caddy stop` or `caddy reload`, which might target another Caddy process. A separate shared Caddy can handle public HTTPS: same software, different process.
 
 Then operate it with user-scope systemd commands:
 

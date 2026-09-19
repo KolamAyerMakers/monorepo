@@ -58,7 +58,7 @@ Expected: permission columns, owner, group, size, date, and names. Ignore `.` an
 ## Proof Checklist
 
 - `whoami` prints your handle.
-- `cat /etc/os-release` shows a Debian-family system description.
+- `cat /etc/os-release` shows which Linux distribution this machine runs.
 - You can count home entries from `ls -la ~` without counting `.` and `..`.
 - You can explain `ls -S` from `man ls`.
 - You have run `head -n 5 /etc/services` and `tail -n 5 /etc/services`.

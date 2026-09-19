@@ -27,7 +27,7 @@ The proxied route needs a backend listening on the configured address and port. 
 
 ## Proof Check
 
-Run the self-contained [manual server example](../commands/caddy.md), observe its response, stop it with `Ctrl-C`, and repeat the direct request. That demonstrates backend availability only; it does not configure or test a public proxy. Explain why a proxy aimed at that now-closed port could return `502`, while an independent static-file route could still work. On an existing deployment, compare direct and public observations before diagnosing the cause; never change shared routing or stop another user's process for this exercise. Do not use `caddy stop` or `caddy reload`: those admin-API commands might target the shared proxy, not this file server.
+Run the self-contained [manual server example](../commands/caddy.md), observe its response, stop it with `Ctrl-C`, and repeat the direct request. That demonstrates backend availability only; it does not configure or test a public proxy. Explain why a proxy aimed at that now-closed port could return `502`, while an independent static-file route could still work. On an existing deployment, compare direct and public observations before diagnosing the cause; never change shared routing or stop another user's process for this exercise. Do not use `caddy stop` or `caddy reload`: they might target the shared proxy, not this file server.
 
 ## Docs Pointers
 

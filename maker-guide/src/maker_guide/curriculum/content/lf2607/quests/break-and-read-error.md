@@ -14,7 +14,7 @@ Agree to the brief outage first. If you do not consent, observe a consenting pee
 systemctl --user cat site.service
 ```
 
-If there are custom settings, drop-ins, or a different application, ask staff to adapt the exercise; do not overwrite them with a template. In one SSH shell, create a unique private backup:
+If there are custom settings or a different application, ask staff to adapt the exercise; do not overwrite them with a template. In one SSH shell, create a unique private backup:
 
 ```bash
 BACKUP="$(mktemp -d "$HOME/site-service-backup.XXXXXX")"

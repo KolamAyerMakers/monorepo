@@ -19,7 +19,7 @@ serve() {
 }
 ```
 
-The first two commands create a demo page. The function definition names the body but does not execute it. Type `serve` to start the foreground HTTP server; press `Ctrl-C` to stop it. No configuration file is needed. The explicit root prevents a failed `cd` from leaving the server exposing the caller's directory instead; it is not a symlink sandbox. Do not use `caddy stop` or `caddy reload`: `file-server` disables the admin API and those commands might target another process.
+The first two commands create a demo page. The function definition names the body but does not execute it. Type `serve` to start the foreground HTTP server; press `Ctrl-C` to stop it. No configuration file is needed. The explicit root prevents a failed `cd` from leaving the server exposing the caller's directory instead; it is not a symlink sandbox. Do not use `caddy stop` or `caddy reload`: they might target another process.
 
 ## Arguments
 

@@ -32,7 +32,7 @@ Keep `maker-report.sh` and `site-check.sh` active in `~/scripts/`, with copies i
 
 The personal Caddy unit uses `WorkingDirectory=%h` and `ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log`, with your assigned numeric port in place of `12345`. The explicit root follows the replaced publication directory. See the [S8 unit](../S08/self-study.md#2-create-the-user-unit) for the complete file and preservation steps.
 
-Shared Caddy handles public HTTPS and forwards to personal Caddy over loopback HTTP. Same software, two processes; do not add `--domain`. Control personal Caddy with `systemctl --user`, never `caddy stop` or `caddy reload`, which can target shared Caddy's admin endpoint.
+Shared Caddy handles public HTTPS and forwards to personal Caddy over loopback HTTP. Same software, two processes; do not add `--domain`. Control personal Caddy with `systemctl --user`, never `caddy stop` or `caddy reload`, which can target shared Caddy.
 
 ## Before S10
 

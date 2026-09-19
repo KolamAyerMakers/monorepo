@@ -86,7 +86,7 @@ printf '%s\r\n' \
   timeout 5s nc -N -w 3 127.0.0.1 "$PORT"
 ```
 
-Run `bash ~/scripts/http-request.sh`. Each string gets its own CRLF; `''` produces the final blank line. The pipe supplies EOF when `printf` finishes, replacing `Ctrl-D`. No `-C` is needed in the script. `-w 3` limits connection/idle waits; `timeout 5s` bounds the scripted exchange. The classroom uses Debian's OpenBSD netcat; tool availability and flags need instructor preflight.
+Run `bash ~/scripts/http-request.sh`. Each string gets its own CRLF; `''` produces the final blank line. The pipe supplies EOF when `printf` finishes. `-w 3` limits connection/idle waits; `timeout 5s` bounds the scripted exchange.
 
 Read the status, headers, and body, then find the matching log entry. Change only `/` to `/missing.html` in the request line and repeat. For an absent file, expect `404` in both response and log, not a connection failure. Do not modify a real file to manufacture this result. The [raw-HTTP lab](self-study.md#send-raw-http) builds the request incrementally.
 
@@ -94,7 +94,7 @@ Read the status, headers, and body, then find the matching log entry. Change onl
 
 ## Two Safe Incidents
 
-`file-server` disables the personal process's admin API. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint. When an incident calls for stopping, use `Ctrl-C` only in your own server's terminal:
+Never use `caddy stop` or `caddy reload`: they can target shared Caddy. When an incident calls for stopping, use `Ctrl-C` only in your own server's terminal:
 
 | Incident | Evidence and recovery |
 | --- | --- |
@@ -121,7 +121,7 @@ Repeat `ps` and `ss` after recovery and match the new process to its port. Confi
 
 ## Finish
 
-Success means you can connect ownership, PID, listening port, HTTP response, and request log, then distinguish and recover both incidents. No new page or Git commit is required. After confirming recovery, stop the foreground server with `Ctrl-C`; it is not an uptime promise. Remove only your empty practice directory with `rmdir -- "$practice_root"` in the first shell if that variable still identifies it. If it is unset or the directory is not empty, leave it and ask for help. Restore any pre-existing S8 user service you temporarily stopped, following the self-study cleanup.
+Success means you can connect ownership, PID, listening port, HTTP response, and request log, then distinguish and recover both incidents. No new page or Git commit is required. After confirming recovery, stop the foreground server with `Ctrl-C`; it is not an uptime promise. Remove only your empty practice directory with `rmdir -- "$practice_root"` in the first shell if that variable still identifies it. If it is unset or the directory is not empty, leave it and ask for help.
 
 ## Optional Practice
 

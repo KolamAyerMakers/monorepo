@@ -25,7 +25,7 @@ This is a TCP diagnostic, not an HTTP request. A refused connection has no HTTP 
 
 ## Plaintext HTTP
 
-These examples use Debian's OpenBSD netcat (`netcat-openbsd`). Check `nc -h` for `-C` and `-N` support first. Start the local demo from the [Caddy file-server card](caddy.md), then connect from another shell on the same machine:
+Start the local demo from the [Caddy file-server card](caddy.md), then connect from another shell on the same machine:
 
 ```bash
 nc -C -N 127.0.0.1 8000
@@ -64,10 +64,8 @@ Change only the path from `/` to `/missing.html`, choosing another name if that 
 - A missing blank terminator can leave the server waiting for more headers.
 - `-w` is a connection/idle timeout, not a strict total runtime while data keeps arriving. The outer `timeout 5s` bounds the whole netcat run; use `Ctrl-C` to cancel earlier.
 - Plain `nc` to port `443` cannot speak HTTPS. Use [curl](curl.md) for TLS; do not bypass certificate verification.
-- Netcat variants have different flags. Read your local `man nc`; do not assume listener examples for another variant apply.
 
 ## Docs Pointers
 
-- Read the [Debian OpenBSD netcat manual](https://manpages.debian.org/bookworm/netcat-openbsd/nc.1.en.html) for `-C` and `-N` behavior.
 - Run `man nc` and `help printf`.
 - Read [Sockets](../concepts/sockets.md) and [HTTP Basics](../concepts/http-basics.md).

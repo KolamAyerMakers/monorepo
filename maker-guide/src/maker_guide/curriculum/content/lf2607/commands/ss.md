@@ -8,7 +8,7 @@ ss -ltnp
 
 ## What It Does
 
-`ss` shows sockets, the endpoints processes use to communicate. It is provided by the `iproute2` package.
+`ss` shows sockets, the endpoints processes use to communicate.
 
 - `-l`: show listening sockets.
 - `-t`: select TCP sockets.

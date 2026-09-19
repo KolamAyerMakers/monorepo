@@ -10,7 +10,7 @@ Hand your working backend to a systemd user service. A peer should be able to lo
 
 Use your own classroom account and existing published site. Stop your manual Caddy server with `Ctrl-C` in its terminal before systemd takes the same port. Detaching from optional tmux does not stop a process. Do not stop another learner's server.
 
-Staff must preflight the route, Caddy installation, user manager, and `Linger`. Enabling the unit does not promise logout survival. No `sudo`, shared routing changes, or TLS bypasses are needed.
+Enabling the unit does not promise logout survival. No `sudo`, shared routing changes, or TLS bypasses are needed.
 
 ```bash
 PORT="$((10000 + $(id -u)))"
@@ -43,7 +43,7 @@ WantedBy=default.target
 
 `%h` expands to your home. The publisher replaces `public_html`, so keep `WorkingDirectory=%h` and the explicit `--root %h/public_html`. Personal Caddy listens for plain HTTP on all interfaces; the classroom firewall blocks new direct external connections to its port. A separate shared Caddy handles public HTTPS and proxies to `127.0.0.1` at that port. Same software, two processes; do not add `--domain`. The root is not a sandbox: Caddy follows symlinks, so publish only public files.
 
-No Caddy configuration file is needed. `file-server` disables the admin API. Use `systemctl --user` for this unit, never `caddy stop` or `caddy reload`, which might target the shared proxy. `--access-log` records requests in the journal.
+No Caddy configuration file is needed. Use `systemctl --user` for this unit, never `caddy stop` or `caddy reload`, which might target the shared proxy. `--access-log` records requests in the journal.
 
 `ExecStart` is not a Bash command: use the literal number, not `$PORT`, `$()`, or arithmetic. Save with `Ctrl-S` and quit with `Ctrl-Q`.
 

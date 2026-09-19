@@ -53,7 +53,7 @@ For the short traceroute demonstration, use the same address:
 traceroute -m 8 1.1.1.1
 ```
 
-The classroom provides GNU inetutils traceroute. Its UDP probes travel progressively farther; replies reveal some hops. Eight hops may not reach the destination. A `*` means a missing probe reply, not proof of a broken route. `Ctrl-C` cancels.
+Its UDP probes travel progressively farther; replies reveal some hops. Eight hops may not reach the destination. A `*` means a missing probe reply, not proof of a broken route. `Ctrl-C` cancels.
 
 These are network diagnostics, not steps required to fetch a web page. The destination is not the classroom server; filtering, routing, or destination policy can prevent replies while HTTPS still works.
 
@@ -380,7 +380,7 @@ Generation writes Markdown; rebuilding publishes HTML. Verify `200`, then open t
 
 | Symptom | Check | Repair |
 |---|---|---|
-| `command not found` for host, ping, curl, or traceroute | Read the command name | Ask the instructor to verify deployment; do not use sudo or install packages yourself. |
+| `command not found` for host, ping, curl, or traceroute | Read the command name | Ask the instructor; do not install software yourself. |
 | Wrong username in URLs | Compare `whoami` with `printf '%s\n' "$USER"` | Reconnect with your course account. |
 | No DNS address answer | Read the exact host error | Ask the instructor about the resolver or hostname. |
 | No ping replies, HTTP works | Read packet loss | Report no replies, not an invented time or "website down". |

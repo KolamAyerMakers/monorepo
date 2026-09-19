@@ -114,7 +114,7 @@ No password swapping. No guessing missing commands aloud: write the missing inst
 
 Swap roles. Record one ambiguity fixed and one observed recovery.
 
-Use `systemctl --user stop site.service` and `systemctl --user start site.service`. Never use `caddy stop` or `caddy reload`; they can target shared Caddy's admin endpoint.
+Use `systemctl --user stop site.service` and `systemctl --user start site.service`. Never use `caddy stop` or `caddy reload`; they can target shared Caddy.
 
 <!-- end_slide -->
 

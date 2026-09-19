@@ -130,7 +130,7 @@ systemctl --user status site.service --no-pager
 
 If the port exceeds `65535` or does not match the unit, stop and ask the instructor rather than choosing another port. The unit needs `WorkingDirectory=%h` and `ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log`, with your numeric port in place of `12345`; see the [complete S8 unit](../S08/self-study.md#2-create-the-user-unit). The publisher swaps its output directory, so the explicit root must follow the current published path rather than an old working directory.
 
-Shared Caddy handles public HTTPS and forwards requests to personal Caddy over loopback HTTP. Same software, two separate processes; no `--domain` or shared configuration changes. `file-server` disables its admin API. Control personal Caddy with `systemctl --user`, never `caddy stop` or `caddy reload`, which can target shared Caddy's admin endpoint. The root is not a sandbox: keep secrets and symlinks to private files out of the published tree.
+Shared Caddy handles public HTTPS and forwards requests to personal Caddy over loopback HTTP. Same software, two separate processes; no `--domain` or shared configuration changes. Control personal Caddy with `systemctl --user`, never `caddy stop` or `caddy reload`, which can target shared Caddy. The root is not a sandbox: keep secrets and symlinks to private files out of the published tree.
 
 The checker covers the static homepage and report, not the personal service hostname. A successful static check or active service is not proof of the whole backend route.
 

@@ -13,7 +13,7 @@ caddy file-server --listen "127.0.0.1:$PORT" --root "$HOME/http-demo" --access-l
 
 ## What It Does
 
-This creates a demo page and serves it over plain HTTP on loopback port `8000`. `--root` selects files independently of the shell's current directory, and `--access-log` enables request logs. No configuration file is needed. The `file-server` subcommand disables the admin API; this example does not request a domain, automatic HTTPS, or directory browsing.
+This creates a demo page and serves it over plain HTTP on loopback port `8000`. `--root` selects files independently of the shell's current directory, and `--access-log` enables request logs. No configuration file is needed; this example does not request a domain, automatic HTTPS, or directory browsing.
 
 Caddy can also run separately as a shared HTTPS reverse proxy. A personal file server and a shared proxy can be the same software in two processes with different owners, listeners, and lifecycles. Starting this demo does not configure a public proxy.
 
@@ -38,7 +38,7 @@ Press `Ctrl-C` in the server terminal to stop it. Repeat curl: with no listener 
 - Only place public files in the serving directory. Caddy follows symlinks, so `--root` is not a filesystem sandbox.
 - Loopback allows only local direct connections, but a local reverse proxy can still publish the content to outside visitors.
 - A port can become busy after inspection. If startup reports `address already in use`, inspect again instead of stopping someone else's process. Use the assigned port when adapting this demo to an existing proxy route.
-- Stop a foreground server with `Ctrl-C`, or a managed one with its own `systemctl --user stop` command. Do not use `caddy stop` or `caddy reload`: they use the admin API, disabled here, and might target a separate shared Caddy process. Do not alter shared configuration.
+- Stop a foreground server with `Ctrl-C`, or a managed one with its own `systemctl --user stop` command. Do not use `caddy stop` or `caddy reload`: they might target a separate shared Caddy process. Do not alter shared configuration.
 - Access logs can contain private request data. Summarize observations rather than publishing raw logs.
 
 ## Docs Pointers

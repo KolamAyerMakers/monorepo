@@ -36,7 +36,7 @@ Route: restart and handover (25 min), unit and preservation (45 min), requests a
 
 Shared Caddy still handles HTTPS and forwards to personal Caddy over loopback HTTP. Same software, two separate processes; no `--domain` or shared configuration changes.
 
-The instructor must confirm `Linger` and how long to wait after logout before class. Enabling a unit alone does not promise survival after logout.
+Enabling a unit alone does not promise survival after logout.
 
 <!-- end_slide -->
 
@@ -91,7 +91,7 @@ systemctl --user status site.service --no-pager
 
 `Restart=on-failure` retries failures, not an intentional stop. Keep `--user`; no root service or `sudo`.
 
-`file-server` disables its admin API. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint. Control your service with `systemctl --user` only.
+Never use `caddy stop` or `caddy reload`: they can target shared Caddy. Control your service with `systemctl --user` only.
 
 <!-- end_slide -->
 
@@ -162,7 +162,7 @@ cp ~/.config/systemd/user/site.service "$BACKUP/site.service"
 printf '%s\n' "$BACKUP/site.service"
 ```
 
-Record the path. Continue only if the copy succeeded. Existing backups stay untouched. Inspect custom content and drop-ins with `systemctl --user cat site.service`; if this is not the simple course unit, get help choosing a safe exercise first.
+Record the path. Continue only if the copy succeeded. Existing backups stay untouched. Inspect custom content with `systemctl --user cat site.service`; if this is not the simple course unit, get help choosing a safe exercise first.
 
 <!-- end_slide -->
 

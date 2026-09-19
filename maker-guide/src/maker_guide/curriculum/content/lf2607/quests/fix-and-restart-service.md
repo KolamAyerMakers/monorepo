@@ -26,7 +26,7 @@ Read actual state and errors. Use the smallest repair that explains them:
 
 Before editing an existing unit, agree to the interruption and preserve its current content in a unique private backup as in the [unit preservation steps](../sessions/S08/self-study.md#2-create-the-user-unit). If recovering from the deliberate break, compare the known working backup first and consent to restoring it; preserve unrelated changes and existing backups. Do not replace a customized unit wholesale with a template.
 
-The course contract keeps `WorkingDirectory=%h` and `ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log`, replacing `12345` with your literal result of `10000 + uid`. The publisher replaces `public_html`, so cwd-only serving is not sufficient. No configuration file or `sudo` is needed. Use `systemctl --user`, not `caddy stop` or `caddy reload`: `file-server` disables the admin API, and those commands might target shared Caddy.
+The course contract keeps `WorkingDirectory=%h` and `ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log`, replacing `12345` with your literal result of `10000 + uid`. The publisher replaces `public_html`, so cwd-only serving is not sufficient. No configuration file or `sudo` is needed. Use `systemctl --user`, not `caddy stop` or `caddy reload`: those commands might target shared Caddy.
 
 ## Apply The Repair
 

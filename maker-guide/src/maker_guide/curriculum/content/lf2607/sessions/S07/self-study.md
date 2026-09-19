@@ -14,7 +14,7 @@ Raw HTTP and both incidents are core work. Publishing changes, operating notes, 
 
 Use your existing source in `~/src/pages` and published site in `~/public_html`. Do not replace the project or redo the previous session's checker workshop. Open your [static homepage](https://lf2607.kolamayermakers.org/~your-handle/), replacing `your-handle`. If it is missing, run `build-website` in your classroom account and resolve build errors first.
 
-Use the classroom's existing public addresses and shared Caddy configuration. If an address cannot be reached or a browser warns about its certificate, ask the instructor rather than changing shared settings or disabling certificate verification. The instructor must confirm the deployed firewall protection and required tools before this lab. Caddy is expected at `/usr/bin/caddy`; `ss` comes from `iproute2`, and these examples require the OpenBSD `nc` variant from `netcat-openbsd`. Package declarations are not proof that deployment is ready.
+Use the classroom's existing public addresses and shared Caddy configuration. If an address cannot be reached or a browser warns about its certificate, ask the instructor rather than changing shared settings or disabling certificate verification.
 
 From your laptop, open two SSH connections using your actual username:
 
@@ -28,10 +28,9 @@ At a classroom shell prompt, confirm the tools are available:
 
 ```bash
 command -v caddy curl ps ss printf timeout nc mktemp
-nc -h
 ```
 
-The `nc` help should identify Debian's OpenBSD netcat and support `-C`, `-N`, and `-w`. If a tool is missing or the variant differs, ask the instructor to resolve it before continuing; do not install packages with `sudo` or skip the core raw-HTTP lab.
+If a tool is missing, ask the instructor; do not install software yourself or skip the core raw-HTTP lab.
 
 ## 1. Client, Protocol, Server
 
@@ -61,8 +60,6 @@ The class assigns ports using `10000 + uid`; this is not a general Linux rule. I
 
 ## 3. Start In The First SSH Shell
 
-If repeating this exercise after S8, inspect your own `site.service` first. Only if it is running and you agree to interrupt it, stop it with `systemctl --user stop site.service`; remember to restore it afterward. The original S7 route needs no unit or tmux.
-
 Start your server:
 
 ```bash
@@ -75,8 +72,7 @@ Keep this terminal visible. There is no shell prompt while personal Caddy owns t
 
 `--root "$HOME/public_html"` explicitly selects the published tree regardless of your shell's current directory; never omit it and accidentally serve your home or source tree. It is a file path, not a sandbox: symlinks can lead outside it. Do not publish credentials or symlinks to private files. Without `--browse`, Caddy does not automatically list a directory when its index is missing; restore the source index and build instead.
 
-`--access-log` enables structured request logs. `file-server` disables the personal process's admin API, avoiding an admin-port conflict with shared Caddy. Stop this foreground process with `Ctrl-C` only. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint instead. In S8, use `systemctl --user` to control your supervised process.
-
+`--access-log` enables structured request logs. Stop this foreground process with `Ctrl-C` only. Never use `caddy stop` or `caddy reload`: they can target shared Caddy instead.
 
 ## 4. Request And Watch
 
@@ -263,7 +259,7 @@ Repeat `ps`, `ss`, and local curl, then reload the service homepage in the lapto
 
 Explain which process answers each address, how its PID connects your account to the listening port, and how you recognized a request in the log. Describe your raw request's line endings and final blank line. Distinguish a running server with the wrong root from a stopped backend using actual observations. Confirm the service page works again after relaunching. No new page, published notes, or Git commit is required for this experiment.
 
-After any optional exercises below, stop the manual server with `Ctrl-C`. It is not supervised, and SSH logout behavior is not an uptime guarantee. If you temporarily stopped an existing S8 unit, stop the manual server first, restore it with `systemctl --user start site.service`, and confirm local and public access again.
+After any optional exercises below, stop the manual server with `Ctrl-C`. It is not supervised, and SSH logout behavior is not an uptime guarantee.
 
 In the first shell, if you created the practice directory, remove only that empty directory with `rmdir -- "$practice_root"`. If the variable is unset or the directory is no longer empty, leave it and ask for help; do not use recursive deletion.
 
