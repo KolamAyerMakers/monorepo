@@ -13,6 +13,8 @@ Use both controls:
 
 The daemon derives UID and username from kernel peer credentials. It does not trust identity fields sent by shell hooks.
 
+Classroom account creation remains a separate root wrapper. After initialization it invokes Salt's root-only lingering helper for the new course participant, then refreshes the shared Caddy routes. A failure leaves provisioning incomplete and recoverable with the administrator's `--resume` flow. Existing participants are reconciled by Salt; neither enrollment nor the daemon runs `loginctl`. See [classroom operations](../infra/salt/README.md#participant-lingering) for policy scope and account cleanup.
+
 ## IRC
 
 IRC SASL authentication is mandatory. The implemented client supports SASL `PLAIN`, requires the server to advertise the `sasl` capability, and refuses to join channels unless authentication succeeds.
@@ -22,6 +24,23 @@ IRC SASL authentication is mandatory. The implemented client supports SASL `PLAI
 Mentors can run `maker-guide-progress release S03` during the in-person session. It releases that session to the whole cohort, triggers `maker-guide-build-docs.service`, and leaves earlier unfinished quests available. The service reads the release from SQLite and atomically publishes release-gated session materials and quests alongside an open reference library. Command cards, concept cards, and general learner guides are available from the start so curious learners can read ahead. Every local document linked from available material must also be available.
 
 ## Development Classroom
+
+### Test Prerequisites
+
+The test suite requires a Caddy 2 executable on `PATH`, alongside the Python development dependencies. The learner-server regression starts `caddy file-server` on a temporary loopback port and verifies publication replacement, missing-page responses, and access logs. It uses temporary home/configuration directories, does not contact the classroom, and does not use Caddy's admin API.
+
+CI installs the Ubuntu `caddy` package before pytest. Local developers need the binary available before the commit hook runs; the test fails with an explicit prerequisite message rather than silently skipping real-server coverage. Follow the repository policy: checks run through the commit gate, not before committing.
+
+### Curriculum
+
+The [course map](src/maker_guide/curriculum/content/lf2607/README.md) follows session work, not a mandatory bot checklist. Dedicated support and scoring guides remain available for optional help and recorded progress.
+
+- [S7: Run Your Own Web Server](src/maker_guide/curriculum/content/lf2607/sessions/S07/self-study.md): foreground personal Caddy, visitor logs, own PID/listener correlation with `ps` and `ss`, and core raw HTTP. Recover an occupied own port, an empty public practice root, and a stopped backend, distinguishing HTTP `404`, local refusal, proxy `502`, and independent static delivery. Publishing, notes, and Git remain optional self-study.
+- [S8: Keep Your Server Running](src/maker_guide/curriculum/content/lf2607/sessions/S08/self-study.md): systemd supervision, safe repair, and logout evidence; tmux and helpers are optional.
+- [S9: Automate It. Hand It Over.](src/maker_guide/curriculum/content/lf2607/sessions/S09/self-study.md): report refresh before build, observed timer publication, and a peer-tested handoff of two scripts and three units. No `site.sh` is required.
+- [S10: Show What You Can Do](src/maker_guide/curriculum/content/lf2607/sessions/S10/self-study.md): learner-led demonstration, investigation, and a concrete next step in the learner's own words.
+
+### Hostnames And Validation
 
 Curriculum examples use `lf2607.kolamayermakers.org`. When testing on `lf-dev`, replace that hostname with `lf-dev.kolamayermakers.org` in DNS commands, page and service URLs, and the S6 checker's URLs (`base_url` in the reference example). The shared validators accept both classroom hostnames, not arbitrary hosts; the course ID remains `lf2607`.
 
@@ -140,11 +159,11 @@ Answer-based and mixed questions still require `answer <your answer>`; `now` doe
 
 For the current S6 checker objective or already assigned checker quest, `guide now` and `guide check` automatically request a local simulated test suite. The CLI announces the run and executes `~/scripts/site-check.sh` with varying page arguments and a separate no-argument usage case as the invoking learner. The interface is `site-check.sh PAGE [PAGE ...]`: accept arbitrary paths, `""` selects home, and no arguments print usage and exit nonzero. IRC cannot run it and directs the learner to these commands in the classroom shell. Older CLI clients without this capability cannot complete this check; there is no source-only fallback. Deploy the updated CLI and daemon together.
 
-The reference checker is one implementation, not a required copy. Grading accepts equivalent functions, `case` statements, variable names, page order, and curl flag order. Output must identify each page by URL, path, or homepage/report label, give its HTTP code and diagnosis or a transport-failure diagnosis, and never claim a failed request succeeded. Report-404 advice must name `maker-report.sh` followed by `build-website`; other missing pages must not trigger report regeneration. See the [cases and output contract](src/maker_guide/curriculum/content/lf2607/sessions/S06/self-study.md#guide-checks).
+The reference checker is one implementation, not a required copy. Grading accepts equivalent functions, `case` statements, variable names, page order, and curl flag order. Output must identify each page by URL, path, or homepage/report label, give its HTTP code and diagnosis or a transport-failure diagnosis, and never claim a failed request succeeded. Report-404 advice must name `maker-report.sh` followed by `build-website`; other missing pages must not trigger report regeneration. See the [diagnostic cases](src/maker_guide/curriculum/content/lf2607/sessions/S06/self-study.md#diagnostic-cases).
 
 A simulated pass is not a live website health check. Learners must still run `bash ~/scripts/site-check.sh "" maker-report.html` against their real pages and inspect both in a browser. Use `bash ~/scripts/site-check.sh not-a-page.html` with an unused path to exercise a real `404`, without changing statuses or deleting files. Connection failures are different and are covered safely by controlled fixtures. Existing stored completions remain historical records; they are not rerun or reinterpreted as passes of the new suite.
 
-When LLM support is configured, private conceptual answers use a forced tool call to assess each catalog rubric as demonstrated, contradicted, or not demonstrated. Strict application code validates that tool payload and remains solely responsible for progress writes. Provider failures fall back to the deterministic regex checks. Private fallback questions can use the optional LLM tutor with read-only learner context. Public IRC fallback and public answers do not call the LLM because they could expose learner data. The CLI response prompt uses the configured IRC nickname so local terminal conversations match the bot identity seen in IRC. In interactive mode, type `exit` or `quit` to leave.
+When LLM support is configured, private conceptual answers use a forced tool call to assess each catalog rubric as demonstrated, contradicted, or not demonstrated. Strict application code validates that tool payload and remains solely responsible for progress writes. Valid semantic verdicts take precedence over regex aliases; a valid negative assessment is not a provider failure and cannot fall back to matching aliases. Deterministic forbidden patterns still veto semantic demonstrations. Missing or invalid assessments and provider failures fall back to the deterministic regex checks. Private fallback questions can use the optional LLM tutor with read-only learner context. Public IRC fallback and public answers do not call the LLM because they could expose learner data. The CLI response prompt uses the configured IRC nickname so local terminal conversations match the bot identity seen in IRC. In interactive mode, type `exit` or `quit` to leave.
 
 Mentor identities are initialized with `maker-guide-initialize-learner --no-enroll`. They can use `guide` and receive IRC replies, but have no course membership or learner progress.
 

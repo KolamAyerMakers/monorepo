@@ -13,8 +13,8 @@ Create `~/src/pages/setup.md`, link to it from `index.md`, and rebuild.
 
 ## Steps
 
-1. Create `~/src/pages/setup.md` with a useful heading.
-2. Add a link to `setup.html` from `~/src/pages/index.md`.
+1. Open `~/src/pages/setup.md` in an editor. Create it with a useful heading only if absent; otherwise extend its existing content without overwriting it.
+2. Keep or add a link to `setup.html` from `~/src/pages/index.md` and a `[Home](index.html)` link on setup. Preserve existing content and links in both files.
 3. Run `build-website`.
 4. Confirm `~/public_html/setup.html` contains your setup page.
 5. Ask the guide to check the source, link, build command, and output.
@@ -27,7 +27,7 @@ Create `~/src/pages/setup.md`, link to it from `index.md`, and rebuild.
 
 ## If Check Fails
 
-Rebuild and confirm `setup.md` has a heading, `index.md` links to `setup.html`, and `setup.html` contains the generated page.
+Confirm the source `setup.md` exists and has a heading, and `index.md` links to `setup.html`. Then rebuild and confirm `setup.html` contains the generated page. Building cannot supply a missing source page.
 
 ## Related Reading
 

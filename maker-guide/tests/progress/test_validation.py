@@ -44,6 +44,9 @@ from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckReport
 from maker_guide.validation_paths import UnixAccount, UnixAccountLookup
 from tests.repositories.helpers import write_learner
 
+_SITE_SERVICE_COMMAND = (
+    "ExecStart=/usr/bin/caddy file-server --listen :14242 --root %h/public_html --access-log\n"
+)
 _GENERIC_FALLBACK_ALLOWED_VALIDATION_FAILURE_REASONS = frozenset(
     {
         "incomplete-evidence",
@@ -986,26 +989,90 @@ def test_interactive_question_validation_reports_contradicted_concept(
     assert result.evidence["missing_concept_ids"] == []
 
 
-def test_semantic_assessment_cannot_override_deterministic_contradiction(
-    migrated_database_path: Path,
-) -> None:
-    """Provider demonstrations cannot override explicit forbidden answer text."""
-    with connect_database(migrated_database_path) as database_connection:
-        result = validate_quest(
-            _answer_validation_input(
-                database_connection,
-                _interactive_validation(),
-                "I did not use hostname, but I used a port.",
-                assessments=(
-                    AnswerConceptAssessment(concept_id="host", verdict="demonstrated"),
-                    AnswerConceptAssessment(concept_id="port", verdict="demonstrated"),
-                ),
+@pytest.mark.parametrize(
+    ("answer_text", "assessments", "failure_reason", "matched_concept_ids"),
+    [
+        (
+            "The hostname and port identify the endpoint.",
+            (
+                AnswerConceptAssessment(concept_id="host", verdict="not_demonstrated"),
+                AnswerConceptAssessment(concept_id="port", verdict="demonstrated"),
             ),
+            "missing-concept",
+            ["port"],
+        ),
+        (
+            "The hostname and port identify the endpoint.",
+            (
+                AnswerConceptAssessment(concept_id="host", verdict="contradicted"),
+                AnswerConceptAssessment(concept_id="port", verdict="demonstrated"),
+            ),
+            "contradicted-concept",
+            ["port"],
+        ),
+        (
+            "The machine address and service number identify the endpoint.",
+            (
+                AnswerConceptAssessment(concept_id="host", verdict="demonstrated"),
+                AnswerConceptAssessment(concept_id="port", verdict="demonstrated"),
+            ),
+            None,
+            ["host", "port"],
+        ),
+        (
+            "The hostname and port identify the endpoint.",
+            (AnswerConceptAssessment(concept_id="host", verdict="not_demonstrated"),),
+            None,
+            ["host", "port"],
+        ),
+        (
+            "The machine address and service number identify the endpoint.",
+            (AnswerConceptAssessment(concept_id="host", verdict="demonstrated"),),
+            "missing-concept",
+            [],
+        ),
+        (
+            "I did not use hostname, but I used a port.",
+            (
+                AnswerConceptAssessment(concept_id="host", verdict="demonstrated"),
+                AnswerConceptAssessment(concept_id="port", verdict="demonstrated"),
+            ),
+            "contradicted-concept",
+            ["host", "port"],
+        ),
+    ],
+)
+def test_semantic_assessments_take_precedence_over_aliases(
+    migrated_database_path: Path,
+    answer_text: str,
+    assessments: tuple[AnswerConceptAssessment, ...],
+    failure_reason: str | None,
+    matched_concept_ids: list[str],
+) -> None:
+    """Complete assessments replace alias verdicts but cannot bypass forbidden patterns."""
+    validation = _interactive_validation()
+    with connect_database(migrated_database_path) as database_connection:
+        validation_input = _answer_validation_input(
+            database_connection,
+            validation,
+            answer_text,
+            assessments=assessments,
         )
-
-    assert result.passed is False
-    assert result.failure_reason == "contradicted-concept"
-    assert result.evidence["contradicted_concept_ids"] == ["host"]
+        for result in (
+            validate_quest(validation_input),
+            validate_session_objective(validation_input, validation),
+        ):
+            assert result.passed is (failure_reason is None)
+            assert result.failure_reason == failure_reason
+            assert result.evidence["matched_concept_ids"] == matched_concept_ids
+            assert result.evidence["missing_concept_ids"] == [
+                concept_id
+                for concept_id in ("host", "port")
+                if concept_id not in matched_concept_ids
+            ]
+            assert result.evidence["contradicted_concept_ids"] == (
+                ["host"] if failure_reason == "contradicted-concept" else []
+            )
 
 
 def test_interactive_question_validation_requires_answer(
@@ -2371,7 +2438,7 @@ def test_user_port_file_validation_uses_uid_derived_port(
     learner_home = tmp_path / "alice"
     learner_home.mkdir()
     service_file = learner_home / "site.service"
-    service_file.write_text("ExecStart=/usr/bin/python3 -m http.server 14242\n", encoding="utf-8")
+    service_file.write_text(_SITE_SERVICE_COMMAND, encoding="utf-8")
 
     with connect_database(migrated_database_path) as database_connection:
         passed_result = validate_quest(
@@ -2379,13 +2446,13 @@ def test_user_port_file_validation_uses_uid_derived_port(
                 database_connection,
                 UserPortFileValidation(
                     path="site.service",
-                    required_regex_template=r"http\.server {port}",
+                    required_regex_template=r"caddy file-server --listen :{port}",
                 ),
                 learner_home,
             ),
         )
         service_file.write_text(
-            "ExecStart=/usr/bin/python3 -m http.server 9999\n",
+            _SITE_SERVICE_COMMAND.replace("14242", "9999"),
             encoding="utf-8",
         )
         failed_result = validate_quest(
@@ -2393,7 +2460,7 @@ def test_user_port_file_validation_uses_uid_derived_port(
                 database_connection,
                 UserPortFileValidation(
                     path="site.service",
-                    required_regex_template=r"http\.server {port}",
+                    required_regex_template=r"caddy file-server --listen :{port}",
                 ),
                 learner_home,
             ),
@@ -2402,7 +2469,7 @@ def test_user_port_file_validation_uses_uid_derived_port(
     assert passed_result.passed is True
     assert passed_result.failure_reason is None
     assert passed_result.evidence == {
-        "byte_count": 48,
+        "byte_count": len(_SITE_SERVICE_COMMAND.encode("utf-8")),
         "catalog_path": "site.service",
         "computed_port": 14242,
         "failure_reason": None,
@@ -2416,9 +2483,9 @@ def test_user_port_file_validation_uses_uid_derived_port(
     assert failed_result.passed is False
     assert failed_result.failure_reason == "port-content-mismatch"
     assert failed_result.evidence == {
-        "byte_count": 47,
+        "byte_count": len(_SITE_SERVICE_COMMAND.replace("14242", "9999").encode("utf-8")),
         "catalog_path": "site.service",
-        "content_excerpt": "ExecStart=/usr/bin/python3 -m http.server 9999\n",
+        "content_excerpt": _SITE_SERVICE_COMMAND.replace("14242", "9999"),
         "computed_port": 14242,
         "failure_reason": "port-content-mismatch",
         "forbidden_matched": None,
@@ -2448,7 +2515,7 @@ def test_user_port_file_validation_reports_unknown_user(
                     CATALOG.quest("prove-shell-alive"),
                     validation=UserPortFileValidation(
                         path="site.service",
-                        required_regex_template=r"http\.server {port}",
+                        required_regex_template=r"caddy file-server --listen :{port}",
                     ),
                 ),
                 checked_at="2026-07-19T09:00:00Z",
@@ -2482,7 +2549,7 @@ def test_user_port_file_validation_reports_missing_path(
                 database_connection,
                 UserPortFileValidation(
                     path="missing.service",
-                    required_regex_template=r"http\.server {port}",
+                    required_regex_template=r"caddy file-server --listen :{port}",
                 ),
                 learner_home,
             ),
@@ -2510,9 +2577,9 @@ def test_user_port_file_validation_rejects_symlink_swap_escape_before_read(
     learner_home = tmp_path / "alice"
     learner_home.mkdir()
     inside_file = learner_home / "site.service"
-    inside_file.write_text("ExecStart=/usr/bin/python3 -m http.server 14242\n", encoding="utf-8")
+    inside_file.write_text(_SITE_SERVICE_COMMAND, encoding="utf-8")
     outside_file = tmp_path / "outside.service"
-    outside_file.write_text("ExecStart=/usr/bin/python3 -m http.server 14242\n", encoding="utf-8")
+    outside_file.write_text(_SITE_SERVICE_COMMAND, encoding="utf-8")
     link_path = learner_home / "site-link.service"
     link_path.symlink_to(inside_file)
     original_open = validation_paths.os.open
@@ -2531,7 +2598,7 @@ def test_user_port_file_validation_rejects_symlink_swap_escape_before_read(
                 database_connection,
                 UserPortFileValidation(
                     path="site-link.service",
-                    required_regex_template=r"http\.server {port}",
+                    required_regex_template=r"caddy file-server --listen :{port}",
                 ),
                 learner_home,
             ),
@@ -2558,7 +2625,7 @@ def test_user_port_file_validation_reports_runtime_invalid_regex(
     learner_home = tmp_path / "alice"
     learner_home.mkdir()
     service_file = learner_home / "site.service"
-    service_file.write_text("ExecStart=/usr/bin/python3 -m http.server 14242\n", encoding="utf-8")
+    service_file.write_text(_SITE_SERVICE_COMMAND, encoding="utf-8")
 
     with connect_database(migrated_database_path) as database_connection:
         result = validate_quest(
@@ -2575,7 +2642,7 @@ def test_user_port_file_validation_reports_runtime_invalid_regex(
     assert result.passed is False
     assert result.failure_reason == "invalid-regex"
     assert result.evidence == {
-        "byte_count": 48,
+        "byte_count": len(_SITE_SERVICE_COMMAND.encode("utf-8")),
         "catalog_path": "site.service",
         "computed_port": 14242,
         "failure_reason": "invalid-regex",
@@ -2600,7 +2667,7 @@ def test_user_port_file_validation_rejects_unsupported_formula(
                 database_connection,
                 UserPortFileValidation(
                     path="site.service",
-                    required_regex_template=r"http\.server {port}",
+                    required_regex_template=r"caddy file-server --listen :{port}",
                     port_formula="uid",
                 ),
                 learner_home,

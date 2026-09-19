@@ -52,9 +52,9 @@ build-website
 
 ## Optional Reinforcement
 
-Three sequential extensions follow the live objectives: add uptime, run the script from another directory, and preserve it in Git.
+For extra practice, add uptime, run the script from another directory, and preserve it in Git.
 
-The self-study guide also contains an unscored shell-options appendix. It demonstrates `set -u` with an unset `$1`, then `set -e` with one standalone failed command. These options reveal failures; they do not replace input checks or explicit error handling.
+The self-study guide also contains an optional shell-options appendix. It demonstrates `set -u` with an unset `$1`, then `set -e` with one standalone failed command. These options reveal failures; they do not replace input checks or explicit error handling.
 
 ## Can You Explain This?
 

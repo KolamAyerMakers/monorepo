@@ -131,6 +131,157 @@ def test_current_quest_requires_session_placement(migrated_database_path: Path) 
             )
 
 
+@pytest.mark.parametrize(
+    ("session_id", "historical_objective_ids", "historical_quest_id", "expected_objective_id"),
+    [
+        ("S7", ("create-setup-page",), "serve-local-check-page", "inspect-first-url-headers"),
+        ("S8", ("keep-tmux-workbench",), "serve-local-check-page", "enable-site-service"),
+        ("S9", ("transform-heading-with-sed",), "serve-local-check-page", "schedule-site-rebuilds"),
+        (
+            "S7",
+            ("inspect-first-url-headers", "diagnose-second-url"),
+            "inspect-first-url-headers",
+            None,
+        ),
+    ],
+)
+def test_redesigned_sessions_preserve_historical_completions_and_scores(
+    migrated_database_path: Path,
+    session_id: str,
+    historical_objective_ids: tuple[str, ...],
+    historical_quest_id: str,
+    expected_objective_id: str | None,
+) -> None:
+    """Retired and retained work survives redesign without rescoring or stale quest priority."""
+    with connect_database(migrated_database_path) as database_connection:
+        _enroll_without_session_placement(database_connection)
+        for session in CATALOG.sessions_through(session_id):
+            release_course(
+                database_connection,
+                CATALOG,
+                CourseReleaseInput(
+                    session_reached=session.id,
+                    updated_at=session.starts_at.isoformat(),
+                    source=SOURCE,
+                ),
+            )
+        for objective_id in historical_objective_ids:
+            write_session_objective_completion(
+                database_connection,
+                SessionObjectiveCompletion(
+                    handle=HANDLE,
+                    course_id=CATALOG.course.id,
+                    session_id=session_id,
+                    objective_id=objective_id,
+                    completed_at=JOINED_AT,
+                    evidence_json='{"historical":true}',
+                ),
+            )
+            add_score_entry(
+                database_connection,
+                ScoreLedgerEntry(
+                    id=None,
+                    handle=HANDLE,
+                    course_id=CATALOG.course.id,
+                    amount=50,
+                    reason="session_objective_completed",
+                    related_type="session_objective",
+                    related_id=f"{session_id}:{objective_id}",
+                    created_at=JOINED_AT,
+                ),
+            )
+        write_quest_completion(
+            database_connection,
+            QuestCompletion(
+                handle=HANDLE,
+                course_id=CATALOG.course.id,
+                quest_id=historical_quest_id,
+                attempt_id=_record_repository_attempt(
+                    database_connection, historical_quest_id, "passed", JOINED_AT
+                ),
+                completed_at=JOINED_AT,
+                source=SOURCE,
+            ),
+        )
+        historical_quests = list_quest_completions(database_connection, HANDLE, CATALOG.course.id)
+        historical_scores = list_score_entries(database_connection, HANDLE, CATALOG.course.id)
+        objective_result = current_session_objective(database_connection, CATALOG, handle=HANDLE)
+        if expected_objective_id is None:
+            assert objective_result.objective is None
+            for objective_id in historical_objective_ids:
+                complete_session_objective(
+                    database_connection,
+                    CATALOG,
+                    handle=HANDLE,
+                    session_id=session_id,
+                    objective_id=objective_id,
+                    completed_at="2026-09-19T09:01:00Z",
+                    evidence={"replacement": True},
+                )
+            assign_quest(
+                database_connection,
+                QuestAssignment(
+                    id=None,
+                    handle=HANDLE,
+                    course_id=CATALOG.course.id,
+                    quest_id="create-setup-page",
+                    assigned_at=JOINED_AT,
+                    source=SOURCE,
+                ),
+            )
+            setup_assignment = get_assignment(
+                database_connection, HANDLE, CATALOG.course.id, "create-setup-page"
+            )
+            assert setup_assignment is not None
+
+            quest_result = current_quest(
+                database_connection,
+                CATALOG,
+                handle=HANDLE,
+                assigned_at="2026-09-19T09:02:00Z",
+                source=SOURCE,
+            )
+
+            assert quest_result.quest == CATALOG.quest("serve-local-check-page")
+            assert quest_result.assigned_now is True
+            assert (
+                get_assignment(database_connection, HANDLE, CATALOG.course.id, "create-setup-page")
+                == setup_assignment
+            )
+            assert (
+                get_quest_completion(
+                    database_connection, HANDLE, CATALOG.course.id, "create-setup-page"
+                )
+                is None
+            )
+        else:
+            assert objective_result.objective is not None
+            assert objective_result.objective.id == expected_objective_id
+        assert list_completed_objective_ids(
+            database_connection, HANDLE, CATALOG.course.id, session_id
+        ) == frozenset(historical_objective_ids)
+        assert database_connection.execute(
+            """select objective_id, completed_at, evidence_json
+            from session_objective_completions
+            where handle = ? and course_id = ? and session_id = ?
+            order by objective_id""",
+            (HANDLE, CATALOG.course.id, session_id),
+        ).fetchall() == [
+            (objective_id, JOINED_AT, '{"historical":true}')
+            for objective_id in sorted(historical_objective_ids)
+        ]
+        assert (
+            list_quest_completions(database_connection, HANDLE, CATALOG.course.id)
+            == historical_quests
+        )
+        assert (
+            list_score_entries(database_connection, HANDLE, CATALOG.course.id) == historical_scores
+        )
+        assert total_score_for_course(database_connection, HANDLE, CATALOG.course.id) == (
+            50 * len(historical_objective_ids)
+        )
+
+
 def test_current_quest_assigns_before_returning(migrated_database_path: Path) -> None:
     """The current quest service persists an assignment before returning it."""
     with connect_database(migrated_database_path) as database_connection:

@@ -8,17 +8,17 @@ A syscall is a controlled request from a user-space program to the kernel.
 
 Programs should not directly control disks, memory, devices, users, or network hardware. They ask the kernel. The kernel checks permissions, performs the operation, and returns a result.
 
-## Course Examples
+## Examples
 
 - `cat file` asks the kernel to open and read a file.
 - `mkdir directory` asks the kernel to create a directory.
 - `ssh` asks the kernel to open a network connection.
-- `python3 -m http.server --bind 127.0.0.1` asks the kernel to listen on a TCP port.
+- The [Caddy file-server demo](../commands/caddy.md) asks the kernel to listen on a loopback TCP port and read its demo files.
 - `kill PID` asks the kernel to send a signal to a process.
 
 ## How To Observe Syscalls
 
-`strace` is allowed in this course for observing your own small commands. Use it as a microscope, not as a stunt.
+Use `strace` to observe your own small commands. Use it as a microscope, not as a stunt.
 
 ```bash
 strace -e openat,read,write cat /etc/hostname

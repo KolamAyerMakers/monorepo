@@ -6,6 +6,8 @@ Quest: inspect-generated-html
 
 Inspect `~/public_html/setup.html` and find generated HTML tags.
 
+This is optional publishing reinforcement. If `~/src/pages/setup.md` is absent, follow [Create a setup page](create-setup-page.md) first: create the source before building. If it already exists, preserve its content and existing homepage links rather than replacing them.
+
 ## Commands You Will Use
 
 - `cat`
@@ -22,11 +24,11 @@ Inspect `~/public_html/setup.html` and find generated HTML tags.
 
 1. Source Markdown becomes generated HTML.
 2. `grep` can search for tags or words.
-3. Rebuild if the generated file is missing.
+3. If generated output is missing, confirm the source exists before rebuilding.
 
 ## If Check Fails
 
-Run `build-website` and inspect `~/public_html/setup.html` again.
+Confirm `~/src/pages/setup.md` exists, using the prerequisite above if needed. Then run `build-website`, resolve any build error, and inspect `~/public_html/setup.html` again. Do not create or edit generated HTML by hand.
 
 ## Related Reading
 

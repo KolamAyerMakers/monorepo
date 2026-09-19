@@ -80,19 +80,29 @@ _S5_REPORT_PIPELINE_PATTERN = (
     r"(?m)^[ \t]*cut[ \t]+-d:[ \t]+-f7[ \t]+/etc/passwd"
     r"[ \t]*\|[ \t]*sort[ \t]+-u[ \t]*(?:#.*)?$"
 )
+_S5_REPORT_OUTPUT_PATTERN = (
+    r'(?:~/src/pages/maker-report\.md|"\$temporary_report"[ \t]*$'
+    r'.*?^[ \t]*mv -T -- "\$temporary_report" "\$HOME/src/pages/maker-report\.md")'
+)
 _S5_REPORT_DESTINATION_SCRIPT_PATTERN = (
-    r"(?ms)\A"
-    r"(?=.*^[ \t]*(?:\{|\()[ \t]*(?:#.*)?$"
-    r".*?^[ \t]*(?:\}|\))[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"
-    r".+\Z"
+    (
+        r"(?ms)\A"
+        r"(?=.*^[ \t]*(?:\{|\()[ \t]*(?:#.*)?$"
+        r".*?^[ \t]*(?:\}|\))[ \t]*>[ \t]*"
+    )
+    + _S5_REPORT_OUTPUT_PATTERN
+    + r"[ \t]*(?:#.*)?$).+\Z"
 )
 _S5_REPORT_FENCES_SCRIPT_PATTERN = (
-    r"""(?ms)\A"""
-    r"""(?=.*^[ \t]*printf[^\n]*(?:```(?:text)?\\n|'%s\\n'[ \t]+'```(?:text)?')[^\n]*$"""
-    r""".*?^[ \t]*cut[^\n]*$"""
-    r""".*?^[ \t]*printf[ \t]+(?:'```\\n'|"```\\n"|'%s\\n'[ \t]+'```')[ \t]*(?:#.*)?$"""
-    r""".*?^[ \t]*(?:\}|\))[ \t]*>[ \t]*~/src/pages/maker-report\.md[ \t]*(?:#.*)?$)"""
-    r""".+\Z"""
+    (
+        r"""(?ms)\A"""
+        r"""(?=.*^[ \t]*printf[^\n]*(?:```(?:text)?\\n|'%s\\n'[ \t]+'```(?:text)?')[^\n]*$"""
+        r""".*?^[ \t]*cut[^\n]*$"""
+        r""".*?^[ \t]*printf[ \t]+(?:'```\\n'|"```\\n"|'%s\\n'[ \t]+'```')[ \t]*(?:#.*)?$"""
+        r""".*?^[ \t]*(?:\}|\))[ \t]*>[ \t]*"""
+    )
+    + _S5_REPORT_OUTPUT_PATTERN
+    + r"[ \t]*(?:#.*)?$).+\Z"
 )
 _S5_MARKDOWN_REPORT_PATTERN = (
     r"(?ms)\A#[ \t]+\S[^\n]*\n"
@@ -127,23 +137,127 @@ _STATIC_HOMEPAGE_COMMAND_PATTERN = (
     r"""\$(?:USER|\{USER\})/(?P=variable_quote))$"""
 )
 _SERVICE_HOMEPAGE_COMMAND_PATTERN = (
-    r"""^curl -I (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)https://[a-z_][a-z0-9_-]*"""
+    r"""^curl -[Ii] (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)https://[a-z_][a-z0-9_-]*"""
     rf"""\.{_CLASSROOM_HOSTNAME_PATTERN}/(?P=quote)|(?P<variable_quote>"?)"""
     r"""https://\$(?:USER|\{USER\})"""
     rf"""\.{_CLASSROOM_HOSTNAME_PATTERN}/(?P=variable_quote))$"""
 )
 _LOCAL_SERVICE_COMMAND_PATTERN = (
-    r'^curl -I (?:--max-time [0-9]+ )?"?http://127\.0\.0\.1:'
+    r'^curl -[Ii] (?:--max-time [0-9]+ )?"?http://127\.0\.0\.1:'
     r'(?:[0-9]+|\$PORT|\$\{PORT\})/"?$'
+)
+_LOCAL_REFUSAL_PATTERN = (
+    # ponytail: conservative fallback phrases; semantic assessment handles other explanations.
+    r"\b(?:localhost|local (?:curl|connection|request))\s+(?:was |is )?"
+    r"(?:connection )?refused\s+(?:because|since|as)\s+(?:the |my )?"
+    r"(?:personal caddy (?:was |is )?stopped|(?:there (?:was|is) )?no listener)\b"
+)
+_LOCAL_REFUSAL_FORBIDDEN_PATTERNS = (
+    r"\b(?:localhost|local (?:curl|connection|request))\s+(?:was |is )?not refused\b",
+    r"\brefus(?:al|ed)\s+(?:means|is caused by|because of)\s+(?:a |the )?missing page\b",
+)
+_PROXY_502_PATTERN = (
+    r"\b502\s*(?:(?:means?|is|because|when)\s+|[:=-]\s*)(?:the |its |an? )?(?:"
+    r"(?:backend|upstream)(?: service)?\s+(?:(?:is|was) )?(?:unavailable|unreachable)"
+    r"|(?:unavailable|unreachable) (?:backend|upstream)"
+    r"|(?:proxy|gateway|shared caddy)\s+(?:cannot|could not|can't|couldn't)\s+"
+    r"(?:get|obtain)\s+(?:a )?(?:usable|valid)\s+(?:backend|upstream) response"
+    r"|(?:proxy|gateway)\s+(?:got|received)\s+an? invalid "
+    r"(?:upstream response|response from (?:its |the )?upstream))\b"
+)
+_PROXY_502_FORBIDDEN_PATTERNS = (
+    (
+        r"\b502\s+(?:means?|is)\s+(?:a |the )?(?:success|ok|successful request|missing page|"
+        r"not found|dns failure|tls failure)\b"
+    ),
+    (
+        r"\b502\s+(?:(?:does not|doesn't|never)\s+mean|is not|isn't)\b[^.;]{0,45}"
+        r"\b(?:unavailable backend|unreachable backend|upstream failure|"
+        r"backend (?:is )?(?:unavailable|unreachable))\b"
+    ),
+    (
+        r"\b502\s+(?:alone )?(?:proves?|always means?)\s+(?:that )?(?:the )?"
+        r"(?:process|backend|personal caddy)\s+(?:is |has )?stopped\b"
+    ),
+)
+_INDEPENDENT_STATIC_PATTERN = (
+    r"\bshared caddy serves\s+(?:the files in )?public_html directly\b[^.;]{0,30}"
+    r"\b(?:independently of|without (?:using|needing))\s+(?:the |my )?personal caddy\b"
+    r"|\bstatic (?:route|hosting|delivery|url)\s+(?:bypasses|does not depend on|"
+    r"is independent of)\s+(?:the |my )?personal caddy\b"
+)
+_STATIC_DEPENDENCE_PATTERNS = (
+    (
+        r"\bstatic (?:route|hosting|delivery|url)\s+(?:depends on|requires|needs|"
+        r"does not bypass|doesn't bypass|is not independent of)\s+(?:the |my )?personal caddy\b"
+    ),
+    r"\bshared caddy\s+(?:does not|doesn't|cannot)\s+serve\s+public_html directly\b",
+)
+_WORKING_BACKEND_PATTERN = (
+    r"\bbackend\s+(?:was |is )?(?:already )?working locally and through (?:shared )?caddy\b"
+)
+_SITE_SERVICE_PATTERN = (
+    r"(?ms)^\[Unit\]$.*^\[Service\]$.*^WorkingDirectory=%h[ \t]*$"
+    r".+^ExecStart=/usr/bin/caddy file-server --listen (?:127\.0\.0\.1)?:{port} "
+    r"--root %h/public_html --access-log[ \t]*$"
+    r".+^\[Install\]$.*^WantedBy=default\.target[ \t]*$"
+)
+_SITE_BUILD_SERVICE_PATTERN = (
+    r"(?ms)^\[Service\]$.*^Type=oneshot[ \t]*$"
+    r".+^WorkingDirectory=%h/src[ \t]*$"
+    r'.+^ExecStartPre=/bin/bash %h/scripts/maker-report\.sh "System Report"[ \t]*$'
+    r".+^ExecStart=/usr/local/bin/npm run build[ \t]*$"
+)
+_SITE_BUILD_TIMER_PATTERN = (
+    r"(?ms)^\[Timer\]$.*^OnActiveSec=1h[ \t]*$.*^OnUnitInactiveSec=1h[ \t]*$"
+    r".*^\[Install\]$.*^WantedBy=timers\.target[ \t]*$"
+)
+_SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN = (
+    r"(?m)^[ \t]*On(?:BootSec|StartupSec|UnitActiveSec|Calendar)="
+    r"|^[ \t]*On(?:ActiveSec|UnitInactiveSec)=(?!1h[ \t]*$)\S"
 )
 _SOURCE_HANDOFF_PATHS = (
     "README.md",
     "scripts/maker-report.sh",
     "scripts/site-check.sh",
-    "scripts/site.sh",
     "services/site.service",
     "services/site-build.service",
     "services/site-build.timer",
+)
+_SERVICE_RECOVERY_QUESTION = InteractiveQuestionValidation(
+    question=(
+        "What journal error or failed response did you observe, what caused it, "
+        "how was it repaired, and what response confirmed recovery? "
+        "You may describe an agreed demonstration."
+    ),
+    required_concepts=(
+        AnswerConcept(
+            id="journal-error",
+            aliases=(r"\b(?:203/exec|exec|404|502|error|failed|missing|no such file)\b",),
+            rubric=(
+                "Report the actual journal error or failed response and its cause, such as an "
+                "invalid executable path. An observed peer or staff demonstration is valid."
+            ),
+        ),
+        AnswerConcept(
+            id="safe-repair",
+            aliases=(r"\b(?:restored|repaired|fixed|backup)\b",),
+            rubric=(
+                "Explain the agreed repair while preserving unrelated edits. Unit changes need "
+                "daemon-reload and restart; content changes need a build and browser reload, "
+                "not a restart. Resetting failed state alone is not repair."
+            ),
+        ),
+        AnswerConcept(
+            id="recovery-response",
+            aliases=(r"\b(?:page|response|browser|200|content)\b",),
+            rubric=(
+                "Describe the actual page response used to assess recovery, or an unresolved "
+                "failure and next diagnostic step. Do not equate a successful restart "
+                "with recovery."
+            ),
+        ),
+    ),
 )
 _S6_SITE_CHECK_PROMPT = (
     "Finish `~/scripts/site-check.sh PAGE [PAGE ...]` to query any supplied page paths. "
@@ -1368,14 +1482,18 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S7",
-            title="Your page on the wire",
+            title="Run Your Own Web Server",
             date=date(2026, 9, 19),
             starts_at=datetime(2026, 9, 19, 9, tzinfo=UTC),
             introduced_commands=(
+                "curl -i",
                 "curl -v",
                 "nc",
+                "ss",
                 "diff",
                 "caddy",
+                "caddy file-server",
+                "id -u",
             ),
             introduced_skills=(
                 "http-inspection",
@@ -1383,81 +1501,104 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "html-on-the-wire",
                 "reverse-proxy",
                 "multi-page-sites",
+                "manual-web-service",
+                "service",
             ),
             learning_objectives=(
-                "Inspect HTTP requests and responses.",
-                "Compare rendered HTML on disk and over the network.",
-                "Distinguish static hosting from a proxy with no backend service.",
-                "Add another page to the site.",
+                (
+                    "Run a foreground web server on all interfaces at your UID-derived port, "
+                    "protected by the classroom firewall."
+                ),
+                "Request it locally and publicly, and read its access logs.",
+                (
+                    'Match your Caddy PID from `ps -u "$USER" -o pid,comm,args` to its listening '
+                    'socket with `ss -ltnp "sport = :$PORT"`.'
+                ),
+                (
+                    "Send HTTP interactively with netcat, then save the request in a shell script. "
+                    "Distinguish CRLF, the blank header terminator, and EOF; read the response "
+                    "status, headers, and body over loopback."
+                ),
+                (
+                    "Diagnose a collision on your own assigned port without stopping the original "
+                    "listener or changing ports."
+                ),
+                (
+                    "Explain why a newly empty public-practice root returns HTTP 404 while Caddy "
+                    "and its listener remain running, unlike a stopped backend."
+                ),
+                "Distinguish localhost refusal, public 502, and working static hosting.",
             ),
-            content=_session_content("S7", "Your page on the wire"),
+            content=_session_content("S7", "Run Your Own Web Server"),
             objectives=(
                 SessionObjective(
                     id="inspect-first-url-headers",
-                    title="Inspect HTTP requests and responses",
+                    title="Request your server locally and compare the routes",
                     prompt=(
-                        'Run `curl -I "https://lf2607.kolamayermakers.org/~$USER/"` to inspect '
-                        "your static homepage headers. Compare with the raw HTTP lab; the guide "
-                        "records the curl command, not the returned status."
+                        "Set `PORT=$((10000 + $(id -u)))` and run "
+                        '`caddy file-server --listen ":$PORT" '
+                        '--root "$HOME/public_html" --access-log` in one terminal. This listens on '
+                        "all interfaces; the classroom firewall blocks new external connections "
+                        "to assigned ports over IPv4 and IPv6. In another terminal, "
+                        "request localhost with `curl -i` while your server runs, then attempt the "
+                        "public service homepage with `curl -i` and static homepage with "
+                        "`curl -I`. Inspect running and stopped responses and structured access "
+                        "logs (request.method, request.uri, status, and ts) yourself. The guide "
+                        "checks only a successful completed local curl request. Public DNS or TLS "
+                        "failures do not block the explanation objective: report what happened, "
+                        "not an invented HTTP status. This check cannot prove service outcomes, "
+                        "a foreground process, response status, log contents, or browser access."
                     ),
                     validation=CommandHistoryValidation(
-                        required_patterns=(_STATIC_HOMEPAGE_COMMAND_PATTERN,),
-                        observed_commands=("curl -I",),
-                    ),
-                ),
-                SessionObjective(
-                    id="compare-source-and-output",
-                    title="Compare rendered HTML on disk and over the network",
-                    prompt=(
-                        "Run `build-website`, then use `diff` to compare a generated page with a "
-                        "fetched copy."
-                    ),
-                    validation=CommandHistoryValidation(
-                        required_patterns=(
-                            r"^(?:build-website|maker-guide-build-personal-website)$",
-                            r"^diff ",
-                        ),
-                        observed_commands=("build-website", "diff"),
+                        required_patterns=(_LOCAL_SERVICE_COMMAND_PATTERN,),
+                        observed_commands=("curl",),
                     ),
                 ),
                 SessionObjective(
                     id="diagnose-second-url",
-                    title="Diagnose the separate service URL",
+                    title="Explain what stops and what keeps working",
                     prompt=(
-                        'Run `curl -v "https://$USER.lf2607.kolamayermakers.org/"`. Inspect '
-                        "the proxy response and explain the missing backend. This is a separate "
-                        "serving route, not the report path checked in S6."
+                        "Stop your foreground server with Ctrl-C. Compare expected localhost "
+                        "refusal, public service 502, and independent static delivery with your "
+                        "actual results. Explain the three routes with `guide answer`, including "
+                        "unexpected DNS or TLS failures. This checks your explanation, not "
+                        "failed command history or captured output."
                     ),
-                    validation=CommandHistoryValidation(
-                        required_patterns=(
-                            _SERVICE_HOMEPAGE_COMMAND_PATTERN.replace("curl -I", "curl -v"),
+                    validation=InteractiveQuestionValidation(
+                        question=(
+                            "After stopping personal Caddy, why do we expect localhost refusal, "
+                            "public 502, and working static delivery? How did your results differ?"
                         ),
-                        observed_commands=("curl -v",),
-                    ),
-                ),
-                SessionObjective(
-                    id="create-setup-page",
-                    title="Add another page to the site",
-                    prompt=(
-                        "Write a headed `~/src/pages/setup.md`, link `setup.html` from `index.md`, "
-                        "then run `build-website` and check the generated setup page."
-                    ),
-                    validation=AllOfValidation(
-                        validations=(
-                            FileCheckValidation(
-                                path="~/src/pages/setup.md", required_regex=r"(?s)# .+"
-                            ),
-                            FileCheckValidation(
-                                path="~/src/pages/index.md", required_regex=r"setup\.html"
-                            ),
-                            FileCheckValidation(
-                                path="~/public_html/setup.html", required_regex=r"(?is)setup"
-                            ),
-                            CommandHistoryValidation(
-                                required_patterns=(
-                                    r"^(?:build-website|maker-guide-build-personal-website)$",
+                        required_concepts=(
+                            AnswerConcept(
+                                id="local-listener-stopped",
+                                aliases=(_LOCAL_REFUSAL_PATTERN,),
+                                forbidden_patterns=_LOCAL_REFUSAL_FORBIDDEN_PATTERNS,
+                                rubric=(
+                                    "Localhost refuses the connection because personal Caddy's "
+                                    "listener stopped, not because a page is missing."
                                 ),
-                                observed_commands=("build-website",),
+                            ),
+                            AnswerConcept(
+                                id="proxy-backend-stopped",
+                                aliases=(_PROXY_502_PATTERN,),
+                                forbidden_patterns=_PROXY_502_FORBIDDEN_PATTERNS,
+                                rubric=(
+                                    "With routing working, shared Caddy returns 502 when its "
+                                    "personal Caddy backend at 127.0.0.1 on the assigned port is "
+                                    "unavailable. The documented all-interface listener is "
+                                    "protected by the classroom firewall. Distinguish actual "
+                                    "DNS or TLS failure; do not require a claimed 502 observation."
+                                ),
+                            ),
+                            AnswerConcept(
+                                id="independent-static-hosting",
+                                aliases=(_INDEPENDENT_STATIC_PATTERN,),
+                                forbidden_patterns=_STATIC_DEPENDENCE_PATTERNS,
+                                rubric=(
+                                    "Explain that shared Caddy serves public_html directly for "
+                                    "the static URL, independently of stopped personal Caddy."
+                                ),
                             ),
                         ),
                     ),
@@ -1466,20 +1607,16 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S8",
-            title="Your own web service",
+            title="Keep Your Server Running",
             date=date(2026, 9, 26),
             starts_at=datetime(2026, 9, 26, 9, tzinfo=UTC),
             introduced_commands=(
                 "tmux",
-                "python3 -m http.server --bind 127.0.0.1",
-                "id -u",
                 "systemctl --user",
                 "journalctl --user",
             ),
             introduced_skills=(
                 "terminal-multiplexing",
-                "manual-web-service",
-                "service",
                 "bash-functions",
                 "systemd-user-services",
                 "logging",
@@ -1487,89 +1624,34 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "lingering",
             ),
             learning_objectives=(
-                "Create, detach from, list, reattach to, and end a tmux session.",
-                "Start a web server manually.",
-                "Wrap service actions in shell functions.",
                 "Run a user systemd service.",
                 "Read service logs.",
+                "Safely break and repair your own service using its journal.",
                 "Keep the service alive after logout.",
             ),
-            content=_session_content("S8", "Your own web service"),
+            content=_session_content("S8", "Keep Your Server Running"),
             objectives=(
-                SessionObjective(
-                    id="keep-tmux-workbench",
-                    title="Keep work alive in tmux",
-                    prompt=(
-                        "Create a tmux session named `workbench`, detach with `Ctrl-b d`, list it, "
-                        "attach, detach again, then run `tmux kill-session -t workbench`."
-                    ),
-                    validation=CommandHistoryValidation(
-                        required_patterns=(
-                            r"^tmux new -s workbench$",
-                            r"^tmux ls$",
-                            r"^tmux attach -t workbench$",
-                            r"^tmux kill-session -t workbench$",
-                        ),
-                        observed_commands=("tmux",),
-                        ordered=True,
-                    ),
-                ),
-                SessionObjective(
-                    id="serve-local-check-page",
-                    title="Start a web server manually",
-                    prompt=(
-                        "Start `python3 -m http.server` for your site, then use "
-                        "`curl` to request a page from it."
-                    ),
-                    validation=CommandHistoryValidation(
-                        required_patterns=(
-                            r"python3 -m http\.server",
-                            _LOCAL_SERVICE_COMMAND_PATTERN,
-                        ),
-                        observed_commands=("python3 -m http.server --bind 127.0.0.1", "curl"),
-                    ),
-                ),
-                SessionObjective(
-                    id="write-site-helper-functions",
-                    title="Wrap service actions in shell functions",
-                    prompt=(
-                        "Create executable `~/bin/site.sh` with `site_port`, `serve`, "
-                        "`status`, and `stop` functions for a localhost web server."
-                    ),
-                    validation=AllOfValidation(
-                        validations=(
-                            FileCheckValidation(
-                                path="~/bin/site.sh",
-                                required_regex=(
-                                    r"(?s)site_port\(\).+10000.+id -u.+serve\(\).+"
-                                    r"python3 -m http\.server.+--bind 127\.0\.0\.1.+"
-                                    r'--directory "\$HOME/public_html".+status\(\).+'
-                                    r"systemctl --user status.+stop\(\).+systemctl --user stop"
-                                ),
-                            ),
-                            ExecutablePathValidation(paths=("~/bin/site.sh",)),
-                        ),
-                    ),
-                ),
                 SessionObjective(
                     id="enable-site-service",
                     title="Run a user systemd service",
                     prompt=(
                         "Create `~/.config/systemd/user/site.service` to serve `~/public_html` on "
-                        "localhost, enable it with `systemctl --user enable --now "
+                        "all interfaces with `WorkingDirectory=%h` and "
+                        "`/usr/bin/caddy file-server`, explicit "
+                        "`--listen :YOUR_PORT --root %h/public_html --access-log`. "
+                        "Replace YOUR_PORT with your numeric UID-derived port. "
+                        "The classroom firewall blocks new external connections to assigned ports "
+                        "over IPv4 and IPv6; shared Caddy still connects through 127.0.0.1. "
+                        "Enable it with `systemctl --user enable --now "
                         "site.service`, then check both its localhost port and public service "
-                        "URL with `curl -I`. Read the statuses yourself; command evidence alone "
-                        "does not prove a healthy response."
+                        "URL with `curl -i` or `curl -I`. Read the statuses yourself; "
+                        "command evidence alone does not prove a healthy response."
                     ),
                     validation=AllOfValidation(
                         validations=(
                             UserPortFileValidation(
                                 path="~/.config/systemd/user/site.service",
-                                required_regex_template=(
-                                    r"(?s)\[Unit\].+\[Service\].+WorkingDirectory=%h/public_html.+"
-                                    r"ExecStart=/usr/bin/python3 -m http\.server {port} "
-                                    r"--bind 127\.0\.0\.1.+\[Install\].+WantedBy=default\.target"
-                                ),
+                                required_regex_template=_SITE_SERVICE_PATTERN,
                             ),
                             CommandHistoryValidation(
                                 required_patterns=(
@@ -1587,7 +1669,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     title="Read service logs",
                     prompt=(
                         "Request your public service URL with `curl -I`, then run "
-                        "`journalctl --user -u site.service` to read the service log."
+                        "`journalctl --user -u site.service --no-pager -n 20` to read the log. "
+                        "Identify request.method, request.uri, status, and ts in a structured "
+                        "personal Caddy access record. "
+                        "The guide sees completed curl and journal commands, not log contents. "
+                        "Stop the follower with Ctrl-C, not the service."
                     ),
                     validation=CommandHistoryValidation(
                         required_patterns=(
@@ -1597,11 +1683,79 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         observed_commands=("journalctl --user", "curl"),
                     ),
                 ),
+                SessionObjective(
+                    id="break-and-read-error",
+                    title="Explain and recover a service failure",
+                    prompt=(
+                        "Follow the agreed, backed-up repair exercise on your own unit, or observe "
+                        "a consenting peer or staff demonstration. Explain the journal error, "
+                        "cause, safe repair, and actual recovery response with `guide answer`. "
+                        "Leave your own installed unit restored. The guide checks its file and "
+                        "your explanation, not that a live failure or recovery occurred."
+                    ),
+                    validation=AllOfValidation(
+                        validations=(
+                            UserPortFileValidation(
+                                path="~/.config/systemd/user/site.service",
+                                required_regex_template=_SITE_SERVICE_PATTERN,
+                            ),
+                            _SERVICE_RECOVERY_QUESTION,
+                        ),
+                    ),
+                ),
+                SessionObjective(
+                    id="test-logout-survival",
+                    title="Explain the logout observation",
+                    prompt=(
+                        "Inspect lingering with staff, record MainPID and ExecMainStartTimestamp, "
+                        "close every login, and request the page from your laptop while logged out "
+                        "for the agreed interval. Reconnect and compare process identity and start "
+                        "time. Explain what happened, including shutdown or an inconclusive "
+                        "result. The guide checks your account of the experiment, not logout or "
+                        "uptime."
+                    ),
+                    validation=InteractiveQuestionValidation(
+                        question=(
+                            "What did lingering, the browser request while logged out, and the "
+                            "PID/start-time comparison establish? Why is active after login alone "
+                            "insufficient evidence?"
+                        ),
+                        required_concepts=(
+                            AnswerConcept(
+                                id="lingering-policy",
+                                aliases=(r"\blinger(?:ing)?\b",),
+                                rubric=(
+                                    "Distinguish staff-managed lingering from unit enablement: "
+                                    "enablement alone does not keep the manager alive after logout."
+                                ),
+                            ),
+                            AnswerConcept(
+                                id="outside-logout-observation",
+                                aliases=(r"\b(?:browser|laptop|logged out|logout)\b",),
+                                rubric=(
+                                    "Describe the outside request while all logins were closed for "
+                                    "the agreed interval, or why that observation was "
+                                    "inconclusive. "
+                                    "Report failure honestly; do not require claimed survival."
+                                ),
+                            ),
+                            AnswerConcept(
+                                id="process-identity-comparison",
+                                aliases=(r"\b(?:mainpid|pid|timestamp|start time|start-time)\b",),
+                                rubric=(
+                                    "Compare PID and start time before and after logout, or name "
+                                    "missing evidence. Active after reconnecting may be a fresh "
+                                    "start and does not establish uninterrupted service."
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
             ),
         ),
         Session(
             id="S9",
-            title="Polish: timers, markdown, vim, webring",
+            title="Automate It. Hand It Over.",
             date=date(2026, 10, 10),
             starts_at=datetime(2026, 10, 10, 9, tzinfo=UTC),
             introduced_commands=(
@@ -1623,80 +1777,53 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "irc",
             ),
             learning_objectives=(
-                "Schedule user-level site rebuilds.",
-                "Use light sed and awk transforms with regular expressions.",
-                "Survive basic vim editing.",
+                "Generate a fresh report before each automated site build.",
+                "Demonstrate a short timer, then leave a reasonable schedule.",
                 "Publish a readable README.",
-                "Enable the webring through source configuration.",
                 "Preserve the working scripts and systemd units in the source repository.",
+                "Have a peer use the README and improve it from their feedback.",
             ),
-            content=_session_content("S9", "Polish"),
+            content=_session_content("S9", "Automate It. Hand It Over."),
             objectives=(
                 SessionObjective(
                     id="schedule-site-rebuilds",
-                    title="Schedule user-level site rebuilds",
+                    title="Automate report generation and publishing",
                     prompt=(
-                        "Create the `site-build.service` and hourly `site-build.timer` user units, "
-                        "reload systemd, enable the timer, and list your timers."
+                        "Create `site-build.service` with report generation in ExecStartPre, then "
+                        "the npm build in ExecStart. Demonstrate a short `site-build.timer`, then "
+                        "set OnActiveSec=1h and OnUnitInactiveSec=1h, reload, and re-arm the "
+                        "timer. "
+                        "Start the build service and inspect its journal and published report. "
+                        "The guide checks unit files and completed commands, not timer firing "
+                        "or fresh report output."
                     ),
                     validation=AllOfValidation(
                         validations=(
                             FileCheckValidation(
                                 path="~/.config/systemd/user/site-build.service",
-                                required_regex=(
-                                    r"(?s)\[Service\].+Type=oneshot.+WorkingDirectory=%h/src.+"
-                                    r"ExecStart=/usr/local/bin/npm run build"
-                                ),
+                                required_regex=_SITE_BUILD_SERVICE_PATTERN,
                             ),
                             FileCheckValidation(
                                 path="~/.config/systemd/user/site-build.timer",
-                                required_regex=(
-                                    r"(?s)\[Timer\].+OnBootSec=5min.+OnUnitActiveSec=1h.+"
-                                    r"\[Install\].+WantedBy=timers\.target"
-                                ),
+                                required_regex=_SITE_BUILD_TIMER_PATTERN,
+                                forbidden_regex=_SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN,
                             ),
                             CommandHistoryValidation(
                                 required_patterns=(
                                     r"^systemctl --user daemon-reload$",
                                     r"^systemctl --user enable --now site-build\.timer$",
-                                    r"^systemctl --user list-timers$",
+                                    r"^systemctl --user list-timers(?: --all site-build\.timer)?$",
+                                    r"^systemctl --user start site-build\.service$",
+                                    r"^journalctl --user -u site-build\.service",
                                 ),
                                 observed_commands=(
                                     "systemctl --user",
                                     "systemctl --user enable --now",
                                     "systemctl --user list-timers",
+                                    "journalctl --user",
                                 ),
                             ),
                         ),
-                    ),
-                ),
-                SessionObjective(
-                    id="transform-heading-with-sed",
-                    title="Use light sed transforms",
-                    prompt=(
-                        "Run a `sed` command that changes a heading in a text file or sample text."
-                    ),
-                    validation=CommandHistoryValidation(
-                        required_patterns=(r"(?:^|\|\s*)sed ",), observed_commands=("sed",)
-                    ),
-                ),
-                SessionObjective(
-                    id="extract-fields-with-awk",
-                    title="Use light awk transforms",
-                    prompt="Run an `awk` command that prints a field from a line of text.",
-                    validation=CommandHistoryValidation(
-                        required_patterns=(r"^awk ",), observed_commands=("awk",)
-                    ),
-                ),
-                SessionObjective(
-                    id="survive-vim",
-                    title="Survive basic vim editing",
-                    prompt=(
-                        "Use `vim` to create `~/playground/vim-note.txt`, add a line of text, then "
-                        "save and quit."
-                    ),
-                    validation=FileCheckValidation(
-                        path="~/playground/vim-note.txt", required_regex=r"(?s).+"
                     ),
                 ),
                 SessionObjective(
@@ -1704,32 +1831,17 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     title="Publish a readable README",
                     prompt=(
                         "Write `~/src/README.md` with a heading that names your site "
-                        "and explains how to run it."
+                        "and explains how to generate the report, build, serve, inspect logs, "
+                        "and recover it. Have a peer follow the README and improve unclear steps. "
+                        "The guide checks the title and build/service instructions, not peer use."
                     ),
                     validation=FileCheckValidation(
                         path="~/src/README.md",
                         required_regex=(
                             r"(?ms)\A# \S[^\n]*\n"
-                            r"(?=.*(?:build-website|npm run build))(?=.*systemctl --user).+"
-                        ),
-                    ),
-                ),
-                SessionObjective(
-                    id="enable-webring",
-                    title="Enable the site webring",
-                    prompt=(
-                        "Set `webring = true` in `~/src/site.toml`, rebuild the site, "
-                        "and check that the homepage shows webring, previous, and next links."
-                    ),
-                    validation=AllOfValidation(
-                        validations=(
-                            FileCheckValidation(
-                                path="~/src/site.toml", required_regex=r"(?m)^webring *= *true$"
-                            ),
-                            FileCheckValidation(
-                                path="~/public_html/index.html",
-                                required_regex=r"(?is)(?=.*\bwebring\b)(?=.*\bprevious\b)(?=.*\bnext\b).+",
-                            ),
+                            r"(?=.*(?:build-website|npm run build|"
+                            r"systemctl --user start site-build\.service))"
+                            r"(?=.*systemctl --user).+"
                         ),
                     ),
                 ),
@@ -1737,7 +1849,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="prepare-source-handoff",
                     title="Preserve the working project",
                     prompt=(
-                        "Copy the three working scripts into `~/src/scripts/` and the three "
+                        "Copy the two working scripts into `~/src/scripts/` and the three "
                         "systemd units into `~/src/services/`, keeping active originals in place. "
                         "Commit those copies and `README.md`, then verify them in Forgejo. "
                         "The guide checks committed, unchanged local files; "
@@ -1754,7 +1866,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S10",
-            title="Boss fight, demos, graduation",
+            title="Show What You Can Do",
             date=date(2026, 10, 24),
             starts_at=datetime(2026, 10, 24, 9, tzinfo=UTC),
             introduced_commands=(
@@ -1773,12 +1885,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "number-bases",
             ),
             learning_objectives=(
-                "Solve Bandit levels in teams.",
-                "Demonstrate the static site, report, backend, source repository, and README.",
-                "Publish a concrete next Linux project with a recovery plan.",
-                "Understand what to explore after graduation.",
+                "Lead a demonstration of work you can explain and recover.",
+                "Investigate an unfamiliar problem using evidence and familiar tools.",
+                "Choose a concrete next action and explain how you will begin.",
             ),
-            content=_session_content("S10", "Boss fight, demos, graduation"),
+            content=_session_content("S10", "Show What You Can Do"),
         ),
     ),
     quests=(
@@ -2867,7 +2978,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="create-setup-page",
             title="Create a setup page",
-            sequence=59,
+            sequence=67,
             available_after_session="S7",
             prompt="Create `~/src/pages/setup.md`, link to it from `index.md`, and rebuild.",
             required_commands=("micro", "build-website"),
@@ -2900,9 +3011,14 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="inspect-first-url-headers",
             title="Inspect first URL headers",
-            sequence=60,
+            sequence=64,
             available_after_session="S7",
-            prompt="Run `curl -I` against your public `~username` URL and report the status code.",
+            prompt=(
+                "Run `curl -I` against your public `~username` URL and report the actual status "
+                "code, including an error status. If DNS or TLS fails before HTTP, report no HTTP "
+                "response and ask staff; do not invent 200. This numeric check needs an HTTP "
+                "response."
+            ),
             required_commands=("curl -I",),
             practiced_skills=("http-inspection", "http-status-codes"),
             validation=InteractiveQuestionValidation(
@@ -2910,10 +3026,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 required_concepts=(
                     AnswerConcept(
                         id="http-200",
-                        aliases=(r"\b200\b", r"\bok\b"),
+                        aliases=(r"(?<![\w.])[1-5][0-9]{2}(?!\w|\.[0-9])",),
                         rubric=(
-                            "The answer must report HTTP status 200 OK for the public username "
-                            "URL. Reporting an error status contradicts this concept."
+                            "Report the actual three-digit HTTP status, 100 through 599, for the "
+                            "public username URL. Error statuses are valid observations. "
+                            "DNS or TLS failure before HTTP is not a status; never require an "
+                            "invented 200."
                         ),
                     ),
                 ),
@@ -2924,40 +3042,90 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="diagnose-second-url",
             title="Diagnose the second URL",
-            sequence=61,
+            sequence=60,
             available_after_session="S7",
-            prompt="Run `curl -v` against your second URL and explain why it fails before S8.",
+            prompt=(
+                "Compare localhost, the public service hostname, and the independent static URL. "
+                "Explain the actual failure boundary and recovery, or why no repair was needed. "
+                "A manual backend may already be serving without a systemd unit."
+            ),
             required_commands=("curl -v",),
             practiced_skills=("http-inspection", "reverse-proxy"),
             validation=InteractiveQuestionValidation(
-                question="Why does the second URL fail before your service exists?",
+                question=(
+                    "What did local and public requests show, where was the failure, and what "
+                    "restored access? If the backend already worked, explain that observation."
+                ),
                 required_concepts=(
                     AnswerConcept(
-                        id="missing-service",
-                        aliases=(r"\bservice\b", r"\bbackend\b"),
+                        id="backend-observation",
+                        aliases=(
+                            _WORKING_BACKEND_PATTERN,
+                            (
+                                r"\b(?:localhost|local curl|local request|backend)\s+(?:was |is )?"
+                                r"(?:refused|working|responding|returned (?:200|404))\b"
+                            ),
+                        ),
+                        forbidden_patterns=(
+                            (
+                                r"\bno (?:systemd )?unit\s+(?:means|proves)\s+"
+                                r"(?:there is )?no listener\b"
+                            ),
+                        ),
                         rubric=(
-                            "The answer must identify the absent backend service as the reason the "
-                            "second URL fails. Claiming the service exists and is available "
-                            "contradicts this concept."
+                            "Report the local backend observation, including a working manual "
+                            "server. Do not infer no listener merely from the absence of a unit."
                         ),
                     ),
                     AnswerConcept(
-                        id="not-listening",
-                        aliases=(r"\b(no|nothing)\s+listening\b", r"\bnot\s+listening\b"),
+                        id="failure-boundary",
+                        aliases=(
+                            _WORKING_BACKEND_PATTERN,
+                            _PROXY_502_PATTERN,
+                            r"\blocal curl was refused and shared caddy returned 502\b",
+                            (
+                                r"\b(?:dns|tls)\s+(?:failed|failure)\s+before\s+(?:any |an )?"
+                                r"http(?: response)?\b"
+                            ),
+                        ),
+                        forbidden_patterns=_PROXY_502_FORBIDDEN_PATTERNS,
                         rubric=(
-                            "The answer must state that no process is listening on the backend "
-                            "port. Claiming a process is listening contradicts this concept."
+                            "Use the actual observations to distinguish backend, proxy, path, "
+                            "DNS, or TLS trouble, or explain why the routes already worked. "
+                            "A 502 alone cannot establish a stopped process."
+                        ),
+                    ),
+                    AnswerConcept(
+                        id="recovery-or-working-route",
+                        aliases=(
+                            rf"{_WORKING_BACKEND_PATTERN}[.;,]?\s+no repair was needed\b",
+                            (
+                                r"\b(?:started|restarted) personal caddy\b[^.;]{0,40}"
+                                r"\b(?:it|the page|local curl)\s+(?:loaded|worked|returned 200)\b"
+                            ),
+                            (
+                                r"\b(?:dns|tls)\s+(?:is |remains )?unresolved\b[^.]{0,40}"
+                                r"\b(?:ask|asked|asking) staff\b"
+                            ),
+                        ),
+                        rubric=(
+                            "Explain the change and subsequent request used to assess recovery, "
+                            "an unresolved blocker, or why an already working route needed no "
+                            "repair."
                         ),
                     ),
                 ),
             ),
-            goal="Explain the missing-backend failure mode.",
-            evidence="Answer must mention that no service is listening yet.",
+            goal="Locate the observed failure without assuming the backend is absent.",
+            evidence=(
+                "Describe the local result, public failure boundary, and recovery or already "
+                "working route. The guide checks your explanation, not captured responses."
+            ),
         ),
         _quest(
             quest_id="publish-ascii-art",
             title="Publish ASCII art",
-            sequence=62,
+            sequence=68,
             available_after_session="S7",
             prompt="Create `~/src/pages/art.md` with a fenced code block and rebuild.",
             required_commands=("micro", "build-website"),
@@ -2972,7 +3140,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="explain-status-codes",
             title="Explain status codes",
-            sequence=63,
+            sequence=61,
             available_after_session="S7",
             prompt="Explain `200`, `404`, and `502` in one short answer.",
             required_commands=("curl -I",),
@@ -2982,12 +3150,41 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 required_concepts=(
                     AnswerConcept(
                         id="http-200",
-                        aliases=(r"\b200\b",),
+                        aliases=(
+                            (
+                                r"\b200\s*(?:(?:means?|is)\s+|[:=-]\s*)?"
+                                r"(?:ok|success|the request succeeded|successful request)\b"
+                            ),
+                        ),
+                        forbidden_patterns=(
+                            (
+                                r"\b200\s+(?:means?|is)\s+(?:not found|missing|bad gateway|"
+                                r"(?:a |the )?(?:request )?fail(?:ure|ed))\b"
+                            ),
+                            r"\b200\s+(?:does not|doesn't|never)\s+mean\s+(?:ok|success)\b",
+                        ),
                         rubric="The answer must explain that HTTP 200 means the request succeeded.",
                     ),
                     AnswerConcept(
                         id="http-404",
-                        aliases=(r"\b404\b",),
+                        aliases=(
+                            (
+                                r"\b404\s*(?:(?:means?|is)\s+|[:=-]\s*)?"
+                                r"(?:(?:the )?(?:requested )?(?:page|resource|path)\s+"
+                                r"(?:was |is )?)?"
+                                r"(?:not found|missing)\b"
+                            ),
+                        ),
+                        forbidden_patterns=(
+                            (
+                                r"\b404\s+(?:means?|is)\s+(?:ok|success|bad gateway|"
+                                r"(?:an? )?(?:unavailable|stopped) backend)\b"
+                            ),
+                            (
+                                r"\b404\s+(?:does not|doesn't|never)\s+mean\s+"
+                                r"(?:(?:the )?(?:page|resource) (?:is )?)?(?:not found|missing)\b"
+                            ),
+                        ),
                         rubric=(
                             "The answer must explain that HTTP 404 means the requested resource "
                             "was not found."
@@ -2995,10 +3192,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     ),
                     AnswerConcept(
                         id="http-502",
-                        aliases=(r"\b502\b",),
+                        aliases=(_PROXY_502_PATTERN,),
+                        forbidden_patterns=_PROXY_502_FORBIDDEN_PATTERNS,
                         rubric=(
                             "The answer must explain that HTTP 502 means a gateway or proxy got an "
-                            "invalid response from its upstream service."
+                            "invalid response from its upstream service or could not reach it. "
+                            "It does not by itself prove that the backend process stopped."
                         ),
                     ),
                 ),
@@ -3009,7 +3208,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="compare-source-and-output",
             title="Compare source and output",
-            sequence=64,
+            sequence=69,
             available_after_session="S7",
             prompt="Use `diff` to compare one source Markdown page with generated HTML output.",
             required_commands=("diff", "build-website"),
@@ -3027,9 +3226,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="inspect-generated-html",
             title="Inspect generated HTML",
-            sequence=65,
+            sequence=70,
             available_after_session="S7",
-            prompt="Inspect `~/public_html/setup.html` and find generated HTML tags.",
+            prompt=(
+                "After the optional create-setup-page quest, inspect `~/public_html/setup.html` "
+                "and find generated HTML tags. Rebuilding alone cannot create missing source."
+            ),
             required_commands=("cat", "grep"),
             practiced_skills=("html-on-the-wire", "text-search"),
             validation=FileCheckValidation(
@@ -3042,31 +3244,64 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="probe-closed-port",
             title="Probe a closed port",
-            sequence=66,
+            sequence=62,
             available_after_session="S7",
-            prompt="Use `nc` against a port with no service and describe the failure.",
+            prompt=(
+                "Stop only your known foreground Caddy with Ctrl-C, then probe your assigned "
+                'port using `PORT=$((10000 + $(id -u)))` and `nc -vz -w 3 127.0.0.1 "$PORT"`. '
+                "Explain refusal, timeout, or unexpected success honestly. Do not stop an unknown "
+                "listener. Restore any existing user service you agreed to interrupt."
+            ),
             required_commands=("nc",),
             practiced_skills=("reverse-proxy", "sockets"),
             validation=InteractiveQuestionValidation(
-                question="What happened when `nc` reached a port without a service?",
+                question=(
+                    "What did nc report on your assigned port, and what does refusal, timeout, "
+                    "or an unexpected connection establish about a listener?"
+                ),
                 required_concepts=(
                     AnswerConcept(
                         id="closed-port",
-                        aliases=(r"\b(refused|closed|failed)\b",),
+                        aliases=(
+                            (
+                                r"\b(?:connection )?refused\b[^.]{0,40}"
+                                r"\b(?:no listener|nothing (?:was |is )?listening)\b"
+                            ),
+                            (
+                                r"\b(?:timed out|timeout)\b[^.]{0,50}\b(?:unknown|"
+                                r"(?:does not|doesn't) prove (?:the port is )?closed|"
+                                r"not proof of closure)\b"
+                            ),
+                            (
+                                r"\b(?:connected|connection succeeded)\b[^.]{0,50}"
+                                r"\b(?:another listener|other listener|not closed)\b"
+                            ),
+                        ),
+                        forbidden_patterns=(
+                            (
+                                r"\b(?:timeout|timed out|connected|connection succeeded)\s+"
+                                r"(?:(?:means|proves|so)\s+)?(?:the port (?:is|was) |it is )?"
+                                r"closed\b"
+                            ),
+                            r"\b(?:refused|timeout|timed out)\s+(?:means|is)\s+(?:http )?502\b",
+                        ),
                         rubric=(
-                            "The answer must report that the connection was refused or failed "
-                            "because no service accepted it on the port."
+                            "Report the actual result: refusal supports no listener at that "
+                            "endpoint; timeout leaves the listener state unknown and does not "
+                            "prove closure; an unexpected connection means a listener accepted "
+                            "it, not a closed port. Generic failure is insufficient. "
+                            "Do not stop an unknown listener."
                         ),
                     ),
                 ),
             ),
-            goal="Recognize a missing backend before systemd enters the story.",
-            evidence="Answer with the failure mode from `nc`.",
+            goal="Distinguish refused, unanswered, and accepted TCP connections.",
+            evidence="Report nc's actual result and what it establishes about the listener.",
         ),
         _quest(
             quest_id="record-http-headers",
             title="Record HTTP headers",
-            sequence=67,
+            sequence=65,
             available_after_session="S7",
             prompt="Save response headers from your public URL into `~/playground/headers.txt`.",
             required_commands=("curl -I", ">", "cat"),
@@ -3081,7 +3316,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="create-links-page",
             title="Create a links page",
-            sequence=68,
+            sequence=71,
             available_after_session="S7",
             prompt="Create `~/src/pages/links.md`, link it from `index.md`, and rebuild.",
             required_commands=("micro", "build-website"),
@@ -3098,7 +3333,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="compare-page-fetches",
             title="Compare two page fetches",
-            sequence=69,
+            sequence=66,
             available_after_session="S7",
             prompt="Fetch two site pages with `curl`, save them, and compare them with `diff`.",
             required_commands=("curl", "diff", ">"),
@@ -3113,49 +3348,78 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="explain-502",
             title="Explain a 502",
-            sequence=70,
+            sequence=63,
             available_after_session="S7",
-            prompt="Explain why a reverse proxy returns 502 when the backend service is missing.",
+            prompt=(
+                "Explain public 502, local refusal, and independent static delivery using your "
+                "stop-and-recover observations. A stopped backend is one possible cause of 502."
+            ),
             required_commands=("curl -v",),
             practiced_skills=("reverse-proxy", "http-status-codes"),
             validation=InteractiveQuestionValidation(
-                question="Why does a reverse proxy return 502 for a missing backend service?",
+                question="What does 502 establish, and how do local and static requests narrow it?",
                 required_concepts=(
                     AnswerConcept(
                         id="missing-backend",
-                        aliases=(r"\bbackend\b",),
+                        aliases=(_PROXY_502_PATTERN,),
+                        forbidden_patterns=_PROXY_502_FORBIDDEN_PATTERNS,
                         rubric=(
-                            "The answer must identify the reverse proxy's unavailable backend. "
-                            "Blaming the requested page alone contradicts this concept."
+                            "Explain that 502 means the proxy could not obtain a usable upstream "
+                            "response, for example from an unavailable backend. Explain expected "
+                            "502 even if DNS or TLS actually failed before HTTP; do not invent an "
+                            "observed status. Blaming the requested page alone contradicts this "
+                            "concept."
                         ),
                     ),
                     AnswerConcept(
-                        id="missing-service",
-                        aliases=(r"\bservice\b",),
+                        id="local-and-static-routes",
+                        aliases=(
+                            (
+                                rf"(?=.*(?:{_LOCAL_REFUSAL_PATTERN}))"
+                                rf"(?=.*(?:{_INDEPENDENT_STATIC_PATTERN}))"
+                            ),
+                        ),
+                        forbidden_patterns=(
+                            *_LOCAL_REFUSAL_FORBIDDEN_PATTERNS,
+                            *_STATIC_DEPENDENCE_PATTERNS,
+                        ),
                         rubric=(
-                            "The answer must explain that the backend service is absent or not "
-                            "running, so the proxy cannot obtain a response."
+                            "Explain that shared Caddy's static route bypasses personal Caddy. "
+                            "A controlled stop and local refusal support no listener; a public "
+                            "502 alone only establishes that the proxy could not obtain a usable "
+                            "upstream response. Static independence can be explained theoretically "
+                            "without claiming an observed successful static request."
                         ),
                     ),
                 ),
             ),
-            goal="Name the proxy-versus-backend boundary before you run your own service.",
-            evidence="Answer must mention the backend service.",
+            goal="Distinguish the proxy response from local and static observations.",
+            evidence="Explain the unavailable backend response and independent static route.",
         ),
         _quest(
             quest_id="publish-http-troubleshooting",
             title="Publish troubleshooting notes",
-            sequence=71,
+            sequence=80,
             available_after_session="S7",
-            prompt="Create `~/src/pages/troubleshooting.md` with notes on 200, 404, and 502.",
+            prompt=(
+                "Complete the optional create-setup-page quest first if setup.md is absent, "
+                "then improve `~/src/pages/setup.md` with your HTTP troubleshooting observations, "
+                "including 200, 404, and 502. Explain a real incident and recovery to a peer; "
+                "a separate troubleshooting page is optional."
+            ),
             required_commands=("micro", "build-website"),
             practiced_skills=("multi-page-sites", "reverse-proxy"),
             validation=FileCheckValidation(
-                path="~/src/pages/troubleshooting.md",
-                required_regex=r"(?s)200.+404.+502|502.+404.+200",
+                path="~/src/pages/setup.md",
+                required_regex=(
+                    r"(?s)(?=.*\b200\b)(?=.*\b404\b)(?=.*\b502\b).+|troubleshooting\.html"
+                ),
             ),
             goal="Turn HTTP failure modes into notes you can use during service work.",
-            evidence="`~/src/pages/troubleshooting.md` needs notes on 200, 404, and 502.",
+            evidence=(
+                "The guide checks status references or a troubleshooting link in setup.md, not "
+                "the incident, recovery, or whether a peer could use the advice."
+            ),
         ),
         _quest(
             quest_id="keep-tmux-workbench",
@@ -3189,34 +3453,43 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Write site helper functions",
             sequence=73,
             available_after_session="S8",
-            prompt="Create executable `~/bin/site.sh` with subcommands for your local site server.",
-            required_commands=(
-                "mkdir",
-                "micro",
-                "chmod",
-                "python3 -m http.server --bind 127.0.0.1",
-                "id -u",
-                "systemctl --user",
+            prompt=(
+                "Try the read-only site_status and site_logs shell functions. Explain definition "
+                "versus invocation and why reading logs does not control personal Caddy. "
+                "If useful, save only the definitions in `~/src/service/site-functions.sh`, "
+                "then inspect and source it. Persistence, an executable bit, and a dispatcher "
+                "are not required."
             ),
-            practiced_skills=("bash-functions", "manual-web-service"),
-            validation=AllOfValidation(
-                validations=(
-                    FileCheckValidation(
-                        path="~/bin/site.sh",
-                        required_regex=(
-                            r"(?s)site_port\(\).+10000.+id -u.+serve\(\).+"
-                            r"python3 -m http\.server.+--bind 127\.0\.0\.1.+"
-                            r'--directory "\$HOME/public_html".+status\(\).+'
-                            r"systemctl --user status.+stop\(\).+systemctl --user stop"
+            required_commands=("bash", "systemctl --user", "journalctl --user"),
+            practiced_skills=("bash-functions", "service-logs"),
+            validation=InteractiveQuestionValidation(
+                question=(
+                    "What happens when you define and call site_logs, and why does it not "
+                    "start or stop your web server? How would you load a trusted saved definition?"
+                ),
+                required_concepts=(
+                    AnswerConcept(
+                        id="function-invocation",
+                        aliases=(r"\b(?:call|calling|invoke|invoking)\b",),
+                        rubric=(
+                            "Defining a function does not run its body. Calling site_logs runs "
+                            "journalctl to read logs, without changing the service lifecycle."
                         ),
                     ),
-                    ExecutablePathValidation(paths=("~/bin/site.sh",)),
+                    AnswerConcept(
+                        id="trusted-source",
+                        aliases=(r"\b(?:source|sourcing)\b",),
+                        rubric=(
+                            "Source only an inspected, trusted definitions file into the current "
+                            "shell. It needs neither executable permission nor a dispatcher."
+                        ),
+                    ),
                 ),
             ),
-            goal="Turn repeated site-server operations into one reusable command.",
+            goal="Name repeated read-only operations without adding a service dependency.",
             evidence=(
-                "`~/bin/site.sh` needs site_port, serve, status, and stop subcommands, "
-                "plus executable permission."
+                "Explain function invocation and trusted sourcing. The guide does not require "
+                "a saved helper or certify what ran in your shell."
             ),
         ),
         _quest(
@@ -3224,18 +3497,18 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Enable site.service",
             sequence=74,
             available_after_session="S8",
-            prompt="Create and enable your user `site.service` for the second URL.",
+            prompt=(
+                "Create and enable your user `site.service` for the public service hostname. "
+                "Listen on all interfaces at your UID-derived port, protected by the classroom "
+                "firewall; shared Caddy still connects through 127.0.0.1."
+            ),
             required_commands=("id -u", "mkdir", "micro", "systemctl --user", "curl"),
             practiced_skills=("systemd-user-services", "manual-web-service"),
             validation=AllOfValidation(
                 validations=(
                     UserPortFileValidation(
                         path="~/.config/systemd/user/site.service",
-                        required_regex_template=(
-                            r"(?s)\[Unit\].+\[Service\].+WorkingDirectory=%h/public_html.+"
-                            r"ExecStart=/usr/bin/python3 -m http\.server {port} "
-                            r"--bind 127\.0\.0\.1.+\[Install\].+WantedBy=default\.target"
-                        ),
+                        required_regex_template=_SITE_SERVICE_PATTERN,
                     ),
                     CommandHistoryValidation(
                         required_patterns=(
@@ -3247,7 +3520,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     ),
                 ),
             ),
-            goal="Make your second URL work using a user service.",
+            goal="Serve the public service hostname using a user unit.",
             evidence=(
                 "`site.service` must use your computed port, with enable and local/public curl "
                 "observations. Inspect actual responses and browser access yourself."
@@ -3259,26 +3532,41 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=75,
             available_after_session="S8",
             prompt=(
-                "Follow `site.service` logs in a tmux session, detach, make a request with `curl`, "
-                "reattach, stop the log follower, and end the tmux session."
+                "Follow `site.service` logs in one SSH shell and make public requests in another. "
+                "Stop only the follower, then read recent logs. Explain one request and why a "
+                "missing page or a stopped log follower does not mean personal Caddy has stopped."
             ),
-            required_commands=("tmux", "journalctl --user", "curl"),
-            practiced_skills=("service-logs", "terminal-multiplexing"),
-            validation=CommandHistoryValidation(
-                required_patterns=(
-                    r"^tmux new -s logs$",
-                    r"^curl ",
-                    r"^journalctl --user -u site\.service -f$",
-                    r"^tmux attach -t logs$",
-                    r"^tmux kill-session -t logs$",
+            required_commands=("journalctl --user", "curl"),
+            practiced_skills=("service-logs", "logging"),
+            validation=InteractiveQuestionValidation(
+                question=(
+                    "Which request did you recognize by request.method, request.uri, status, "
+                    "and time (ts)? Why did stopping the log follower leave the service available?"
                 ),
-                observed_commands=("tmux", "journalctl --user", "curl"),
-                ordered=True,
+                required_concepts=(
+                    AnswerConcept(
+                        id="reported-request",
+                        aliases=(r"\b(?:get|head)\b.*?/\S*.*\b[1-5][0-9]{2}\b",),
+                        rubric=(
+                            "Report request.method, request.uri, status, and time (ts) from a "
+                            "structured personal Caddy access record in the journal. Explain its "
+                            "meaning; a 404 means a server answered, not that the service stopped."
+                        ),
+                    ),
+                    AnswerConcept(
+                        id="follower-not-service",
+                        aliases=(r"\b(?:journalctl|follower)\b",),
+                        rubric=(
+                            "Explain that Ctrl-C ended journalctl, not the separately supervised "
+                            "personal Caddy server, and describe the subsequent page observation."
+                        ),
+                    ),
+                ),
             ),
             goal="Watch your service logs while traffic arrives.",
             evidence=(
-                "The guide needs the complete named tmux workflow: create, curl, reattach, stop "
-                "journalctl, and kill the session."
+                "Report request.method, request.uri, status, and time plus the follower/service "
+                "distinction. This checks your explanation, not captured logs or a tmux lifecycle."
             ),
         ),
         _quest(
@@ -3287,49 +3575,45 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=76,
             available_after_session="S8",
             prompt=(
-                "Temporarily break `site.service`, read the journal error, then restore "
-                "and verify it."
+                "With consent and a private backup, temporarily break your own `site.service`, "
+                "read the journal, and restore it. Observing an agreed peer or staff demonstration "
+                "is also valid. Explain the error, safe repair, and actual recovery observation."
             ),
             required_commands=("systemctl --user", "journalctl --user", "micro", "curl"),
             practiced_skills=("service-logs", "systemd-user-services"),
             validation=AllOfValidation(
                 validations=(
-                    InteractiveQuestionValidation(
-                        question="What error did journalctl show for the broken service?",
-                        required_concepts=(
-                            AnswerConcept(
-                                id="journal-error",
-                                aliases=(r"\berror\b", r"\bfailed\b"),
-                                rubric=(
-                                    "The answer must report the specific failure or error message "
-                                    "observed in journalctl for the deliberately broken service."
-                                ),
-                            ),
-                        ),
+                    UserPortFileValidation(
+                        path="~/.config/systemd/user/site.service",
+                        required_regex_template=_SITE_SERVICE_PATTERN,
                     ),
-                    CommandHistoryValidation(
-                        required_patterns=(r"^systemctl --user restart site\.service$", r"^curl "),
-                        observed_commands=("systemctl --user", "curl"),
-                    ),
+                    _SERVICE_RECOVERY_QUESTION,
                 ),
             ),
-            goal="Use logs instead of guessing, then prove the service was restored.",
-            evidence="Answer with the journal error and verify the repaired service with curl.",
+            goal="Use logs to explain a safe repair without leaving your unit broken.",
+            evidence=(
+                "The guide checks your restored unit file and explanation, not a live outage "
+                "or recovery. Inspect the actual page result yourself."
+            ),
         ),
         _quest(
             quest_id="fix-and-restart-service",
             title="Fix and restart service",
             sequence=77,
             available_after_session="S8",
-            prompt="Fix `site.service`, restart it, and verify both site URLs with `curl`.",
+            prompt=(
+                "Diagnose the actual failure and apply the smallest safe repair. Reload and "
+                "restart after a unit change; build and reload the browser after a content change. "
+                "Explain the cause, repair, and observed page response or remaining blocker."
+            ),
             required_commands=("systemctl --user", "curl", "journalctl --user"),
             practiced_skills=("systemd-user-services", "service-logs"),
-            validation=CommandHistoryValidation(
-                required_patterns=(r"^systemctl --user restart", r"^curl "),
-                observed_commands=("systemctl --user", "curl"),
-            ),
+            validation=_SERVICE_RECOVERY_QUESTION,
             goal="Recover your service after a configuration mistake.",
-            evidence="The guide needs to see a restart and a curl verification.",
+            evidence=(
+                "Explain the observed error, repair, and actual response. The guide checks "
+                "your explanation, not command output, and does not require a content-only restart."
+            ),
         ),
         _quest(
             quest_id="check-service-status",
@@ -3346,11 +3630,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         id="service-state",
                         aliases=(
                             r"\b(?:active|inactive|failed|activating|deactivating|running|dead)\b",
+                            r"\b(?:could not be found|not found)\b",
                         ),
                         rubric=(
                             "The answer must report the observed state of site.service. "
                             "Inactive, failed, or transitional states are valid observations; "
-                            "do not require the learner to claim the service is running."
+                            "a missing unit is also valid. Do not require claimed uptime."
                         ),
                     ),
                     AnswerConcept(
@@ -3372,29 +3657,43 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=79,
             available_after_session="S8",
             prompt="Restart `site.service` and verify the local endpoint with `curl`.",
-            required_commands=("systemctl --user", "curl"),
+            required_commands=("systemctl --user", "curl", "journalctl --user"),
             practiced_skills=("systemd-user-services", "manual-web-service"),
             validation=CommandHistoryValidation(
-                required_patterns=(r"^systemctl --user restart site\.service$", r"^curl "),
+                required_patterns=(
+                    r"^systemctl --user restart site\.service$",
+                    _LOCAL_SERVICE_COMMAND_PATTERN,
+                ),
                 observed_commands=("systemctl --user", "curl"),
+                ordered=True,
             ),
             goal="Restart a service deliberately and verify behavior afterward.",
-            evidence="The guide needs to see a restart and a curl verification.",
+            evidence=(
+                "The guide checks a restart followed by local curl, not the returned page. "
+                "Inspect the response and journal yourself."
+            ),
         ),
         _quest(
             quest_id="document-service-port",
             title="Document your service port",
-            sequence=80,
-            available_after_session="S8",
-            prompt="Create `~/src/pages/service.md` explaining how your user port is computed.",
+            sequence=82,
+            available_after_session="S7",
+            prompt=(
+                "Complete the optional create-setup-page quest first if setup.md is absent, "
+                "then improve `~/src/pages/setup.md` with your UID-derived backend port "
+                "explanation."
+            ),
             required_commands=("id -u", "micro", "build-website"),
             practiced_skills=("manual-web-service", "multi-page-sites"),
             validation=FileCheckValidation(
-                path="~/src/pages/service.md",
-                required_regex=r"(?s)10000.+uid|uid.+10000|port",
+                path="~/src/pages/setup.md",
+                required_regex=r"(?is)(?=.*\b10000\b)(?=.*\buid\b)(?=.*\bport\b).+|service\.html",
             ),
             goal="Make the per-user port rule explicit enough to debug later.",
-            evidence="`~/src/pages/service.md` must mention the port or `10000 + uid` rule.",
+            evidence=(
+                "The guide checks UID/10000/port references or a service-page link in setup.md; "
+                "explain the calculation and route to a peer rather than relying on keywords."
+            ),
         ),
         _quest(
             quest_id="read-recent-logs",
@@ -3414,47 +3713,35 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         _quest(
             quest_id="serve-local-check-page",
             title="Serve a local check page",
-            sequence=82,
-            available_after_session="S8",
+            sequence=59,
+            available_after_session="S7",
             prompt=(
-                "Stop `site.service`, run a temporary Python HTTP server in tmux, fetch it with "
-                "`curl`, stop it, then restart `site.service`."
+                "Use `PORT=$((10000 + $(id -u)))` and run "
+                '`caddy file-server --listen ":$PORT" --root "$HOME/public_html" '
+                "--access-log`. This listens on all interfaces; the classroom firewall blocks "
+                "new external connections to assigned ports over IPv4 and IPv6. "
+                "Request it with local curl and a public browser visit, read "
+                "request.method, request.uri, status, and time in its access logs, then stop "
+                "with Ctrl-C. This is your personal Caddy, not the shared Caddy proxy."
             ),
             required_commands=(
-                "systemctl --user",
-                "tmux",
-                "python3 -m http.server --bind 127.0.0.1",
+                "id -u",
+                "caddy file-server",
                 "curl",
             ),
             practiced_skills=(
-                "systemd-user-services",
-                "terminal-multiplexing",
                 "manual-web-service",
                 "sockets",
             ),
             validation=CommandHistoryValidation(
-                required_patterns=(
-                    r"^systemctl --user stop site\.service$",
-                    r"^tmux new -s local-server$",
-                    r"^tmux ls$",
-                    r"^curl ",
-                    r"python3 -m http\.server",
-                    r"^tmux attach -t local-server$",
-                    r"^tmux kill-session -t local-server$",
-                    r"^systemctl --user start site\.service$",
-                ),
-                observed_commands=(
-                    "systemctl --user",
-                    "tmux",
-                    "python3 -m http.server --bind 127.0.0.1",
-                    "curl",
-                ),
-                ordered=True,
+                required_patterns=(_LOCAL_SERVICE_COMMAND_PATTERN,),
+                observed_commands=("curl",),
             ),
-            goal="Temporarily replace the managed service with a foreground server and restore it.",
+            goal="Run and stop your own foreground server without systemd or tmux.",
             evidence=(
-                "The guide needs the ordered service stop, tmux server, curl, cleanup, and service "
-                "start commands."
+                "The guide checks a completed local `curl -i` or `curl -I` command only. "
+                "Inspect public browser access and logs yourself; this does not prove foreground "
+                "execution or the refused localhost connection after stopping."
             ),
         ),
         _quest(
@@ -3467,7 +3754,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             practiced_skills=("multi-page-sites", "http"),
             validation=FileCheckValidation(
                 path="~/src/pages/health.md",
-                required_regex=r"(?s)# .+health|Health",
+                required_regex=r"(?i)\bhealth\b",
             ),
             goal="Publish a simple page that can be used for service checks.",
             evidence="`~/src/pages/health.md` needs a health heading or note.",
@@ -3508,7 +3795,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=85,
             available_after_session="S8",
             prompt="Check both public URLs with `curl -I` and inspect service status.",
-            required_commands=("curl -I", "systemctl --user"),
+            required_commands=("curl -I", "curl -i", "systemctl --user", "journalctl --user"),
             practiced_skills=("http-inspection", "systemd-user-services"),
             validation=CommandHistoryValidation(
                 required_patterns=(
@@ -3518,7 +3805,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 ),
                 observed_commands=("curl -I", "systemctl --user"),
             ),
-            goal="Collect URL and service evidence to discuss in the polish session.",
+            goal="Collect URL and service evidence before automating the build.",
             evidence="The guide needs to see header checks and service status.",
         ),
         _quest(
@@ -3638,7 +3925,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 path="~/src/README.md",
                 required_regex=(
                     r"(?ms)\A# \S[^\n]*\n"
-                    r"(?=.*(?:build-website|npm run build))(?=.*systemctl --user).+"
+                    r"(?=.*(?:build-website|npm run build|"
+                    r"systemctl --user start site-build\.service))"
+                    r"(?=.*systemctl --user).+"
                 ),
             ),
             goal="Make your source repository understandable to another human.",
@@ -3675,7 +3964,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Schedule site rebuilds",
             sequence=92,
             available_after_session="S9",
-            prompt="Create a user systemd timer that runs your site build service on a schedule.",
+            prompt=(
+                "Create a user timer whose build service generates the report in ExecStartPre "
+                "before the npm build. Demonstrate a short interval, then leave an hourly cadence."
+            ),
             required_commands=(
                 "mkdir",
                 "micro",
@@ -3689,23 +3981,18 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 validations=(
                     FileCheckValidation(
                         path="~/.config/systemd/user/site-build.service",
-                        required_regex=(
-                            r"(?s)\[Service\].+Type=oneshot.+WorkingDirectory=%h/src.+"
-                            r"ExecStart=/usr/local/bin/npm run build"
-                        ),
+                        required_regex=_SITE_BUILD_SERVICE_PATTERN,
                     ),
                     FileCheckValidation(
                         path="~/.config/systemd/user/site-build.timer",
-                        required_regex=(
-                            r"(?s)\[Timer\].+OnBootSec=5min.+OnUnitActiveSec=1h.+"
-                            r"\[Install\].+WantedBy=timers\.target"
-                        ),
+                        required_regex=_SITE_BUILD_TIMER_PATTERN,
+                        forbidden_regex=_SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN,
                     ),
                     CommandHistoryValidation(
                         required_patterns=(
                             r"^systemctl --user daemon-reload$",
                             r"^systemctl --user enable --now site-build\.timer$",
-                            r"^systemctl --user list-timers$",
+                            r"^systemctl --user list-timers(?: --all site-build\.timer)?$",
                             r"^systemctl --user start site-build\.service$",
                             r"^journalctl --user -u site-build\.service",
                         ),
@@ -3718,7 +4005,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 ),
             ),
             goal="Automate site rebuilds with a user timer you can inspect and debug.",
-            evidence="The timer unit must be enabled, inspected, manually triggered, and logged.",
+            evidence=(
+                "The guide checks the report-before-build unit, hourly timer, and completed "
+                "enable, start, list, and journal commands. Inspect actual timer runs yourself."
+            ),
         ),
         _quest(
             quest_id="refresh-pipes-for-bandit",
@@ -3766,41 +4056,45 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Demo your site",
             sequence=95,
             available_after_session="S9",
-            prompt="Show your public site, source repo, service, and README to another person.",
+            prompt=(
+                "Choose one part of your project to demonstrate with evidence and a real "
+                "recovery explanation. Report what you showed and one useful audience observation; "
+                "a tour of every artifact is not required."
+            ),
             required_commands=("curl", "git log", "systemctl --user"),
             practiced_skills=("multi-page-sites", "systemd-user-services", "readme-writing"),
             validation=InteractiveQuestionValidation(
                 question=(
-                    "What did you demonstrate for the static site, report, public service URL, "
-                    "source repo, and README? Include one recovery and the feedback you received."
+                    "What did you choose to demonstrate, what evidence supported it, and what "
+                    "failure and recovery did you explain? Include useful audience feedback."
                 ),
                 required_concepts=(
                     AnswerConcept(
-                        id="demoed-site",
-                        aliases=(r"\bsite\b", r"\bwebsite\b"),
+                        id="chosen-demonstration",
+                        aliases=(r"\b(?:showed|demonstrated|demoed)\b",),
                         rubric=(
-                            "The answer must state that the learner demonstrated the public site "
-                            "and report page to another person."
+                            "Describe the chosen demonstration and its purpose. A script, page, "
+                            "service, automation, or handoff is enough; no complete artifact tour "
+                            "is required. This is the learner's account, not observed demo output."
                         ),
                     ),
                     AnswerConcept(
-                        id="demoed-service",
-                        aliases=(r"\bservice\b", r"\bbackend\b"),
+                        id="demonstration-evidence",
+                        aliases=(
+                            r"\b(?:output|logs?|journal|response|result|evidence|feedback)\b",
+                        ),
                         rubric=(
-                            "The answer must describe a working public service endpoint, not only "
-                            "systemctl status or the independently hosted static site."
+                            "Describe actual evidence supporting the chosen claim, including its "
+                            "limitations. Do not require unrelated site or repository evidence."
                         ),
                     ),
                     AnswerConcept(
-                        id="demoed-source",
-                        aliases=(r"\brepo(?:sitory)?\b", r"\bforgejo\b"),
-                        rubric="The answer must describe showing the source repository and commit.",
-                    ),
-                    AnswerConcept(
-                        id="demoed-readme",
-                        aliases=(r"\breadme\b",),
+                        id="recovery-explanation",
+                        aliases=(r"\b(?:fixed|repaired|recovered|restored|unresolved|blocked)\b",),
                         rubric=(
-                            "The answer must describe showing the README and its run instructions."
+                            "Describe a real failure, diagnosis, repair, and confirming "
+                            "observation. If recovery remains blocked, explain the missing "
+                            "evidence and agreed next action honestly instead of claiming success."
                         ),
                     ),
                 ),
@@ -3813,18 +4107,48 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Write the next path",
             sequence=96,
             available_after_session="S9",
-            prompt="Create `~/src/pages/next.md` describing what you will learn after S10.",
+            prompt=(
+                "Choose a concrete next action, when to do it, and how you will check the result. "
+                "Keep the plan where you will use it; publishing a page is optional. "
+                "Give the guide a non-private summary in your own words."
+            ),
             required_commands=("micro", "build-website", "git add", "git commit", "git push"),
             practiced_skills=("multi-page-sites", "readme-writing"),
-            validation=FileCheckValidation(
-                path="~/src/pages/next.md",
-                required_regex=(
-                    r"(?im)\A(?=#[ \t]+[^\n]*\bLinux\b)"
-                    r"(?=[\s\S]*^Next action:[ \t]*\S)[\s\S]+\Z"
+            validation=InteractiveQuestionValidation(
+                question="What will you do next, when, and how will you check the result?",
+                required_concepts=(
+                    AnswerConcept(
+                        id="next-action",
+                        aliases=(r"\b(?:will|plan|try|start|build|read|write|maintain|refresh)\b",),
+                        rubric=(
+                            "Name a concrete action you intend to take, not just a broad interest."
+                        ),
+                    ),
+                    AnswerConcept(
+                        id="planned-time",
+                        aliases=(
+                            r"\b[0-9]{4}-[0-9]{2}-[0-9]{2}\b",
+                            (
+                                r"\b(?:tomorrow|next week|next month|monday|tuesday|wednesday|"
+                                r"thursday|friday|saturday|sunday)\b"
+                            ),
+                        ),
+                        rubric=(
+                            "Say when you intend to act; a date or a clear relative time is valid."
+                        ),
+                    ),
+                    AnswerConcept(
+                        id="observable-result",
+                        aliases=(r"\b(?:check|verify|test|observe|record|inspect|see|show)\b",),
+                        rubric="Explain what observable result will let you assess the action.",
+                    ),
                 ),
             ),
             goal="Arrive at graduation with a concrete next step already written down.",
-            evidence="`~/src/pages/next.md` needs a Linux heading and a non-empty `Next action:`.",
+            evidence=(
+                "Describe your action, timing, and observable result. No public file, fixed "
+                "heading, or exact label is required; this checks the plan, not future execution."
+            ),
         ),
         _quest(
             quest_id="prepare-source-handoff",
@@ -3845,7 +4169,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Preserve a recoverable project with its working scripts and service units.",
             evidence=(
-                "The six script/unit copies and README must be committed and unchanged. "
+                "The two scripts, three units, and README must be committed and unchanged. "
                 "Verify the remote copies in Forgejo yourself."
             ),
         ),

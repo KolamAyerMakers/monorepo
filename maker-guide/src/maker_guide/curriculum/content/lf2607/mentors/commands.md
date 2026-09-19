@@ -2,7 +2,7 @@
 
 Run these commands on the classroom server as a member of the `mentors` group.
 
-Use the [S5 runbook](S05.md) or [S6 runbook](S06.md) for session-specific preparation.
+Use the [S5 runbook](S05.md), [S6 runbook](S06.md), or [S7-S10 delivery notes](S07-S10.md) for session-specific preparation.
 
 ## During A Session
 

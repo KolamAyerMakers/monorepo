@@ -15,6 +15,7 @@ from rich.console import Console
 
 from maker_guide.cli.registration import registration_is_open
 from maker_guide.deployment import (
+    CLASSROOM_LINGERING_COMMAND,
     CONFIGURATION_FILE,
     LLDAP_CREATE_USER_COMMAND,
     MAKER_GUIDE_DAEMON_USER,
@@ -67,6 +68,11 @@ def main(arguments: Sequence[str] | None = None) -> int:
         account_created = True
     try:
         initialize_learner(parsed_arguments, user_id_number)
+        _ = subprocess.run(  # noqa: S603 - fixed root-owned deployment helper.
+            [CLASSROOM_LINGERING_COMMAND, "--", parsed_arguments.username],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
         refresh_learner_routes(parsed_arguments)
     except subprocess.CalledProcessError as error:
         if account_created:

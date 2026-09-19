@@ -1,20 +1,34 @@
 #!/bin/sh
 set -eu
 
+umask 077
+# Lock a stable inode, not the routes file replaced below.
+exec 9>{{ learner_routes_file }}.lock
+/usr/bin/flock --exclusive 9
+
 temporary_routes_file=$(/usr/bin/mktemp {{ learner_routes_file }}.XXXXXX)
-backup_routes_file=$(/usr/bin/mktemp {{ learner_routes_file }}.backup.XXXXXX)
-cleanup() {
-    /usr/bin/rm -f "$temporary_routes_file" "$backup_routes_file"
-}
-trap cleanup EXIT
+backup_routes_file={{ learner_routes_file }}.pending
+trap '/usr/bin/rm -f "$temporary_routes_file" "$temporary_routes_file.backup"' EXIT
 
 /usr/local/bin/maker-guide-render-learner-routes --database {{ database_path }} --domain {{ domain }} > "$temporary_routes_file"
-/usr/bin/cp --preserve=mode,ownership {{ learner_routes_file }} "$backup_routes_file"
+if [ ! -e "$backup_routes_file" ] && /usr/bin/cmp -s "$temporary_routes_file" {{ learner_routes_file }}; then
+    printf '{"changed": false, "comment": "Learner routes unchanged"}\n'
+    exit 0
+fi
+
+# Keep the previous routes until reload succeeds, including across interrupted runs.
+if [ ! -e "$backup_routes_file" ]; then
+    /usr/bin/cp --preserve=mode,ownership {{ learner_routes_file }} "$temporary_routes_file.backup"
+    /usr/bin/mv -f "$temporary_routes_file.backup" "$backup_routes_file"
+fi
 /usr/bin/chmod 0644 "$temporary_routes_file"
 /usr/bin/mv -f "$temporary_routes_file" {{ learner_routes_file }}
-if /usr/bin/caddy validate --config {{ configuration_file }}; then
-    /usr/bin/systemctl reload caddy
+if /usr/bin/caddy validate --config {{ configuration_file }} >&2 && /usr/bin/systemctl reload caddy >&2; then
+    /usr/bin/rm -f "$backup_routes_file"
+    printf '{"changed": true, "comment": "Learner routes refreshed"}\n'
 else
-    /usr/bin/mv -f "$backup_routes_file" {{ learner_routes_file }}
+    # A failed restoration leaves the backup in place for operator recovery.
+    /usr/bin/cp --preserve=mode,ownership "$backup_routes_file" "$temporary_routes_file"
+    /usr/bin/mv -f "$temporary_routes_file" {{ learner_routes_file }}
     exit 1
 fi

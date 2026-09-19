@@ -8,6 +8,13 @@ kam_classroom:
       gid: 980
     registration_administrator: pmuller
     default_group: humans
+    lingering:
+      group: linux-foundations
+      uid_minimum: 10000
+      uid_maximum: 20999
+      packages:
+        - libpam-systemd
+        - dbus-user-session
     groups:
       humans:
         gid_number: 1001

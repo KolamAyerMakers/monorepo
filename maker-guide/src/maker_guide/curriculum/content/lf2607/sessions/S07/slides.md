@@ -1,209 +1,343 @@
-# Linux Foundations S7
+# Run Your Own Web Server
 
 Session: S7
 
-Your page on the wire
-
-S7: 2026-09-19
+2026-09-19
 
 <!-- end_slide -->
 
-# Your Page On The Wire
+# A Client Asks, A Server Answers
 
-S6 read HTTP responses and automated two page checks. Today we compare served bytes with your files and investigate the separate service route.
-
-Four goals: inspect headers, compare generated HTML with a fetched body, diagnose the service route, and publish a linked setup page.
-
-<!-- end_slide -->
-
-# Reuse Your Static Preflight
-
-Run on the classroom server in your personal SSH account, not in your laptop's local shell:
-
-```bash
-whoami
-printf '%s\n' "$USER"
-bash ~/scripts/site-check.sh "" maker-report.html
-guide now
-```
-
-`$USER` must match `whoami`. Keep the S6 checker unchanged: it checks the homepage and `maker-report.html`, two paths on the same static host. Read both results and repair static failures before continuing.
-
-Run `guide now` before starting a quest and after practical work: it checks one task and shows the next on success. Otherwise, follow the feedback. Use `guide answer` when asked; `guide check` is an optional explicit check.
-
-<!-- end_slide -->
-
-# 1. Inspect Headers Again
-
-```bash
-curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/"
-```
-
-As in S6, `-I` sends `HEAD`: response headers, no page body. Identify the actual status and `content-type`. Read `Location` if redirected; do not invent a `200`.
-
-Use the checkpoint routine: `guide now` first.
-
-<!-- end_slide -->
-
-# 2. Compare Three Views
+A **client** is a program that sends a request. A **server** is a program that waits for requests and answers them.
 
 ```text
-~/src/pages/index.md -> build-website -> ~/public_html/index.html -> HTTP body
+client  -- request --> server
+client <-- response -- server
 ```
 
-```bash
-build-website
-cat ~/src/pages/index.md
-cat ~/public_html/index.html
-```
+Your browser is a web client. **Curl is a client too.**
 
-Stop if the build fails. Find your heading in both files: Markdown describes the page; generated HTML contains tags and layout. Edit the source, not the generated file.
+Here, "server" means the running program, not the whole computer.
 
 <!-- end_slide -->
 
-# Fetch The Body And Compare
+# HTTP Defines The Exchange
 
-```bash
-mkdir -p ~/playground
-curl -fSs --max-time 10 -o ~/playground/s7-index-from-web.html \
-  "https://lf2607.kolamayermakers.org/~$USER/"
-```
+A **protocol** defines how programs exchange messages. HTTP defines web requests and responses.
 
-This sends `GET`. `-f` fails on HTTP errors; `-sS` hides progress but keeps errors; `-o` saves only the body. Do not add `-I` or `-i` to the saved comparison.
+- The client requests a path, such as `/index.html`.
+- The server answers with a status, headers, and usually a body such as HTML.
 
-Only after curl succeeds:
+The browser displays the page. Curl prints the response in your terminal.
 
-```bash
-diff -u ~/public_html/index.html ~/playground/s7-index-from-web.html
-```
-
-No output and exit status `0` mean identical files. Status `1` means differences; `2` means an error. These files should match: investigate any mismatch, rebuild, and refetch. Once they match, use the checkpoint routine: `guide now` first.
+HTTPS protects this exchange using TLS, which encrypts the connection and verifies the server's identity.
 
 <!-- end_slide -->
 
-# Send HTTP Without Curl
+# Caddy Already Serves Your Site
 
-Use the existing Caddy server's plaintext loopback port. Do not start another server:
+**Caddy** is the web-server program already serving your site on the classroom machine.
 
-```bash
-printf 'GET /~%s/ HTTP/1.1\r\nHost: lf2607.kolamayermakers.org\r\nConnection: close\r\n\r\n' "$USER" | nc -w 3 127.0.0.1 80
-```
+Today you will run your own Caddy process to learn to start it, request a page, stop it, and recover it without affecting others.
 
-`127.0.0.1` is this classroom machine. If `nc` is missing, ask the instructor.
+We will connect to it locally first, then from your laptop browser.
 
 <!-- end_slide -->
 
-# Read The Request You Built
+# Localhost Keeps The Connection Local
 
-- `GET /~username/ HTTP/1.1`: method, path, protocol version. `printf` substitutes `$USER` for `%s`.
-- `Host`: selects the classroom hostname even though TCP connects to a numeric loopback address.
-- `\r\n`: carriage return plus line feed (CRLF), the HTTP/1.1 line ending.
-- Final `\r\n\r\n`: ends the last header and sends the blank line that finishes the headers. This request has no body.
-- `Connection: close`: asks the server to close after responding.
-- `nc -w 3`: limits connection and idle waits to three seconds. `Ctrl-C` cancels.
+`localhost` targets the host **where the client process runs**, using a loopback address: `127.0.0.1` (IPv4) or `::1` (IPv6). The traffic stays inside that host's network stack.
 
-`nc` carries TCP bytes; it does not construct HTTP for you.
+Curl launched in your SSH session runs on the classroom server. A request to `localhost` therefore reaches a service on that server, not on your laptop. We will use `127.0.0.1` explicitly.
+
+We will first ask your server for a page from that same machine.
 
 <!-- end_slide -->
 
-# Expect A Redirect, Not Your HTML
+# A Port Selects A Service
 
-Caddy normally returns `HTTP/1.1 308 Permanent Redirect` here, with an HTTPS `Location`. Identify the status and destination in your actual output.
+An IP address identifies the network destination. A **port** selects a listening service at that address.
 
-This is the HTTP-to-HTTPS redirect from S6, now exposed as raw bytes. A `3xx` redirect is not the `200` page body you compared. `nc` does not follow it.
+- The server **listens** on an address and port.
+- The client **connects** to that address and port.
 
-Plain `nc` to port `443` cannot speak TLS. Use curl for HTTPS; do not disable certificate checks. If the status differs or nothing returns, report that evidence instead of copying the expected status.
-
-<!-- end_slide -->
-
-# 3. A Different Host, A Different Route
-
-```bash
-curl -v --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
-```
-
-S6's two URLs were two static paths. This user subdomain is the service URL, sometimes called the "second URL" by the guide. It is not `maker-report.html`.
+Example: two services on the same host:
 
 ```text
-static host /~username/ -> Caddy -> public_html/index.html
-username subdomain /  -> Caddy -> personal backend process
+127.0.0.1:22    -> SSH server
+127.0.0.1:8000  -> HTTP server
 ```
 
-Read `*` connection/TLS details, `>` request headers, and `<` response headers. With routing working, expect `502` before S8 because no personal backend is listening yet. DNS or TLS failure happens earlier; it is not an HTTP `502`. Report the actual result and do not start a backend today.
-
-Use the checkpoint routine: `guide now` first.
-
-<!-- end_slide -->
-
-# 4. Create A Useful Setup Page
+HTTP uses port `80` by default. Your server will use its own assigned port:
 
 ```bash
-micro ~/src/pages/setup.md
+PORT="$((10000 + $(id -u)))"
 ```
 
-If it exists, improve it rather than replacing it. Otherwise start with:
-
-```markdown
-# My Setup
-
-I edit Markdown in ~/src/pages/ and publish with build-website.
-
-[Back to my homepage](index.html)
-```
-
-Add your own useful notes, not passwords, keys, or tokens. Save with `Ctrl-S`, quit with `Ctrl-Q`.
+How does this calculate your port?
 
 <!-- end_slide -->
 
-# Link, Rebuild, Open
+# Start Your Server
 
 ```bash
-micro ~/src/pages/index.md
+caddy file-server --listen :$PORT --root ~/public_html --access-log
 ```
 
-Add this without removing existing content or links:
+- `--listen` sets the port your server accepts connections on.
+- `--root` sets the folder containing the files to serve.
+- `--access-log` records requests.
 
-```markdown
-[My setup](setup.html)
-```
+<!-- end_slide -->
+
+# Request A Page With Curl
+
+Open a second SSH connection:
 
 ```bash
-build-website
-cat ~/public_html/setup.html
-curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/setup.html"
+PORT="$((10000 + $(id -u)))"
+curl -i --max-time 10 "http://127.0.0.1:$PORT/"
 ```
 
-Open your homepage in your laptop browser and follow the setup link, then the link back. Link to `.html`, not source `.md`. Run `guide now` and follow its feedback.
+`-i` displays the status line and headers before the page's HTML.
+
+**Curl is the client. Your Caddy process is the server.** Both are running on the classroom machine.
+
+In the server terminal, find the access-log record for this request: method `GET`, URI `/`, and its status. You can now see both sides of the exchange.
 
 <!-- end_slide -->
 
-# Exit Goal
+# Reach Your Server Through A Reverse Proxy
 
-- Identify a real status and header.
-- Show the generated-file versus fetched-body comparison, and explain why Markdown differs.
-- Explain the raw request's blank terminator and HTTPS redirect.
-- Distinguish static paths from the service subdomain and explain the missing backend.
-- Keep headed `setup.md`, its homepage link, and rebuilt `setup.html`.
+The classroom firewall blocks direct external access to your port. How can your laptop browser reach your server?
 
-The four guide objectives are core work. Guide evidence does not independently prove a successful HTTP response or matching body; inspect your results too.
+For your personal service address, shared Caddy is already configured to pass requests to your assigned port and return the responses:
 
-<!-- end_slide -->
+```text
+browser -> shared Caddy -> personal Caddy
+browser <- shared Caddy <- personal Caddy
+```
 
-# Between-Session Practice Route
-
-Use the [self-study guide](self-study.md) to finish any missing core work. Then the S7 quests offer optional reinforcement, not a replacement for the four objectives:
-
-- Repeat header inspection and source/output comparisons.
-- Publish ASCII art with a fenced code block.
-- Try the [closed-port probe](../../quests/probe-closed-port.md) and distinguish TCP refusal from an HTTP response.
-- Explain the already-learned `200`, `404`, and `502` using your own observations.
-
-Run `guide now` for your current session objective; after you complete it, it shows your current quest. Submit prompted observations with `guide answer 'your own observation'`, then follow the checkpoint routine.
+Shared Caddy is a **reverse proxy**: a server to the browser and a client to personal Caddy. Personal Caddy is the **backend**, the server answering the forwarded request. Same software, two processes with different roles.
 
 <!-- end_slide -->
 
-# Next Session: Your Own Web Service
+# Open Your Site From Your Laptop
 
-S8: 2026-09-26
+Open your [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in the laptop browser, replacing `your-handle` with your username.
 
-Run your own backend behind the service subdomain. Learn its lifecycle: start, stop, restart, inspect logs, and keep it running after logout. Keep your static site and unchanged `site-check.sh` working.
+Look for the same page you just fetched with curl. Watch for the browser's request in your personal Caddy terminal.
+
+Shared Caddy handles the browser's HTTPS connection. Personal Caddy uses local HTTP. Keep the command as given, without `--domain`; no shared configuration changes are needed.
+
+<!-- end_slide -->
+
+# Proxies Can Represent Clients Or Servers
+
+A **proxy** is an intermediary: it forwards requests and sends responses back.
+
+A **forward proxy** represents clients when requesting resources from destination servers.
+
+```text
+clients -> forward proxy -> destination servers
+```
+
+A **reverse proxy** represents servers, forwarding incoming requests to backends.
+
+```text
+clients -> reverse proxy -> backend servers
+```
+
+The distinction is which side the proxy represents, not the direction of HTTP. Access filtering and load distribution are examples of proxy uses; our shared Caddy forwards requests to your server.
+
+<!-- end_slide -->
+
+# Follow A Visitor's Request In The Logs
+
+Ask a peer to open your service homepage, then request `/missing.html` on the same hostname.
+
+Watch the first terminal. Find the time or timestamp, `request.method`, `request.uri`, and `status` in the structured access logs.
+
+What client address appears in the log? Can you explain why, even when the request comes from your peer's browser?
+
+<!-- end_slide -->
+
+# Identify The Process Serving Your Page
+
+In the second terminal:
+
+```bash
+ps -u "$USER" -o pid,comm,args
+```
+
+Which row is your server? Find its **PID**, the process ID, and the command that started it.
+
+What tells you which port and files this process serves?
+
+<!-- end_slide -->
+
+# Match The Process To Its Listening Port
+
+```bash
+ss -ltnp "sport = :$PORT"
+```
+
+- `-l`: listening sockets.
+- `-t`: TCP sockets.
+- `-n`: numeric addresses and ports.
+- `-p`: process information.
+
+The filter selects your port. Does the PID match the Caddy process you found with `ps`?
+
+A **listening socket** is the endpoint where the server waits for connections.
+
+<!-- end_slide -->
+
+# HTTP Messages Need Line Endings
+
+The names come from typewriters and printing terminals. Starting a new line involved two movements:
+
+- `\r`: **carriage return (CR)**, return to the start of the line.
+- `\n`: **line feed (LF)**, advance the paper by one line.
+
+Text formats kept different conventions:
+
+- Unix text files use `\n`.
+- Windows text files traditionally use `\r\n`.
+- HTTP/1.1 uses `\r\n` to end request and header lines.
+
+A blank line after the last header gives `\r\n\r\n`: the headers are finished.
+
+<!-- end_slide -->
+
+# Send An HTTP Request By Hand
+
+In the second terminal, connect to your server:
+
+```bash
+nc -C -N 127.0.0.1 $PORT
+```
+
+Type this request, replacing `11234` with your numeric port:
+
+```http
+GET / HTTP/1.1
+Host: localhost:11234
+
+```
+
+Press Enter on a blank line to end the headers, then `Ctrl-D` with no pending input.
+
+- `GET / HTTP/1.1`: method, requested path, protocol version.
+- `Host`: the requested hostname and port.
+- `-C` sends HTTP's CRLF (`\r\n`) line endings when you press Enter.
+- `-N` finishes sending on end-of-input, while still receiving the reply.
+
+Find your request in Caddy's log. Which parts did curl previously write for you?
+
+<!-- end_slide -->
+
+# Repeat The Request With A Script
+
+Save as `~/scripts/http-request.sh`:
+
+```bash
+#!/bin/bash
+PORT=$((10000 + $(id -u)))
+printf '%s\r\n' \
+  'GET / HTTP/1.1' \
+  "Host: localhost:$PORT" \
+  '' |
+  timeout 5s nc -N -w 3 127.0.0.1 "$PORT"
+```
+
+Run `bash ~/scripts/http-request.sh`.
+
+`printf` supplies the lines you typed, including the final blank line. When it finishes, the pipe supplies EOF instead of `Ctrl-D`.
+
+<!-- end_slide -->
+
+# Change The Path, Observe The Response
+
+In your script, change only `GET / HTTP/1.1` to `GET /missing.html HTTP/1.1`, then run it again.
+
+Predict the status. Compare the response with the matching entry in Caddy's access log.
+
+Now request the same path with curl:
+
+```bash
+curl -i http://127.0.0.1:$PORT/missing.html
+```
+
+What is the same? What did curl save you from writing?
+
+<!-- end_slide -->
+
+# What If Two Servers Use The Same Port?
+
+Keep your server running. Try starting another one from the second terminal:
+
+```bash
+caddy file-server --listen :$PORT --root ~/public_html --access-log
+```
+
+Why did this launch fail? Use `ps` and `ss` to identify the process already listening.
+
+Does the original server still answer curl? Do not change the port or stop the existing process to hide the error.
+
+<!-- end_slide -->
+
+# What If The Server Has No Files?
+
+Stop your server with `Ctrl-C`. In that terminal, serve a new empty practice directory:
+
+```bash
+practice_root=$(mktemp -d) &&
+caddy file-server --listen :$PORT --root "$practice_root" --access-log
+```
+
+Request `/` locally and through your service address. Is the process running? Is the port listening? What do the response and log tell you?
+
+The practice directory is public through the proxy; leave it empty. Your real site files are unchanged.
+
+Stop this server, restart the original command with `--root ~/public_html`, and verify the page is back.
+
+<!-- end_slide -->
+
+# What Happens When Your Server Stops?
+
+If you stop your Caddy process, which of these three URLs will still respond? Why?
+
+```bash
+curl -I http://127.0.0.1:$PORT/
+curl -I https://$USER.lf2607.kolamayermakers.org/
+curl -I https://lf2607.kolamayermakers.org/~$USER/
+```
+
+Share your predictions, then press `Ctrl-C` in the terminal running your Caddy process. Run these requests in the second SSH terminal.
+
+Which requests still get a response? Who sends each response?
+
+Start Caddy again with the same command, then repeat the three requests. What changed?
+
+<!-- end_slide -->
+
+# Explain What Runs And What Responds
+
+Explain how you found your server's process and listening socket, what you sent with netcat, and how you distinguished the three incidents.
+
+Confirm the service page works again, then stop your server with `Ctrl-C`. The static site stays available.
+
+This process is not supervised. Keeping it running after logout is the next session's problem.
+
+<!-- end_slide -->
+
+# Next: Keep It Running After Logout
+
+S8: 2026-09-26.
+
+Make Caddy start automatically, keep running after logout, and restart if it crashes.
+
+Use the [self-study route](self-study.md) for complete examples and troubleshooting.
+
+Use `guide` if you need help between sessions.

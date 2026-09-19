@@ -4,89 +4,66 @@ Quest: schedule-site-rebuilds
 
 ## Mission
 
-Create and enable a user systemd timer that rebuilds your existing site.
-
-## Commands You Will Use
-
-- `mkdir`
-- `micro`
-- `systemd timer`
-- `systemctl --user`
-- `systemctl --user list-timers`
-- `journalctl --user`
+Automatically refresh the system report's facts, then build the existing site. Prove a timer-triggered run with logs and changed published content, not just a timer listing.
 
 ## Before You Start
 
-Read [S09 self-study](../sessions/S09/self-study.md). Keep your working `site.service` and `~/bin/site.sh`; the two new files below schedule builds, not a second web server.
+Keep the existing `~/scripts/maker-report.sh`, `~/scripts/site-check.sh`, and `site.service`. The report script takes one title and writes `~/src/pages/maker-report.md`. npm builds that Markdown; it does not collect new report facts.
 
-The build renders existing `~/src/pages/maker-report.md`. It does not rerun `~/scripts/maker-report.sh` or refresh collected facts. To collect fresh facts, run `~/scripts/maker-report.sh "My Maker Report"` separately before rebuilding.
+Follow [report preparation](../sessions/S09/self-study.md#report-safety-gate) to compare and safely upgrade an older script. The current resource stops on errors and preserves the last valid report until a replacement is complete. A nonzero report exit must prevent the build.
 
 ## Files To Create
 
-Create the unit directory and open each file. Inspect any existing contents before replacing them:
+Use the [S9 setup sequence](../sessions/S09/self-study.md#timer-files) to pause any existing timer, wait for builds to finish, and inspect existing units before editing. Active units belong in `~/.config/systemd/user/`.
 
-```bash
-mkdir -p ~/.config/systemd/user
-micro ~/.config/systemd/user/site-build.service
-micro ~/.config/systemd/user/site-build.timer
-```
-
-`~/.config/systemd/user/site-build.service`:
+`site-build.service`:
 
 ```ini
 [Unit]
-Description=Build my site
+Description=Refresh report and build my site
 
 [Service]
 Type=oneshot
 WorkingDirectory=%h/src
+ExecStartPre=/bin/bash %h/scripts/maker-report.sh "System Report"
 ExecStart=/usr/local/bin/npm run build
 ```
 
-`~/.config/systemd/user/site-build.timer`:
+`%h` means your home directory. A failed pre-start command stops the chain. Do not prefix it with `-`, which would ignore failure. `build-website` is an interactive alias and cannot be used as the systemd executable.
+
+`site-build.timer`, for a short classroom observation:
 
 ```ini
 [Unit]
-Description=Build my site every hour
+Description=Observe automatic report refresh and build
 
 [Timer]
-OnBootSec=5min
-OnUnitActiveSec=1h
+OnActiveSec=30s
+OnUnitInactiveSec=2min
+AccuracySec=1s
 
 [Install]
 WantedBy=timers.target
 ```
 
-## Steps
+The first deadline is relative to timer activation; repeats wait until two minutes after the service finishes. The matching timer activates the oneshot, not the long-running web server. Systemd does not start another copy of an active service, but cannot prevent a competing terminal build. Do not run npm or the build alias alongside it.
 
-1. Create both unit files with the contents above.
-2. Run `systemctl --user daemon-reload`.
-3. Run `systemctl --user enable --now site-build.timer`.
-4. Run `systemctl --user start site-build.service` to trigger one build immediately.
-5. Run `systemctl --user list-timers` and find `site-build.timer` and its next run.
-6. Read logs with `journalctl --user -u site-build.service --no-pager -n 50`.
-7. Run `bash ~/scripts/site-check.sh "" maker-report.html` and inspect the actual site/report results.
-8. Preserve both units alongside `site.service` using [Prepare a source handoff](prepare-source-handoff.md).
-9. Ask the guide to check both active unit files.
+## Observe, Then Slow Down
 
-## Expected Output
+1. Follow [Establish A Baseline](../sessions/S09/self-study.md#establish-a-baseline): reload, inspect the effective units, manually run once, and resolve errors with the timer stopped.
+2. Save the baseline report Markdown and public HTML in a fresh scratch directory.
+3. Follow [Witness Automatic Publication](../sessions/S09/self-study.md#witness-automatic-publication): start the timer, record the time, and watch for a new journal activation without manually building.
+4. After completion, stop the timer and wait for any active build. Fetch again and compare the old and new facts, including the report date, then compare the public body with generated HTML. Refresh the laptop browser too.
+5. Replace the short timer with the complete [hourly schedule](../sessions/S09/self-study.md#hourly-schedule): `OnActiveSec=1h` and `OnUnitInactiveSec=1h`. Remove old timing directives rather than accumulating schedules. Inspect drop-ins, reload while stopped, then start and inspect the actual next deadline.
+6. Preserve the working units using [Prepare a source handoff](prepare-source-handoff.md).
 
-`systemctl --user list-timers` should include `site-build.timer`. The journal should show a completed build; fix any build error before calling it done. A successful oneshot service normally becomes inactive after finishing.
+## Evidence And Recovery
 
-## Hints
+A successful oneshot normally becomes inactive after finishing. Read the journal for a completed run after timer activation and show the corresponding changed public report. A failed request, unchanged report, or manual run is not that evidence.
 
-1. Timers activate services. Debug the service first.
-2. Use `--user`; root systemd is not the target.
-3. `%h` is your home directory. This starter's `/usr/local/bin/npm run build` in `~/src` includes prebuild asset syncing and produces the same output as `build-website`.
-4. `OnBootSec=5min` is relative to boot and may fire immediately if that time has passed when you enable the timer. `OnUnitActiveSec=1h` is relative to the service's last activation.
-5. This is a monotonic schedule, not a calendar schedule. It does not catch up missed calendar runs after downtime.
+If refresh fails, the build must not start and the previous valid report must remain. If the unit or schedule is wrong, stop the timer, let a running build finish, inspect `systemctl --user cat site-build.service site-build.timer`, and repair the first error from `journalctl --user -u site-build.service --no-pager -n 50`.
 
-## If Check Fails
-
-- `Unit site-build.timer not found`: check the filename and run `systemctl --user daemon-reload`.
-- `list-timers` does not show it: run `systemctl --user enable --now site-build.timer` again and read the error.
-- Service fails: run `journalctl --user -u site-build.service --no-pager -n 50` and fix the first real error.
-- Timer stops after logout: inspect `loginctl show-user "$USER" -p Linger` and bring the output to the instructor, without changing system settings yourself.
+Reloading alone does not reset an active timer's clock. Stop, edit, reload, then start when changing its schedule. These monotonic timers do not replay missed hourly runs after downtime. If automation stops at logout, inspect `loginctl show-user "$USER" -p Linger` and ask staff; do not change shared system settings yourself.
 
 ## Related Reading
 
@@ -94,4 +71,3 @@ WantedBy=timers.target
 - [systemctl list-timers](../commands/systemctl-list-timers.md)
 - [automation timers](../concepts/automation-timers.md)
 - [systemd timer units](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)
-- [systemd service units](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html)

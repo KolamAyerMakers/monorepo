@@ -9,11 +9,10 @@ Session: S1
 3. If your account does not exist, run `ssh new@lf2607.kolamayermakers.org`. If you do not have an SSH client, use the [browser registration page](https://lf2607.kolamayermakers.org/register/). The kiosk creates your account, prints your real SSH command, then disconnects.
 4. Reconnect with `ssh username@lf2607.kolamayermakers.org`. If you do not have an SSH client, use [browser SSH](https://lf2607.kolamayermakers.org/ssh/).
 5. Prove identity and machine state with `whoami`, `hostname`, `date`, and `uptime`.
-6. Run `guide` and ask it one question. Use it throughout class and between sessions: run `guide now` for your current session objective; after you complete it, it shows your current quest. Use `guide answer 'your answer'` for prompted answers, and run `guide check` after practical work. A passing check records your progress.
-7. Join `#lf2607` at [the classroom IRC page](https://lf2607.kolamayermakers.org/irc/). This is your first rewarded S01 objective. Use `#kolamayermakers` for general chat.
-8. Learn the map: `/` is the filesystem root, `~` is your home, `.` is here, `..` is parent. Run `cd /docs` to visit your course-material playground. Read anything in it and follow what interests you.
-9. Read files with `cat`, `bat`, `less`, `head`, and `tail` before editing anything.
-10. Generate your starter page with `build-website` and inspect the static URL.
+6. Join `#lf2607` at [the classroom IRC page](https://lf2607.kolamayermakers.org/irc/). Use `#kolamayermakers` for general chat.
+7. Learn the map: `/` is the filesystem root, `~` is your home, `.` is here, `..` is parent. Run `cd /docs` to visit your course-material playground. Read anything in it and follow what interests you.
+8. Read files with `cat`, `bat`, `less`, `head`, and `tail` before editing anything.
+9. Generate your starter page with `build-website` and inspect the static URL.
 
 ## Mental Model
 
@@ -21,11 +20,9 @@ The shell is a text conversation with the operating system. A command has a name
 
 If you want the deeper distinction: the terminal is the text interface, SSH is the secure connection, and the shell is the program interpreting commands on the server.
 
-## IRC and guide
+## IRC
 
 IRC is the shared class chat. Use `#lf2607` for help that other learners can learn from, including between sessions. Use `#kolamayermakers` for general chat.
-
-`guide` is your course tool and AI tutor. Run it whenever you feel lost or have a question. DM `guide` on IRC for the same tutor. In a terminal, run `guide now` for your current session objective; after you complete it, it shows your current quest. Submit prompted answers with `guide answer 'your answer'`, and run `guide check` after practical work. It can provide hints, but a chat answer by itself is not proof; a passing check records your progress.
 
 Do not paste passwords, private keys, access tokens, or private account setup links into IRC.
 
@@ -56,7 +53,7 @@ Expected: permission columns, owner, group, size, date, and names. Ignore `.` an
 - Host key prompt appears: read it. Type `yes` only when the host is `lf2607.kolamayermakers.org`.
 - Stuck in `less` or `man`: press `q`.
 - Command is running too long: press `Ctrl-C`.
-- You are lost or have a question: run `guide` or DM `guide` on IRC.
+- You are lost or have a question: ask in `#lf2607`, including the command and error but no secrets.
 
 ## Proof Checklist
 

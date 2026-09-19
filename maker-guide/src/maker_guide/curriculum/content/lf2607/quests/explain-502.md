@@ -1,34 +1,55 @@
-# Explain a 502
+# Explain A 502
 
 Quest: explain-502
 
 ## Mission
 
-Explain why a reverse proxy returns 502 when the backend service is missing.
+Use your own backend observations to explain why the service route can fail while the static page still works. A `502` is a proxy response, not a synonym for every network error.
 
-## Commands You Will Use
+## Predict And Observe
 
-- `curl -v`
+Reuse your [S7 stop-and-recover observations](../sessions/S07/self-study.md#7-predict-stop-and-recover), or repeat that brief experiment with your own manual server. Agree to the interruption first, stop only your known foreground server with `Ctrl-C` in its terminal, and restore it afterward. If your own `site.service` owns the port now, inspect it and agree to the interruption before using `systemctl --user stop site.service` and later `systemctl --user start site.service` instead. Never stop an unknown process or another learner's service.
 
-## Steps
+In your classroom SSH shell:
 
-1. Run `curl -v` against a URL that depends on a backend service.
-2. Read the connection details.
-3. Explain the proxy and backend service roles.
-4. Answer the guide in your own words.
+```bash
+PORT="$((10000 + $(id -u)))"
+printf '%s\n' "$PORT"
+```
 
-## Hints
+Use only the assigned course port. If it exceeds `65535`, ask staff before proceeding. While your backend is stopped:
 
-1. The proxy receives the public request first.
-2. The backend service must be listening behind it.
-3. A missing backend can produce a 502.
+```bash
+curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+curl -v --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
+curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/"
+```
 
-## If Check Fails
+With routing working, expect local connection refusal, public service HTTP `502`, and a working static page. Record actual results. Do not disable TLS verification or change shared routing to force the prediction.
 
-Answer again and mention the backend service explicitly.
+## Explain The Difference
+
+- Local refusal means the connection was not accepted at that endpoint; there is no HTTP status to read.
+- A public `502 Bad Gateway` means the proxy could not obtain a usable upstream response. A stopped backend is one possible cause, not the only one.
+- The paired local refusal and controlled stop support the missing-listener diagnosis in this experiment. A `502` alone does not prove the process is stopped.
+- Shared Caddy's static delivery bypasses your personal Caddy backend and still reads the published files. The shared process handles public HTTPS and forwards to your backend over loopback HTTP. Your backend listens on all interfaces; the classroom firewall blocks new direct external connections to its port.
+- A `404` means an HTTP server answered but did not find that path. DNS failure, TLS failure, and timeout are different failures, not HTTP `502`.
+
+## Restore And Keep
+
+For a manual backend, relaunch in its original terminal:
+
+```bash
+PORT="$((10000 + $(id -u)))"
+caddy file-server --listen ":$PORT" --root "$HOME/public_html" --access-log
+```
+
+If systemd owned the backend, start the unit instead; do not launch a competing manual server. Repeat local curl and try the public service page in the laptop browser. Ask a peer to try too. Explain which component returned the earlier error, or why DNS or TLS failed before any HTTP response. Report unresolved public access separately from local recovery.
+
+Do not leave a deliberately stopped managed service behind. Published notes are optional: if you want them and `~/src/pages/setup.md` is absent, follow [Create a setup page](create-setup-page.md) before building. Preserve existing content when adding the diagnosis; you may build and [preserve only the intended source change](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or private logs.
 
 ## Related Reading
 
-- [curl -v](../commands/curl-verbose.md)
-- [reverse proxy](../concepts/reverse-proxy.md)
+- [Diagnose the second URL](diagnose-second-url.md)
+- [Reverse proxy](../concepts/reverse-proxy.md)
 - [HTTP status codes](../concepts/http-status-codes.md)

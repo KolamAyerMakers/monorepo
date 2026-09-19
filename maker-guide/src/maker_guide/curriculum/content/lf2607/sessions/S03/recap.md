@@ -47,7 +47,7 @@ You have the live milestone when you can read redirection left to right, explain
 
 ## Optional Reinforcement
 
-Run `guide now` for your current session objective. After the objectives, it shows the current S3 quest. Submit requested explanations with `guide answer 'your answer'` and run `guide check` after practical work.
+Repeat the stream and pipeline exercises, inspect the saved output, and explain one process-table row to another learner.
 
 ## Full Autonomy
 

@@ -1,5 +1,6 @@
 include:
   - roles.kam-classroom.identity
+  - roles.kam-classroom.caddy.service
   - dns-nftsets.configuration
   - dns-nftsets.service
   - nftables
@@ -398,6 +399,9 @@ roles::kam_classroom::bot::release_pending:
     - force: true
     - require:
       - cmd: roles::kam_classroom::bot::publish_release
+{% if command == 'maker-guide-create-learner' %}
+      - cmd: roles::kam_classroom::identity::lingering
+{% endif %}
 {% endfor %}
 
 roles::kam_classroom::bot::build_docs:
@@ -488,19 +492,20 @@ roles::kam_classroom::bot::initialize_participant::{{ username }}:
 roles::kam_classroom::bot::refresh_learner_routes:
   cmd.run:
     - name: /usr/local/sbin/refresh-learner-routes
-    - onchanges:
-      - cmd: roles::kam_classroom::bot::publish_release
-      - cmd: roles::kam_classroom::bot::release_pending
+    - stateful: true
+    - require:
+      - cmd: roles::kam_classroom::bot::database_migrate
+      - file: /usr/local/bin/maker-guide-render-learner-routes
+      - file: /usr/local/sbin/refresh-learner-routes
+      - service: kam-classroom::caddy::service
+      - cmd: kam-classroom::caddy::admin_ready
+      - service: sssd::service
 {% for username, user in identity.get('managed_users', {}).items() %}
 {%   set secondary_group_names = user.get('secondary_groups', []) %}
 {%   if user.primary_group == 'linux-foundations' or 'linux-foundations' in secondary_group_names %}
       - cmd: roles::kam_classroom::bot::initialize_participant::{{ username }}
 {%   endif %}
 {% endfor %}
-    - require:
-      - cmd: roles::kam_classroom::bot::database_migrate
-      - file: /usr/local/bin/maker-guide-render-learner-routes
-      - file: /usr/local/sbin/refresh-learner-routes
 
 /etc/tmpfiles.d/maker-guide.conf:
   file.managed:
@@ -684,6 +689,7 @@ roles::kam_classroom::bot::restore_registration:
     - name: /usr/local/sbin/maker-guide-release /usr/local/lib/maker-guide/incoming /usr/local/lib/maker-guide/releases restore-registration
     - onlyif: test -e /usr/local/lib/maker-guide/registration-open.before-release
     - require:
+      - cmd: roles::kam_classroom::identity::lingering
       - cmd: roles::kam_classroom::bot::database_migrate
       - cmd: roles::kam_classroom::bot::verify_active_release
       - cmd: roles::kam_classroom::bot::prune_releases

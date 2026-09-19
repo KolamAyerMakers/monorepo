@@ -21,7 +21,7 @@ You have the core milestone when you can explain a permission row, initialize th
 
 ## Optional Reinforcement
 
-Use the S4 quests for permissions, Git, and Forgejo practice. The endpoint is source history you can explain, not just a local website. Run `guide now` for the next scored activity; run `guide check` after practical work. A passing check records progress.
+Repeat the S4 permissions, Git, and Forgejo exercises. The endpoint is source history you can explain, not just a local website. Compare your local log with Forgejo and explain one commit to another learner.
 
 ## Can You Explain This?
 

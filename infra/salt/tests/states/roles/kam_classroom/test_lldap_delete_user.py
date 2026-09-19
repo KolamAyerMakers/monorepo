@@ -53,12 +53,31 @@ def test_argument_parser_accepts_username(
     assert arguments.skip_sss_cache is False
 
 
+@pytest.mark.parametrize("lingering_fails", [False, True])
 def test_delete_user_calls_lldap_graphql_mutation(
     monkeypatch: pytest.MonkeyPatch,
+    lingering_fails: bool,
 ) -> None:
     """Test that user deletion uses the LLDAP GraphQL mutation."""
     script = _load_script()
     calls: list[dict[str, object]] = []
+
+    def run(
+        arguments: list[str], *, check: bool, stdout: int
+    ) -> subprocess.CompletedProcess[str]:
+        assert arguments == [
+            "/usr/local/sbin/kam-classroom-lingering",
+            "--disable",
+            "--",
+            "alice",
+        ]
+        assert check is True
+        assert stdout == subprocess.DEVNULL
+        assert calls == []
+        if lingering_fails:
+            raise subprocess.CalledProcessError(1, arguments)
+        calls.append({"lingering": "disabled"})
+        return subprocess.CompletedProcess(arguments, 0)
 
     def graphql(
         base_url: str,
@@ -77,10 +96,17 @@ def test_delete_user_calls_lldap_graphql_mutation(
         return {}
 
     monkeypatch.setattr(script, "graphql", graphql)
+    monkeypatch.setattr(script.subprocess, "run", run)
 
+    if lingering_fails:
+        with pytest.raises(subprocess.CalledProcessError):
+            script.delete_user("http://127.0.0.1:17170/", "token", "alice")
+        assert calls == []
+        return
     script.delete_user("http://127.0.0.1:17170/", "token", "alice")
 
     assert calls == [
+        {"lingering": "disabled"},
         {
             "base_url": "http://127.0.0.1:17170/",
             "token": "token",
@@ -92,7 +118,7 @@ def test_delete_user_calls_lldap_graphql_mutation(
                 """
             ).strip(),
             "variables": {"userId": "alice"},
-        }
+        },
     ]
 
 

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import importlib
+import json
 import os
+import shlex
 import subprocess
 import tomllib
 from collections.abc import MutableMapping
@@ -143,6 +145,14 @@ def _load_pillar_file(
     )
 
 
+def _state_arguments(state: object, function: str) -> dict[str, object]:
+    return {
+        key: value
+        for argument in cast(dict[str, list[dict[str, object]]], state)[function]
+        for key, value in argument.items()
+    }
+
+
 def _role_pillar(
     relative_path: str,
     pillar_key: str,
@@ -190,6 +200,7 @@ def _lldap_http() -> dict[str, object]:
         "domain": "lf2607.kolamayermakers.org",
         "host": "127.0.0.1",
         "port": 17170,
+        "url": "https://lf2607.kolamayermakers.org/lldap/",
     }
 
 
@@ -345,6 +356,12 @@ def _kam_classroom_pillar() -> dict[str, object]:
                 },
                 "registration_administrator": "pmuller",
                 "default_group": "humans",
+                "lingering": {
+                    "group": "linux-foundations",
+                    "uid_minimum": 10000,
+                    "uid_maximum": 20999,
+                    "packages": ["libpam-systemd", "dbus-user-session"],
+                },
                 "groups": {
                     "humans": {
                         "gid_number": 1001,
@@ -430,13 +447,22 @@ def _kam_classroom_pillar() -> dict[str, object]:
 
 def _caddy_pillar() -> dict[str, object]:
     return {
-        "caddy": {
-            "domain": "lf2607.kolamayermakers.org",
-            "docs_site_directory": "/var/www/maker-guide-docs/current",
-            "service_user": "caddy",
-            "http_port": 80,
-            "https_port": 443,
-        }
+        "caddy": _role_pillar("pillar/caddy.sls", "caddy", "production-host")
+        | _role_pillar(
+            "pillar/roles/kam-classroom/caddy.sls", "caddy", "production-host"
+        ),
+        "forgejo": {"server": _forgejo_server()},
+        "lldap": {"http": _lldap_http()},
+        "authelia": {"server": _authelia_server()},
+        "gamja": {"paths": _gamja_paths()},
+        "ergo": {"server": _ergo_server(), "listeners": _ergo_listeners()},
+        "ttyd": {
+            "instances": {
+                "registration": {"server": _ttyd_server()},
+                "ssh": {"server": _ssh_ttyd_server()},
+            },
+            "web": {"assets": _ttyd_web_assets()},
+        },
     }
 
 
@@ -650,6 +676,7 @@ def test_role_bot_installs_maker_guide_artifact() -> None:
 
     assert state["include"] == [
         "roles.kam-classroom.identity",
+        "roles.kam-classroom.caddy.service",
         "dns-nftsets.configuration",
         "dns-nftsets.service",
         "nftables",
@@ -957,13 +984,16 @@ def test_role_bot_installs_maker_guide_artifact() -> None:
         "maker-guide-sync-derived-data",
         "maker-guide-sync-groups",
     ):
-        assert state[f"/usr/local/bin/{command}"] == {
-            "file.symlink": [
-                {"target": f"/usr/local/lib/maker-guide/current/bin/{command}"},
-                {"force": True},
-                {"require": [{"cmd": "roles::kam_classroom::bot::publish_release"}]},
-            ]
-        }
+        symlink = _state_arguments(state[f"/usr/local/bin/{command}"], "file.symlink")
+        assert symlink["target"] == f"/usr/local/lib/maker-guide/current/bin/{command}"
+        assert symlink["force"] is True
+        assert {"cmd": "roles::kam_classroom::bot::publish_release"} in cast(
+            list[dict[str, str]], symlink["require"]
+        )
+        if command == "maker-guide-create-learner":
+            assert {"cmd": "roles::kam_classroom::identity::lingering"} in cast(
+                list[dict[str, str]], symlink["require"]
+            )
     config_state = cast(dict[str, object], state["/etc/maker-guide/config.toml"])
     assert config_state["file.managed"] == [
         {"source": "salt://roles/kam-classroom/templates/maker-guide-config.toml.j2"},
@@ -1231,34 +1261,22 @@ def test_role_bot_installs_maker_guide_artifact() -> None:
             },
         ]
     }
-    assert state["roles::kam_classroom::bot::refresh_learner_routes"] == {
-        "cmd.run": [
-            {"name": "/usr/local/sbin/refresh-learner-routes"},
-            {
-                "onchanges": [
-                    {"cmd": "roles::kam_classroom::bot::publish_release"},
-                    {"cmd": "roles::kam_classroom::bot::release_pending"},
-                    {
-                        "cmd": (
-                            "roles::kam_classroom::bot::initialize_participant::pmuller"
-                        )
-                    },
-                    {
-                        "cmd": (
-                            "roles::kam_classroom::bot::initialize_participant::wanlong"
-                        )
-                    },
-                ]
-            },
-            {
-                "require": [
-                    {"cmd": "roles::kam_classroom::bot::database_migrate"},
-                    {"file": "/usr/local/bin/maker-guide-render-learner-routes"},
-                    {"file": "/usr/local/sbin/refresh-learner-routes"},
-                ]
-            },
-        ]
-    }
+    refresh = _state_arguments(
+        state["roles::kam_classroom::bot::refresh_learner_routes"], "cmd.run"
+    )
+    assert refresh["name"] == "/usr/local/sbin/refresh-learner-routes"
+    assert refresh["stateful"] is True
+    assert not {"onchanges", "onlyif", "unless"} & refresh.keys()
+    assert refresh["require"] == [
+        {"cmd": "roles::kam_classroom::bot::database_migrate"},
+        {"file": "/usr/local/bin/maker-guide-render-learner-routes"},
+        {"file": "/usr/local/sbin/refresh-learner-routes"},
+        {"service": "kam-classroom::caddy::service"},
+        {"cmd": "kam-classroom::caddy::admin_ready"},
+        {"service": "sssd::service"},
+        {"cmd": "roles::kam_classroom::bot::initialize_participant::pmuller"},
+        {"cmd": "roles::kam_classroom::bot::initialize_participant::wanlong"},
+    ]
     assert state["roles::kam_classroom::bot::create_directories"] == {
         "file.directory": [
             {"name": "/run/maker-guide"},
@@ -1574,6 +1592,7 @@ def test_role_bot_installs_maker_guide_artifact() -> None:
             },
             {
                 "require": [
+                    {"cmd": "roles::kam_classroom::identity::lingering"},
                     {"cmd": "roles::kam_classroom::bot::database_migrate"},
                     {"cmd": "roles::kam_classroom::bot::verify_active_release"},
                     {"cmd": "roles::kam_classroom::bot::prune_releases"},
@@ -1703,33 +1722,18 @@ def test_role_bot_initializes_course_participants() -> None:
             },
         ]
     }
-    assert state["roles::kam_classroom::bot::refresh_learner_routes"] == {
-        "cmd.run": [
-            {"name": "/usr/local/sbin/refresh-learner-routes"},
-            {
-                "onchanges": [
-                    {"cmd": "roles::kam_classroom::bot::publish_release"},
-                    {"cmd": "roles::kam_classroom::bot::release_pending"},
-                    {
-                        "cmd": (
-                            "roles::kam_classroom::bot::initialize_participant::volunteer"
-                        )
-                    },
-                    {
-                        "cmd": (
-                            "roles::kam_classroom::bot::initialize_participant::student"
-                        )
-                    },
-                ]
-            },
-            {
-                "require": [
-                    {"cmd": "roles::kam_classroom::bot::database_migrate"},
-                    {"file": "/usr/local/bin/maker-guide-render-learner-routes"},
-                    {"file": "/usr/local/sbin/refresh-learner-routes"},
-                ]
-            },
-        ]
+    refresh = _state_arguments(
+        state["roles::kam_classroom::bot::refresh_learner_routes"], "cmd.run"
+    )
+    assert {
+        requirement["cmd"]
+        for requirement in cast(list[dict[str, str]], refresh["require"])
+        if requirement.get("cmd", "").startswith(
+            "roles::kam_classroom::bot::initialize_participant::"
+        )
+    } == {
+        "roles::kam_classroom::bot::initialize_participant::volunteer",
+        "roles::kam_classroom::bot::initialize_participant::student",
     }
 
 
@@ -2198,87 +2202,194 @@ def test_caddy_firewall_opens_http_and_https_input() -> None:
 
 
 def test_caddy_service_waits_for_nftables_reload() -> None:
-    """Test that Caddy service waits for the live firewall reload."""
-    assert _load_state(
-        "roles/kam-classroom/caddy/service.sls",
-        {"caddy": {"configuration_file": "/etc/caddy/Caddyfile", "local_certs": True}},
+    """Caddy starts after firewall, validation and systemd reload, then trusts its CA."""
+    pillar = _caddy_pillar()
+    cast(dict[str, object], pillar["caddy"])["local_certs"] = True
+    state = _load_state("roles/kam-classroom/caddy/service.sls", pillar)
+    service = _state_arguments(
+        state["kam-classroom::caddy::service"], "service.running"
+    )
+    assert service["enable"] is True
+    for requirement in (
+        {"cmd": "nftables::reload"},
+        {"cmd": "kam-classroom::caddy::configuration::validate"},
+        {"module": "kam-classroom::caddy::daemon_reload"},
+    ):
+        assert requirement in cast(list[dict[str, str]], service["require"])
+    assert {"file": "/etc/systemd/system/caddy.service.d/classroom.conf"} in cast(
+        list[dict[str, str]], service["watch"]
+    )
+    assert _state_arguments(
+        state["kam-classroom::caddy::daemon_reload"], "module.run"
     ) == {
-        "include": [
-            "roles.kam-classroom.caddy.config",
-            "roles.kam-classroom.caddy.firewall",
+        "service.systemctl_reload": [],
+        "onchanges": [{"file": "/etc/systemd/system/caddy.service.d/classroom.conf"}],
+    }
+    guard = _state_arguments(
+        state["kam-classroom::caddy::service::required_pillar"], "test.check_pillar"
+    )
+    assert {
+        "caddy:admin_address",
+        "caddy:runtime_directory",
+        "caddy:runtime_directory_mode",
+        "caddy:service_umask",
+    } <= set(cast(list[str], guard["string"]))
+    assert guard["failhard"] is True
+    trust = _state_arguments(state["kam-classroom::caddy::local_ca_trusted"], "cmd.run")
+    assert {"service": "kam-classroom::caddy::service"} in cast(
+        list[dict[str, str]], trust["require"]
+    )
+    assert cast(str, trust["unless"]).startswith("cmp -s ")
+    assert "update-ca-certificates" in cast(str, trust["name"])
+
+
+@pytest.mark.parametrize(
+    "socket_path", ["/run/caddy/admin.sock", "/run/caddy-test/admin.sock"]
+)
+def test_caddy_repairs_interrupted_admin_socket_migration(socket_path: str) -> None:
+    """Missing sockets trigger recovery even when configuration files are unchanged."""
+    pillar = _caddy_pillar()
+    cast(dict[str, object], pillar["caddy"])["admin_address"] = f"unix/{socket_path}"
+    recovery = _state_arguments(
+        _load_state("roles/kam-classroom/caddy/service.sls", pillar)[
+            "kam-classroom::caddy::admin_ready"
         ],
-        "kam-classroom::caddy::service::required_pillar": {
-            "test.check_pillar": [
-                {"string": ["caddy:configuration_file"]},
-                {"boolean": ["caddy:local_certs"]},
-                {"failhard": True},
-            ]
-        },
-        "kam-classroom::caddy::service": {
-            "service.running": [
-                {"name": "caddy"},
-                {"enable": True},
-                {
-                    "require": [
-                        {"pkg": "kam-classroom::caddy::package"},
-                        {"file": "/etc/caddy/Caddyfile"},
-                        {"nftables_file": "kam-classroom::caddy::firewall"},
-                        {"cmd": "kam-classroom::caddy::configuration::validate"},
-                        {"cmd": "nftables::reload"},
-                        {"service": "forgejo::service"},
-                        {"service": "lldap::service"},
-                        {"service": "ttyd::instance::registration::service"},
-                        {"service": "ttyd::instance::ssh::service"},
-                        {"test": "kam-classroom::caddy::service::required_pillar"},
-                    ]
-                },
-                {
-                    "watch": [
-                        {"file": "/etc/caddy/Caddyfile"},
-                        {"pkg": "kam-classroom::caddy::package"},
-                    ]
-                },
-            ]
-        },
-        "kam-classroom::caddy::local_ca_trusted": {
-            "cmd.run": [
-                {
-                    "name": (
-                        "set -eu\n"
-                        "source_certificate=/var/lib/caddy/.local/share/caddy/"
-                        "pki/authorities/local/root.crt\n"
-                        "destination_certificate=/usr/local/share/ca-certificates/"
-                        "caddy-local-root.crt\n"
-                        "elapsed_seconds=0\n"
-                        'while [ ! -s "$source_certificate" ]; do\n'
-                        '    if [ "$elapsed_seconds" -ge 60 ]; then\n'
-                        '        echo "Timed out waiting for $source_certificate" >&2\n'
-                        "        exit 1\n"
-                        "    fi\n"
-                        "    sleep 2\n"
-                        "    elapsed_seconds=$((elapsed_seconds + 2))\n"
-                        "done\n"
-                        'install -m 0644 "$source_certificate" '
-                        '"$destination_certificate"\n'
-                        "update-ca-certificates\n"
+        "cmd.run",
+    )
+    assert recovery["name"] == (
+        "/usr/bin/systemctl daemon-reload && /usr/bin/systemctl restart caddy"
+    )
+    assert shlex.split(cast(str, recovery["unless"])) == [
+        "/usr/bin/test",
+        "-S",
+        socket_path,
+    ]
+    assert recovery["require"] == [{"service": "kam-classroom::caddy::service"}]
+    assert not {"onchanges", "onlyif"} & recovery.keys()
+
+
+def test_classroom_readiness_dependency_graph_is_acyclic() -> None:
+    """Readiness edges order imports, services and users without an SSSD cycle."""
+    pillar = _kam_classroom_pillar() | _caddy_pillar()
+    pillar["sssd"] = _role_pillar("pillar/sssd.sls", "sssd", "production-host") | {
+        "enabled": True
+    }
+    pillar["systemd"] = _role_pillar(
+        "pillar/roles/kam-classroom/systemd.sls", "systemd", "production-host"
+    )
+    chunks: dict[tuple[str, str], dict[str, object]] = {}
+    for template in (
+        "roles/kam-classroom/caddy/config.sls",
+        "roles/kam-classroom/caddy/service.sls",
+        "roles/kam-classroom/bot.sls",
+        "roles/kam-classroom/identity.sls",
+        "sssd/service.sls",
+        "systemd/drop_ins.sls",
+    ):
+        for identifier, body in _load_state(template, pillar).items():
+            if identifier == "include":
+                continue
+            for function in cast(dict[str, object], body):
+                state_type, function_name = function.split(".", 1)
+                chunks[state_type, identifier] = {
+                    "state": state_type,
+                    "fun": function_name,
+                    "__id__": identifier,
+                    "__sls__": template,
+                    "name": identifier,
+                    **_state_arguments(body, function),
+                }
+
+    # ponytail: unrelated includes are leaves; use full highstate for cross-role cycles.
+    for chunk in list(chunks.values()):
+        for requisite in (
+            "require",
+            "watch",
+            "onchanges",
+            "require_in",
+            "watch_in",
+            "onchanges_in",
+        ):
+            for requirement in cast(list[dict[str, str]], chunk.get(requisite, [])):
+                for state_type, identifier in requirement.items():
+                    if (state_type, identifier) not in chunks:
+                        chunks[state_type, identifier] = {
+                            "state": state_type,
+                            "fun": "nop",
+                            "__id__": identifier,
+                            "name": identifier,
+                        }
+    graph = DependencyGraph()
+    for chunk in chunks.values():
+        graph.add_chunk(chunk, allow_aggregate=False)
+    for chunk in chunks.values():
+        assert graph.add_requisites(chunk, []) is None
+        for requisite in ("require_in", "watch_in", "onchanges_in"):
+            for requirement in cast(list[dict[str, str]], chunk.get(requisite, [])):
+                for state_type, identifier in requirement.items():
+                    assert graph.add_dependency(
+                        chunks[state_type, identifier],
+                        RequisiteType(requisite.removesuffix("_in")),
+                        cast(str, chunk["state"]),
+                        cast(str, chunk["__id__"]),
                     )
-                },
-                {
-                    "unless": (
-                        "cmp -s /var/lib/caddy/.local/share/caddy/pki/"
-                        "authorities/local/root.crt /usr/local/share/"
-                        "ca-certificates/caddy-local-root.crt"
-                    )
-                },
-                {
-                    "require": [
-                        {"service": "kam-classroom::caddy::service"},
-                        {"test": "kam-classroom::caddy::service::required_pillar"},
-                    ]
-                },
-            ]
+    assert graph.find_cycle_edges() == []
+
+    expected_dependencies = {
+        ("cmd", "kam-classroom::caddy::configuration::validate"): {
+            (RequisiteType.REQUIRE, "/etc/caddy/learner-routes.caddy"),
+            (RequisiteType.ONCHANGES, "/etc/caddy/learner-routes.caddy"),
+        },
+        ("module", "kam-classroom::caddy::daemon_reload"): {
+            (
+                RequisiteType.ONCHANGES,
+                "/etc/systemd/system/caddy.service.d/classroom.conf",
+            ),
+        },
+        ("service", "kam-classroom::caddy::service"): {
+            (RequisiteType.REQUIRE, "kam-classroom::caddy::configuration::validate"),
+            (RequisiteType.REQUIRE, "kam-classroom::caddy::daemon_reload"),
+        },
+        ("cmd", "kam-classroom::caddy::admin_ready"): {
+            (RequisiteType.REQUIRE, "kam-classroom::caddy::service"),
+        },
+        ("cmd", "roles::kam_classroom::bot::refresh_learner_routes"): {
+            (RequisiteType.REQUIRE, "kam-classroom::caddy::service"),
+            (RequisiteType.REQUIRE, "kam-classroom::caddy::admin_ready"),
+            (RequisiteType.REQUIRE, "sssd::service"),
+            (
+                RequisiteType.REQUIRE,
+                "roles::kam_classroom::bot::initialize_participant::pmuller",
+            ),
+            (
+                RequisiteType.REQUIRE,
+                "roles::kam_classroom::bot::initialize_participant::wanlong",
+            ),
+        },
+        ("file", "/usr/local/sbin/lldap-delete-user"): {
+            (RequisiteType.REQUIRE, "/usr/local/sbin/kam-classroom-lingering"),
+        },
+        ("file", "/usr/local/sbin/kam-classroom-lingering"): {
+            (RequisiteType.REQUIRE, "/etc/kam-classroom-lingering.json"),
+        },
+        ("service", "sssd::service"): {
+            (RequisiteType.REQUIRE, "roles::kam_classroom::sssd_uses_local_lldap"),
+        },
+        ("cmd", "roles::kam_classroom::identity::lingering"): {
+            (RequisiteType.REQUIRE, "sssd::service"),
+        },
+        ("file", "/usr/local/bin/maker-guide-create-learner"): {
+            (RequisiteType.REQUIRE, "roles::kam_classroom::identity::lingering"),
+        },
+        ("cmd", "roles::kam_classroom::bot::restore_registration"): {
+            (RequisiteType.REQUIRE, "roles::kam_classroom::identity::lingering"),
         },
     }
+    for key, expected in expected_dependencies.items():
+        assert expected <= {
+            (requisite_type, dependency["__id__"])
+            for requisite_type, dependency in graph.get_dependencies(chunks[key])
+        }
 
 
 def test_role_data_root_is_traversable_by_services() -> None:
@@ -2681,97 +2792,79 @@ def test_identity_state_owns_lldap_sssd_and_user_helper() -> None:
         "forgejo.service",
         "pam-pwquality.package",
         "sssd",
+        "systemd.drop_ins",
     ]
-    assert state["roles::kam_classroom::identity::required_pillar"] == {
-        "test.check_pillar": [
-            {
-                "string": [
-                    "kam_classroom:identity:registration_user:user",
-                    "kam_classroom:identity:registration_user:group",
-                    "kam_classroom:identity:registration_administrator",
-                    "kam_classroom:identity:default_group",
-                    "kam_classroom:identity:managed_users:pmuller:display_name",
-                    "kam_classroom:identity:managed_users:pmuller:email",
-                    "kam_classroom:identity:managed_users:pmuller:home_directory",
-                    "kam_classroom:identity:managed_users:pmuller:shell",
-                    "kam_classroom:identity:managed_users:pmuller:primary_group",
-                    "kam_classroom:identity:managed_users:wanlong:display_name",
-                    "kam_classroom:identity:managed_users:wanlong:email",
-                    "kam_classroom:identity:managed_users:wanlong:home_directory",
-                    "kam_classroom:identity:managed_users:wanlong:shell",
-                    "kam_classroom:identity:managed_users:wanlong:primary_group",
-                    "kam_classroom:identity:managed_users:guide:display_name",
-                    "kam_classroom:identity:managed_users:guide:email",
-                    "kam_classroom:identity:managed_users:guide:home_directory",
-                    "kam_classroom:identity:managed_users:guide:shell",
-                    "kam_classroom:identity:managed_users:guide:primary_group",
-                ]
-            },
-            {
-                "dictionary": [
-                    "kam_classroom:identity:registration_user",
-                    "kam_classroom:identity:groups",
-                    "kam_classroom:identity:managed_users",
-                    "kam_classroom:identity:groups:humans",
-                    "kam_classroom:identity:groups:makers",
-                    "kam_classroom:identity:groups:architects",
-                    "kam_classroom:identity:groups:speakers",
-                    "kam_classroom:identity:groups:lf2607",
-                    "kam_classroom:identity:groups:admins",
-                    "kam_classroom:identity:groups:mentors",
-                    "kam_classroom:identity:groups:pa",
-                    "kam_classroom:identity:groups:volunteers",
-                    "kam_classroom:identity:groups:linux-foundations",
-                    "kam_classroom:identity:groups:students",
-                    "kam_classroom:identity:groups:guide",
-                    "kam_classroom:identity:groups:irc-bots",
-                    "kam_classroom:identity:managed_users:pmuller",
-                    "kam_classroom:identity:managed_users:wanlong",
-                    "kam_classroom:identity:managed_users:guide",
-                ]
-            },
-            {
-                "integer": [
-                    "kam_classroom:identity:registration_user:uid",
-                    "kam_classroom:identity:registration_user:gid",
-                    "kam_classroom:identity:managed_users:pmuller:uid_number",
-                    "kam_classroom:identity:managed_users:wanlong:uid_number",
-                    "kam_classroom:identity:managed_users:guide:uid_number",
-                    "kam_classroom:identity:groups:humans:gid_number",
-                    "kam_classroom:identity:groups:makers:gid_number",
-                    "kam_classroom:identity:groups:architects:gid_number",
-                    "kam_classroom:identity:groups:speakers:gid_number",
-                    "kam_classroom:identity:groups:lf2607:gid_number",
-                    "kam_classroom:identity:groups:admins:gid_number",
-                    "kam_classroom:identity:groups:mentors:gid_number",
-                    "kam_classroom:identity:groups:pa:gid_number",
-                    "kam_classroom:identity:groups:volunteers:gid_number",
-                    "kam_classroom:identity:groups:linux-foundations:gid_number",
-                    "kam_classroom:identity:groups:students:gid_number",
-                    "kam_classroom:identity:groups:guide:gid_number",
-                    "kam_classroom:identity:groups:irc-bots:gid_number",
-                ]
-            },
-            {
-                "listing": [
-                    "kam_classroom:identity:managed_users:pmuller:secondary_groups",
-                    "kam_classroom:identity:managed_users:pmuller:ssh_public_keys",
-                ]
-            },
-            {
-                "listing": [
-                    "kam_classroom:identity:managed_users:wanlong:secondary_groups",
-                    "kam_classroom:identity:managed_users:wanlong:ssh_public_keys",
-                ]
-            },
-            {
-                "listing": [
-                    "kam_classroom:identity:managed_users:guide:secondary_groups",
-                ]
-            },
-            {"failhard": True},
-        ]
+    guard_arguments = cast(
+        dict[str, list[dict[str, object]]],
+        state["roles::kam_classroom::identity::required_pillar"],
+    )["test.check_pillar"]
+    assert sum("listing" in argument for argument in guard_arguments) == 1
+    guard = _state_arguments(
+        state["roles::kam_classroom::identity::required_pillar"], "test.check_pillar"
+    )
+    assert guard["listing"] == [
+        "kam_classroom:identity:lingering:packages",
+        "kam_classroom:identity:managed_users:pmuller:secondary_groups",
+        "kam_classroom:identity:managed_users:pmuller:ssh_public_keys",
+        "kam_classroom:identity:managed_users:wanlong:secondary_groups",
+        "kam_classroom:identity:managed_users:wanlong:ssh_public_keys",
+        "kam_classroom:identity:managed_users:guide:secondary_groups",
+    ]
+    assert "kam_classroom:identity:lingering:group" in cast(list[str], guard["string"])
+    assert "kam_classroom:identity:lingering" in cast(list[str], guard["dictionary"])
+    assert {
+        "kam_classroom:identity:lingering:uid_minimum",
+        "kam_classroom:identity:lingering:uid_maximum",
+    } <= set(cast(list[str], guard["integer"]))
+    assert guard["failhard"] is True
+    policy = _state_arguments(
+        state["/etc/kam-classroom-lingering.json"], "file.managed"
+    )
+    assert json.loads(cast(str, policy["contents"])) == {
+        "group": "linux-foundations",
+        "uid_minimum": 10000,
+        "uid_maximum": 20999,
     }
+    assert (policy["user"], policy["group"], policy["mode"]) == ("root", "root", "0600")
+    helper = _state_arguments(
+        state["/usr/local/sbin/kam-classroom-lingering"], "file.managed"
+    )
+    assert (helper["user"], helper["group"], helper["mode"]) == ("root", "root", "0700")
+    assert helper["require"] == [{"file": "/etc/kam-classroom-lingering.json"}]
+    lingering = _state_arguments(
+        state["roles::kam_classroom::identity::lingering"], "cmd.run"
+    )
+    assert lingering["name"] == "/usr/local/sbin/kam-classroom-lingering"
+    assert lingering["stateful"] is True
+    assert not {"onchanges", "onlyif", "unless"} & lingering.keys()
+    for requirement in (
+        {"test": "roles::kam_classroom::identity::required_pillar"},
+        {"file": "/usr/local/sbin/kam-classroom-lingering"},
+        {"service": "sssd::service"},
+        {"service": "systemd::drop_ins::session_policy::service"},
+        {"module": "systemd::drop_ins::resource_limits::daemon_reload"},
+        {"cmd": "roles::kam_classroom::lldap_group::linux-foundations"},
+        {"cmd": "roles::kam_classroom::lldap_group_migration::lf2607"},
+        *(
+            {"cmd": f"roles::kam_classroom::lldap_user::{username}"}
+            for username in ("pmuller", "wanlong", "guide")
+        ),
+    ):
+        assert requirement in cast(list[dict[str, str]], lingering["require"])
+    for package in ("libpam-systemd", "dbus-user-session"):
+        assert {"pkg": package} in cast(list[dict[str, str]], lingering["require"])
+        installed = _state_arguments(state[package], "pkg.installed")
+        assert installed["name"] == package
+        assert {"test": "roles::kam_classroom::identity::required_pillar"} in cast(
+            list[dict[str, str]], installed["require"]
+        )
+        assert installed["require_in"] == [{"test": "bootstrap::apt_packages_ready"}]
+    assert {"file": "/usr/local/sbin/kam-classroom-lingering"} in cast(
+        list[dict[str, str]],
+        _state_arguments(state["/usr/local/sbin/lldap-delete-user"], "file.managed")[
+            "require"
+        ],
+    )
     assert state["roles::kam_classroom::registration_group"] == {
         "group.present": [
             {"name": "new"},
@@ -3061,29 +3154,113 @@ def test_identity_state_owns_lldap_sssd_and_user_helper() -> None:
     }
 
 
+@pytest.mark.parametrize("group", ["mentors", "unmanaged"])
+def test_identity_lingering_requires_a_managed_policy_group(group: str) -> None:
+    """The configured group controls lingering and unknown groups fail closed."""
+    pillar = _kam_classroom_pillar()
+    cast(
+        dict[str, object],
+        _SaltNamespace(pillar).pillar_get("kam_classroom:identity:lingering"),
+    )["group"] = group
+    state = _load_state("roles/kam-classroom/identity.sls", pillar)
+    policy = _state_arguments(
+        state["/etc/kam-classroom-lingering.json"], "file.managed"
+    )
+    assert json.loads(cast(str, policy["contents"])) == {
+        "group": group,
+        "uid_minimum": 10000,
+        "uid_maximum": 20999,
+    }
+    assert policy["require"] == [
+        {"test": "roles::kam_classroom::identity::required_pillar"}
+    ]
+    assert {"cmd": f"roles::kam_classroom::lldap_group::{group}"} in cast(
+        list[dict[str, str]],
+        _state_arguments(state["roles::kam_classroom::identity::lingering"], "cmd.run")[
+            "require"
+        ],
+    )
+    if group == "unmanaged":
+        assert (
+            _state_arguments(
+                state["roles::kam_classroom::identity::lingering_group_is_managed"],
+                "test.fail_without_changes",
+            )["failhard"]
+            is True
+        )
+    else:
+        assert "roles::kam_classroom::identity::lingering_group_is_managed" not in state
+
+
 def test_caddyfile_uses_narrow_path_routes() -> None:
-    """Test learner redirects and the fj API alias do not catch unrelated paths."""
+    """Narrow routes and service reload share a private Unix admin endpoint."""
+    pillar = _caddy_pillar()
+    cast(dict[str, object], pillar["caddy"])["local_certs"] = True
+    state = _load_state("roles/kam-classroom/caddy/config.sls", pillar)
+    configuration = _state_arguments(state["/etc/caddy/Caddyfile"], "file.managed")
+    assert configuration["template"] == "jinja"
     rendered = (
         _environment()
-        .get_template("roles/kam-classroom/caddy/templates/Caddyfile.j2")
-        .render(
-            forgejo_server=_forgejo_server(),
-            lldap_http=_lldap_http(),
-            authelia_server=_authelia_server(),
-            gamja_paths=_gamja_paths(),
-            ergo_server=_ergo_server(),
-            ergo_listeners=_ergo_listeners(),
-            registration_ttyd_server=_ttyd_server(),
-            ssh_ttyd_server=_ssh_ttyd_server(),
-            ttyd_web_assets=_ttyd_web_assets(),
-            caddy={
-                "local_certs": True,
-                "domain": "lf2607.kolamayermakers.org",
-                "docs_site_directory": "/var/www/maker-guide-docs/current",
-                "learner_routes_file": "/etc/caddy/learner-routes.caddy",
-            },
+        .get_template(cast(str, configuration["source"]).removeprefix("salt://"))
+        .render(**cast(dict[str, object], configuration["context"]))
+    )
+    override = _state_arguments(
+        _load_state("roles/kam-classroom/caddy/service.sls", pillar)[
+            "/etc/systemd/system/caddy.service.d/classroom.conf"
+        ],
+        "file.managed",
+    )
+    assert override["template"] == "jinja"
+    assert (override["user"], override["group"], override["mode"]) == (
+        "root",
+        "root",
+        "0644",
+    )
+    assert override["makedirs"] is True
+    service_lines = (
+        _environment()
+        .get_template(cast(str, override["source"]).removeprefix("salt://"))
+        .render(**cast(dict[str, object], override["context"]))
+        .splitlines()
+    )
+    assert {
+        "RuntimeDirectory=caddy",
+        "RuntimeDirectoryMode=0700",
+        "UMask=0077",
+        "ExecReload=",
+    } <= set(service_lines)
+    reload_command = shlex.split(
+        next(
+            line.removeprefix("ExecReload=")
+            for line in service_lines
+            if line.startswith("ExecReload=/")
         )
     )
+    admin_address = next(
+        line.strip().split()[1]
+        for line in rendered.splitlines()
+        if line.strip().startswith("admin ")
+    )
+    assert admin_address == "unix//run/caddy/admin.sock"
+    assert reload_command == [
+        "/usr/bin/caddy",
+        "reload",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--address",
+        admin_address,
+    ]
+    assert "import /etc/caddy/learner-routes.caddy" in rendered
+    routes = _state_arguments(state["/etc/caddy/learner-routes.caddy"], "file.managed")
+    assert routes["contents"] == "# No learner routes.\n"
+    assert routes["replace"] is False
+    validation = _state_arguments(
+        state["kam-classroom::caddy::configuration::validate"], "cmd.run"
+    )
+    for requisite in ("require", "onchanges"):
+        assert {"file": "/etc/caddy/learner-routes.caddy"} in cast(
+            list[dict[str, str]], validation[requisite]
+        )
 
     assert (
         "@user_home_redirect path_regexp user_home_redirect ^/~[a-z][a-z0-9_-]*$"
@@ -3119,6 +3296,7 @@ def test_caddyfile_omits_dev_service_aliases() -> None:
             ssh_ttyd_server=_ssh_ttyd_server(),
             ttyd_web_assets=_ttyd_web_assets(),
             caddy={
+                **cast(dict[str, object], _caddy_pillar()["caddy"]),
                 "local_certs": False,
                 "domain": "lf-dev.kolamayermakers.org",
                 "docs_site_directory": "/var/www/maker-guide-docs/current",

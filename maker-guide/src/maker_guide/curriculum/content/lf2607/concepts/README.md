@@ -100,8 +100,10 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [SMTP basics](smtp-basics.md)
 - [external data fetching](external-data-fetching.md)
 
-## S07 Web Diagnostics
+## S07 Web Servers And Diagnostics
 
+- [manual web service](manual-web-service.md)
+- [service](service.md)
 - [sockets](sockets.md)
 - [HTTP inspection](http-inspection.md)
 - [HTML on the wire](html-on-the-wire.md)
@@ -110,23 +112,27 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 
 ## S08 Services
 
-- [terminal multiplexing](terminal-multiplexing.md)
-- [manual web service](manual-web-service.md)
-- [service](service.md)
-- [bash functions](bash-functions.md)
 - [systemd user services](systemd-user-services.md)
 - [logging](logging.md)
 - [service logs](service-logs.md)
 - [lingering](lingering.md)
 
-## S09 Polish
+Optional extensions:
+
+- [terminal multiplexing](terminal-multiplexing.md)
+- [bash functions](bash-functions.md)
+
+## S09 Automation And Handoff
 
 - [automation timers](automation-timers.md)
+- [README writing](readme-writing.md)
+
+Optional interests:
+
 - [IRC](irc.md)
 - [text transforms](text-transforms.md)
 - [regular expressions](regular-expression.md)
 - [vim survival](vim-survival.md)
-- [README writing](readme-writing.md)
 
 ## S10 Investigation
 

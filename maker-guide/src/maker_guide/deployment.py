@@ -11,6 +11,7 @@ MAKER_GUIDE_CREATE_LEARNER_COMMAND: Final = "/usr/local/bin/maker-guide-create-l
 MAKER_GUIDE_INITIALIZE_LEARNER_COMMAND: Final = "/usr/local/bin/maker-guide-initialize-learner"
 MAKER_GUIDE_REGISTRATION_COMMAND: Final = "/usr/local/bin/maker-guide-registration"
 REFRESH_LEARNER_ROUTES_COMMAND: Final = "/usr/local/sbin/refresh-learner-routes"
+CLASSROOM_LINGERING_COMMAND: Final = "/usr/local/sbin/kam-classroom-lingering"
 REGISTRATION_STATE_FILE: Final = "/etc/maker-guide/registration-open"
 LLDAP_CREATE_USER_COMMAND: Final = "/usr/local/sbin/lldap-create-user"
 RUN_USER_COMMAND: Final = "/usr/sbin/runuser"

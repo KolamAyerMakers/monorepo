@@ -4,12 +4,12 @@
 
 A socket is an endpoint a process uses to communicate, often over the network with an address, port, and protocol.
 
-## Why Sockets Matter In This Course
+## Examples
 
 - `ssh` opens a client socket to the SSH server.
 - `curl` opens a client socket to an HTTP server.
-- `python3 -m http.server --bind 127.0.0.1` opens a listening socket on your service port.
-- Caddy connects to your user service through a local socket endpoint.
+- The [Caddy file-server demo](../commands/caddy.md) opens a listening socket on loopback port `8000`.
+- A separate reverse proxy can connect to a file server through a local socket endpoint.
 
 ## Client And Listening Sockets
 
@@ -17,7 +17,7 @@ A socket is an endpoint a process uses to communicate, often over the network wi
 client socket -> network -> listening socket
 ```
 
-A listening socket waits for incoming connections. A client socket initiates a connection. For your personal service, Python listens on `127.0.0.1:<your-port>`; Caddy connects to that local endpoint when handling the public service URL.
+A listening socket waits for incoming connections. A client socket initiates a connection. In the standalone demo, Caddy listens on `127.0.0.1:8000` and curl connects to it over plain HTTP. In a proxied deployment, a shared Caddy process can accept public HTTPS and connect to a personal Caddy HTTP listener: the same software, two processes with different sockets.
 
 ## Address And Port
 
@@ -38,10 +38,10 @@ ss -ltnp
 ss -tnp
 ```
 
-Use `curl` to test an HTTP listening socket:
+Start the [Caddy demo](../commands/caddy.md), including its generated page and unused-port inspection. In a second shell on the same machine, use `curl` to test its HTTP listening socket. Substitute the demo's chosen port if different:
 
 ```bash
-PORT="$((10000 + $(id -u)))"
+PORT=8000
 curl -I "http://127.0.0.1:$PORT/"
 ```
 
@@ -54,10 +54,11 @@ curl -I "http://127.0.0.1:$PORT/"
 
 ## Proof Check
 
-Start your user service, compute your port with `printf '%s\n' "$((10000 + $(id -u)))"`, then run a local `curl -I` against that port. Explain which process is listening and which command is the client.
+Run the local request above and explain which process is listening and which command is the client. Stop the demo with `Ctrl-C` in its server terminal, then repeat curl and compare the connection result. Do not stop an unknown listener.
 
 ## Docs Pointers
 
 - Run `man ss`.
+- Read [ss](../commands/ss.md) to match a listener to its process.
 - Run `man 2 socket`.
-- Read [IP Networking](ip-networking.md), [Service](service.md), [Server](server.md), [Client](client.md), and [Platform Reference](../guides/platform-reference.md).
+- Read [IP Networking](ip-networking.md), [Service](service.md), [Server](server.md), and [Client](client.md).

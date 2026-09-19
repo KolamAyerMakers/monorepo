@@ -9,7 +9,7 @@ Session: S2
 3. Create files with `touch`, use `micro` to write the exact note `edited with micro`, and verify with `cat`.
 4. Practice `>`, `>>`, `cp`, `mv`, `rm -i`, and `rmdir` only in the playground first.
 5. Edit `~/src/pages/index.md`, run `build-website` successfully, then refresh `https://lf2607.kolamayermakers.org/~username/`.
-6. Run `guide now` for your current session objective. After you complete it, `guide now` shows your current quest. Submit prompted answers with `guide answer 'your answer'`. Run `guide check` after practical work.
+6. Explain source versus generated output to another learner using the files you edited and rebuilt.
 
 ## Mental Model
 
@@ -77,7 +77,7 @@ Only for a genuinely new pair, run `ssh-keygen -t ed25519` and choose a passphra
 
 On macOS or Linux, type `ssh-copy-id -i ~/.ssh/id_ed25519.pub` followed by the address from your personal registration command. Replace the example `.pub` path with the actual public-key path you selected. Reconnect using your personal command without entering your account password and run `whoami`.
 
-In PowerShell on Windows, run `Get-Content ~/.ssh/id_ed25519.pub`, substituting your actual `.pub` path. This preview-only command displays the public key and changes nothing. Copy that one public-key line, then use your personal registration command to sign in with your password. On the server, run `mkdir -p ~/.ssh`, then `chmod 700 ~/.ssh` so only you can enter or change that directory. Run `cat >> ~/.ssh/authorized_keys`; paste the line, press Enter and Ctrl-D, then run `chmod 600 ~/.ssh/authorized_keys` so only you can read or change the key list. This appends without replacing existing keys. Exit, reconnect with the same personal command without entering your account password, and run `whoami`. The guide records a successful public-key login automatically.
+In PowerShell on Windows, run `Get-Content ~/.ssh/id_ed25519.pub`, substituting your actual `.pub` path. This preview-only command displays the public key and changes nothing. Copy that one public-key line, then use your personal registration command to sign in with your password. On the server, run `mkdir -p ~/.ssh`, then `chmod 700 ~/.ssh` so only you can enter or change that directory. Run `cat >> ~/.ssh/authorized_keys`; paste the line, press Enter and Ctrl-D, then run `chmod 600 ~/.ssh/authorized_keys` so only you can read or change the key list. This appends without replacing existing keys. Exit, reconnect with the same personal command without entering your account password, and run `whoami`.
 
 If you chose a non-default key filename, insert `-i` followed by its matching private-key path immediately after `ssh` in your personal command so SSH knows which key to use. A key passphrase prompt is different from your server account password prompt.
 

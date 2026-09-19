@@ -1,21 +1,22 @@
 # Linux Foundations 2026-07
 
-Attend the sessions or use the self-study guides, then complete the session objectives and quests in catalog order. The guide records progress only from deterministic checks.
+Follow the session work in class or through the self-study guides. Build, inspect, explain, and improve your own site; use reinforcement quests for extra practice.
 
 ## Start here
 
-The guide is the course bot. Use it throughout class and between sessions for help, objectives, quests, answer submission, and progress checks. The guide awards score and records progress only when a deterministic check passes, such as a required command, file, or answer.
+Start with the current session below. Slides support the live workshop, self-study gives the practical steps, and the recap helps you revisit what you learned. Your evidence is the work itself: real responses, logs, source changes, recovery, and explanations.
 
-Start with the [docs navigation guide](guides/docs-map.md) to learn how to move through these files. Use the [platform reference](guides/platform-reference.md) for hostnames, account paths, public URL shapes, Forgejo conventions, and service ports. Read [scoring and rankings](guides/scoring.md) to see exactly how score, tiers, rankings, and the points ledger work. Use the [password guide](guides/passwords.md) for passphrase rules and the [IRC support guide](guides/irc-support.md) when you need live help.
+Use the [docs navigation guide](guides/docs-map.md) to move through these files and the [platform reference](guides/platform-reference.md) for hostnames, account paths, public URL shapes, Forgejo conventions, and service ports. The [password guide](guides/passwords.md) covers passphrase rules.
 
-The self-guided loop is always the same:
+For self-study:
 
-1. Run `guide now` to find your current task. Always run it before starting a quest.
-2. Read the linked guide page.
-3. Do the work in your shell.
-4. After practical work, run `guide now`. It checks one task and shows the next on success. Use `guide answer 'your answer'` when asked; `guide check` is an optional explicit check.
-5. If work is incomplete, follow the feedback, fix the problem, and try again. Ask for help when stuck.
-6. Read the next task before continuing. Use `guide progress` to see your recorded progress.
+1. Read the session's goals and practical steps.
+2. Do the work in your own shell, preserving existing source.
+3. Compare actual output with your prediction; inspect the result in a browser when relevant.
+4. Diagnose failures, recover safely, and record what you learned.
+5. Explain the result to a peer or use the recap to review it.
+
+The guide bot is optional learner support, not a required workshop checklist. For help and recorded progress, use the dedicated [IRC support guide](guides/irc-support.md) and [scoring and rankings](guides/scoring.md). Recorded checks do not replace inspecting your live work.
 
 Feeling stuck still counts as progress if you can describe what changed. Post the command you ran, the output you got, and what you expected in `#lf2607`.
 
@@ -83,7 +84,7 @@ Saved commands, direct execution, quoted arguments, and a published report.
 
 Explore how web requests work, then write a checker that diagnoses your homepage and report page.
 
-For the current checker task, `guide now` or `guide check` in your classroom shell automatically runs your script locally under your account through simulated cases with varying page arguments, including unknown-page `404` and no-argument usage help. Grading accepts equivalent implementations, not just the lesson's `for`/`if` example. IRC directs you back to the shell. Still run `bash ~/scripts/site-check.sh "" maker-report.html` against the live site and inspect both pages in a browser; a simulated pass does not verify live health. `""` selects home; no arguments must show usage and exit nonzero.
+Use the [diagnostic cases](sessions/S06/self-study.md#diagnostic-cases) to reason about successful responses, missing pages, and transport failures. Run `bash ~/scripts/site-check.sh "" maker-report.html` against the live site and inspect both pages in a browser. `""` selects home; no arguments must show usage and exit nonzero.
 
 - [Slides](sessions/S06/slides.md)
 - [Self-study](sessions/S06/self-study.md)
@@ -92,19 +93,20 @@ For the current checker task, `guide now` or `guide check` in your classroom she
 - [Concept cards](concepts/README.md#s06-control-flow-and-networking)
 - [Instructor runbook](mentors/S06.md)
 
-### S07: Your page on the wire
+### S07: Run Your Own Web Server
 
-Compare generated files with HTTP bodies, send a raw request, link another page, and investigate the separate service route.
+Run a foreground Caddy file server, request it locally and publicly, and watch visitor logs. Reuse `ps` and add `ss` to connect your ownership and PID to the listening port. Construct raw HTTP over loopback, change only the path, and compare response status with the log. Diagnose three safe incidents: an occupied own port, an empty public practice root, and a stopped backend. Restore the real root before comparing local refusal, shared Caddy's `502`, and independent static delivery, then restart. Raw HTTP and the incidents are core; publishing changes, notes, and Git remain optional self-study.
 
 - [Slides](sessions/S07/slides.md)
 - [Self-study](sessions/S07/self-study.md)
 - [Recap](sessions/S07/recap.md)
 - [Reinforcement quests](quests/README.md#s07-reinforcement)
-- [Concept cards](concepts/README.md#s07-web-diagnostics)
+- [Concept cards](concepts/README.md#s07-web-servers-and-diagnostics)
+- [Instructor delivery notes](mentors/S07-S10.md)
 
-### S08: Services
+### S08: Keep Your Server Running
 
-Tmux, a safe service helper, systemd user services, logs, and checks of the local backend and public service URL.
+Let a systemd user service supervise the backend. Read its journal, safely break and repair your own unit, and investigate logout survival. Tmux and helper functions are optional extensions.
 
 - [Slides](sessions/S08/slides.md)
 - [Self-study](sessions/S08/self-study.md)
@@ -112,19 +114,19 @@ Tmux, a safe service helper, systemd user services, logs, and checks of the loca
 - [Reinforcement quests](quests/README.md#s08-reinforcement)
 - [Concept cards](concepts/README.md#s08-services)
 
-### S09: Automation and sharing
+### S09: Automate It. Hand It Over.
 
-Timers, text transforms, vim, README files, the webring, and a committed handoff of working scripts and units.
+Refresh report facts before building, prove an automatic publication, and peer-test an operations README. Preserve two scripts and three units in a recoverable source handoff; no `site.sh` dispatcher is required. Sed, awk, vim, cron, and the webring are optional.
 
 - [Slides](sessions/S09/slides.md)
 - [Self-study](sessions/S09/self-study.md)
 - [Recap](sessions/S09/recap.md)
 - [Reinforcement quests](quests/README.md#s09-reinforcement)
-- [Concept cards](concepts/README.md#s09-polish)
+- [Concept cards](concepts/README.md#s09-automation-and-handoff)
 
-### S10: Boss fight
+### S10: Show What You Can Do
 
-Bandit investigation, a demo of the site and backend, a recoverable source handoff, and your next Linux project.
+Lead a demonstration with evidence you choose, investigate an unfamiliar problem, and choose a concrete next step. Explain your actual work in your own words, not a fixed answer script.
 
 - [Slides](sessions/S10/slides.md)
 - [Self-study](sessions/S10/self-study.md)

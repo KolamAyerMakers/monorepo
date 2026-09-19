@@ -2,190 +2,147 @@
 
 Session: S9
 
-Polish the same project: timers, text, README, webring
+Automate It. Hand It Over.
+
+2026-10-10
 
 <!-- end_slide -->
 
-# Still Running Tomorrow
+# Two Workshops
 
-Useful systems run again tomorrow without you remembering.
+1. Automatically refresh report facts, then build and prove the published change.
+2. Peer-test an operations README and preserve the working source handoff.
 
-Keep your static site, report, checker, `~/bin/site.sh`, and `site.service`. Today you automate rebuilding and make that work portable.
+Keep the same site, two scripts, and user service. No new helper is needed.
 
-<!-- end_slide -->
-
-# Hands-On Spine
-
-Required live work:
-
-1. Create and enable a user build timer, then read a successful build log.
-2. Transform a heading with `sed`.
-3. Extract fields with `awk`.
-4. Save a new note with vim.
-5. Write the README.
-6. Enable the webring from source and rebuild twice.
-7. Prepare the source handoff: copy working scripts and units into the existing repo, commit, and push.
-
-Start with `guide now` for your current session objective. Use the checkpoint routine after each of these seven steps.
-
-Use the [self-study guide](self-study.md) for the complete commands. Cron is optional, not a prerequisite.
+`site.service` runs personal Caddy; shared Caddy still handles public HTTPS. Keep the [S8 unit](../S08/self-study.md#2-create-the-user-unit), including `--root` and `--access-log`, so new publications and request logs remain visible.
 
 <!-- end_slide -->
 
-# Checkpoint Routine
+# Today's Three Hours
 
-After completing a step, start with:
+| Minutes | Work |
+|---|---|
+| 0-15 | Inspect the working project and report safety |
+| 15-75 | Workshop 1: refresh, build, observe automation |
+| 75-85 | Break |
+| 85-160 | Workshop 2: README, peer operation, source handoff |
+| 160-180 | Verify the handoff and rehearse one explanation |
 
-```bash
-guide now
+<!-- end_slide -->
+
+# Workshop 1: Fresh Facts
+
+```text
+timer -> report script -> Markdown -> build -> published HTML
 ```
 
-- It checks one task and shows the next on success.
-- Otherwise, follow the feedback and try again.
+`maker-report.sh "System Report"` collects new facts.
 
-Run `guide now` before starting a quest. Use `guide answer` when asked; `guide check` is an optional explicit check.
+The builder alone does not regenerate the report.
 
 <!-- end_slide -->
 
-# Create The Timer Pair
+# Failure Must Stop The Chain
 
-Hands-on now: create these files with Micro. Inspect any existing contents before changing them.
+A failed report must prevent the build and preserve the last valid report.
 
-```bash
-mkdir -p ~/.config/systemd/user
-micro ~/.config/systemd/user/site-build.service
-micro ~/.config/systemd/user/site-build.timer
+Use the current supplied report generator: it collects into a temporary file and replaces the report only on success. Compare older copies and preserve personal changes before updating; the self-study explains the backup and replacement.
+
+Do not work around it by building a partial report.
+
+<!-- end_slide -->
+
+# One Service, In Order
+
+`~/.config/systemd/user/site-build.service`:
+
+```ini
+[Unit]
+Description=Refresh report and build my site
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/src
+ExecStartPre=/bin/bash %h/scripts/maker-report.sh "System Report"
+ExecStart=/usr/local/bin/npm run build
 ```
 
-Use the complete [timer files](self-study.md#timer-files): the service runs `/usr/local/bin/npm run build` in `%h/src`; the timer uses `OnBootSec=5min` and `OnUnitActiveSec=1h`.
-
-This rebuild renders existing report Markdown. It does not rerun `maker-report.sh` or refresh collected facts. The monotonic schedule does not catch up missed calendar runs after downtime.
+A nonzero pre-start exit prevents `ExecStart`. `build-website` is an interactive alias, not an executable for systemd.
 
 <!-- end_slide -->
 
-# Activate And Prove It
+# Wait For A Real Activation
 
-```bash
-systemctl --user daemon-reload
-systemctl --user enable --now site-build.timer
-systemctl --user start site-build.service
-systemctl --user list-timers
-journalctl --user -u site-build.service --no-pager -n 50
-bash ~/scripts/site-check.sh "" maker-report.html
-```
+Use the [classroom timer and observation sequence](self-study.md#timer-files).
 
-Find the next timer run and the completed build in the real output. An inactive oneshot service after success is normal; a failed build is not.
+- First activation: 30 seconds after starting the timer.
+- Later activations: two minutes after the build service finishes.
+- Watch the journal without manually starting another build.
+- Compare the old and new report date in the published page.
 
-Checkpoint: use the checkpoint routine with `guide now` before sed.
+Timer listings show a schedule, not successful automation.
 
 <!-- end_slide -->
 
-# One Small Regex
+# Leave A Reasonable Schedule
 
-```bash
-printf '# heading\n' | sed 's/^# \(.*\)$/<h1>\1<\/h1>/'
-```
+After witnessing the automatic refresh, change to hourly operation.
 
-Expected: `<h1>heading</h1>`. `s/from/to/` substitutes a match. `^` and `$` anchor the line; `# ` is literal; `.*` matches the remaining text. `\( ... \)` captures it and `\1` puts it in the replacement. `\/` is a literal slash inside the `/`-delimited substitution.
+Stop the timer, let any build finish, replace the short schedule, reload units, then start the timer again. Do not leave both schedules in place.
 
-Try both a heading and an ordinary line:
-
-```bash
-printf '%s\n' '# My report' 'ordinary line' | sed 's/^# \(.*\)$/<h1>\1<\/h1>/'
-```
-
-Only the heading changes. This is a regex exercise, not a replacement for the site's Markdown builder.
-
-Checkpoint: use the checkpoint routine with `guide now` before awk.
+Use [Hourly Schedule](self-study.md#hourly-schedule). Pause the timer before standalone builds or source handoff work; one systemd unit prevents overlap only for work started through that unit.
 
 <!-- end_slide -->
 
-# Extract Fields With Awk
+# Workshop 2: Can A Peer Operate It?
 
-```bash
-awk -F: '{print $1}' /etc/passwd
-```
+Write an operations README: what runs, where it lives, how to refresh, how to inspect, how to recover.
 
-`-F:` splits each line at colons. Awk's `$1` selects the first field; single quotes stop the shell expanding it. These are local account names, not a complete classroom roster.
+The peer reads and directs from the README. The owner reviews and runs commands in their own account.
 
-Change `$1` to `$7` to inspect shell paths, like the fields used in your report.
-
-Checkpoint: use the checkpoint routine with `guide now` before vim.
+No password swapping. No guessing missing commands aloud: write the missing instruction, then retry.
 
 <!-- end_slide -->
 
-# Create A File In Vim
+# Test The Instructions
 
-```bash
-mkdir -p ~/playground
-vim ~/playground/vim-note.txt
-```
+- Find the site's public page and its source.
+- Refresh and build through the oneshot service; inspect logs and changed content.
+- Agree to a brief stop of the owner's web service, then recover it from the README.
+- Confirm the local response and the public service response after recovery.
 
-For a new file, press `i`, type `My timer rebuilds existing site source.`, press Esc, type `:wq`, and press Enter. If the file already exists, keep its notes and add your sentence.
+Swap roles. Record one ambiguity fixed and one observed recovery.
 
-Back at the shell, run `cat ~/playground/vim-note.txt`. Esc then `:q!` and Enter quits without saving; `:w` saves without quitting.
-
-Checkpoint: use the checkpoint routine with `guide now` before the README.
+Use `systemctl --user stop site.service` and `systemctl --user start site.service`. Never use `caddy stop` or `caddy reload`; they can target shared Caddy's admin endpoint.
 
 <!-- end_slide -->
 
-# Write The README
+# Preserve Five Working Files
 
-```bash
-micro ~/src/README.md
-```
+| Active Files | Source Copies |
+|---|---|
+| `~/scripts/maker-report.sh`, `~/scripts/site-check.sh` | `~/src/scripts/` |
+| `site.service`, `site-build.service`, `site-build.timer` under `~/.config/systemd/user/` | `~/src/services/` |
 
-Explain the site, both public URLs, report generation, build, service, logs, and recovery. Save with `Ctrl-S` and quit with `Ctrl-Q`; the source handoff and Git steps follow after the webring.
+Copy, do not move. Include README and site source in the existing repository.
 
-Checkpoint: use the checkpoint routine with `guide now` before the webring.
-
-<!-- end_slide -->
-
-# Enable The Webring
-
-Set `webring = true` in source, not generated HTML:
-
-```bash
-micro ~/src/site.toml
-build-website
-grep -i webring ~/public_html/index.html
-build-website
-grep -i webring ~/public_html/index.html
-```
-
-Open the homepage in your laptop browser after each build; keep one set of navigation links.
-
-Checkpoint: use the checkpoint routine with `guide now` before the source handoff.
+Follow [Prepare a source handoff](../../quests/prepare-source-handoff.md): inspect, stage explicit paths, commit, push, verify the actual files in Forgejo.
 
 <!-- end_slide -->
 
-# Preserve The Working Project
+# Exit Evidence
 
-Follow [Prepare a source handoff](../../quests/prepare-source-handoff.md) now:
+Show an automatic activation in the journal and changed published report facts.
 
-- Copy `maker-report.sh`, `site-check.sh`, and `site.sh` into `~/src/scripts/`.
-- Copy `site.service`, `site-build.service`, and `site-build.timer` into `~/src/services/`.
-- Keep active originals in place. Inspect before replacing an existing copy.
-- Use the S4 Git workflow: inspect, stage only these files and README/source changes, commit, push, then verify them in Forgejo.
+Show the peer-tested README and the pushed two scripts plus three units.
 
-A Git log listing is not a backup of files outside the repo.
-
-Final checkpoint: use the checkpoint routine with `guide now`. Once all seven core steps are complete, it shows your current quest. Remaining quests are optional reinforcement.
+Explain which step collects facts, which builds, and what happens when collection fails.
 
 <!-- end_slide -->
 
-# Exit Goal
+# Help Between Sessions
 
-You created a working timer, ran both text transforms, saved a vim note, and published a documented project with a webring and recoverable scripts and units.
+S10 is **2026-10-24: Show What You Can Do**. Rehearse a five-minute [demo](../../quests/demo-site.md) with evidence you choose and one real recovery story.
 
-<!-- end_slide -->
-
-# Before S10
-
-S10 is on **2026-10-24**: Bandit teamwork, your site demo, and next steps.
-
-Finish any missing core work with the self-study guide. Rehearse the [demo](../../quests/demo-site.md), including the local backend and both public URLs.
-
-Optional: [try cron and remove only your demo job](../../quests/try-cron-and-remove-it.md), or refresh pipelines for Bandit.
-
-Run `guide now` for your current session objective; after you complete it, it shows your current quest. Submit prompted answers with `guide answer 'your answer'`, and use the same checkpoint routine after practice. Optional quest completion is not a graduation prerequisite.
+Use the [self-study instructions](self-study.md) for recovery. Between sessions, ask the instructor or the guide for help with the command, error, and your next test. Never share secrets.

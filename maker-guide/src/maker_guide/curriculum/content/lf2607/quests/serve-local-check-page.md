@@ -1,46 +1,65 @@
-# Serve a local check page
+# Serve A Local Check Page
 
 Quest: serve-local-check-page
 
 ## Mission
 
-Temporarily stop `site.service`, serve the site inside tmux, fetch it with `curl`, then restore the service.
+Run your own foreground backend and fetch its page locally with curl. Then try the public service hostname and watch for visitors. Two SSH connections are enough; no tmux or helper script is required.
 
-## Commands You Will Use
+## Start In One SSH Shell
 
-- `systemctl --user`
-- `tmux`
-- `python3 -m http.server --bind 127.0.0.1`
-- `curl`
+Use your own classroom account and existing published site in `~/public_html`. If the site needs publishing, run `build-website` and resolve any error first. Do not create another source tree.
 
-## Steps
+If your own `site.service` is already running, inspect it and agree to a short interruption before using `systemctl --user stop site.service`. Record that you need to restore it. If an unknown process occupies the port, ask staff rather than killing it.
 
-1. Stop the managed server with `systemctl --user stop site.service`.
-2. Run `tmux new -s local-server`.
-3. Inside tmux, set `PORT="$((10000 + $(id -u)))"`.
-4. Start `python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$HOME/public_html"`.
-5. Detach with `Ctrl-b d`, then run `tmux ls` in your original shell.
-6. Recompute `PORT="$((10000 + $(id -u)))"` and fetch the site with `curl -I "http://127.0.0.1:$PORT/"`.
-7. Run `tmux attach -t local-server`, then stop the server with `Ctrl-C`.
-8. Detach with `Ctrl-b d`, then run `tmux kill-session -t local-server`.
-9. Restore the managed server with `systemctl --user start site.service`.
-10. Ask the guide to check your command history.
+```bash
+PORT="$((10000 + $(id -u)))"
+printf '%s\n' "$PORT"
+```
 
-## Hints
+This course assigns port `10000 + uid`. If the number exceeds `65535`, stop and ask staff. Otherwise:
 
-1. The socket binds to `127.0.0.1`, but the course proxy can expose it publicly. Use `--directory "$HOME/public_html"` so Python never falls back to serving your current directory.
-2. The temporary server and `site.service` cannot own the same port together.
-3. The guide checks the stop, tmux lifecycle, server, curl, and service restart in order.
+```bash
+caddy file-server --listen ":$PORT" --root "$HOME/public_html" --access-log
+```
 
-## If Check Fails
+Keep this terminal visible. Your personal Caddy listens for plain HTTP on all interfaces; the classroom firewall blocks new direct external connections to its port. Shared Caddy handles public HTTPS and proxies to `127.0.0.1` at that port. Same software, two processes. Do not add `--domain`. No configuration file is needed, and `file-server` disables the admin API. The explicit root prevents accidental serving of your shell's current directory. Caddy follows symlinks, so `--root` is not a filesystem sandbox: keep credentials and links to private files out of the published tree, which remains public through the shared proxy.
 
-Finish the cleanup and restart `site.service` before asking again.
+## Request In Another SSH Shell
+
+```bash
+PORT="$((10000 + $(id -u)))"
+curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+```
+
+Read the status and page body. Now open your [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in your laptop browser, replacing `your-handle`, and ask a peer to visit. Ask them to request an agreed missing path too. `--access-log` records structured fields: match `request.uri`, `request.method`, `status`, and time (`ts` in JSON) to the first terminal's log. Formatting can differ between terminal and journal output. `request.remote_ip` may show the shared proxy's `127.0.0.1` address rather than the visitor's address.
+
+If public access fails, keep the actual error and compare it with the successful local request. DNS and TLS failures have no HTTP status; do not invent a public response or visitor log.
+
+## Leave It Working
+
+After any optional extension below, press `Ctrl-C` in your server terminal when finished. If you stopped an existing user service for this experiment, restore it with `systemctl --user start site.service` only after the manual server stops, then repeat local and browser requests. Otherwise the manual process can end; your static site remains available.
+
+Do not use `caddy stop` or `caddy reload`: these admin-API commands might target the shared Caddy instead of your file server. Do not edit shared configuration.
+
+Success means local curl received your recognizable page from your own running backend and you can identify the matching request log. Public and peer attempts provide additional observations; publishing, notes, and Git are not required for this practical result.
+
+## Optional Publishing Extension
+
+For extra practice while Caddy runs, edit an existing page source, run `build-website`, and reload after success without restarting Caddy. The explicit root path lets new requests find the newly replaced `public_html` tree.
+
+If you want published operating notes, follow [Create a setup page](create-setup-page.md) first when `~/src/pages/setup.md` is absent. Preserve existing files and links, add useful observations, then build. You can [preserve intended source changes in Git](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or raw private logs.
+
+## If It Does Not Work
+
+- `Address already in use`: find your own previous manual server or unit. Do not change the assigned port or kill another learner's process.
+- Local refusal: confirm the server is running and both SSH shells use the same account, machine, and computed port.
+- HTTP `404`: inspect the published path and build result. With browsing disabled, a missing `index.html` makes `/` return `404` even if the process is healthy; never remove `--root` or enable browsing to hide missing output.
+- Local access works but public access fails: bring the actual public error and local result to staff. Do not use `sudo`, change shared routing, or bypass TLS.
 
 ## Related Reading
 
-- [python3 http.server](../commands/python3-http-server.md)
-- [curl](../commands/curl.md)
-- [systemctl](../commands/systemctl.md)
-- [tmux](../commands/tmux.md)
-- [manual web service](../concepts/manual-web-service.md)
-- [sockets](../concepts/sockets.md)
+- [S7 practical route](../sessions/S07/self-study.md)
+- [Caddy file-server](../commands/caddy.md)
+- [Curl](../commands/curl.md)
+- [Reverse proxy](../concepts/reverse-proxy.md)

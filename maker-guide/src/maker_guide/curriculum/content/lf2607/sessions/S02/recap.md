@@ -52,7 +52,7 @@ Use `>` when you mean "replace this file".
 
 Use `>>` when you mean "add to the end of this file".
 
-If you accidentally use `>` twice, the first content is gone. That is not a bot bug. That is what you asked the shell to do.
+If you accidentally use `>` twice, the first content is gone. That is what you asked the shell to do.
 
 ## SSH Keys
 
@@ -72,12 +72,11 @@ If you attended live and personalized your homepage, you have the core milestone
 - You can copy, rename, move, and remove playground files deliberately.
 - You can explain source under `~/src/pages/` versus generated output under `~/public_html/`.
 - You can reconnect with your key without entering the account password, run `whoami`, and know why the private key stays private.
-- The guide records your successful public-key login automatically.
 
 ## Optional Reinforcement
 
-Use the S2 quests for file-operation repetition and guide-checked proof. Run `guide now` for your current session objective. After you complete it, `guide now` shows your current quest. Submit prompted answers with `guide answer 'your answer'`. Run `guide check` after practical work. A passing check records your progress. If stuck, read the quest guide and ask in public help so the answer teaches more than one person.
+Repeat the S2 file exercises and inspect the results after each operation. If stuck, read the self-study guide and ask in public help so the answer teaches more than one person.
 
 ## Full Autonomy
 
-Use [S2 Self-Study Guide: Files, Editing, Identity](self-study.md) for editor keys, SSH key safety, source/output recovery, and exact proof checks.
+Use [S2 Self-Study Guide: Files, Editing, Identity](self-study.md) for editor keys, SSH key safety, source/output recovery, and expected file contents.

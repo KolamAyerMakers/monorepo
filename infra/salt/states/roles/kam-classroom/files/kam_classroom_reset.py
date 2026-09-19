@@ -210,17 +210,21 @@ def _post_reset_commands() -> tuple[tuple[str, ...], ...]:
 
 
 def _all_reset_commands(usernames: tuple[str, ...]) -> tuple[tuple[str, ...], ...]:
-    return tuple(
-        ("/usr/bin/loginctl", "terminate-user", username) for username in usernames
-    ) + tuple(
-        ("/usr/bin/systemctl", "stop", service_name)
-        for service_name in (
-            "maker-guide-sync-derived-data.timer",
-            "maker-guide-bot.service",
-            "forgejo.service",
-            "ergo.service",
-            "authelia.service",
-            "lldap.service",
+    return (
+        (("/usr/local/sbin/kam-classroom-lingering", "--disable"),)
+        + tuple(
+            ("/usr/bin/loginctl", "terminate-user", username) for username in usernames
+        )
+        + tuple(
+            ("/usr/bin/systemctl", "stop", service_name)
+            for service_name in (
+                "maker-guide-sync-derived-data.timer",
+                "maker-guide-bot.service",
+                "forgejo.service",
+                "ergo.service",
+                "authelia.service",
+                "lldap.service",
+            )
         )
     )
 

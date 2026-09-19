@@ -4,81 +4,46 @@ Quest: demo-site
 
 ## Mission
 
-Show your existing site and report, source repo, real backend service, and README to another person. These are the normal graduation core, not optional extras.
+Give a five-minute demonstration of something you choose from your project. Support the claim with real evidence and explain one real failure and recovery. This is not a mandatory tour of every artifact.
 
-## Commands You Will Use
+## Choose The Claim
 
-- `curl`
-- `git log`
-- `systemctl --user`
+You might show an automatically refreshed report, a reachable page and its service route, your checker's diagnosis and repair, or a source handoff that a peer could operate. Choose evidence that fits, rather than running every command you know.
 
-## Return To The Classroom
+Prepare in your own classroom account. If you chose an optional Bandit investigation, exit it back to your laptop, then switch to classroom SSH and confirm the account and hostname before project commands. Do not exchange passwords with a peer.
 
-If you are in Bandit, run `exit` to close that connection and use `whoami` and `hostname` to confirm where you are. Exit any remaining nested Bandit connection. If you return to your laptop instead of the classroom, reconnect with `ssh your-classroom-username@lf2607.kolamayermakers.org`, replacing `your-classroom-username` with your classroom account. Do not use the laptop's `$USER` as if it were your classroom username.
+## Five-Minute Shape
 
-The commands below run in the classroom, where your project, scripts, and user services live. Use your laptop browser for the outside view.
+| Time | Show |
+|---|---|
+| 0:00-0:30 | What you chose and why it matters |
+| 0:30-3:00 | The result and evidence supporting your claim |
+| 3:00-4:30 | A real failure, diagnosis, repair, and recovery evidence |
+| 4:30-5:00 | What you learned and one question |
 
-## Check The Existing Project
+Rehearse once before the protected demo block. Open the pages or logs you will need, and keep credentials out of view. Do not create a risky live failure just to make the presentation dramatic.
 
-```bash
-bash ~/scripts/site-check.sh "" maker-report.html
-PORT="$(~/bin/site.sh site_port)"
-printf 'Service port: %s\n' "$PORT"
-curl -I "https://lf2607.kolamayermakers.org/~$USER/"
-curl -I "http://127.0.0.1:$PORT/"
-curl -I "https://$USER.lf2607.kolamayermakers.org/"
-systemctl --user status site.service --no-pager
-```
+## Evidence You Can Use
 
-The checker covers the static homepage and report. The helper prints the S8 port, `10000 + uid`. Read the actual HTTP responses; neither a successful static request nor an active service proves that the public backend route works.
+- Automation: a journal activation after the timer started, without a manual build, plus changed facts in the public report. The pre-start script refreshes facts before npm builds; npm alone does not regenerate the report.
+- Serving: a successful local and public request with the expected page body, supported by request logs and an outside browser view. An active unit alone does not prove this.
+- Handoff: the README, site source, two scripts, and three units visible in Forgejo, plus the peer's successful operation and an instruction you improved. A local commit listing alone is insufficient.
+- Recovery: the actual symptom, observation that narrowed the cause, repair, and response or content proving recovery. Do not replace observed errors with expected successes.
 
-## Prove The Report Body
+Use the [S10 fallback demo commands](../sessions/S10/self-study.md#demo-script) only when useful for preparation or diagnosis. They include computing the port directly, pausing automation and waiting for a build before body comparisons, checking routes, and restoring the hourly timer. For live automation proof, use [S9's observation procedure](../sessions/S09/self-study.md#witness-automatic-publication) instead of manually starting a service and calling it automatic.
 
-Use fresh scratch files so you do not overwrite existing work:
+## If Something Fails
 
-```bash
-demo_directory="$(mktemp -d /tmp/site-demo.XXXXXX)"
-curl -fsS "https://lf2607.kolamayermakers.org/~$USER/maker-report.html" -o "$demo_directory/static-report.html"
-curl -fsS "http://127.0.0.1:$PORT/maker-report.html" -o "$demo_directory/local-report.html"
-curl -fsS "https://$USER.lf2607.kolamayermakers.org/maker-report.html" -o "$demo_directory/service-report.html"
-diff ~/public_html/maker-report.html "$demo_directory/static-report.html"
-diff ~/public_html/maker-report.html "$demo_directory/local-report.html"
-diff ~/public_html/maker-report.html "$demo_directory/service-report.html"
-journalctl --user -u site.service --no-pager -n 20
-```
+Show the failure honestly. A static `404` suggests inspecting source/build/output; a personal URL `502` calls for comparing local reachability, the port, and the service journal. If local service works but public routing fails, collect the evidence for staff rather than changing shared DNS or proxy settings.
 
-`-f` makes HTTP errors fail, `-sS` hides progress but shows errors, and `-o` saves the response body. Stop and diagnose failed requests. Successful fetches and no `diff` output show the report matches disk through all three routes. Point to the actual report requests in the service journal.
+If you have no recovered example yet, agree on a safe preparation exercise such as the [owner-operated README test](write-readme.md#peer-operation-test), not an improvised break during your five minutes. If the issue remains unresolved or sessions were missed, agree on a reduced scope, name the missing evidence, and date the recovery action. Recorded evidence can be used when access is unavailable if you state its date and limitations.
 
-## Show Source And The Outside View
+## After The Demo
 
-```bash
-git -C ~/src remote -v
-git -C ~/src log --oneline -5
-git -C ~/src status
-cat ~/src/README.md
-ls -l ~/src/scripts ~/src/services
-systemctl --user list-timers
-journalctl --user -u site-build.service --no-pager -n 20
-```
-
-1. Open both public URLs and their report page in your laptop browser. Type your real classroom username in place of `$USER`; a browser does not expand shell variables.
-2. Open your Forgejo repo and show the latest commit, README, site/report source, and all six [handoff copies](prepare-source-handoff.md#copy-working-files).
-3. Explain how `maker-report.sh` collects facts, while the builder and timer only render existing Markdown. Explain one failure and recovery from your own work.
-4. Answer the guide with the site feature you showed, actual HTTP/body/log results, and feedback you received. Do not present expected output as observed evidence.
-
-## Hints
-
-1. A demo is proof, not a speech.
-2. Show the running backend, the source that creates its pages, and the units that run it.
-3. If you missed S8 or S9, agree with the instructor on an explicitly reduced demo, name the missing artifacts, and date the recovery work.
-
-## If Check Fails
-
-Inspect actual failures before answering again. Static `404` means check the source/build/output path. A personal URL `502` means compare the local port request, service status, and journal. If local requests work but public DNS does not, collect the [platform-reference evidence](../guides/platform-reference.md) and ask the instructor. A failed public request is not a completed end-to-end demo.
+Keep one useful question or observation from the audience. Follow [Write the next path](write-next-path.md) to choose a next action and date; a private note or calendar is sufficient when publishing is not meaningful.
 
 ## Related Reading
 
-- [multi-page sites](../concepts/multi-page-sites.md)
-- [Forgejo publishing](../concepts/forgejo-publishing.md)
 - [README writing](../concepts/readme-writing.md)
-- [systemd user services](../concepts/systemd-user-services.md)
+- [Source handoff](prepare-source-handoff.md)
+- [S10 self-study](../sessions/S10/self-study.md)

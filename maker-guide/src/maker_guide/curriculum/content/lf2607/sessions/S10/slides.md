@@ -2,136 +2,129 @@
 
 Session: S10
 
-Boss fight, demos, graduation
+Show What You Can Do
+
+2026-10-24
 
 <!-- end_slide -->
 
-# The Real Point
+# Your Work, Your Evidence
 
-The point was never the checklist.
+Choose something you can now make, operate, investigate, or recover.
 
-The point was becoming the kind of person who can keep going. Show the same site, report, checker, helper, service, and source handoff you have built throughout the course.
-
-<!-- end_slide -->
-
-# Know Which Machine
-
-- Laptop: separate terminal tabs for classroom SSH and direct Bandit SSH, plus the outside browser.
-- Classroom: keep this SSH tab open for your site, `~/src`, scripts, user services, notes, and `guide`.
-- Bandit: connect directly from a new laptop terminal tab for puzzle accounts and files, not your classroom project.
-
-Use `whoami`, `hostname`, and `pwd` when unsure. `$USER` and `~` refer to the current machine's account, not always your classroom account.
+Show evidence from your own work and explain one real recovery. This is not a command-memory test.
 
 <!-- end_slide -->
 
-# Notes Before Connecting
+# Protect The Demos
 
-In your existing classroom SSH terminal, create the note file before starting Bandit:
+| Minutes | Work |
+|---|---|
+| 0-10 | Choose an investigation and demo focus |
+| 10-30 | Bounded unfamiliar investigation |
+| 30-45 | Share method and evidence |
+| 45-55 | Break |
+| 55-75 | Prepare and rehearse |
+| 75-150 | Twelve five-minute demos, plus 15 minutes for transitions |
+| 150-170 | Choose one dated next action |
+| 170-180 | Close and celebrate the work |
 
-```bash
-mkdir -p ~/playground
-micro ~/playground/bandit-notes.md
-```
-
-Record the level, goal, command tried, actual result, and next test. Save with `Ctrl-S` and quit with `Ctrl-Q`. Never put passwords in notes you will publish or share.
-
-Keep the classroom connection open. In a **new laptop terminal window or tab**, run this from your laptop's local shell, not from the classroom:
-
-```bash
-ssh bandit0@bandit.labs.overthewire.org -p 2220
-```
-
-Read the login instructions and each goal on [OverTheWire Bandit](https://overthewire.org/wargames/bandit/).
+The 75-minute demo block stays protected. Stop investigating when its time is up.
 
 <!-- end_slide -->
 
-# Boss Fight
+# Twenty Minutes, One Question
 
-Teams work through a level: one person drives, another reads the goal and records the method, then swap.
+Choose one unfamiliar but bounded investigation:
 
-Hands-on now: work in teams, keep notes, and ask publicly when blocked.
+- Inspect a file provided by the instructor without executing it.
+- Explain an unfamiliar option or log line using documentation and a safe test.
+- Try a Bandit puzzle with a partner, if you want that challenge.
 
-Use the tools. Read the errors. Ask publicly about the command and error, not the password or answer.
-
-Switch to the classroom SSH tab to update notes, then back to the Bandit tab to continue. `guide` runs in the classroom, not on Bandit.
-
-Inspect with `ls -la` and `file`, then choose a tool for the actual file. For writable scratch space on Bandit, use `mktemp -d /tmp/bandit-work.XXXXXX`; do not assume its home directory is writable. Follow the [file workflow](self-study.md#unknown-file-workflow), not a list of guessed decoders.
+No required Bandit level, rank, or number of solves.
 
 <!-- end_slide -->
 
-# Return To The Classroom
+# Investigate, Do Not Guess
 
-In the Bandit tab, run `exit` to return to your laptop shell. Exit any nested Bandit connections too. This does not take you into the classroom.
+Name the question. Inspect what is actually there. Read the error or documentation. Try one safe test.
 
-Switch to the classroom SSH tab you kept open. Only if it disconnected, reconnect from your laptop using your classroom username, not your laptop's `$USER`:
+Record the command or source, observed result, and next test. An honest unresolved question is a valid outcome.
 
-```bash
-ssh your-classroom-username@lf2607.kolamayermakers.org
-```
-
-Replace `your-classroom-username` before running it. In the classroom tab, confirm your account and machine with `whoami` and `hostname`, then update `~/playground/bandit-notes.md` before the site demo.
+Do not execute unfamiliar files, publish credentials, or let a puzzle consume demo time.
 
 <!-- end_slide -->
 
-# Site Tour
+# Return To Your Own Work
 
-Required demo: site, source repo, running service, README, and one recovery story.
+If you chose Bandit, exit back to the laptop and switch to your classroom SSH tab. Confirm the account and machine before touching project files.
 
-In the classroom shell, reuse your checker and helper:
-
-```bash
-bash ~/scripts/site-check.sh "" maker-report.html
-PORT="$(~/bin/site.sh site_port)"
-curl -I "https://lf2607.kolamayermakers.org/~$USER/"
-curl -I "http://127.0.0.1:$PORT/"
-curl -I "https://$USER.lf2607.kolamayermakers.org/"
-systemctl --user status site.service --no-pager
-journalctl --user -u site.service --no-pager -n 20
-```
-
-Read the real outputs. Service status alone does not prove a working backend.
+Keep detailed commands in [self-study](self-study.md), not in your five-minute presentation.
 
 <!-- end_slide -->
 
-# Prove The Whole Path
+# Build A Five-Minute Demo
 
-Follow the [demo script](self-study.md#demo-script): fetch the report from the static URL, localhost service port, and public service URL, then compare each body with `~/public_html/maker-report.html`.
+| Time | Show |
+|---|---|
+| 0:00-0:30 | What you chose and why it matters |
+| 0:30-3:00 | Your working result and evidence for the claim |
+| 3:00-4:30 | A real failure, diagnosis, repair, and recovery evidence |
+| 4:30-5:00 | What you learned and one audience question |
 
-In your laptop browser, open both public URLs and the report page. Show the Forgejo README, newest commit, three scripts, and three units. Explain which command collects report facts and which only rebuilds HTML.
-
-Use actual results and one real recovery story. If a request fails, show the error and diagnose it instead of claiming success.
-
-<!-- end_slide -->
-
-# Publish Your Next Step
-
-Create `~/src/pages/next.md` using the [next-path template](self-study.md#next-path-template). Keep a real Markdown heading containing Linux and an explicit `Next action:` line with an action and date.
-
-Link `next.html` from the homepage, rebuild, then inspect and stage only the intended page changes, commit, and push. Verify the page and commit from your laptop.
+Choose the evidence, not a mandatory tour of every artifact.
 
 <!-- end_slide -->
 
-# Exit Goal
+# Evidence You Could Choose
 
-Graduate with a live site and report, a reachable source repo containing the working scripts and units, a service that actually answers requests, a useful README, and a published Linux next step.
+- A changed report date and timer-triggered journal entry.
+- A page body reaching you through the local and public service routes.
+- A peer-tested README and the source files needed to restore the site.
+- A script's diagnosis of a real failure, followed by a verified repair.
 
-Missed-session accommodation: agree with the instructor on what is missing and when to recover it. A reduced demo must say so explicitly.
-<!-- end_slide -->
-
-# Keep Going
-
-Carry out the dated `Next action:` on your page. Keep the repo and working copies in sync after future edits, and verify pushes in Forgejo.
-
-Optional: more Bandit levels, a homelab, or teaching a command to someone else. No next class is required to take the first step.
+Show actual output. A green status or timer listing alone does not establish every claim.
 
 <!-- end_slide -->
 
-# Final Proof
+# Explain Real Recovery
 
-The proof is not that you remember every command.
+What failed? What observation narrowed the cause? What did you change? What proved it worked again?
 
-The proof is that you can read, test, recover, and explain.
+Use your real history. Do not invent a recovery or break a working service just for the stage.
 
-S10 has no new scored session objective. Use the guide for remaining reinforcement in the classroom: `guide now` shows your current session objective first if one remains; after you complete it, it shows your current quest.
+If something is still broken, show the evidence and name the next safe test. Agree on a dated recovery plan for unfinished work.
 
-Use `guide answer 'your answer'` for prompted answers and `guide check` after practice. Optional quest completion is not a graduation prerequisite.
+<!-- end_slide -->
+
+# While Someone Else Demos
+
+Give the presenter their full five minutes. Keep transitions short.
+
+Notice one convincing piece of evidence and ask one useful question. Keep feedback about the work, not rankings.
+
+<!-- end_slide -->
+
+# One Next Move
+
+Choose an action you intend to take and a date.
+
+For example: "On 2026-10-31, I will use my README to check the site after a rebuild and record what changed."
+
+Keep it in a calendar, private note, README, or a page if publishing serves a real purpose. No required heading or exact label.
+
+<!-- end_slide -->
+
+# Leave With Evidence
+
+You investigated an unfamiliar question, demonstrated something you chose, explained real recovery, and chose a dated next action.
+
+Preserve useful source and notes. Say what remains unfinished and how you will continue.
+
+<!-- end_slide -->
+
+# Help Afterwards
+
+Use [self-study](self-study.md) for fallback commands and recovery references. Ask the instructor or the guide for help afterwards while course access remains available.
+
+Bring the command, actual error, and next test, never passwords or tokens. Keep learning with documentation, small experiments, and other people.

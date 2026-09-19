@@ -25,24 +25,49 @@ This is a TCP diagnostic, not an HTTP request. A refused connection has no HTTP 
 
 ## Plaintext HTTP
 
-Start the local demo from the [Python HTTP server card](python3-http-server.md). With that server still running on port `8000`, send a complete request from another shell on the same machine:
+These examples use Debian's OpenBSD netcat (`netcat-openbsd`). Check `nc -h` for `-C` and `-N` support first. Start the local demo from the [Caddy file-server card](caddy.md), then connect from another shell on the same machine:
 
 ```bash
-printf 'GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: close\r\n\r\n' | nc -w 3 127.0.0.1 8000
+nc -C -N 127.0.0.1 8000
 ```
 
-The request line selects method `GET`, path `/`, and version `HTTP/1.1`. `Host` identifies the hostname and port. `printf` emits carriage return plus line feed (CRLF) for each `\r\n`; the final pair creates the blank line that ends the headers. This request has no body.
+Type these lines, replacing `8000` if you chose another demo port:
 
-`Connection: close` asks the server to close after responding. Read the actual status and headers: a redirect is not the requested page, and `nc` will not follow its `Location`.
+```http
+GET / HTTP/1.1
+Host: localhost:8000
+
+```
+
+Press Enter on a blank line after `Host` to finish the headers. Then press `Ctrl-D` with no pending input to signal EOF. `-C` converts terminal newlines to CRLF; `-N` shuts down the sending side at EOF but continues receiving the reply. The blank line completes the HTTP headers; EOF is not a substitute for it and is not a byte sent as part of HTTP. `Ctrl-C` cancels if you need to start again.
+
+## Automate The Request
+
+After sending it interactively, the same request can come from a script:
+
+```bash
+printf '%s\r\n' \
+  'GET / HTTP/1.1' \
+  'Host: localhost:8000' \
+  '' |
+  timeout 5s nc -N -w 3 127.0.0.1 8000
+```
+
+The request line selects method `GET`, path `/`, and version `HTTP/1.1`. `Host` identifies the hostname and port. `printf` formats each argument with `%s\r\n`, appending carriage return plus line feed (CRLF). The final empty argument produces the blank line ending the headers. This request has no body. Each `\` continues the shell command and must be the last character on its line.
+
+The pipe supplies EOF when `printf` finishes, replacing the interactive `Ctrl-D`. No `-C` is needed here because `printf` already produces CRLF. `Connection: close` is another way to ask the server to close after replying, but is not required in this example. Read the actual status and headers: a redirect is not the requested page, and `nc` will not follow its `Location`.
+
+Change only the path from `/` to `/missing.html`, choosing another name if that file exists. Predict the status, send the request again, and compare it with Caddy's access log and `curl -i http://127.0.0.1:8000/missing.html`. Netcat transmits your message; curl constructs the HTTP request for you.
 
 ## Watch Out
 
 - A missing blank terminator can leave the server waiting for more headers.
-- `-w` is a connection/idle timeout, not a strict total runtime while data keeps arriving. Use `Ctrl-C` to cancel.
+- `-w` is a connection/idle timeout, not a strict total runtime while data keeps arriving. The outer `timeout 5s` bounds the whole netcat run; use `Ctrl-C` to cancel earlier.
 - Plain `nc` to port `443` cannot speak HTTPS. Use [curl](curl.md) for TLS; do not bypass certificate verification.
 - Netcat variants have different flags. Read your local `man nc`; do not assume listener examples for another variant apply.
 
 ## Docs Pointers
 
+- Read the [Debian OpenBSD netcat manual](https://manpages.debian.org/bookworm/netcat-openbsd/nc.1.en.html) for `-C` and `-N` behavior.
 - Run `man nc` and `help printf`.
 - Read [Sockets](../concepts/sockets.md) and [HTTP Basics](../concepts/http-basics.md).

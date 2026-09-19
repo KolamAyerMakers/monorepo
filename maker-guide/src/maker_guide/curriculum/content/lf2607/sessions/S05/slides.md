@@ -485,25 +485,6 @@ Rerun the script for fresh Markdown. Rerun `build-website` for fresh HTML.
 
 <!-- end_slide -->
 
-# You Built A Real Generator
-
-```text
-three familiar commands
-  -> one saved script
-  -> one executable ./ command
-  -> one quoted title
-  -> one generated Markdown file
-  -> one published web page
-```
-
-Three sequential extensions are available after the live objectives:
-
-1. Add uptime to the report.
-2. Run the script from another directory.
-3. Preserve the script in Git.
-
-<!-- end_slide -->
-
 # Next Session: Decisions And Networks
 
 S6: 2026-09-12
@@ -562,3 +543,24 @@ In this straight-line example, `-e` exits after the standalone `ls` returns nonz
 It is not a universal "stop on every error" rule. Tests, `&&`, `||`, `!`, and pipelines have exceptions.
 
 These options expose failures; they do not replace explicit validation or error handling.
+
+<!-- end_slide -->
+
+# You Built A Real Generator
+
+```text
+three familiar commands
+  -> one saved script
+  -> one executable ./ command
+  -> one quoted title
+  -> one generated Markdown file
+  -> one published web page
+```
+
+For extra practice:
+
+1. Add uptime to the report.
+2. Run the script from another directory.
+3. Preserve the script in Git.
+
+For extra help, run `guide` in the classroom terminal.

@@ -19,14 +19,9 @@ Open your classroom SSH session:
 ```bash
 whoami
 hostname
-guide now
 ```
 
 In the URLs below, `$USER` expands to your classroom username.
-
-Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. Use `guide answer 'your own observation'` when asked. `guide check` is an optional explicit check. Reading an answer does not record progress.
-
-For the checker task, `guide now` and `guide check` automatically run your script locally under your account through [simulated cases](#guide-checks). This does not replace running it against your live site and checking both pages in your browser.
 
 ## Provided Report Script
 
@@ -270,7 +265,7 @@ Do not add `-f`: it would turn `404` into a command failure before our explicit 
 
 ## Complete Script
 
-This is one implementation, not a required copy. The lesson uses `for` and `if` to teach repetition and decisions. Grading checks behavior, not variable names or exact `if` nesting; equivalent functions, `case` statements, page order, and curl flag order can differ.
+This is one implementation, not a required copy. The lesson uses `for` and `if` to teach repetition and decisions. Focus on the behavior: request each supplied page, distinguish HTTP results from curl failures, and print useful advice.
 
 ````bash
 #!/bin/bash
@@ -347,13 +342,11 @@ fi
 
 `.invalid` is reserved for names that should not resolve. A configured proxy may instead return a response; explain what you actually see. Do not disable TLS checks, alter DNS, or open firewall rules yourself.
 
-## Guide Checks
+## Diagnostic Cases
 
-When the checker is your current objective or assigned quest, run `guide now` or `guide check` in your classroom shell. It automatically runs your script with selected page arguments through simulated cases under your own account, including a separate no-argument usage check. Use your own script and do not use sudo. If asking through IRC, return to the classroom shell for this step.
+Use this table to reason through your script with another learner. Predict the output without changing your site to cause failures. Run your script as your own account, without sudo, and keep repairs as printed advice rather than automatic file changes.
 
-Call `curl` through `PATH`, not an absolute path such as `/usr/bin/curl`, so the checks can supply simulated responses. The test runner is not a sandbox: your script retains your normal file permissions. Keep repairs as printed advice, not automatic file changes.
-
-| Simulated case | What your checker must do |
+| Case | Expected checker behavior |
 |---|---|
 | Both pages return `200` | Identify each page and its HTTP `200` success. |
 | Report alone returns `404` | Diagnose the missing report; suggest `maker-report.sh`, then `build-website`. |
@@ -365,13 +358,11 @@ Call `curl` through `PATH`, not an absolute path such as `/usr/bin/curl`, so the
 | An arbitrary missing page alone returns `404` | Identify that page and HTTP `404`; do not suggest report regeneration. |
 | No page arguments | Print concise usage help and exit nonzero without requesting a page. The reference uses exit `2`. |
 
-The suite varies the selected arguments and their order; check only the supplied pages. `""` is an explicit homepage argument, not the same as no arguments. Controlled fixtures exercise connection failures safely; a real missing page tests HTTP `404`, not a connection failure.
+Check only the supplied pages, in the supplied order. `""` is an explicit homepage argument, not the same as no arguments. A real missing page tests HTTP `404`, not a connection failure.
 
-Identify each page by its URL or a `homepage`/`home page`/`report` label on its diagnosis line or a heading above it; identify other pages by their path or URL. Print the actual HTTP code with a clear diagnosis such as `OK`, `MISSING`, `CHECK`, or `ERROR`. For transport failures, use clear failure wording such as `CONNECTION FAILED`, DNS, TLS, or timeout, and do not also call the request successful. Advice can follow on separate lines; report repair advice must name both commands. Exact sentences are not required.
+Identify each page by its URL, path, or a homepage/report label. Print the actual HTTP code with a clear diagnosis. For transport failures, use clear failure wording and do not also call the request successful. Report repair advice should explain both generation and rebuilding.
 
-The guide distinguishes simulated tests from your live website, acknowledges the two-page success test when it passes, and shows one failing case to work on next. Fix that behavior and run `guide now` again. If the script changes during checking, run the check again. If the local checker is unavailable or your CLI is too old, ask a mentor; it cannot fall back to accepting the source layout.
-
-Passing these simulations does not verify your live website. Still run `bash ~/scripts/site-check.sh "" maker-report.html` against the real pages and open both in your laptop browser. The checker should print repair advice, not regenerate or publish files automatically.
+Predictions do not verify your live website. Run `bash ~/scripts/site-check.sh "" maker-report.html` against the real pages and open both in your laptop browser. Repair only observed problems, then rerun.
 
 ## Repair A Missing Report
 
@@ -401,8 +392,6 @@ Generation writes Markdown; rebuilding publishes HTML. Verify `200`, then open t
 | `403`, `500`, or `502` | Preserve the response and URL | Ask the instructor; do not change shared-service permissions or configuration. |
 | `syntax error` | Run `bash -n` | Check both `if`/`fi` pairs, `do`/`done`, quotes, and bracket spaces. |
 | Both iterations show the same URL | Inspect the loop body | Use `url="$base_url/$page"`, not a fixed homepage URL. |
-| Guide passes simulations but a live page fails | Run the script against the live site and read both results | Simulations do not verify live health or public reachability. Repair and retest manually, including the browser. |
-| Guide reports a failed simulated case | Read the named case and fixed advice | Check page labels, HTTP codes, failure handling, and report-only repair advice; you do not need to copy the reference. |
 
 ## Proof Checklist
 
@@ -412,11 +401,10 @@ Generation writes Markdown; rebuilding publishes HTML. Verify `200`, then open t
 - Explain how `"$@"` extends the early `$1` exercise and how `for` and `if` repeat checks and choose diagnoses. Your implementation accepts arbitrary page arguments, distinguishes no arguments from `""`, and handles curl failure separately from HTTP status.
 - Predict the diagnostics for missing-report, other HTTP statuses, and curl failures without changing the checker.
 - Both real paths return `200` from the server and open correctly in your laptop browser.
-- Run `guide now` or `guide check` in the classroom shell to pass the simulated cases. This is separate from the live HTTP and browser checks.
 
 ## Next Session
 
-You have already inspected HTTP statuses, headers, and bodies. In S7, compare generated HTML with fetched HTML, add and link another page, and inspect a raw HTTP exchange and the separate personal service route. Keep your report and checker working.
+You have already inspected HTTP statuses, headers, and bodies. In S7, Run Your Own Web Server, start a backend manually, watch requests in its log, match its PID to its listening port, send raw HTTP, and diagnose and recover three safe incidents. Publishing, notes, and Git remain optional practice. Keep your report and checker working.
 
 ## Optional Practice
 
@@ -430,9 +418,9 @@ while [[ "$remaining" -gt 0 ]]; do
 done
 ```
 
-`-gt` means numerically greater than; `$((...))` performs arithmetic. The update makes the loop stop. This is optional, not a guide gate.
+`-gt` means numerically greater than; `$((...))` performs arithmetic. The update makes the loop stop. This is optional; `Ctrl-C` cancels a loop that does not stop.
 
-Optional Git practice: inspect `~/src/scripts/site-check.sh` before copying your working script there; do not overwrite an existing version without comparing it. Use S4's deliberate stage, diff, commit workflow. Git completion is not a prerequisite or live objective here.
+Optional Git practice: inspect `~/src/scripts/site-check.sh` before copying your working script there; do not overwrite an existing version without comparing it. Use S4's deliberate stage, diff, commit workflow.
 
 ## Docs Pointers
 

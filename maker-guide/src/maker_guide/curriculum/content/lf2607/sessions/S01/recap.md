@@ -52,11 +52,9 @@ Your home directory is your base. System files such as `/etc/os-release` are rea
 
 `/docs` is your course-material playground. Run `cd /docs`, read anything in it, and follow what interests you.
 
-## IRC and guide
+## IRC
 
 Join IRC at [the classroom IRC page](https://lf2607.kolamayermakers.org/irc/). Use `#lf2607` for course help during class or between sessions, and `#kolamayermakers` for general chat.
-
-`guide` is your course tool and AI tutor. Run it whenever you feel lost or have a question. DM `guide` on IRC for the same tutor. In a terminal, run `guide now` for your current session objective; after you complete it, it shows your current quest. Submit prompted answers with `guide answer 'your answer'`, and run `guide check` after practical work. A passing check records your progress.
 
 Never paste passwords, private keys, tokens, or private account links into IRC.
 
@@ -68,7 +66,7 @@ Never paste passwords, private keys, tokens, or private account links into IRC.
 - Use Ctrl-C if a command will not stop.
 - Press `q` to leave `less` or `man`.
 - Read the error before asking for help.
-- Run `guide` whenever you need help.
+- Ask in `#lf2607` with the command and the error, without secrets.
 
 ## Live Core
 
@@ -80,7 +78,7 @@ If you attended live and generated your starter page, you have the core mileston
 
 ## Optional Reinforcement
 
-Use the S1 quests if you want extra practice, missed the live session, or want guide-checked proof of the same shell and first-site skills. Run `guide now` to start, then submit prompted answers with `guide answer 'your answer'` or run `guide check` after practical work.
+Repeat the shell and first-site exercises if you want extra practice or missed the live session. Explain your command output to another learner and compare what you observed.
 
 ## Full Autonomy
 

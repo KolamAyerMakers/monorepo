@@ -1,6 +1,6 @@
 # Command Card Index
 
-Use command cards when a quest or self-study guide names a command but you need the shape, purpose, or common failure mode.
+Use command cards when you need a command's shape, purpose, or common failure mode. Examples introduce their own inputs or link to the setup they need; a card is a reference, not a required checklist.
 
 ## Login And Orientation
 
@@ -100,17 +100,22 @@ Use command cards when a quest or self-study guide names a command but you need 
 - [curl -v](curl-verbose.md)
 - [diff](diff.md)
 - [nc](nc.md)
-- [tmux](tmux.md)
-- [python3 http.server](python3-http-server.md)
-- [caddy](caddy.md)
+- [ss](ss.md)
+- [caddy file-server](caddy.md)
+- [id -u](id-u.md)
+
+## Supervision And Scheduling
+
 - [systemctl](systemctl.md)
 - [journalctl](journalctl.md)
 - [systemd timer](systemd-timer.md)
 - [systemctl list-timers](systemctl-list-timers.md)
 - [cron](cron.md)
 - [crontab](crontab.md)
+- [tmux](tmux.md)
 - [weechat](weechat.md)
-- [id -u](id-u.md)
+
+Use systemd for service supervision and scheduled work. Tmux keeps a terminal workspace; it does not replace a service manager. A scheduled build renders existing inputs unless its service explicitly refreshes them first.
 
 ## Text, Investigation, And Archives
 

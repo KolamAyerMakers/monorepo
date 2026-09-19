@@ -7,8 +7,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from maker_guide.cli import render_learner_routes as learner_routes
+from maker_guide.curriculum.catalogs import DEFAULT_COURSE_ID
+from maker_guide.repositories.cohort_membership import CohortMembership, upsert_membership
 from maker_guide.repositories.helpers import connect_database
-from maker_guide.repositories.learner import Learner, get_learner, upsert_learner
+from maker_guide.repositories.learner import Learner, get_learner, list_learners, upsert_learner
 
 if TYPE_CHECKING:
     import pytest
@@ -105,12 +107,87 @@ def test_capture_missing_uids_persists_legacy_mapping(
             ),
         )
         monkeypatch.setattr(learner_routes.pwd, "getpwnam", _getpwnam)
-        learner_routes.capture_missing_uids(database_connection)
+        learner_routes.capture_missing_uids(database_connection, frozenset({"alice"}))
 
         learner = get_learner(database_connection, "alice")
 
     assert learner is not None
     assert learner.uid == 20001
+
+
+def test_render_continues_after_missing_account_and_recovers(
+    migrated_database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Missing accounts remain retryable without blocking valid or stored routes."""
+    with connect_database(migrated_database_path) as database_connection:
+        for handle, uid in (("alice", None), ("bob", None), ("mentor", 10001), ("outsider", None)):
+            upsert_learner(
+                database_connection,
+                Learner(
+                    handle=handle,
+                    joined_at="2026-07-17T00:00:00Z",
+                    tagline=None,
+                    created_at="2026-07-17T00:00:00Z",
+                    uid=uid,
+                ),
+            )
+            if handle != "outsider":
+                upsert_membership(
+                    database_connection,
+                    CohortMembership(
+                        handle=handle,
+                        course_id=DEFAULT_COURSE_ID,
+                        joined_at="2026-07-17T00:00:00Z",
+                    ),
+                )
+
+    accounts = {"bob": _getpwnam("bob")}
+    lookups: list[str] = []
+
+    def lookup_account(handle: str) -> pwd.struct_passwd:
+        lookups.append(handle)
+        return accounts[handle]
+
+    monkeypatch.setattr(learner_routes.pwd, "getpwnam", lookup_account)
+    arguments = [
+        "--database",
+        str(migrated_database_path),
+        "--domain",
+        "lf2607.kolamayermakers.org",
+    ]
+    assert learner_routes.run(arguments) == 0
+    captured = capsys.readouterr()
+    assert "alice" in captured.err
+    assert "alice" not in captured.out
+    assert "outsider" not in captured.out
+    assert "bob.lf2607.kolamayermakers.org" in captured.out
+    assert "127.0.0.1:30001" in captured.out
+    assert "mentor.lf2607.kolamayermakers.org" in captured.out
+    assert "127.0.0.1:20001" in captured.out
+    assert lookups == ["alice", "bob"]
+    with connect_database(migrated_database_path) as database_connection:
+        assert {learner.handle: learner.uid for learner in list_learners(database_connection)} == {
+            "alice": None,
+            "bob": 20001,
+            "mentor": 10001,
+            "outsider": None,
+        }
+
+    accounts["alice"] = pwd.struct_passwd(
+        ("alice", "x", 20002, 20002, "", "/home/alice", "/bin/bash"),
+    )
+    assert learner_routes.run(arguments) == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert "alice.lf2607.kolamayermakers.org" in captured.out
+    assert "127.0.0.1:30002" in captured.out
+    assert lookups == ["alice", "bob", "alice"]
+    with connect_database(migrated_database_path) as database_connection:
+        learner = get_learner(database_connection, "alice")
+        assert learner is not None
+        assert learner.uid == 20002
 
 
 def _getpwnam(_handle: str) -> pwd.struct_passwd:

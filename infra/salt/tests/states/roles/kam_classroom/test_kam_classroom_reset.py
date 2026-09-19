@@ -74,6 +74,7 @@ def test_all_reset_removes_snapshotted_homes_and_requires_controller_reapply(
     script._reset_all(script.CONFIRM_ALL, True)
 
     assert commands == [
+        ("/usr/local/sbin/kam-classroom-lingering", "--disable"),
         ("/usr/bin/loginctl", "terminate-user", "alice"),
         ("/usr/bin/systemctl", "stop", "maker-guide-sync-derived-data.timer"),
         ("/usr/bin/systemctl", "stop", "maker-guide-bot.service"),
@@ -103,6 +104,25 @@ def test_all_reset_removes_snapshotted_homes_and_requires_controller_reapply(
         Path("/data/authelia"),
     ]
     assert "ssh-apply <classroom-host> roles.kam-classroom" in capsys.readouterr().out
+
+
+def test_all_reset_stops_before_identity_loss_when_lingering_cleanup_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed cleanup cannot strand lingering markers after deleting LLDAP."""
+    script = _load_script()
+    monkeypatch.setattr(script, "_learner_usernames", lambda: ("alice",))
+
+    def run(
+        command: tuple[str, ...], *, check: bool
+    ) -> subprocess.CompletedProcess[str]:
+        assert command == ("/usr/local/sbin/kam-classroom-lingering", "--disable")
+        assert check is True
+        raise subprocess.CalledProcessError(1, command)
+
+    monkeypatch.setattr(script.subprocess, "run", run)
+    with pytest.raises(subprocess.CalledProcessError):
+        script._reset_all(script.CONFIRM_ALL, True)
 
 
 def test_learner_usernames_resolves_classroom_members_directly(

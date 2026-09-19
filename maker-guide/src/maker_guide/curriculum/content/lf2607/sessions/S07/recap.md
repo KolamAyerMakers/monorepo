@@ -1,55 +1,145 @@
-# S7 Recap: Your page on the wire
+# S7 Recap: Run Your Own Web Server
 
 Session: S7
 
-## Core Idea
+Date: 2026-09-19
 
-S6 checked whether your existing pages respond. S7 compares what you build with what HTTP carries, constructs a raw request, and separates static-file serving from a personal backend route.
+## Client And Server
 
-## Remember
+A client sends a request; a server waits for requests and answers. Your browser and curl are clients. A server here means a running program, not the whole computer.
 
-- Reuse `bash ~/scripts/site-check.sh "" maker-report.html` unchanged for static preflight. These arguments select the homepage and report on one host.
-- `curl -I` reuses S6's `HEAD` request: headers, no page body. `GET` fetches the body.
-- Compare `~/public_html/index.html` with the successfully fetched body, not with response headers. `diff` prints nothing and exits `0` for identical files; `1` means differences and `2` means an error. These files should match: investigate any mismatch, rebuild, and refetch.
-- Markdown source and generated HTML are related, not identical. Edit source and rebuild; do not repair generated HTML by hand.
-- `curl -v` exposes connection/TLS details and request/response headers. The user subdomain is a separate service route, not S6's report path.
-- With routing working, the service route normally returns `502` before S8 because no backend is listening. A DNS or TLS failure is not an HTTP status. Report what you actually observe.
-- Raw `nc` to the existing plaintext loopback Caddy port `80` normally gets an HTTPS `308`/`3xx` redirect, not the homepage HTML. `nc` does not follow redirects or speak TLS on port `443`.
-- The raw HTTP/1.1 request needs its request line, `Host`, CRLF line endings, and final blank line. `Connection: close` asks the server to close; `-w 3` bounds connection and idle waits.
+HTTP is the protocol, the rules for those requests and responses. HTTPS protects the exchange using TLS. Shared Caddy already serves your static site. You started a personal Caddy process to learn start, request, stop, and recovery without affecting others. Same software, two separate processes.
 
-## Live Core
+You first used curl on the classroom machine to request a page directly from personal Caddy. `127.0.0.1` means that same machine; the port selects your listening service.
 
-All four guide objectives are required core work:
+## From Browser To Personal Caddy
 
-1. Inspect static response headers with `curl -I`.
-2. Run `build-website`, fetch a body, and use `diff` to compare it with generated HTML.
-3. Inspect the service subdomain with `curl -v` and explain the result.
-4. Create headed `~/src/pages/setup.md`, link `setup.html` from `index.md`, rebuild, and verify the generated page and browser navigation.
+For your personal service address, shared Caddy forwards requests to personal Caddy and returns its responses. That role is a reverse proxy. Personal Caddy is the backend, the server behind it. Shared Caddy acts as a server to your browser and a client to personal Caddy.
 
-Also explain the raw request and its observed redirect. Inspect real results yourself, because the guide does not independently verify HTTP success or body equality.
+```text
+Browser -> HTTPS -> shared Caddy -> HTTP on 127.0.0.1:PORT -> personal Caddy -> public_html
+Browser -> HTTPS -> shared Caddy -> public_html (static /~username/ route)
+```
 
-Checkpoint routine: run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback. Use `guide answer 'your own observation'` when asked; `guide check` is an optional explicit check. Use this for all four core tasks, including setup once its files, link, and build are ready.
+The static address uses the same published files without your personal Caddy process. Shared Caddy handles public HTTPS; ask the instructor about its configuration, do not change it. Personal Caddy serves plain HTTP without `--domain`.
 
-## Optional Reinforcement
+## Start And Observe
 
-After the core, the S7 quests offer more site and HTTP practice. ASCII art, troubleshooting notes, and the [closed-port probe](../../quests/probe-closed-port.md) are optional reinforcement. Use `guide now`, submit prompted observations with `guide answer 'your own observation'`, then follow the checkpoint routine.
+In your first SSH shell on the classroom machine:
 
-## Can You Explain This?
+```bash
+PORT="$((10000 + $(id -u)))"
+caddy file-server --listen ":$PORT" --root "$HOME/public_html" --access-log
+```
 
-- What is the difference between source Markdown and generated HTML?
-- What does `curl -I` omit?
-- Why does the raw port-80 request return a redirect rather than your generated page?
-- Why is the service subdomain not just another path checked by `site-check.sh`?
-- Why can a proxy return an error when the HTML files are fine?
+The port formula is course policy. If the result exceeds `65535`, ask the instructor rather than choosing another port. The listener uses all interfaces; the classroom firewall blocks new direct external connections to that port. Keep the explicit `--root`; never serve your home or source directory. The root is not a sandbox: symlinks can expose files outside it. Without `--browse`, a missing index does not produce an automatic directory listing.
 
-## Keep
+In a second SSH shell:
 
-Keep `setup.md`, its homepage link, and rebuilt `setup.html`. Keep your existing report and unchanged `site-check.sh`. `art.md` and troubleshooting notes are optional demo polish.
+```bash
+PORT="$((10000 + $(id -u)))"
+curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+```
 
-## Full Autonomy
+Then open your [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in the laptop browser, replacing `your-handle`. `--access-log` records structured fields: `request.method`, `request.uri`, `status`, and a timestamp or time (`ts` in JSON). Match them to your own and a peer's requests; terminal and journal formatting can differ. Personal Caddy sees shared Caddy's loopback connection, so the logged address need not be the visitor's address.
 
-Use [S7 Self-Study Guide: Your page on the wire](self-study.md) for executable activities, the complete bounded raw request, route diagnosis, and setup-page instructions.
+## Identify The Process And Port
+
+After watching visitors, reuse S3's process command in the second SSH shell, then inspect the listener:
+
+```bash
+ps -u "$USER" -o pid,comm,args
+ss -ltnp "sport = :$PORT"
+```
+
+Find your `caddy file-server` arguments in `ps`, which selects processes owned by your account. Match that row's PID to `pid=...` in `ss`, alongside `LISTEN` and your assigned local port. `-ltnp` selects listening TCP sockets, numeric addresses/ports, and available process details. A process alone does not prove a listener exists; a listener alone does not prove the page is correct. Missing or unexpected ownership information is a reason to ask for help, not kill a process.
+
+## Build A Raw Request
+
+Raw HTTP is core S7 work. These are the request lines, with `PORT` standing for your assigned number and a blank line after the headers:
+
+```text
+GET / HTTP/1.1
+Host: localhost:PORT
+
+```
+
+The request line gives method, path, and version. `Host` names the requested authority and is required in HTTP/1.1. Lines end with CRLF (`\r\n`); the final blank line ends the headers.
+
+While your backend runs, connect from the second SSH shell:
+
+```bash
+nc -C -N 127.0.0.1 $PORT
+```
+
+Type the request using the actual numeric port, press Enter on a blank line, then `Ctrl-D` with no pending input. `-C` converts newlines to CRLF; `-N` finishes sending at EOF while still receiving the response. EOF is not the blank line ending HTTP headers, and typed text inside netcat does not expand `$PORT`.
+
+Then save the same request as `~/scripts/http-request.sh`, preserving any existing file:
+
+```bash
+#!/bin/bash
+PORT=$((10000 + $(id -u)))
+printf '%s\r\n' \
+  'GET / HTTP/1.1' \
+  "Host: localhost:$PORT" \
+  '' |
+  timeout 5s nc -N -w 3 127.0.0.1 "$PORT"
+```
+
+Run `bash ~/scripts/http-request.sh`. Each string gets its own CRLF; `''` produces the final blank line. The pipe supplies EOF when `printf` finishes, replacing `Ctrl-D`. No `-C` is needed in the script. `-w 3` limits connection/idle waits; `timeout 5s` bounds the scripted exchange. The classroom uses Debian's OpenBSD netcat; tool availability and flags need instructor preflight.
+
+Read the status, headers, and body, then find the matching log entry. Change only `/` to `/missing.html` in the request line and repeat. For an absent file, expect `404` in both response and log, not a connection failure. Do not modify a real file to manufacture this result. The [raw-HTTP lab](self-study.md#send-raw-http) builds the request incrementally.
+
+<a id="what-stopping-changes"></a>
+
+## Three Safe Incidents
+
+`file-server` disables the personal process's admin API. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint. When an incident calls for stopping, use `Ctrl-C` only in your own server's terminal. Keep the original running for the first incident:
+
+| Incident | Evidence and recovery |
+| --- | --- |
+| Start an identical second Caddy in the second SSH shell while the first runs | Startup reports an occupied address; `ss` still matches the original PID, curl still works, and the first terminal logs the request. The second launch failed, not the original server. |
+| Stop the first server, then serve a fresh empty practice root in that same first shell | `ps` shows the temporary root and new PID; `ss` matches it. Local and public service requests return `404` with fresh logs while the real static site works. Stop this process and restore `~/public_html` before proceeding. |
+| Stop the restored backend in the first shell | Its PID and listener disappear. Local curl is refused with no HTTP status; the public service returns shared Caddy's `502` if routing works; the static site still loads. Restart and verify recovery. |
+
+Use the [guarded empty-root procedure](self-study.md#incident-2-a-running-server-with-the-wrong-root): `practice_root=$(mktemp -d)` belongs in the first/server shell, and Caddy must not launch if creation fails. Treat that fresh directory as public and keep it empty; never delete or rename real website files, serve private files, or enable directory browsing.
+
+After the practice server stops, restore in the first shell:
+
+```bash
+caddy file-server --listen :$PORT --root ~/public_html --access-log
+```
+
+In the second shell, compare the three routes:
+
+```bash
+curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+curl -i --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
+curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/"
+```
+
+Repeat `ps` and `ss` after recovery and match the new process to its port. Confirm the real page locally and in the laptop browser, plus a matching request log. A `502` alone does not prove a stopped process. DNS failures, certificate failures, and timeouts are different results. Report actual observations; do not change ports, stop unknown processes, or bypass TLS to manufacture success.
+
+## Finish
+
+Success means you can connect ownership, PID, listening port, HTTP response, and request log, then distinguish and recover all three incidents. No new page or Git commit is required. After confirming recovery, stop the foreground server with `Ctrl-C`; it is not an uptime promise. Remove only your empty practice directory with `rmdir -- "$practice_root"` in the first shell if that variable still identifies it. If it is unset or the directory is not empty, leave it and ask for help. Restore any pre-existing S8 user service you temporarily stopped, following the self-study cleanup.
+
+## Optional Practice
+
+If useful, keep operating notes in `setup.md`, publish a content change while Caddy runs, and preserve your source in Git. The [self-study extensions](self-study.md#optional-publish-without-restarting) provide the steps. These are extra practice, not live-session deliverables. Keep secrets out of published notes and preserve unrelated work.
+
+## Questions To Keep
+
+- Which process answers local curl, and which handles public HTTPS?
+- Why does each SSH shell need its own `PORT` assignment?
+- Why is a missing path different from a missing listener?
+- Why can a public request appear as `127.0.0.1` in the backend log?
+- How do `ps` and `ss` identify your own server rather than another Caddy process?
+- What ends the HTTP headers, and how is that different from `Ctrl-D` and EOF?
+- How can the service homepage return `404` while the static homepage still works?
+
+The [self-study route](self-study.md) includes complete raw-HTTP and incident procedures. Extra body comparisons, tmux, and helper scripts are not required outcomes here.
 
 ## Next Session
 
-S8: 2026-09-26, your own web service. Run your own backend and manage its lifecycle: start, stop, restart, inspect logs, and keep it running after logout.
+S8: **2026-09-26**, Keep Your Server Running. A user service will take over the process lifecycle.

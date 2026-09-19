@@ -1394,17 +1394,25 @@ def test_answer_intent_nudges_wrong_stderr_descriptor(
     assert "I cannot verify that yet" not in response.text
 
 
+@pytest.mark.parametrize("verdict", ["contradicted", "not_demonstrated"])
 def test_answer_interpreter_tool_verdicts_gate_completion(
     migrated_database_path: Path,
     tmp_path: Path,
+    verdict: str,
 ) -> None:
-    """Semantic tool verdicts inform grading but deterministic code owns completion."""
+    """Negative semantic verdicts reject regex matches; demonstrated answers can complete."""
     learner_home = tmp_path / "alice"
     with connect_database(migrated_database_path) as database_connection:
         _prepare_combine_streams_objective(database_connection, learner_home)
-        contradicted_interpreter = _RecordingAnswerInterpreter(
+        rejected_interpreter = _RecordingAnswerInterpreter(
             database_connection,
-            (_component("stderr-descriptor", "contradicted", "descriptor 2 is stderr"),),
+            (
+                _component(
+                    "stderr-descriptor",
+                    verdict,
+                    None if verdict == "not_demonstrated" else "descriptor 2 is stderr",
+                ),
+            ),
             feedback=(
                 "You connected descriptor 2 with a standard stream. "
                 "Which stream receives diagnostic messages?"
@@ -1412,18 +1420,18 @@ def test_answer_interpreter_tool_verdicts_gate_completion(
         )
         answer = "descriptor 2 is stderr"
 
-        contradicted_response = handle_chat_request(
+        rejected_response = handle_chat_request(
             _private_chat_request(f"answer {answer}"),
             _chat_dependencies(
                 database_connection,
                 account_lookup=_account_lookup(learner_home),
-                answer_interpreter=contradicted_interpreter,
+                answer_interpreter=rejected_interpreter,
                 timestamp="2026-08-01T09:02:00Z",
             ),
         )
 
-        assert "Let's work through your answer:" in contradicted_response.text
-        assert "Which stream receives diagnostic messages?" in contradicted_response.text
+        assert "Let's work through your answer:" in rejected_response.text
+        assert "Which stream receives diagnostic messages?" in rejected_response.text
         assert "combine-and-copy-streams" not in list_completed_objective_ids(
             database_connection,
             "alice",
@@ -1435,7 +1443,7 @@ def test_answer_interpreter_tool_verdicts_gate_completion(
             database_connection,
             tuple(
                 _component(rubric.concept_id, "demonstrated", "correct")
-                for rubric in contradicted_interpreter.requests[0].concept_rubrics
+                for rubric in rejected_interpreter.requests[0].concept_rubrics
             ),
         )
         accepted_response = handle_chat_request(
@@ -1466,8 +1474,100 @@ def test_answer_interpreter_tool_verdicts_gate_completion(
             "answer_interpreted",
             "answer_interpreted",
         ]
-        assert len(contradicted_interpreter.requests) == 1
+        assert len(rejected_interpreter.requests) == 1
         assert len(accepted_interpreter.requests) == 1
+
+
+def test_s7_local_request_and_honest_diagnosis_unlock_server_quest(
+    migrated_database_path: Path,
+    tmp_path: Path,
+) -> None:
+    """Public DNS/TLS failures and absent publishing work do not block S7 progress."""
+    learner_home = tmp_path / "alice"
+    with connect_database(migrated_database_path) as database_connection:
+        with database_connection:
+            _write_member(database_connection, session_reached="S7")
+            for command, exit_status in (
+                ("curl -i http://127.0.0.1:14242/", 0),
+                ("curl -i https://alice.lf2607.kolamayermakers.org/", 6),
+                ("curl -I https://lf2607.kolamayermakers.org/~alice/", 60),
+            ):
+                add_command_observation(
+                    database_connection,
+                    replace(
+                        _command_observation(command, observed_at="2026-09-19T09:01:00Z"),
+                        exit_status=exit_status,
+                    ),
+                )
+
+        check_response = handle_chat_request(
+            _private_chat_request("check"),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                timestamp="2026-09-19T09:02:00Z",
+            ),
+        )
+
+        assert check_response.text.startswith(
+            "Current session objective: Explain what stops and what keeps working",
+        )
+        assert list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S7"
+        ) == frozenset({"inspect-first-url-headers"})
+        assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
+
+        interpreter = _RecordingAnswerInterpreter(
+            database_connection,
+            (
+                _component(
+                    "local-listener-stopped",
+                    "demonstrated",
+                    "Localhost refused because personal Caddy stopped.",
+                ),
+                _component(
+                    "proxy-backend-stopped",
+                    "demonstrated",
+                    "Shared Caddy returns 502 when its backend is unavailable.",
+                ),
+                _component(
+                    "independent-static-hosting",
+                    "demonstrated",
+                    "Shared Caddy serves public_html directly, independently of personal Caddy.",
+                ),
+            ),
+        )
+        answer_response = handle_chat_request(
+            _private_chat_request(
+                (
+                    "answer Localhost refused because personal Caddy stopped. "
+                    "Shared Caddy returns 502 when its backend is unavailable. "
+                    "Shared Caddy serves public_html directly, independently of personal Caddy. "
+                    "My public request failed before HTTP because of DNS/TLS."
+                ),
+            ),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                answer_interpreter=interpreter,
+                timestamp="2026-09-19T09:03:00Z",
+            ),
+        )
+
+        assert answer_response.text.startswith("Answer accepted. Objective complete:")
+        assert "Next:\n\nToday's quest: Serve a local check page" in answer_response.text
+        assert list_completed_objective_ids(
+            database_connection, "alice", CATALOG.course.id, "S7"
+        ) == frozenset({"inspect-first-url-headers", "diagnose-second-url"})
+        assert [
+            assignment.quest_id
+            for assignment in list_assignments(database_connection, "alice", CATALOG.course.id)
+        ] == ["serve-local-check-page"]
+        assert len(interpreter.requests) == 1
+        assert [
+            audit_log.status for audit_log in list_llm_audit_logs(database_connection, "alice", 10)
+        ] == ["answer_interpreted"]
+        assert not learner_home.exists()
 
 
 @pytest.mark.parametrize("session_reached", ["S3", "S4"])
@@ -2505,8 +2605,8 @@ def test_check_intent_completes_user_port_file_quest(
         """[Unit]
 Description=Alice site
 [Service]
-WorkingDirectory=%h/public_html
-ExecStart=/usr/bin/python3 -m http.server 14242 --bind 127.0.0.1
+WorkingDirectory=%h
+ExecStart=/usr/bin/caddy file-server --listen :14242 --root %h/public_html --access-log
 [Install]
 WantedBy=default.target
 """,

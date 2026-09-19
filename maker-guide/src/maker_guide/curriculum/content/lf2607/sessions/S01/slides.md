@@ -94,24 +94,6 @@ Commands go in. Text comes out.
 
 # Do Not Panic
 
-Hands-on now: run `guide` and ask it one question.
-
-```bash
-guide
-```
-
-`guide` is your course tool and AI tutor. Use it throughout class and between sessions for help, objectives, quests, answer submission, and progress checks.
-
-In a terminal, guide requests always start with `guide`:
-
-```bash
-guide now
-guide check
-guide answer 'your answer'
-```
-
-In an IRC DM to `guide`, send the request without `guide`: `now`, `check`, or `answer <your answer>`. A passing check records your progress.
-
 Your recovery kit:
 
 - Tab completion
@@ -123,7 +105,7 @@ Your recovery kit:
 
 <!-- end_slide -->
 
-# IRC and guide
+# IRC
 
 IRC is the public classroom backchannel.
 
@@ -132,8 +114,6 @@ Hands-on task: join IRC now at [the classroom IRC page](https://lf2607.kolamayer
 Use `#lf2607` to ask for help during class or between sessions.
 
 Use `#kolamayermakers` for general chat.
-
-DM `guide` for help from the AI tutor. It is the same tutor as the `guide` command.
 
 Do not paste passwords, private keys, or tokens.
 
@@ -208,12 +188,12 @@ That is fine. Use it first. Read it later.
 
 # After Class
 
-Use quests between sessions for highly recommended reinforcement or catch-up.
-
-Run `guide now` to get the current session objective. After you complete it, `guide now` shows your current quest. Ask the guide for help, submit prompted answers with `guide answer 'your answer'`, and run `guide check` after practical work to record progress.
+Repeat today's commands between sessions for reinforcement or catch-up. Read the output and explain what it tells you to another learner.
 
 If stuck outside class, read the S1 recap or self-study guide, then ask in public help.
 
 Read the full course as formatted web pages at [lf2607.kolamayermakers.org/docs](https://lf2607.kolamayermakers.org/docs/).
 
 Autonomy starts today.
+
+For extra help, run `guide` in the classroom terminal.

@@ -75,7 +75,7 @@ On macOS or Linux, run:
 ssh-copy-id <handle>@lf2607.kolamayermakers.org
 ```
 
-Replace `<handle>` with your username. Reconnect with the same command without entering your account password, then run `whoami`. The guide records a successful public-key login automatically.
+Replace `<handle>` with your username. Reconnect with your personal SSH command without entering your account password, then run `whoami`.
 
 <!-- end_slide -->
 
@@ -232,6 +232,6 @@ You know the difference between source in `~/src/pages/index.md` and generated o
 
 You started safe SSH-key login with a passphrase.
 
-Run `guide now` for your current session objective. After you complete it, `guide now` shows your current quest. Submit prompted answers with `guide answer 'your answer'`. Run `guide check` after practical work. A passing check records your progress.
+Repeat the S2 exercises for reinforcement or catch-up. Explain the changes you observe to another learner.
 
-If possible, complete all S2 quests for reinforcement or catch-up. S3 starts from today's live learning, not quest completion.
+For extra help, run `guide` in the classroom terminal.

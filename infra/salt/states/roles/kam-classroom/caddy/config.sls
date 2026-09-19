@@ -49,6 +49,7 @@ kam-classroom::caddy::configuration::required_pillar:
       - ttyd:web:assets:directory
       - caddy:configuration_directory
       - caddy:configuration_file
+      - caddy:admin_address
       - caddy:docs_site_directory
       - caddy:domain
       - caddy:learner_routes_file
@@ -104,7 +105,7 @@ kam-classroom::caddy::configuration::required_pillar:
     - user: root
     - group: root
     - mode: '0644'
-    - contents: ''
+    - contents: "# No learner routes.\n"
     - replace: false
     - require:
       - file: {{ caddy.configuration_directory }}
@@ -131,7 +132,9 @@ kam-classroom::caddy::configuration::validate:
     - name: caddy validate --config {{ caddy.configuration_file }}
     - onchanges:
       - file: {{ caddy.configuration_file }}
+      - file: {{ caddy.learner_routes_file }}
     - require:
       - pkg: kam-classroom::caddy::package
       - file: {{ caddy.configuration_file }}
+      - file: {{ caddy.learner_routes_file }}
       - test: kam-classroom::caddy::configuration::required_pillar

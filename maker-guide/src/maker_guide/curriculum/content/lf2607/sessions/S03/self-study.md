@@ -90,7 +90,7 @@ cut -d: -f1 /etc/passwd | wc -l
 
 If the final result surprises you, remove the rightmost stage and inspect the previous output.
 
-Submit your own explanation with `guide answer 'your explanation'`.
+Explain to another learner which command writes to the pipe and which reads from it, using your output.
 
 When you need to process error text too, move stderr onto stdout before the pipe:
 
@@ -118,7 +118,7 @@ cat ~/playground/combined.txt
 
 GNU `date` writes an ISO date to stdout and an output-format diagnostic to stderr. It still exits zero: stderr can carry diagnostics even when a command succeeds. `2>&1` combines the streams before `tee` saves them and `wc` prints their line count, `2`.
 
-Submit your own explanation of descriptor 2 and the left-to-right meaning of `2>&1` with `guide answer 'your explanation'`.
+Explain descriptor 2 and the left-to-right meaning of `2>&1` to another learner, pointing to the saved diagnostic.
 
 ## A Useful Pipeline
 
@@ -149,7 +149,7 @@ ps -u "$USER" -o pid,comm,args
 
 The output has a PID, a short command name, and the command with arguments. Long arguments can be clipped to the terminal width. Pick one row and note its numeric PID and command.
 
-Submit your own explanation of program file versus process, including the numeric PID and command from your chosen row, with `guide answer 'your explanation'`.
+Explain program file versus process to another learner, including the numeric PID and command from your chosen row.
 
 ## Troubleshooting
 

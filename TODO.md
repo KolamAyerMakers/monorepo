@@ -1,5 +1,18 @@
 # TODO
 
+- [x] Align S7 assessment and reinforcement with the lesson: semantic verdicts now take precedence over aliases, the first objective needs only a successful local request so DNS/TLS failures can still reach the explanation objective, S7 quests run server-first with publishing last, keyword-only answers and truthful non-200 observations are accepted or rejected appropriately, and quest documents no longer hide publishing prerequisites. IDs, history, and scores are preserved with regression coverage; checks remain for the commit gate.
+- [x] Implement classroom readiness fixes: private shared Caddy administration, serialized retry-safe route reconciliation, unresolved legacy-account handling, and scoped participant lingering with account cleanup. Seed the imported routes file with the renderer's empty-state comment so fresh installs validate Caddy before the first refresh. Add behavioral regression coverage and operator documentation.
+- [ ] Run commit-gate coverage for the readiness fixes, then perform an authorized Salt dry-run and deployment. Verify learner denial of shared admin access, route recovery, and participant service survival after final logout; no host verification has been performed.
+- [x] Expand S7 with process/socket inspection, interactive HTTP through netcat followed by a small shell script, and controlled port-collision/empty-root/stopped-backend incidents; align supporting material, command metadata, package declarations, and existing tests.
+- [ ] With the operator before S7, deploy the declared `procps`, `iproute2`, and `netcat-openbsd` packages and rehearse PID/listener correlation, bounded raw HTTP, and all three incidents on a consenting practice account. Commit-gate checks remain pending.
+- [x] Cut S7 notes, publishing, and Git from the live deck and required objectives; retain optional self-study practice and existing completion history.
+- [x] Align classroom Caddy examples and validation with wildcard listeners. Shared proxy upstreams and local curl targets stay on loopback.
+- [ ] Before delivery, verify deployed IPv4/IPv6 nftables rules and included fragments block new direct external connections to learner ports; wildcard listeners rely on this protection.
+- [x] Replace the learner Python HTTP server with CLI-only Caddy across S7-S10, reference cards, validators, and executable-example tests. Keep the shared Caddy configuration unchanged.
+- [x] Make Caddy 2 available on the local test PATH before the next commit gate: Caddy 2.6.2 from the Ubuntu noble package is installed at `~/.local/bin/caddy`. CI installs the package for real-server publication, access logs, and private shared-admin regression coverage.
+- [x] Redesign S7-S10 around a manual HTTP server, supervision and repair, report automation and peer handoff, then learner-led demonstrations. Align session materials, optional quests, catalog checks, and tests; remove bot workflow from lessons except final-slide between-session help.
+- [ ] Run the commit gate for the S7-S10 redesign, including report failure preservation, replaced-directory serving, and retained historical progress. Checks have not been run before commit, per repository policy.
+- [ ] Before delivering S7-S10, have staff verify personal proxy routes and lingering, review existing objective completions before deployment, and exercise report-refresh timers and publication without restarting the backend.
 - [ ] Build and deploy the updated Maker Guide artifact and classroom configuration with the operator.
 - [ ] After operator deployment, validate one-task `guide now` advancement and concise `guide check` feedback on `lf-dev`.
 - [x] Verify S6 DNS, HTTP, and site-check progression on `lf-dev` after deploying the hostname validation fix.

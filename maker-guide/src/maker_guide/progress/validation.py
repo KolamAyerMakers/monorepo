@@ -545,8 +545,11 @@ def _check_answer_concept(
         )
     return _AnswerConceptCheck(
         concept_id=concept.id,
-        matched=matched
-        or (semantic_assessment is not None and semantic_assessment.verdict == "demonstrated"),
+        matched=(
+            semantic_assessment.verdict == "demonstrated"
+            if semantic_assessment is not None
+            else matched
+        ),
         contradicted=contradicted
         or (semantic_assessment is not None and semantic_assessment.verdict == "contradicted"),
     )

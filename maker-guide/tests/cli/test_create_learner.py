@@ -13,6 +13,7 @@ import pytest
 
 from maker_guide.cli import create_learner
 from maker_guide.deployment import (
+    CLASSROOM_LINGERING_COMMAND,
     CONFIGURATION_FILE,
     LLDAP_CREATE_USER_COMMAND,
     MAKER_GUIDE_DAEMON_USER,
@@ -74,6 +75,7 @@ def test_main_creates_lldap_user_then_initializes_learner(
             "--config",
             CONFIGURATION_FILE,
         ],
+        [CLASSROOM_LINGERING_COMMAND, "--", "alice"],
         [REFRESH_LEARNER_ROUTES_COMMAND],
     ]
 
@@ -140,6 +142,7 @@ def test_resume_skips_lldap_and_retries_remaining_provisioning(
             "--config",
             CONFIGURATION_FILE,
         ],
+        [CLASSROOM_LINGERING_COMMAND, "--", "alice"],
         [REFRESH_LEARNER_ROUTES_COMMAND],
     ]
 
@@ -159,9 +162,11 @@ def test_resume_rejects_missing_posix_account(
     assert capsys.readouterr().err == "Cannot resume: the POSIX account does not exist.\n"
 
 
+@pytest.mark.parametrize("failed_step", [2, 3, 4])
 def test_main_reports_resume_command_after_post_creation_failure(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    failed_step: int,
 ) -> None:
     """A created account has an explicit safe recovery path after initialization fails."""
     calls = 0
@@ -172,7 +177,7 @@ def test_main_reports_resume_command_after_post_creation_failure(
     ) -> subprocess.CompletedProcess[str]:
         nonlocal calls
         calls += 1
-        if calls == 2:
+        if calls == failed_step:
             raise subprocess.CalledProcessError(1, command)
         return subprocess.CompletedProcess(command, 0, stdout="20001\n")
 
@@ -194,6 +199,7 @@ def test_main_reports_resume_command_after_post_creation_failure(
         == 1
     )
     assert "Account created but Maker Guide provisioning is incomplete." in capsys.readouterr().err
+    assert calls == failed_step
 
 
 def test_main_rejects_registration_when_closed(

@@ -404,7 +404,7 @@ def test_course_catalog_accepts_user_port_file_validation() -> None:
                     course.quests[0],
                     validation=UserPortFileValidation(
                         path="~/.config/systemd/user/site.service",
-                        required_regex_template=r"http\.server {port} --bind 127\.0\.0\.1",
+                        required_regex_template=r"caddy file-server --listen :{port}",
                     ),
                 ),
             ),
@@ -425,7 +425,7 @@ def test_course_catalog_accepts_user_port_regex_quantifiers() -> None:
                     course.quests[0],
                     validation=UserPortFileValidation(
                         path="~/.config/systemd/user/site.service",
-                        required_regex_template=r"http\.server [0-9]{1,5} {port}",
+                        required_regex_template=r"caddy file-server --listen :{port}\s{1,5}",
                     ),
                 ),
             ),
@@ -684,7 +684,7 @@ def test_course_catalog_rejects_bad_user_port_file_validation() -> None:
                         course.quests[0],
                         validation=UserPortFileValidation(
                             path="~/.config/systemd/user/site.service",
-                            required_regex_template=r"http\.server [0-9]+",
+                            required_regex_template=r"caddy file-server --listen :[0-9]+",
                         ),
                     ),
                 ),

@@ -1,115 +1,58 @@
-# Write site helper functions
+# Write Site Helper Functions
 
 Quest: write-site-helper-functions
 
-## Mission
+## Optional Mission
 
-Create executable `~/bin/site.sh` with subcommands for your local site server.
+Give a repeated read-only service command a memorable name. This is optional shell practice after the backend works, not a prerequisite for a user service or a required `site.sh` dispatcher.
 
-## What The Script Should Achieve
+## Try Functions In Your Shell
 
-You are building one reusable command for the second URL workflow. Instead of retyping long server and service commands, you should be able to run:
-
-- `~/bin/site.sh site_port`: print your assigned course port, computed as `10000 + uid`.
-- `~/bin/site.sh serve`: serve `~/public_html` on your assigned loopback port, regardless of the caller's directory.
-- `~/bin/site.sh status`: show the user `site.service` status after you create it.
-- `~/bin/site.sh stop`: stop the user `site.service` after you create it.
-
-`serve` is a foreground manual server, not a command to start systemd. `status` and `stop` become useful after [enable-site-service](enable-site-service.md) creates the unit. `stop` stops that unit, not a manual Python process.
-
-## Commands You Will Use
-
-- `mkdir`
-- `micro`
-- `chmod`
-- `python3 -m http.server --bind 127.0.0.1`
-- `id -u`
-- `systemctl --user`
-
-## Steps
-
-1. Run `mkdir -p ~/bin`.
-2. Run `micro ~/bin/site.sh` and enter the complete helper below. If it already exists from class, inspect and correct it rather than creating a different version.
-3. Save with `Ctrl-S` and quit with `Ctrl-Q`.
-4. Run the self-check, then `guide check` for file and executable-permission evidence. This does not prove the HTTP endpoint works.
-
-## Complete Helper
+In your own classroom SSH shell, with `site.service` already created:
 
 ```bash
-#!/bin/bash
-
-site_port() {
-  printf '%s\n' "$((10000 + $(id -u)))"
+site_status() {
+  systemctl --user status site.service --no-pager
 }
 
-serve() {
-  python3 -m http.server "$(site_port)" --bind 127.0.0.1 --directory "$HOME/public_html"
+site_logs() {
+  journalctl --user -u site.service --no-pager -n 20
 }
 
-status() {
-  systemctl --user status site.service
-}
-
-stop() {
-  systemctl --user stop site.service
-}
-
-"$@"
+site_status
+site_logs
 ```
 
-A function names the commands inside `{ ... }`; the body runs only when called. `site_port` prints output that `serve` captures. A function's exit status is a separate success/failure number, not a way to print its result.
+A definition names commands without running them. Calling the name runs its body. These functions only read state and recent logs; they do not start, stop, or supervise your Caddy. Read the actual service state and request lines rather than treating function execution as proof that the page works.
 
-`$(id -u)` runs `id -u` and captures your numeric UID. `$((...))` performs integer arithmetic on that output: UID `1234` gives `11234`. The formula is course routing policy; if your port exceeds `65535`, ask staff rather than choosing another number.
+There is no dispatcher and no arbitrary command execution from supplied arguments. Direct `systemctl` and `journalctl` remain the simplest choice if you do not repeat this enough to need names.
 
-`--directory "$HOME/public_html"` explicitly selects the published files. An unchecked `cd` can fail and leave Python serving unrelated files from the caller's directory. With `--directory`, a missing `public_html` does not fall back to that directory. Keep the loopback bind; the course proxy connects locally.
+## Keep Only If Useful
 
-## Dispatch Trace
-
-For `~/bin/site.sh site_port`:
-
-1. Bash reads the four function definitions without running them.
-2. The script's first argument, `$1`, is `site_port`.
-3. The final `"$@"` expands to the supplied arguments, one word per argument. Here the one word is `site_port`, so Bash calls that function.
-4. The function captures the UID, adds `10000`, and prints the number.
-
-Keep `"$@"` quoted so arguments containing spaces remain separate arguments. This personal dispatcher can run other command names too; it is not an allowlist and must not receive untrusted input.
-
-## Self-Check
-
-Make it executable, print the port, and use `-x` to see the expanded commands:
+The definitions disappear when this shell ends. If you want to preserve them, first inspect any existing file, then save just the definitions above in `~/src/scripts/site-functions.sh`, outside the published pages. Do not overwrite existing content or replace someone else's helper.
 
 ```bash
-chmod +x ~/bin/site.sh
-~/bin/site.sh site_port
-bash -x ~/bin/site.sh site_port
+mkdir -p ~/src/scripts
+micro ~/src/scripts/site-functions.sh
 ```
 
-If the user unit is already running, stop it with `systemctl --user stop site.service` before the manual test. Run `~/bin/site.sh serve` in one SSH shell. In another:
+Load your own inspected file into a fresh SSH shell and call a function:
 
 ```bash
-PORT="$((10000 + $(id -u)))"
-curl -I "http://127.0.0.1:$PORT/"
+source ~/src/scripts/site-functions.sh
+site_status
 ```
 
-Inspect the HTTP status, then press `Ctrl-C` in the server shell. Do not leave the manual server running before enabling or starting `site.service`. If you stopped an existing unit for this test, restore it with `systemctl --user start site.service` and repeat the request.
+Sourcing executes a file in your current shell, so source only content you trust and have read. This file needs no executable bit and no `"$@"` dispatcher. Do not change the systemd unit to depend on it; keep the unit's numeric assigned port, all-interface listener, stable `WorkingDirectory=%h`, explicit `--root %h/public_html`, and `--access-log` unchanged.
 
-After the unit exists, `~/bin/site.sh status` reports its actual state, including inactive or failed. `~/bin/site.sh stop` deliberately stops it; start it again with `systemctl --user start site.service` when it should be serving.
+Use the [source preservation workflow](../sessions/S07/self-study.md#6-preserve-source-now), staging only `scripts/site-functions.sh` for this extension after review. Preserve unrelated work and exclude credentials. No generated files or private backups belong in the commit.
 
-## Hints
+## Explain To A Peer
 
-1. Bash functions let a script give names to repeated command sequences.
-2. `$()` captures output; `$((...))` calculates a number. They solve different problems.
-3. Use `--directory` instead of depending on `cd` succeeding before Python starts.
-
-## If Check Fails
-
-Open `~/bin/site.sh`, compare all four functions and the final quoted dispatch with the complete helper, and rerun `chmod +x ~/bin/site.sh`. If HTTP gives `404`, inspect the published files; do not remove `--directory` to make Python serve somewhere else.
+Ask a peer what calling `site_logs` will do before running it. Explain why reading logs does not change the service lifecycle. If the names made the workflow clearer, add a brief note to existing `setup.md`; otherwise keep using the original commands and skip persistence.
 
 ## Related Reading
 
-- [python3 http server](../commands/python3-http-server.md)
-- [mkdir](../commands/mkdir.md)
-- [chmod](../commands/chmod.md)
-- [bash-functions](../concepts/bash-functions.md)
-- [manual-web-service](../concepts/manual-web-service.md)
-- [systemctl](../commands/systemctl.md)
+- [Bash functions](../concepts/bash-functions.md)
+- [Watch service logs](watch-service-logs.md)
+- [Systemctl](../commands/systemctl.md)

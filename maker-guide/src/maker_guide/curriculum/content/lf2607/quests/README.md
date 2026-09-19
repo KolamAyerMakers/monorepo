@@ -2,7 +2,7 @@
 
 Quests are highly recommended reinforcement. Use them for extra practice or catch-up. Live sessions remain the primary course path.
 
-Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. Use `guide answer 'your answer'` when asked. `guide check` is an optional explicit check. Ask the guide for help when stuck.
+You can read any quest for independent practice and inspect the actual result. The bot's recorded reinforcement path is linear: `guide now` shows the current task, not an arbitrary quest selector, and there is no skip feature. If you want recorded progress, follow that task and run `guide now` before and after practical work; use `guide answer 'your answer'` when asked. See the dedicated [support guide](../guides/irc-support.md) and [scoring guide](../guides/scoring.md) for that optional workflow.
 
 ## S01 Reinforcement
 
@@ -42,7 +42,7 @@ Run `guide now` before starting a quest and after practical work. It checks one 
 
 ## S06 Reinforcement
 
-Practise the observations and checker from the [S6 self-study](../sessions/S06/self-study.md). The first three quests check reported observations. For the assigned checker quest, `guide now` or `guide check` in the classroom shell automatically runs your script locally as your learner account through [simulated cases](../sessions/S06/self-study.md#guide-checks) with varying page arguments, including unknown-page `404` and no-argument usage help. Equivalent implementations are accepted, not just the reference. IRC directs you to the shell. A pass does not verify live site health: still run `bash ~/scripts/site-check.sh "" maker-report.html` and inspect both pages in your browser.
+Practise the observations and checker from the [S6 self-study](../sessions/S06/self-study.md), using its [diagnostic cases](../sessions/S06/self-study.md#diagnostic-cases). Equivalent implementations are welcome, not just the reference. Run `bash ~/scripts/site-check.sh "" maker-report.html` and inspect both pages in your browser; simulated results do not verify live site health.
 
 - [resolve-hostname](resolve-hostname.md)
 - [measure-ping](measure-ping.md)
@@ -51,21 +51,29 @@ Practise the observations and checker from the [S6 self-study](../sessions/S06/s
 
 ## S07 Reinforcement
 
-- [create-setup-page](create-setup-page.md)
-- [inspect-first-url-headers](inspect-first-url-headers.md)
+Run Your Own Web Server: foreground requests and visitor logs, own PID/listening-port correlation with `ps` and `ss`, and core raw HTTP with a path-only change. The [S7 self-study](../sessions/S07/self-study.md) covers three safe incidents: occupied own port, empty public practice root, and stopped backend, with recovery and comparison to independent static delivery. Publishing, notes, Git, and extra page quests below remain optional reinforcement; they are not required live-session deliverables.
+
+The S7 reinforcement order puts core server work and diagnosis before publishing. Optional for the live lesson does not mean skippable within the bot's linear quest sequence.
+
+- [serve-local-check-page](serve-local-check-page.md)
 - [diagnose-second-url](diagnose-second-url.md)
-- [publish-ascii-art](publish-ascii-art.md)
 - [explain-status-codes](explain-status-codes.md)
+- [probe-closed-port](probe-closed-port.md)
+- [explain-502](explain-502.md)
+- [inspect-first-url-headers](inspect-first-url-headers.md)
+- [record-http-headers](record-http-headers.md)
+- [compare-page-fetches](compare-page-fetches.md)
+- [create-setup-page](create-setup-page.md)
+- [publish-ascii-art](publish-ascii-art.md)
 - [compare-source-and-output](compare-source-and-output.md)
 - [inspect-generated-html](inspect-generated-html.md)
-- [probe-closed-port](probe-closed-port.md)
-- [record-http-headers](record-http-headers.md)
 - [create-links-page](create-links-page.md)
-- [compare-page-fetches](compare-page-fetches.md)
-- [explain-502](explain-502.md)
 - [publish-http-troubleshooting](publish-http-troubleshooting.md)
+- [document-service-port](document-service-port.md)
 
 ## S08 Reinforcement
+
+Keep Your Server Running: supervision, journal evidence, safe repair, and logout observations. Tmux and helper functions are optional, not prerequisites for the service.
 
 - [keep-tmux-workbench](keep-tmux-workbench.md)
 - [write-site-helper-functions](write-site-helper-functions.md)
@@ -75,14 +83,14 @@ Practise the observations and checker from the [S6 self-study](../sessions/S06/s
 - [fix-and-restart-service](fix-and-restart-service.md)
 - [check-service-status](check-service-status.md)
 - [restart-service-cleanly](restart-service-cleanly.md)
-- [document-service-port](document-service-port.md)
 - [read-recent-logs](read-recent-logs.md)
-- [serve-local-check-page](serve-local-check-page.md)
 - [add-health-page](add-health-page.md)
 - [explain-user-services](explain-user-services.md)
 - [preflight-both-urls](preflight-both-urls.md)
 
 ## S09 Reinforcement
+
+Automate It. Hand It Over. Refresh report facts before building, observe automatic publication, and peer-test a recoverable handoff of two scripts and three units. No `site.sh` dispatcher is required. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
 
 - [try-cron-and-remove-it](try-cron-and-remove-it.md)
 - [transform-heading-with-sed](transform-heading-with-sed.md)

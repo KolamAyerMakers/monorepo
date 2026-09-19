@@ -41,13 +41,7 @@ traceroute -m 8 1.1.1.1
 
 # Start On The Classroom Server
 
-Open your classroom SSH session and load the objective:
-
-```bash
-guide now
-```
-
-For S6, take the provided report script:
+Open your classroom SSH session. For S6, take the provided report script:
 
 ```bash
 mkdir -p ~/scripts
@@ -465,12 +459,6 @@ bash ~/scripts/site-check.sh not-a-page.html
 
 <!-- end_slide -->
 
-# Check With Guide
-
-`guide now` or `guide check` runs your script locally as your learner account, varying page arguments and order. It tells you the next case to fix; the cases are the ones from the exercise above.
-
-<!-- end_slide -->
-
 # Exit Goal
 
 Explain to your neighbour:
@@ -484,23 +472,9 @@ Explain to your neighbour:
 
 # Between-Session Practice
 
-Practice DNS, ping, HTTP headers, and the checker with the S6 quests.
-
-Use `guide now` to find your next task and keep progressing at your own pace.
+Practice DNS, ping, HTTP headers, and your checker. Compare predictions with actual output and explain any differences to another learner.
 
 Keep `site-check.sh`. Optional: preserve it in Git.
-
-<!-- end_slide -->
-
-# Next Session: Your Page On The Wire
-
-S7: 2026-09-19
-
-- Compare generated HTML with fetched HTML.
-- Add and link another page.
-- Inspect raw HTTP and the separate service route.
-
-Same site, a closer look.
 
 <!-- end_slide -->
 
@@ -519,3 +493,20 @@ done
 `-gt` compares numbers. `$((...))` calculates a new value.
 
 When does it stop? Without the update, it loops forever. `Ctrl-C` cancels.
+
+<!-- end_slide -->
+
+<a id="next-session-your-page-on-the-wire"></a>
+
+# Next Session: Run Your Own Web Server
+
+S7: 2026-09-19
+
+You can now inspect a web response and explain your checker's decisions. Keep `site-check.sh` and your report working.
+
+- Start your own web server manually behind the personal service route.
+- Watch the backend log as requests arrive.
+- Match your process PID to its listening port and send raw HTTP.
+- Diagnose and recover three safe incidents; publishing remains optional.
+
+For extra help, run `guide` in the classroom terminal.

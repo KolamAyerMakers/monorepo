@@ -371,10 +371,12 @@ Before leaving, you can:
 
 # Between-Session Practice
 
-Use `guide now` for the S4 objectives and reinforcement quests.
+Repeat these exercises and explain the permission changes and source history to another learner.
 
 1. Read and change one permission bit in `~/playground`.
 2. Initialize `~/src` on `main`, then make the initial source commit.
 3. Review a source diff, stage deliberately, commit, and check status.
 4. Add `*.tmp` without replacing existing `.gitignore` rules.
 5. Create the Forgejo repository with `fj`, push the commit, and verify it in the web UI.
+
+For extra help, run `guide` in the classroom terminal.

@@ -24,7 +24,7 @@ def test_calendar_exports_table_by_default() -> None:
     assert "First contact: SSH" in result.output
     assert "2026-09-26" in result.output
     assert "S8" in result.output
-    assert "Your own web service" in result.output
+    assert "Keep Your Server Running" in result.output
 
 
 def test_calendar_exports_sessions_as_icalendar_events() -> None:
@@ -45,7 +45,7 @@ def test_calendar_exports_sessions_as_icalendar_events() -> None:
     ]
     assert "SUMMARY:Session S1: First contact: SSH and the lay of the land" in output
     assert "DTSTART;VALUE=DATE:20260718" in output
-    assert "SUMMARY:Session S8: Your own web service" in output
+    assert "SUMMARY:Session S8: Keep Your Server Running" in output
     assert "DTSTART;VALUE=DATE:20260926" in output
     assert "SUMMARY:Quest" not in output
     assert output.endswith("END:VCALENDAR\r\n")
@@ -63,7 +63,7 @@ def test_calendar_exports_sessions_as_csv_rows() -> None:
         '2026-08-01,session,S3,"Streams, pipes, processes"',
     ]
     assert "quest" not in result.output
-    assert '2026-10-24,session,S10,"Boss fight, demos, graduation"' in result.output
+    assert "2026-10-24,session,S10,Show What You Can Do" in result.output
 
 
 def test_calendar_rejects_unknown_curriculum() -> None:

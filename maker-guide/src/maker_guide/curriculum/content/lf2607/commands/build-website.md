@@ -8,9 +8,9 @@ build-website
 
 ## What It Does
 
-`build-website` is a Bash alias for the course bootstrap. On its first run, it creates your learner-owned Astro project in `~/src` and installs its pinned dependencies. Later runs call that project's `npm run build` command.
+`build-website` is a platform-provided Bash alias, not a standard Linux command. It must already be installed in your shell; see the [platform reference](../guides/platform-reference.md) for availability. On its first run, it creates your user-owned Astro project in `~/src` and installs its pinned dependencies. Later runs call that project's `npm run build` command.
 
-Your public page lives at `https://lf2607.kolamayermakers.org/~username/`.
+The platform reference gives the public URL for your account. This command publishes files; it does not start a separate HTTP backend process.
 
 ## Source And Output
 
@@ -21,13 +21,20 @@ Your public page lives at `https://lf2607.kolamayermakers.org/~username/`.
 
 Generated output is disposable. If a change matters, put it in source or source configuration. `npm run build` is the full build command; it renders Astro, generates the Codex PDF with Pandoc, and publishes the result.
 
+A build renders existing source; it does not collect fresh report facts. If a page is produced by a data-collection script, run that script successfully before building. For unattended work, collection must preserve the last valid source on failure and return nonzero, and the build must not run after that failure. A systemd unit cannot invoke the interactive `build-website` alias directly; it needs the actual executable and project working directory.
+
 ## Practice
 
+Run the alias once to initialize a missing project or build the existing one. Stop on errors and preserve existing source before editing its homepage:
+
 ```bash
+build-website
 micro ~/src/pages/index.md
 build-website
-curl -L https://lf2607.kolamayermakers.org/~username/
+test -s ~/public_html/index.html
 ```
+
+Then visit the public URL from the platform reference and find your actual change. A generated file alone does not prove public delivery.
 
 ## Watch Out
 
@@ -36,4 +43,4 @@ Do not hand-edit `~/public_html/index.html` as the permanent fix. The next build
 ## Docs Pointers
 
 - Read [Markdown basics](../concepts/markdown-basics.md), [site source ownership](../concepts/site-source-ownership.md), and [HTML on the wire](../concepts/html-on-the-wire.md).
-- Read [platform reference](../guides/platform-reference.md) for course hostnames and URL shapes.
+- Read [platform reference](../guides/platform-reference.md) for hostnames and URL shapes.

@@ -1,33 +1,59 @@
-# Diagnose the second URL
+# Diagnose The Second URL
 
 Quest: diagnose-second-url
 
 ## Mission
 
-Run `curl -v` against your second URL and explain the missing-service failure mode.
+Find where a service-hostname request fails, then confirm the effect of starting or recovering your backend. Do not assume it is missing just because no systemd unit exists: a manual server can serve this route too.
 
-## Commands You Will Use
+## Compare The Routes
 
-- `curl -v`
+In your own SSH account on the classroom server, confirm `$USER` matches `whoami`, then:
 
-## Steps
+```bash
+PORT="$((10000 + $(id -u)))"
+printf '%s\n' "$PORT"
+```
 
-1. Run `curl -v` against your second URL.
-2. Read the status and verbose connection output.
-3. Remember that no user-managed service has been created yet.
-4. Answer the guide with the cause.
+If the course formula `10000 + uid` exceeds `65535`, ask staff instead of selecting another port. Otherwise:
 
-## Hints
+```bash
+curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+curl -v --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
+curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/"
+```
 
-1. The second URL needs a backend process.
-2. Before your personal service exists, nothing is listening behind that URL.
-3. Use the words `service` and `listening` in your answer.
+The "second URL" is the service hostname, not another static page path. Sketch the two routes:
 
-## If Check Fails
+```text
+Service hostname -> shared Caddy (HTTPS) -> personal Caddy (loopback HTTP) -> public_html
+Static /~username/ -> shared Caddy (HTTPS) -> public_html
+```
 
-Answer again with a sentence explaining that no service is listening behind the second URL yet.
+These are two Caddy processes using the same software, not one process with two names. Only the service route depends on your personal process.
+
+## Diagnose What You Observed
+
+| Observation | What it tells you |
+| --- | --- |
+| Local refusal and public `502` | Consistent with no listener at the assigned endpoint and a working public proxy route |
+| Local page works, public `502` | Backend responds locally; compare the assigned port, then ask staff about proxy routing |
+| Public DNS or TLS error | Failure before an HTTP response, not HTTP `502` |
+| HTTP `404` | An HTTP server answered but could not find the requested resource |
+| Both routes show the page | The backend is already serving; do not invent a missing-service failure |
+
+`curl -v` marks connection/TLS details with `*`, request headers with `>`, and response headers with `<`. A timeout is a different observation from connection refusal. Public `502` alone does not prove a stopped process.
+
+If no backend is running, follow [Serve a local check page](serve-local-check-page.md). If your user unit should own it, inspect `systemctl --user status site.service --no-pager` and the journal instead of starting a competitor. Never kill an unknown process, use `sudo`, change shared routing, or disable certificate verification.
+
+## Explain What Happened
+
+After recovery, request locally and try the [service homepage](https://your-handle.lf2607.kolamayermakers.org/) from your laptop, replacing `your-handle`. Ask a peer to try too. Explain which observation located the failure, what changed, and what remains unresolved. If access already worked, say so; if DNS or TLS fails, explain that no HTTP response was received.
+
+Record actual results, not an expected answer or a command list. Published notes are optional: if you want them and `~/src/pages/setup.md` is absent, follow [Create a setup page](create-setup-page.md) before building. Otherwise extend the existing file without replacing its content. You may then build and [preserve the intended source change](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or private logs.
 
 ## Related Reading
 
-- [curl -v](../commands/curl-verbose.md)
-- [reverse proxy](../concepts/reverse-proxy.md)
+- [Explain a 502](explain-502.md)
+- [Curl verbose output](../commands/curl-verbose.md)
+- [Reverse proxy](../concepts/reverse-proxy.md)

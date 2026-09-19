@@ -97,6 +97,11 @@ def graphql(
 
 
 def delete_user(base_url: str, token: str, username: str) -> None:
+    _ = subprocess.run(
+        ["/usr/local/sbin/kam-classroom-lingering", "--disable", "--", username],
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
     _ = graphql(
         base_url,
         token,

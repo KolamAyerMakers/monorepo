@@ -4,31 +4,31 @@
 
 A reverse proxy receives a public request and forwards it to another server or process behind it.
 
-In this course, Caddy is the reverse proxy for the user service URL. Your user-managed service is the backend.
+A server such as Caddy can serve static files directly on one route and proxy a different route to a backend process. Both routes can use the same files without sharing the backend's lifecycle.
 
-```text
-static URL:  https://lf2607.kolamayermakers.org/~username/
-service URL: https://username.lf2607.kolamayermakers.org/
-```
+The backend can also be Caddy: the same software, two separate processes. A shared Caddy process handles public HTTPS; a personal `caddy file-server` process serves plain HTTP on loopback. Stopping the personal process does not stop the shared proxy or its direct static-file route.
 
 ## Request Path
 
 ```text
-browser or curl -> Caddy -> your service port -> response back through Caddy
+browser or curl -> proxy -> configured backend port -> response back through proxy
+browser or curl -> static file server -> published files
 ```
 
-The static URL can be served as files from `~/public_html/`. The service URL needs your backend process to be listening on your assigned local port.
+The proxied route needs a backend listening on the configured address and port. A direct static-file route does not. Public HTTPS can end at the proxy while the backend receives HTTP over loopback; loopback binding does not make content private if a proxy publishes it.
 
 ## Failure Model
 
-- Caddy reachable, backend missing: proxy-style error such as `502` or connection failure.
-- Backend listening on wrong port: Caddy cannot reach it.
-- Backend returns an error: Caddy may be working correctly while your service fails.
+- Proxy reachable, backend missing: the public route may return HTTP `502`, while direct loopback access is refused without an HTTP response.
+- Backend listening on the wrong port: the proxy cannot reach it at its configured destination.
+- Backend returns an error: the proxy may be working correctly while the requested resource fails.
+- DNS or TLS failure: the client has not received an HTTP status; do not call that `502`.
+- Static route still works: its file delivery does not prove the separate backend is running.
 
 ## Proof Check
 
-Use `curl -v` on the service URL before the service exists, then explain which part is public proxy and which part is missing backend.
+Run the self-contained [manual server example](../commands/caddy.md), observe its response, stop it with `Ctrl-C`, and repeat the direct request. That demonstrates backend availability only; it does not configure or test a public proxy. Explain why a proxy aimed at that now-closed port could return `502`, while an independent static-file route could still work. On an existing deployment, compare direct and public observations before diagnosing the cause; never change shared routing or stop another user's process for this exercise. Do not use `caddy stop` or `caddy reload`: those admin-API commands might target the shared proxy, not this file server.
 
 ## Docs Pointers
 
-- Read [Caddy](../commands/caddy.md), [curl -v](../commands/curl-verbose.md), [HTTP](http.md), [services](service.md), [sockets](sockets.md), and [platform reference](../guides/platform-reference.md).
+- Read [Caddy](../commands/caddy.md), [curl -v](../commands/curl-verbose.md), [HTTP](http.md), [services](service.md), and [sockets](sockets.md).

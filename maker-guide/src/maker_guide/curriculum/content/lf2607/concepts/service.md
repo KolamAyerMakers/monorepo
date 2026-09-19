@@ -7,20 +7,21 @@ A service is a long-running or supervised capability that other programs or user
 ## Meanings You Will See
 
 - Network service: a process listening for network requests, such as SSH, HTTP, or SMTP.
-- systemd service: a unit managed by systemd, such as `site.service`.
+- systemd service: a unit managed by systemd, such as `sample-web.service`.
 - System service: a root-managed or administrator-managed service for the whole machine.
 - User service: a systemd service managed by your user account with `systemctl --user`.
 
-## Course Examples
+## Practice Alone
+
+Create and start the complete [sample web service](systemd-user-services.md), including its test page and unused-port selection. With the example port `18080` (substitute your chosen port if different):
 
 ```bash
-PORT="$((10000 + $(id -u)))"
-systemctl --user status site.service
-journalctl --user -u site.service --no-pager -n 50
-curl -I "http://127.0.0.1:$PORT/"
+systemctl --user status sample-web.service
+journalctl --user -u sample-web.service --no-pager -n 50
+curl -i --max-time 5 http://127.0.0.1:18080/
 ```
 
-Your personal web service is both a network service and a systemd user service: it listens for HTTP requests on the course-assigned port and is supervised by your per-user systemd instance.
+The sample is both a network service and a systemd user service: it listens for HTTP requests on loopback and is supervised by your per-user systemd instance. Follow the setup card's stop-and-disable steps when finished.
 
 ## What A Service Needs
 
@@ -40,10 +41,10 @@ Your personal web service is both a network service and a systemd user service: 
 
 ## Proof Check
 
-For `site.service`, identify whether it is a network service, systemd service, system service, user service, or more than one of those.
+For `sample-web.service`, identify whether it is a network service, systemd service, system service, user service, or more than one of those.
 
 ## Docs Pointers
 
 - Run `man systemd.service` and `man systemctl`.
 - Read [systemd service units](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html).
-- Read [Server](server.md), [systemd User Services](systemd-user-services.md), [Logging](logging.md), and [Platform Reference](../guides/platform-reference.md).
+- Read [Server](server.md), [systemd User Services](systemd-user-services.md), and [Logging](logging.md).

@@ -1,0 +1,6 @@
+[Service]
+RuntimeDirectory={{ caddy.runtime_directory }}
+RuntimeDirectoryMode={{ caddy.runtime_directory_mode }}
+UMask={{ caddy.service_umask }}
+ExecReload=
+ExecReload=/usr/bin/caddy reload --config {{ caddy.configuration_file | tojson }} --address {{ caddy.admin_address | tojson }}

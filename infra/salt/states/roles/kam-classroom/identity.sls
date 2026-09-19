@@ -6,6 +6,7 @@ include:
   - forgejo.service
   - pam-pwquality.package
   - sssd
+  - systemd.drop_ins
 
 {% set identity = salt['pillar.get']('kam_classroom:identity', {}) -%}
 {% set registration_user = identity.get('registration_user', {}) -%}
@@ -22,6 +23,7 @@ include:
 {% set default_group_name = identity.get('default_group') -%}
 {% set managed_groups = identity.get('groups', {}) -%}
 {% set managed_users = identity.get('managed_users', {}) -%}
+{% set lingering = identity.get('lingering', {}) -%}
 
 roles::kam_classroom::identity::required_pillar:
   test.check_pillar:
@@ -30,6 +32,7 @@ roles::kam_classroom::identity::required_pillar:
       - kam_classroom:identity:registration_user:group
       - kam_classroom:identity:registration_administrator
       - kam_classroom:identity:default_group
+      - kam_classroom:identity:lingering:group
 {% for username, user in managed_users.items() %}
       - kam_classroom:identity:managed_users:{{ username }}:display_name
       - kam_classroom:identity:managed_users:{{ username }}:email
@@ -41,6 +44,7 @@ roles::kam_classroom::identity::required_pillar:
       - kam_classroom:identity:registration_user
       - kam_classroom:identity:groups
       - kam_classroom:identity:managed_users
+      - kam_classroom:identity:lingering
 {% for group_name in managed_groups %}
       - kam_classroom:identity:groups:{{ group_name }}
 {% endfor %}
@@ -50,6 +54,8 @@ roles::kam_classroom::identity::required_pillar:
     - integer:
       - kam_classroom:identity:registration_user:uid
       - kam_classroom:identity:registration_user:gid
+      - kam_classroom:identity:lingering:uid_minimum
+      - kam_classroom:identity:lingering:uid_maximum
 {% for username in managed_users %}
       - kam_classroom:identity:managed_users:{{ username }}:uid_number
 {% endfor %}
@@ -58,8 +64,9 @@ roles::kam_classroom::identity::required_pillar:
       - kam_classroom:identity:groups:{{ group_name }}:gid_number
 {%   endfor %}
 {% endif %}
-{% for username in managed_users %}
     - listing:
+      - kam_classroom:identity:lingering:packages
+{% for username in managed_users %}
       - kam_classroom:identity:managed_users:{{ username }}:secondary_groups
 {%   if 'ssh_public_keys' in managed_users[username] %}
       - kam_classroom:identity:managed_users:{{ username }}:ssh_public_keys
@@ -75,6 +82,61 @@ roles::kam_classroom::identity::default_group_is_managed:
     - require:
       - test: roles::kam_classroom::identity::required_pillar
 {% endif %}
+
+{% if lingering.get('group') not in managed_groups %}
+roles::kam_classroom::identity::lingering_group_is_managed:
+  test.fail_without_changes:
+    - name: kam_classroom:identity:lingering:group must reference kam_classroom:identity:groups
+    - failhard: true
+    - require:
+      - test: roles::kam_classroom::identity::required_pillar
+{% endif %}
+
+{% for package in lingering.get('packages', []) %}
+{{ bootstrap_package_installed(package, extra_requirements=[{'test': 'roles::kam_classroom::identity::required_pillar'}]) }}
+{% endfor %}
+
+/etc/kam-classroom-lingering.json:
+  file.managed:
+    - contents: |
+        {{ {
+          'group': lingering.get('group'),
+          'uid_minimum': lingering.get('uid_minimum'),
+          'uid_maximum': lingering.get('uid_maximum')
+        } | tojson }}
+    - user: root
+    - group: root
+    - mode: '0600'
+    - require:
+      - test: roles::kam_classroom::identity::required_pillar
+
+/usr/local/sbin/kam-classroom-lingering:
+  file.managed:
+    - source: salt://roles/kam-classroom/files/kam_classroom_lingering.py
+    - user: root
+    - group: root
+    - mode: '0700'
+    - require:
+      - file: /etc/kam-classroom-lingering.json
+
+roles::kam_classroom::identity::lingering:
+  cmd.run:
+    - name: /usr/local/sbin/kam-classroom-lingering
+    - stateful: true
+    - require:
+      - test: roles::kam_classroom::identity::required_pillar
+      - file: /usr/local/sbin/kam-classroom-lingering
+      - service: sssd::service
+      - service: systemd::drop_ins::session_policy::service
+      - module: systemd::drop_ins::resource_limits::daemon_reload
+      - cmd: roles::kam_classroom::lldap_group::{{ lingering.get('group') }}
+      - cmd: roles::kam_classroom::lldap_group_migration::lf2607
+{% for username in managed_users %}
+      - cmd: roles::kam_classroom::lldap_user::{{ username }}
+{% endfor %}
+{% for package in lingering.get('packages', []) %}
+      - pkg: {{ package }}
+{% endfor %}
 
 {% for username, user in managed_users.items() %}
 {%   if user.primary_group not in managed_groups %}
@@ -278,6 +340,7 @@ roles::kam_classroom::lldap_user::{{ username }}:
     - group: root
     - mode: '0750'
     - require:
+      - file: /usr/local/sbin/kam-classroom-lingering
       - file: lldap::secret_environment_file
       - service: lldap::service
 

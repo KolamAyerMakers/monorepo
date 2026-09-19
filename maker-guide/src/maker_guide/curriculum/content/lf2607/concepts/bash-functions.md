@@ -8,16 +8,18 @@ Use functions to name repeated command sequences, either in an interactive shell
 
 ## Shape
 
+Use a new or confirmed disposable `~/function-demo` directory, preserving any existing files. Check that Caddy is installed and port `8000` is unused as shown in the [Caddy card](../commands/caddy.md); choose another unused unprivileged port for this standalone demo if necessary.
+
 ```bash
 mkdir -p "$HOME/function-demo"
 printf '<h1>Demo</h1>\n' > "$HOME/function-demo/index.html"
 
 serve() {
-  python3 -m http.server 8000 --bind 127.0.0.1 --directory "$HOME/function-demo"
+  caddy file-server --listen 127.0.0.1:8000 --root "$HOME/function-demo" --access-log
 }
 ```
 
-The first two commands create a demo page. The function definition names the body but does not execute it. Type `serve` to start the foreground server; press `Ctrl-C` to stop it. The explicit directory prevents a failed `cd` from leaving the server exposing the caller's directory instead.
+The first two commands create a demo page. The function definition names the body but does not execute it. Type `serve` to start the foreground HTTP server; press `Ctrl-C` to stop it. No configuration file is needed. The explicit root prevents a failed `cd` from leaving the server exposing the caller's directory instead; it is not a symlink sandbox. Do not use `caddy stop` or `caddy reload`: `file-server` disables the admin API and those commands might target another process.
 
 ## Arguments
 

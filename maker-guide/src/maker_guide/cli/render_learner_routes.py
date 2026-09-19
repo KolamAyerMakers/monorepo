@@ -40,11 +40,11 @@ def render(
 ) -> None:
     """Write Caddy site blocks to standard output."""
     with connect_database(database_path) as database_connection:
-        capture_missing_uids(database_connection)
         participant_handles = frozenset(
             membership.handle
             for membership in list_memberships(database_connection, DEFAULT_COURSE_ID)
         )
+        capture_missing_uids(database_connection, participant_handles)
         typer.echo(
             render_learner_routes(
                 domain,
@@ -89,13 +89,23 @@ def render_learner_routes(
     return "\n".join(route_blocks) or "# No learner routes.\n"
 
 
-def capture_missing_uids(database_connection: sqlite3.Connection) -> None:
-    """Persist mappings for learner rows created before routing was introduced."""
+def capture_missing_uids(
+    database_connection: sqlite3.Connection,
+    participant_handles: frozenset[str],
+) -> None:
+    """Persist legacy participant mappings, leaving unresolved accounts for retry."""
     with transaction(database_connection):
         for learner in list_learners(database_connection):
-            if learner.uid is not None:
+            if learner.handle not in participant_handles or learner.uid is not None:
                 continue
-            uid = pwd.getpwnam(learner.handle).pw_uid
+            try:
+                uid = pwd.getpwnam(learner.handle).pw_uid
+            except KeyError:
+                typer.echo(
+                    f"Warning: no POSIX account for {learner.handle}; omitting learner route.",
+                    err=True,
+                )
+                continue
             if not is_managed_uid(uid):
                 continue
             database_connection.execute(

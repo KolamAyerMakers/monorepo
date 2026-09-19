@@ -1,75 +1,87 @@
-# S8 Recap: Your Own Service
+# S8 Recap: Keep Your Server Running
 
 Session: S8
 
-## Core Idea
+Date: 2026-09-26
 
-A website can be served by a process you own. The static URL and your service hostname serve the same published files through different server processes.
+## What Changed
 
-## Remember
+In S7 your SSH shell owned a foreground personal Caddy process. In S8 you restarted it, stopped it to release the port, then gave the same job to your systemd user manager. Shared Caddy still handles public HTTPS and forwards to personal Caddy over loopback HTTP. Same software, two separate processes; the static route still serves files independently.
 
-- Tmux keeps a foreground shell available when you detach or reconnect, but not across a reboot; host logout policy can still stop it.
-- Shell child processes may be terminated when the shell exits. An ordinary foreground shell is not reliable service supervision.
-- A user service is supervised independently by your user manager. `enable --now` enables and starts it, but does not enable lingering.
-- `serve` uses `--directory "$HOME/public_html"` so a failed directory change cannot expose unrelated files. Keep the loopback bind.
-- `$()` captures command output; `$((...))` calculates a number. Quoted `"$@"` dispatches the helper's supplied arguments without splitting them again.
-- Logs are not decoration. They are evidence.
-- `systemctl --user status` is the first question when a service misbehaves.
+## The Unit Contract
 
-## Live Core
+The installed file is `~/.config/systemd/user/site.service`:
 
-The live milestone includes:
+```ini
+[Unit]
+Description=Personal website service
 
-- Create, detach from, list, reattach to, and end a tmux session.
-- Start a manual server for `public_html`, request its local endpoint, and stop it before systemd takes the same port.
-- Create executable `~/bin/site.sh` with `site_port`, `serve`, `status`, `stop`, and quoted `"$@"`; trace `~/bin/site.sh site_port`.
-- Create `~/.config/systemd/user/site.service` with `WorkingDirectory=%h/public_html`, the numeric result of `10000 + uid` (not the expression), and `--bind 127.0.0.1`; reload, enable, and start it.
-- Inspect local and public service responses, read the actual unit state, and match a request to journal output.
-- Explain lingering, ask staff for help if it is disabled, and distinguish uninterrupted operation from a restart on login.
+[Service]
+WorkingDirectory=%h
+ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log
+Restart=on-failure
 
-## Final Preflight
-
-On the classroom server:
-
-```bash
-bash ~/scripts/site-check.sh "" maker-report.html
-PORT="$((10000 + $(id -u)))"
-curl -I "http://127.0.0.1:$PORT/"
-curl -I "https://lf2607.kolamayermakers.org/~$USER/"
-curl -I "https://$USER.lf2607.kolamayermakers.org/"
-systemctl --user show site.service -p ActiveState -p SubState
-journalctl --user -u site.service --no-pager -n 50
-loginctl show-user "$USER" -p Linger
+[Install]
+WantedBy=default.target
 ```
 
-The unchanged checker checks the static homepage and report, not the service endpoint. Read each HTTP status and report `inactive` or `failed` honestly when that is what systemd says; repair comes next. Curl can exit `0` after an HTTP error.
+Replace `12345` with your actual numeric result of `10000 + uid`. If the result exceeds `65535`, ask the instructor rather than choosing another port. `ExecStart` is not Bash; it does not calculate shell expressions.
 
-Local curl tests Python; the service hostname tests the proxy route from the server, possibly using local host mappings. Replace `your-handle` and open the [static homepage](https://lf2607.kolamayermakers.org/~your-handle/), [report](https://lf2607.kolamayermakers.org/~your-handle/maker-report.html), and [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in your laptop browser for outside-access evidence.
+`%h` means your home directory. The publisher replaces `public_html`, so the working directory stays at `%h` and personal Caddy follows the explicit `--root %h/public_html` path on new requests. The listener uses all interfaces; the classroom firewall blocks new direct external connections to the port. Do not add `--domain`; shared HTTPS is already configured. The root is not a sandbox: keep private files and symlinks to them out. Without `--browse`, a missing index does not produce an automatic directory listing.
 
-Staff owns lingering: if `Linger=no`, request help, not `sudo`. For a logout experiment, record `systemctl --user show site.service -p MainPID -p ExecMainStartTimestamp` before logout and compare it after reconnecting. Close other logins and check the browser while logged out; `active` after reconnecting alone can be a newly started service.
+## Lifecycle Decisions
 
-## Optional Reinforcement
+| Change or question | Action |
+| --- | --- |
+| New unit | `systemctl --user daemon-reload`, then `systemctl --user enable --now site.service` |
+| Installed unit edited | Reread with `daemon-reload`, then restart the service |
+| Page source edited | `build-website`, then browser reload, no service restart |
+| Need to stop it | `systemctl --user stop site.service` |
+| Need to see its state | `systemctl --user status site.service --no-pager` |
+| Need recent errors or requests | `journalctl --user -u site.service --no-pager -n 50` |
+| Need new log lines live | `journalctl --user -u site.service -f` |
 
-Use the S8 quests for repeated tmux/log practice, a safe unit break and repair, health pages, and service notes. Helper and unit creation are already live core. Run `guide now` for your current session objective; after you complete it, it shows your current quest. Submit prompted answers with `guide answer 'your observation'`, and run `guide check` after practical work. A passing check records evidence, not independent proof of HTTP 200 or outside access.
+`Restart=on-failure` retries failures, not intentional stops. `Ctrl-C` stops a journal follower, not the service. Keep `--user`; no `sudo`, shared routing changes, or TLS bypasses.
 
-## Can You Explain This?
+`file-server` disables its admin API. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint. Stop the supervised personal process with `systemctl --user stop site.service` only.
 
-- Why can tmux survive an SSH disconnect but not a server reboot?
-- What process serves your second URL?
-- What happens at the final `"$@"` in `~/bin/site.sh site_port`?
-- Why must the unit contain a numeric port rather than `$PORT` or shell arithmetic?
-- Why does `daemon-reload` matter after editing a unit file?
-- Where do service errors appear?
-- Why can `active` after reconnecting fail to prove logout survival?
+## Observe Real Outcomes
+
+An active unit alone does not prove that the page works. Request personal Caddy locally, then load the public service page in the laptop browser:
+
+```bash
+PORT="$((10000 + $(id -u)))"
+curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+curl -I --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
+```
+
+Replace `your-handle` in the [service homepage](https://your-handle.lf2607.kolamayermakers.org/) and [static homepage](https://lf2607.kolamayermakers.org/~your-handle/). Confirm recognizable content through both routes. `--access-log` records structured fields `request.method`, `request.uri`, `status`, and a timestamp or time (`ts` in JSON). Match them to a peer's requests; journal and terminal formatting can differ. Personal Caddy may log shared Caddy's loopback address, not the peer's address. Shared Caddy is a server to the browser and a client to personal Caddy. A missing path can yield `404` while the service is healthy.
+
+## Repair Safely
+
+Agree to any interruption first. Back up your own working unit to a unique private directory, preserving previous backups and custom content. The class exercise changes only `/usr/bin/caddy` to `/no/such/caddy`, reads the executable failure (often `203/EXEC`), and stops retries. Restore only after comparing the backup with the broken file and consenting to replacement; preserve any unrelated edits.
+
+After restoration, use `daemon-reload`, `reset-failed`, and `restart`, then confirm local and public access. `reset-failed` clears failure and retry-limit state; it does not repair configuration. Do not leave a deliberate break behind or interfere with another learner's processes. The [self-study repair lab](self-study.md#7-break-and-read-the-error) contains the complete backup and recovery sequence.
+
+## Logout Is A Separate Experiment
+
+The instructor must confirm lingering and the logout observation interval:
+
+```bash
+loginctl show-user "$USER" -p Linger
+systemctl --user show site.service -p MainPID -p ExecMainStartTimestamp
+```
+
+Enabling a unit arranges startup with the user manager. `Linger=yes` lets that manager run without a login; enablement alone does not set it or guarantee logout survival. Ask the instructor about the policy. Learners do not enable lingering themselves.
+
+Record process identity and start time. Close **all** SSH, browser-terminal, remote editor, and other account logins; end any optional tmux shells rather than merely detaching. Stay logged out past the delay confirmed by the instructor, and request the public page freshly from your laptop or a peer before reconnecting. Compare identity and start time after reconnecting. A service can start again on login, so `active` afterward alone is not proof of survival. Report only the interval you observed, not indefinite uptime.
 
 ## Keep
 
-Keep `~/bin/site.sh` and `~/.config/systemd/user/site.service`; they become part of the final demo and README.
+Keep the working unit source copy at `~/src/services/site.service`, outside published pages. Keep operational notes in linked `setup.md`: numeric port, lifecycle, observed failure and repair, logout result, and useful peer feedback with consent before naming anyone. Build and browse updates without restarting. Review and commit only intended source files as they are created; preserve unrelated work and exclude credentials, private backups, and generated output.
 
-## Full Autonomy
-
-Use [S8 Self-Study Guide: Your Own Web Service](self-study.md) for the tmux workflow, helper script, unit file, port formula, systemctl lifecycle, journal checks, and safe break lab.
+Success is a page a peer can load, requests you can locate in the journal, a failure you can diagnose and repair, and an honest explanation of logout behavior. Tmux and helper functions are optional; no `site.sh` dispatcher is needed.
 
 ## Next Session
 
-S9 is on **2026-10-10**: polish and automation. Bring the helper, unit, site and report, and any unresolved service observations.
+S9: **2026-10-10**, Automate It. Hand It Over. Bring your working service, source history, setup notes, and unresolved issues. Use the [self-study route](self-study.md) for complete examples.

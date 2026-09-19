@@ -321,8 +321,6 @@ build-website
 
 Do not remove `~/scripts`, `~/src`, `~/src/pages`, or `~/public_html`.
 
-This resets files only. It does not erase durable course progress.
-
 ## Troubleshooting
 
 | Symptom | Check | Repair |
@@ -352,7 +350,7 @@ This resets files only. It does not erase durable course progress.
 
 ## Optional Appendix: When Bash Stops
 
-This unscored lab takes about 15 minutes. Keep it in `~/playground`; do not add these options to `maker-report.sh` yet.
+This optional lab takes about 15 minutes. Keep it in `~/playground`; do not add these options to `maker-report.sh` yet.
 
 Create `~/playground/options-demo.sh`:
 

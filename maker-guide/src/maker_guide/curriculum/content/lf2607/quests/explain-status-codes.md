@@ -21,11 +21,11 @@ Explain `200`, `404`, and `502` in one short answer.
 
 1. `200` means success.
 2. `404` means missing path.
-3. `502` often means a proxy could not reach a backend.
+3. `502` means a proxy could not obtain a usable backend response; an unreachable backend is one possible cause.
 
 ## If Check Fails
 
-Answer again and include all three numbers: `200`, `404`, and `502`.
+Explain all three meanings in your own words: `200` is a successful request, `404` means the requested resource was not found, and `502` means a proxy could not obtain a usable backend response. Numbers or a keyword list alone do not satisfy the check.
 
 ## Related Reading
 

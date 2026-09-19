@@ -19,7 +19,7 @@ Use this page when a quest says "your server", "your first URL", "your second UR
 
 ## guide checks
 
-Run `guide now` before starting a quest and after practical work. It checks one task and shows the next on success; otherwise follow the feedback and try again. `guide today` and `guide next` do the same.
+Run `guide now` before starting a quest and after practical work: it shows your current session objective or current task, checks one task, and shows the next on success; otherwise follow the feedback and try again. `guide today` and `guide next` do the same.
 
 Use `guide answer 'your answer'` when asked. `guide check` is an optional explicit check. Ask the guide for help when stuck. In an IRC DM to `guide`, omit the `guide` prefix: send `now`, `today`, `next`, `answer <your answer>`, or `check`.
 
@@ -111,6 +111,25 @@ Use the result anywhere a service quest says `PORT`.
 
 Ports are numeric. If your computed value is above `65535`, stop and ask the instructor because that account id does not fit this course port formula.
 
+## Two Caddy Processes
+
+Shared Caddy handles public HTTPS. It serves the static route directly from published files and proxies the service hostname to `127.0.0.1` at your assigned port. Your personal Caddy listens for plain HTTP on all interfaces; the classroom firewall blocks new direct external connections to that port. Same software, two processes with separate owners and lifecycles.
+
+With your site already built in `~/public_html`, and no existing process using your assigned port, run in your own SSH shell:
+
+```bash
+PORT="$((10000 + $(id -u)))"
+caddy file-server --listen ":$PORT" --root "$HOME/public_html" --access-log
+```
+
+Check the computed port against the range above before starting. Stop an existing manual server you own with `Ctrl-C`, or your managed backend with `systemctl --user stop site.service`, before transferring the port. Never stop an unknown listener.
+
+For systemd, keep `WorkingDirectory=%h` and use `ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log`, replacing `12345` with your numeric port. The stable working directory and explicit root let requests resolve the new tree after publication replaces `public_html`.
+
+No Caddy configuration file is needed. `file-server` disables the admin API. Use `Ctrl-C` for the foreground process and `systemctl --user` for your unit, never `caddy stop` or `caddy reload`, which might target shared Caddy. Do not alter shared configuration. This setup uses neither a domain option nor directory browsing.
+
+`--access-log` enables structured request logs in the terminal or service journal. Match `request.method`, `request.uri`, `status`, and time (`ts` in JSON); `request.remote_ip` may be the shared loopback proxy, not the visitor. A missing index returns `404` with browsing disabled even when the server is healthy. Keep only public files in the root: Caddy follows symlinks, so `--root` is not a filesystem sandbox.
+
 ## Proof Commands
 
 ```bash
@@ -129,4 +148,4 @@ journalctl --user -u site.service --no-pager -n 50
 - [systemd service units](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html)
 - [systemd timers](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)
 - [curl manual](https://curl.se/docs/manpage.html)
-- [Python http.server documentation](https://docs.python.org/3/library/http.server.html)
+- [Caddy file-server CLI](https://caddyserver.com/docs/command-line#caddy-file-server)
