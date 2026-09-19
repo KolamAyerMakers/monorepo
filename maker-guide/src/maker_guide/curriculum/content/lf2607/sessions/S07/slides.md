@@ -96,7 +96,7 @@ Open a second SSH connection:
 
 ```bash
 PORT="$((10000 + $(id -u)))"
-curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+curl -i "http://127.0.0.1:$PORT/"
 ```
 
 `-i` displays the status line and headers before the page's HTML.
