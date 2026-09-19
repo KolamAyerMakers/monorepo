@@ -338,7 +338,6 @@ Success means your peer can load the supervised site, you can match a request to
 ## Optional Practice
 
 - [Watch service logs](../../quests/watch-service-logs.md) for another visitor/request experiment.
-- [Document your service port](../../quests/document-service-port.md) to improve the existing operational notes.
 - [Write site helper functions](../../quests/write-site-helper-functions.md) only if a repeated command merits a name. No service depends on this extension.
 - [Tmux command reference](../../commands/tmux.md) if you want a detachable terminal. Tmux does not replace service supervision or establish logout survival.
 - [Systemd service documentation](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html) and [journalctl documentation](https://www.freedesktop.org/software/systemd/man/latest/journalctl.html) for the underlying tools.

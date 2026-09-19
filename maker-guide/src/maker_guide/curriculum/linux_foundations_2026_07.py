@@ -3410,27 +3410,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
         ),
         _quest(
-            quest_id="document-service-port",
-            title="Document your service port",
-            sequence=82,
-            available_after_session="S7",
-            prompt=(
-                "If `~/src/pages/setup.md` is absent, create it with a heading and link it from "
-                "`index.md`, then improve it with your UID-derived backend port explanation."
-            ),
-            required_commands=("id -u", "micro", "build-website"),
-            practiced_skills=("manual-web-service", "multi-page-sites"),
-            validation=FileCheckValidation(
-                path="~/src/pages/setup.md",
-                required_regex=r"(?is)(?=.*\b10000\b)(?=.*\buid\b)(?=.*\bport\b).+|service\.html",
-            ),
-            goal="Make the per-user port rule explicit enough to debug later.",
-            evidence=(
-                "The guide checks UID/10000/port references or a service-page link in setup.md; "
-                "explain the calculation and route to a peer rather than relying on keywords."
-            ),
-        ),
-        _quest(
             quest_id="read-recent-logs",
             title="Read recent logs",
             sequence=81,

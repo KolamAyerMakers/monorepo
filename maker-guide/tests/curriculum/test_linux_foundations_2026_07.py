@@ -1110,20 +1110,6 @@ def test_s7_manual_server_checks_do_not_require_foreground_or_failed_commands() 
     assert len(diagnosis_validation.required_concepts) == 3
 
 
-def test_s7_companion_notes_reuse_setup() -> None:
-    """Companion quests accept shared notes instead of requiring separate pages."""
-    for quest_id, notes in (
-        ("document-service-port", "My UID is 1234; 10000 + UID gives port 11234."),
-        ("document-service-port", "[My port explanation](service.html)"),
-    ):
-        quest = CATALOG.quest(quest_id)
-        assert quest.available_after_session == "S7"
-        assert isinstance(quest.validation, FileCheckValidation)
-        assert quest.validation.path == "~/src/pages/setup.md"
-        assert re.search(quest.validation.required_regex, notes)
-        assert not re.search(quest.validation.required_regex, "# My setup\n")
-
-
 def test_s3_objectives_and_reinforcement_require_lesson_evidence() -> None:
     """S3 checks cover streams, useful pipelines, and processes."""
     objectives = {objective.id: objective for objective in CATALOG.session("S3").objectives}
