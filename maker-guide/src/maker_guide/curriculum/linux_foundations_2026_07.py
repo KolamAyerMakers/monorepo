@@ -3730,11 +3730,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 required_patterns=(_LOCAL_SERVICE_COMMAND_PATTERN,),
                 observed_commands=("curl",),
             ),
-            goal="Run and stop your own foreground server without systemd or tmux.",
+            goal="Run and stop your own server in the foreground, by hand.",
             evidence=(
-                "The guide checks a completed local `curl -i` or `curl -I` command only. "
-                "Inspect public browser access and logs yourself; this does not prove foreground "
-                "execution or the refused localhost connection after stopping."
+                "The guide matches one completed local `curl -i` or `curl -I` request to "
+                "`http://127.0.0.1:$PORT/` while your server runs."
             ),
         ),
         _quest(

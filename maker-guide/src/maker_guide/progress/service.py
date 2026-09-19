@@ -358,6 +358,23 @@ def _session_evidence_since(
     )
 
 
+def quest_evidence_since(
+    database_connection: sqlite3.Connection,
+    catalog: CourseCatalog,
+    quest_id: str,
+) -> str:
+    """Return the session-wide evidence window start for a quest."""
+    course_release = _require_course_release(database_connection, catalog.course.id)
+    if course_release is None:
+        raise ProgressServiceError("learner has not reached a course session")
+    return _session_evidence_since(
+        database_connection,
+        catalog,
+        course_release,
+        catalog.quest(quest_id).available_after_session,
+    )
+
+
 def complete_session_objective(  # noqa: PLR0913
     database_connection: sqlite3.Connection,
     catalog: CourseCatalog,

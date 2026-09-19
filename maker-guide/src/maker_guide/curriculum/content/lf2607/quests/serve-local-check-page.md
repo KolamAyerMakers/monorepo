@@ -4,7 +4,7 @@ Quest: serve-local-check-page
 
 ## Mission
 
-Run your own foreground backend and fetch its page locally with curl. Then try the public service hostname and watch for visitors. Two SSH connections are enough; no tmux or helper script is required.
+Run your own foreground backend and fetch its page locally with curl. Then try the public service hostname and watch for visitors. Two SSH connections are enough; no extra tool or helper script is required.
 
 ## Start In One SSH Shell
 

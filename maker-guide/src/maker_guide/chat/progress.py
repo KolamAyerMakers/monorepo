@@ -26,6 +26,7 @@ from maker_guide.progress.service import (
     complete_session_objective,
     current_quest,
     current_session_objective,
+    quest_evidence_since,
     record_attempt,
     record_session_objective_validation_failure,
 )
@@ -387,7 +388,11 @@ def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evid
             handle=learner_handle,
             quest=current_quest_result.quest,
             checked_at=timestamp,
-            assigned_at=current_quest_result.assignment.assigned_at,
+            assigned_at=quest_evidence_since(
+                dependencies.database_connection,
+                dependencies.catalog,
+                current_quest_result.quest.id,
+            ),
             answer_text=answer_text,
             answer_concept_assessments=(
                 prepared_answer_interpretation.assessments
@@ -581,17 +586,27 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
         evidence=validation_result.evidence,
         source=source,
     )
+    next_work = _current_response(dependencies, learner_handle, source, timestamp, cwd=cwd)
+    if not is_answer:
+        return CheckResponse(
+            text=next_work,
+            tier_promotions=completion_result.tier_promotions,
+        )
+    session_objectives_complete = (
+        current_session_objective(
+            dependencies.database_connection,
+            dependencies.catalog,
+            handle=learner_handle,
+        ).objective
+        is None
+    )
     return CheckResponse(
-        text=(
-            "\n\n".join(
-                (
-                    f"Answer accepted. Objective complete: {objective.title}.",
-                    "Next:",
-                    _current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
-                ),
-            )
-            if is_answer
-            else _current_response(dependencies, learner_handle, source, timestamp, cwd=cwd)
+        text="\n\n".join(
+            (
+                f"Answer accepted. Objective complete: {objective.title}.",
+                "Session objectives complete." if session_objectives_complete else "Next:",
+                next_work,
+            ),
         ),
         tier_promotions=completion_result.tier_promotions,
     )

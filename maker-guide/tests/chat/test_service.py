@@ -1309,7 +1309,7 @@ def test_answer_intent_validates_answer_bearing_session_objective(
         assert response.text.startswith(
             "Answer accepted. Objective complete: Report a process ID and command.",
         )
-        assert "Next:\n\nToday's quest: Count a stream" in response.text
+        assert "Session objectives complete.\n\nToday's quest: Count a stream" in response.text
         assert tutor_client.requests == []
 
 
@@ -1571,7 +1571,9 @@ def test_s7_local_request_and_honest_diagnosis_unlock_server_quest(
         )
 
         assert answer_response.text.startswith("Answer accepted. Objective complete:")
-        assert "Next:\n\nToday's quest: Serve a local check page" in answer_response.text
+        assert "Session objectives complete.\n\nToday's quest: Serve a local check page" in (
+            answer_response.text
+        )
         assert list_completed_objective_ids(
             database_connection, "alice", CATALOG.course.id, "S7"
         ) == frozenset({"inspect-first-url-headers", "diagnose-second-url"})
@@ -1584,6 +1586,18 @@ def test_s7_local_request_and_honest_diagnosis_unlock_server_quest(
             audit_log.status for audit_log in list_llm_audit_logs(database_connection, "alice", 10)
         ] == ["answer_interpreted"]
         assert not learner_home.exists()
+
+        quest_check_response = handle_chat_request(
+            _private_chat_request("check"),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                timestamp="2026-09-19T09:04:00Z",
+            ),
+        )
+
+        assert quest_check_response.text.startswith("Done.")
+        assert "Completed quest: Serve a local check page" in quest_check_response.text
 
 
 @pytest.mark.parametrize("session_reached", ["S3", "S4"])
@@ -2645,28 +2659,28 @@ WantedBy=default.target
             _chat_dependencies(
                 database_connection,
                 account_lookup=_account_lookup(learner_home),
-                timestamp="2026-07-19T09:00:00Z",
+                timestamp="2026-09-26T09:00:00Z",
             ),
         )
         systemctl_observation_id = add_command_observation(
             database_connection,
             _command_observation(
                 "systemctl --user enable --now site.service",
-                observed_at="2026-07-19T09:01:00Z",
+                observed_at="2026-09-26T09:01:00Z",
             ),
         )
         local_curl_observation_id = add_command_observation(
             database_connection,
             _command_observation(
                 "curl -I http://127.0.0.1:14242/",
-                observed_at="2026-07-19T09:01:00Z",
+                observed_at="2026-09-26T09:01:00Z",
             ),
         )
         public_curl_observation_id = add_command_observation(
             database_connection,
             _command_observation(
                 "curl -I https://alice.lf2607.kolamayermakers.org/",
-                observed_at="2026-07-19T09:01:00Z",
+                observed_at="2026-09-26T09:01:00Z",
             ),
         )
         response = handle_chat_request(
@@ -2674,7 +2688,7 @@ WantedBy=default.target
             _chat_dependencies(
                 database_connection,
                 account_lookup=_account_lookup(learner_home),
-                timestamp="2026-07-19T09:02:00Z",
+                timestamp="2026-09-26T09:02:00Z",
             ),
         )
 
@@ -2699,7 +2713,7 @@ WantedBy=default.target
             "missing_commands": [],
             "missing_pattern_indexes": [],
             "observed_count": 3,
-            "observed_since": "2026-07-19T09:00:00Z",
+            "observed_since": "2026-09-26T09:00:00Z",
             "passed": True,
             "required_count": 3,
             "validation_type": "command_history",

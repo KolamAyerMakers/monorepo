@@ -40,7 +40,7 @@ from maker_guide.llm_tutor import (
     safe_tutor_text,
 )
 from maker_guide.progress.models import CurrentSessionObjectiveResult
-from maker_guide.progress.service import current_session_objective
+from maker_guide.progress.service import current_session_objective, quest_evidence_since
 from maker_guide.progress.validation import (
     QuestValidationInput,
     validate_quest,
@@ -453,7 +453,11 @@ def _read_only_validation_status(  # noqa: PLR0913, validation context is assemb
             handle=handle,
             quest=catalog.quest(assignment.quest_id),
             checked_at=timestamp,
-            assigned_at=assignment.assigned_at,
+            assigned_at=quest_evidence_since(
+                database_connection,
+                catalog,
+                assignment.quest_id,
+            ),
         ),
     )
     return ReadOnlyValidationStatus(
