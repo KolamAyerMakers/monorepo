@@ -310,7 +310,7 @@ Start Caddy again with the same command, then repeat the three requests. What ch
 
 # Explain What Runs And What Responds
 
-Explain how you found your server's process and listening socket, what you sent with netcat, and how you distinguished the three incidents.
+Explain how you found your server's process and listening socket, what you sent with netcat, and how you distinguished the two incidents.
 
 Confirm the service page works again, then stop your server with `Ctrl-C`. The static site stays available.
 

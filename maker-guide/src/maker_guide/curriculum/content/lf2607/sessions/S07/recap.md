@@ -92,17 +92,16 @@ Read the status, headers, and body, then find the matching log entry. Change onl
 
 <a id="what-stopping-changes"></a>
 
-## Three Safe Incidents
+## Two Safe Incidents
 
-`file-server` disables the personal process's admin API. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint. When an incident calls for stopping, use `Ctrl-C` only in your own server's terminal. Keep the original running for the first incident:
+`file-server` disables the personal process's admin API. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint. When an incident calls for stopping, use `Ctrl-C` only in your own server's terminal:
 
 | Incident | Evidence and recovery |
 | --- | --- |
-| Start an identical second Caddy in the second SSH shell while the first runs | Startup reports an occupied address; `ss` still matches the original PID, curl still works, and the first terminal logs the request. The second launch failed, not the original server. |
 | Stop the first server, then serve a fresh empty practice root in that same first shell | `ps` shows the temporary root and new PID; `ss` matches it. Local and public service requests return `404` with fresh logs while the real static site works. Stop this process and restore `~/public_html` before proceeding. |
 | Stop the restored backend in the first shell | Its PID and listener disappear. Local curl is refused with no HTTP status; the public service returns shared Caddy's `502` if routing works; the static site still loads. Restart and verify recovery. |
 
-Use the [guarded empty-root procedure](self-study.md#incident-2-a-running-server-with-the-wrong-root): `practice_root=$(mktemp -d)` belongs in the first/server shell, and Caddy must not launch if creation fails. Treat that fresh directory as public and keep it empty; never delete or rename real website files, serve private files, or enable directory browsing.
+Use the [guarded empty-root procedure](self-study.md#incident-1-a-running-server-with-the-wrong-root): `practice_root=$(mktemp -d)` belongs in the first/server shell, and Caddy must not launch if creation fails. Treat that fresh directory as public and keep it empty; never delete or rename real website files, serve private files, or enable directory browsing.
 
 After the practice server stops, restore in the first shell:
 
@@ -122,7 +121,7 @@ Repeat `ps` and `ss` after recovery and match the new process to its port. Confi
 
 ## Finish
 
-Success means you can connect ownership, PID, listening port, HTTP response, and request log, then distinguish and recover all three incidents. No new page or Git commit is required. After confirming recovery, stop the foreground server with `Ctrl-C`; it is not an uptime promise. Remove only your empty practice directory with `rmdir -- "$practice_root"` in the first shell if that variable still identifies it. If it is unset or the directory is not empty, leave it and ask for help. Restore any pre-existing S8 user service you temporarily stopped, following the self-study cleanup.
+Success means you can connect ownership, PID, listening port, HTTP response, and request log, then distinguish and recover both incidents. No new page or Git commit is required. After confirming recovery, stop the foreground server with `Ctrl-C`; it is not an uptime promise. Remove only your empty practice directory with `rmdir -- "$practice_root"` in the first shell if that variable still identifies it. If it is unset or the directory is not empty, leave it and ask for help. Restore any pre-existing S8 user service you temporarily stopped, following the self-study cleanup.
 
 ## Optional Practice
 

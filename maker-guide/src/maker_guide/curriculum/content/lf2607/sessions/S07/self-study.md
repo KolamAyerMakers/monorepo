@@ -6,9 +6,9 @@ Date: 2026-09-19
 
 ## Study Path
 
-Start your own web-server program. Request a page locally with curl, then reach it from your laptop browser. Watch visitors, identify your process and listening port, send raw HTTP, and diagnose three safe incidents before recovering.
+Start your own web-server program. Request a page locally with curl, then reach it from your laptop browser. Watch visitors, identify your process and listening port, send raw HTTP, and diagnose two safe incidents before recovering.
 
-Raw HTTP and all three incidents are core work. Publishing changes, operating notes, and Git practice remain optional extensions.
+Raw HTTP and both incidents are core work. Publishing changes, operating notes, and Git practice remain optional extensions.
 
 ## Before You Begin
 
@@ -77,7 +77,6 @@ Keep this terminal visible. There is no shell prompt while personal Caddy owns t
 
 `--access-log` enables structured request logs. `file-server` disables the personal process's admin API, avoiding an admin-port conflict with shared Caddy. Stop this foreground process with `Ctrl-C` only. Never use `caddy stop` or `caddy reload`: they can target shared Caddy's admin endpoint instead. In S8, use `systemctl --user` to control your supervised process.
 
-If Caddy reports `address already in use`, do not choose a new port or kill unknown processes. Find your other server terminal or ask the instructor to help identify the owner.
 
 ## 4. Request And Watch
 
@@ -190,27 +189,7 @@ Inspect the actual status and find `request.uri` `/missing.html` with status `40
 
 Compare with `curl -i http://127.0.0.1:$PORT/missing.html`: what did curl construct for you?
 
-## Incident 1: Your Port Is Already Occupied
-
-Leave the original Caddy running in the first SSH shell. Predict what happens if a second process tries the same listen address and port. In the second SSH shell, try the identical launch:
-
-```bash
-caddy file-server --listen ":$PORT" --root "$HOME/public_html" --access-log
-```
-
-Read the startup error and wait for the second shell's prompt to return. Expect `address already in use`: the second process cannot take the original listener. Do not pick another port or stop the original to hide the conflict.
-
-Still in the second shell:
-
-```bash
-ps -u "$USER" -o pid,comm,args
-ss -ltnp "sport = :$PORT"
-curl -i --max-time 10 "http://127.0.0.1:$PORT/"
-```
-
-Match the listener to the original PID you noted earlier. Confirm curl still receives your page and the first terminal logs its request. The failed second launch did not stop the first server. If the second launch unexpectedly stays running, stop only that foreground attempt with `Ctrl-C` and ask the instructor to help reconcile the observations.
-
-## Incident 2: A Running Server With The Wrong Root
+## Incident 1: A Running Server With The Wrong Root
 
 Predict what happens when Caddy listens correctly but serves an empty directory. Do not delete or rename any website files. Press `Ctrl-C` in the first SSH shell to stop the original server. In that SAME first/server shell, create a fresh empty practice directory and launch only if creation succeeds:
 
@@ -248,7 +227,7 @@ Repeat local curl in the second shell and reload the public service homepage. Co
 
 ## 5. Predict, Stop, And Recover
 
-This is incident 3. With the published root restored, predict with your peer what the direct loopback request, public service hostname, and public static homepage will do when only your backend stops. Make your predictions before reading the expected results below.
+This is incident 2. With the published root restored, predict with your peer what the direct loopback request, public service hostname, and public static homepage will do when only your backend stops. Make your predictions before reading the expected results below.
 
 Press `Ctrl-C` in the first terminal to stop your personal Caddy process. From the second terminal:
 
@@ -282,7 +261,7 @@ Repeat `ps`, `ss`, and local curl, then reload the service homepage in the lapto
 
 ## 6. Explain And Finish
 
-Explain which process answers each address, how its PID connects your account to the listening port, and how you recognized a request in the log. Describe your raw request's line endings and final blank line. Distinguish a failed second launch, a running server with the wrong root, and a stopped backend using actual observations. Confirm the service page works again after relaunching. No new page, published notes, or Git commit is required for this experiment.
+Explain which process answers each address, how its PID connects your account to the listening port, and how you recognized a request in the log. Describe your raw request's line endings and final blank line. Distinguish a running server with the wrong root from a stopped backend using actual observations. Confirm the service page works again after relaunching. No new page, published notes, or Git commit is required for this experiment.
 
 After any optional exercises below, stop the manual server with `Ctrl-C`. It is not supervised, and SSH logout behavior is not an uptime guarantee. If you temporarily stopped an existing S8 unit, stop the manual server first, restore it with `systemctl --user start site.service`, and confirm local and public access again.
 
@@ -356,7 +335,6 @@ Do not use `git add .` or stage generated output. There is no required commit or
 
 ## Troubleshooting
 
-- Caddy exits with `address already in use`: correlate `ss` with your account's `ps` output and known foreground server or user unit. The original may still answer requests. Do not kill an unknown process or change the assigned port.
 - Local curl is refused: confirm personal Caddy is still running, the shell's `PORT` is correct, and both SSH sessions are on the classroom machine.
 - Local HTTP is `404`: inspect the running command's `--root` first. After the empty-root incident, stop your practice server and restore `~/public_html`. Otherwise inspect the published path and source, including `index.md` for the homepage, then build. Do not remove `--root` or enable browsing to hide the error.
 - Local access works but public access fails: compare your port with the course formula, then bring the local result and public error to the instructor. Do not alter DNS, shared Caddy, or TLS verification.
