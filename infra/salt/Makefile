@@ -30,3 +30,9 @@ maker-guide-artifact: ## Rebuild and import the Maker Guide venv tarball
 	install -d -m 0755 states/roles/kam-classroom/files/maker-guide; \
 	rm -f states/roles/kam-classroom/files/maker-guide/maker-guide*; \
 	install -m 0644 "$$artifact_path" states/roles/kam-classroom/files/maker-guide/"$${artifact_path##*/}"
+
+restore-dev:
+	../ops/lf-classroom-backup-restore root@lf2607.kolamayermakers.org:/var/backups/kam-classroom/latest root@lf-dev.kolamayermakers.org
+
+deploy-dev: maker-guide-artifact
+	uv run salt-runner ssh-apply lf-dev
