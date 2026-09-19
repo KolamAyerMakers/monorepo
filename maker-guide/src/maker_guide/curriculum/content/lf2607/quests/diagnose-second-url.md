@@ -54,6 +54,5 @@ Record actual results, not an expected answer or a command list. Published notes
 
 ## Related Reading
 
-- [Explain a 502](explain-502.md)
 - [Curl verbose output](../commands/curl-verbose.md)
 - [Reverse proxy](../concepts/reverse-proxy.md)

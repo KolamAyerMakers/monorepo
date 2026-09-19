@@ -43,7 +43,6 @@ Success means someone can use your notes to locate a failure and recover safely,
 
 ## Related Reading
 
-- [Explain a 502](explain-502.md)
 - [Fix and restart service](fix-and-restart-service.md)
 - [HTTP status codes](../concepts/http-status-codes.md)
 - [Multi-page sites](../concepts/multi-page-sites.md)

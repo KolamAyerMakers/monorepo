@@ -3178,7 +3178,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "Stop only your known foreground Caddy with Ctrl-C, then probe your assigned "
                 'port using `PORT=$((10000 + $(id -u)))` and `nc -vz -w 3 127.0.0.1 "$PORT"`. '
                 "Explain refusal, timeout, or unexpected success honestly. Do not stop an unknown "
-                "listener. Restore any existing user service you agreed to interrupt."
+                "listener."
             ),
             required_commands=("nc",),
             practiced_skills=("reverse-proxy", "sockets"),
@@ -3272,57 +3272,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Use command-line evidence to compare what the web server returns.",
             evidence="The guide needs to see `curl` and `diff` commands.",
-        ),
-        _quest(
-            quest_id="explain-502",
-            title="Explain a 502",
-            sequence=63,
-            available_after_session="S7",
-            prompt=(
-                "Explain public 502, local refusal, and independent static delivery using your "
-                "stop-and-recover observations. A stopped backend is one possible cause of 502."
-            ),
-            required_commands=("curl -v",),
-            practiced_skills=("reverse-proxy", "http-status-codes"),
-            validation=InteractiveQuestionValidation(
-                question="What does 502 establish, and how do local and static requests narrow it?",
-                required_concepts=(
-                    AnswerConcept(
-                        id="missing-backend",
-                        aliases=(_PROXY_502_PATTERN,),
-                        forbidden_patterns=_PROXY_502_FORBIDDEN_PATTERNS,
-                        rubric=(
-                            "Explain that 502 means the proxy could not obtain a usable upstream "
-                            "response, for example from an unavailable backend. Explain expected "
-                            "502 even if DNS or TLS actually failed before HTTP; do not invent an "
-                            "observed status. Blaming the requested page alone contradicts this "
-                            "concept."
-                        ),
-                    ),
-                    AnswerConcept(
-                        id="local-and-static-routes",
-                        aliases=(
-                            (
-                                rf"(?=.*(?:{_LOCAL_REFUSAL_PATTERN}))"
-                                rf"(?=.*(?:{_INDEPENDENT_STATIC_PATTERN}))"
-                            ),
-                        ),
-                        forbidden_patterns=(
-                            *_LOCAL_REFUSAL_FORBIDDEN_PATTERNS,
-                            *_STATIC_DEPENDENCE_PATTERNS,
-                        ),
-                        rubric=(
-                            "Explain that shared Caddy's static route bypasses personal Caddy. "
-                            "A controlled stop and local refusal support no listener; a public "
-                            "502 alone only establishes that the proxy could not obtain a usable "
-                            "upstream response. Static independence can be explained theoretically "
-                            "without claiming an observed successful static request."
-                        ),
-                    ),
-                ),
-            ),
-            goal="Distinguish the proxy response from local and static observations.",
-            evidence="Explain the unavailable backend response and independent static route.",
         ),
         _quest(
             quest_id="publish-http-troubleshooting",

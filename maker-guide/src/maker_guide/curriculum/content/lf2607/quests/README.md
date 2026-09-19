@@ -59,7 +59,6 @@ The S7 reinforcement order puts core server work and diagnosis before publishing
 - [diagnose-second-url](diagnose-second-url.md)
 - [explain-status-codes](explain-status-codes.md)
 - [probe-closed-port](probe-closed-port.md)
-- [explain-502](explain-502.md)
 - [inspect-first-url-headers](inspect-first-url-headers.md)
 - [record-http-headers](record-http-headers.md)
 - [compare-page-fetches](compare-page-fetches.md)

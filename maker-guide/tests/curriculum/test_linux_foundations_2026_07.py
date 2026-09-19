@@ -239,39 +239,6 @@ def test_reported_results_need_values_not_just_keywords() -> None:
                 ),
             ),
         ),
-        (
-            "explain-502",
-            (
-                (
-                    "Localhost refused because personal Caddy stopped. "
-                    "Shared Caddy returns 502 when its backend is unavailable. "
-                    "Shared Caddy serves public_html directly, independently of personal Caddy."
-                ),
-                (
-                    "Localhost refused because personal Caddy stopped. "
-                    "Expected 502 means the proxy could not obtain a usable upstream response. "
-                    "TLS failed before HTTP, so I did not observe 502. "
-                    "The static route is independent of personal Caddy. "
-                    "502 does not prove the process stopped."
-                ),
-            ),
-            (
-                "backend static",
-                "502 means the backend is unavailable. The static route bypasses personal Caddy.",
-                (
-                    "Localhost refused because personal Caddy stopped. "
-                    "502 means the backend is unavailable. "
-                    "The static route bypasses personal Caddy. "
-                    "502 alone proves the process is stopped."
-                ),
-                (
-                    "Localhost refused because personal Caddy stopped. "
-                    "502 means the backend is unavailable. "
-                    "The static route bypasses personal Caddy. "
-                    "The static route does not bypass personal Caddy."
-                ),
-            ),
-        ),
     ):
         validation = (
             CATALOG.session("S7").objectives[1].validation
