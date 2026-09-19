@@ -205,34 +205,6 @@ def test_reported_results_need_values_not_just_keywords() -> None:
             ),
         ),
         (
-            "diagnose-second-url",
-            (
-                "the backend was already working locally and through caddy; no repair was needed",
-                (
-                    "local curl was refused and shared caddy returned 502; "
-                    "i started personal caddy and it loaded"
-                ),
-                (
-                    "Local curl returned 200. TLS failed before any HTTP response. "
-                    "TLS remains unresolved; I asked staff."
-                ),
-                (
-                    "Local curl was working. DNS failed before HTTP. "
-                    "DNS is unresolved; I will ask staff."
-                ),
-            ),
-            (
-                "backend caddy already",
-                "local refused 502 started",
-                "The backend was not working locally and through Caddy; no repair was needed.",
-                (
-                    "The backend was already working locally and through Caddy; "
-                    "no repair was needed. 502 alone proves the process is stopped."
-                ),
-                "Local curl was working. DNS failed. Already fixed.",
-            ),
-        ),
-        (
             "S7/diagnose-second-url",
             (
                 (

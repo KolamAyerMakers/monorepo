@@ -8,7 +8,7 @@ Use your own backend observations to explain why the service route can fail whil
 
 ## Predict And Observe
 
-Reuse your [S7 stop-and-recover observations](../sessions/S07/self-study.md#7-predict-stop-and-recover), or repeat that brief experiment with your own manual server. Agree to the interruption first, stop only your known foreground server with `Ctrl-C` in its terminal, and restore it afterward. If your own `site.service` owns the port now, inspect it and agree to the interruption before using `systemctl --user stop site.service` and later `systemctl --user start site.service` instead. Never stop an unknown process or another learner's service.
+Reuse your [S7 stop-and-recover observations](../sessions/S07/self-study.md#7-predict-stop-and-recover), or repeat that brief experiment with your own manual server. Stop only your known foreground server with `Ctrl-C` in its terminal, and restore it afterward. Never stop an unknown process or another learner's service.
 
 In your classroom SSH shell:
 
@@ -44,12 +44,12 @@ PORT="$((10000 + $(id -u)))"
 caddy file-server --listen ":$PORT" --root "$HOME/public_html" --access-log
 ```
 
-If systemd owned the backend, start the unit instead; do not launch a competing manual server. Repeat local curl and try the public service page in the laptop browser. Ask a peer to try too. Explain which component returned the earlier error, or why DNS or TLS failed before any HTTP response. Report unresolved public access separately from local recovery.
+Relaunch your known manual server if you stopped it; do not launch a competing server on an occupied port. Repeat local curl and try the public service page in the laptop browser. Ask a peer to try too. Explain which component returned the earlier error, or why DNS or TLS failed before any HTTP response. Report unresolved public access separately from local recovery.
 
 Do not leave a deliberately stopped managed service behind. Published notes are optional: if you want them and `~/src/pages/setup.md` is absent, follow [Create a setup page](create-setup-page.md) before building. Preserve existing content when adding the diagnosis; you may build and [preserve only the intended source change](../sessions/S07/self-study.md#6-preserve-source-now). No credentials or private logs.
 
 ## Related Reading
 
-- [Diagnose the second URL](diagnose-second-url.md)
+- [Diagnose the service URL](diagnose-second-url.md)
 - [Reverse proxy](../concepts/reverse-proxy.md)
 - [HTTP status codes](../concepts/http-status-codes.md)

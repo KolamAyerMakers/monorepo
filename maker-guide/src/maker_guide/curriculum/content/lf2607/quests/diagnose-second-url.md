@@ -1,10 +1,10 @@
-# Diagnose The Second URL
+# Diagnose The Service URL
 
 Quest: diagnose-second-url
 
 ## Mission
 
-Find where a service-hostname request fails, then confirm the effect of starting or recovering your backend. Do not assume it is missing just because no systemd unit exists: a manual server can serve this route too.
+Find where the service URL fails, then confirm the effect of starting or recovering your backend. A manual server can serve this route too; check what the requests show instead of assuming.
 
 ## Compare The Routes
 
@@ -23,7 +23,7 @@ curl -v --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
 curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/"
 ```
 
-The "second URL" is the service hostname, not another static page path. Sketch the two routes:
+The service URL is the hostname route, not another static page path. Sketch the two routes:
 
 ```text
 Service hostname -> shared Caddy (HTTPS) -> personal Caddy (loopback HTTP) -> public_html
@@ -44,7 +44,7 @@ These are two Caddy processes using the same software, not one process with two 
 
 `curl -v` marks connection/TLS details with `*`, request headers with `>`, and response headers with `<`. A timeout is a different observation from connection refusal. Public `502` alone does not prove a stopped process.
 
-If no backend is running, follow [Serve a local check page](serve-local-check-page.md). If your user unit should own it, inspect `systemctl --user status site.service --no-pager` and the journal instead of starting a competitor. Never kill an unknown process, use `sudo`, change shared routing, or disable certificate verification.
+If no backend is running, follow [Serve a local check page](serve-local-check-page.md). Never kill an unknown process, use `sudo`, change shared routing, or disable certificate verification.
 
 ## Explain What Happened
 

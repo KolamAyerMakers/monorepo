@@ -137,7 +137,7 @@ _STATIC_HOMEPAGE_COMMAND_PATTERN = (
     r"""\$(?:USER|\{USER\})/(?P=variable_quote))$"""
 )
 _SERVICE_HOMEPAGE_COMMAND_PATTERN = (
-    r"""^curl -[Ii] (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)https://[a-z_][a-z0-9_-]*"""
+    r"""^curl -[Iiv] (?:--max-time [0-9]+ )?(?:(?P<quote>["']?)https://[a-z_][a-z0-9_-]*"""
     rf"""\.{_CLASSROOM_HOSTNAME_PATTERN}/(?P=quote)|(?P<variable_quote>"?)"""
     r"""https://\$(?:USER|\{USER\})"""
     rf"""\.{_CLASSROOM_HOSTNAME_PATTERN}/(?P=variable_quote))$"""
@@ -192,9 +192,6 @@ _STATIC_DEPENDENCE_PATTERNS = (
         r"does not bypass|doesn't bypass|is not independent of)\s+(?:the |my )?personal caddy\b"
     ),
     r"\bshared caddy\s+(?:does not|doesn't|cannot)\s+serve\s+public_html directly\b",
-)
-_WORKING_BACKEND_PATTERN = (
-    r"\bbackend\s+(?:was |is )?(?:already )?working locally and through (?:shared )?caddy\b"
 )
 _SITE_SERVICE_PATTERN = (
     r"(?ms)^\[Unit\]$.*^\[Service\]$.*^WorkingDirectory=%h[ \t]*$"
@@ -3003,19 +3000,19 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         _quest(
             quest_id="inspect-first-url-headers",
-            title="Inspect first URL headers",
+            title="Inspect your static URL headers",
             sequence=64,
             available_after_session="S7",
             prompt=(
-                "Run `curl -I` against your public `~username` URL and report the actual status "
-                "code, including an error status. If DNS or TLS fails before HTTP, report no HTTP "
+                "Run `curl -I https://{host}/~{handle}/` and report the actual status code, "
+                "including an error status. If DNS or TLS fails before HTTP, report no HTTP "
                 "response and ask staff; do not invent 200. This numeric check needs an HTTP "
                 "response."
             ),
             required_commands=("curl -I",),
             practiced_skills=("http-inspection", "http-status-codes"),
             validation=InteractiveQuestionValidation(
-                question="What HTTP status code did your public `~username` URL return?",
+                question="What HTTP status code did your static `~username` URL return?",
                 required_concepts=(
                     AnswerConcept(
                         id="http-200",
@@ -3034,85 +3031,23 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         _quest(
             quest_id="diagnose-second-url",
-            title="Diagnose the second URL",
+            title="Diagnose your service URL",
             sequence=60,
             available_after_session="S7",
             prompt=(
-                "Compare localhost, the public service hostname, and the independent static URL. "
-                "Explain the actual failure boundary and recovery, or why no repair was needed. "
-                "A manual backend may already be serving without a systemd unit."
+                "Run `curl -i http://127.0.0.1:{port}/`, `curl -I https://{handle}.{host}/`, and "
+                "`curl -I https://{host}/~{handle}/`, then compare what each returns."
             ),
-            required_commands=("curl -v",),
+            required_commands=("curl",),
             practiced_skills=("http-inspection", "reverse-proxy"),
-            validation=InteractiveQuestionValidation(
-                question=(
-                    "What did local and public requests show, where was the failure, and what "
-                    "restored access? If the backend already worked, explain that observation."
-                ),
-                required_concepts=(
-                    AnswerConcept(
-                        id="backend-observation",
-                        aliases=(
-                            _WORKING_BACKEND_PATTERN,
-                            (
-                                r"\b(?:localhost|local curl|local request|backend)\s+(?:was |is )?"
-                                r"(?:refused|working|responding|returned (?:200|404))\b"
-                            ),
-                        ),
-                        forbidden_patterns=(
-                            (
-                                r"\bno (?:systemd )?unit\s+(?:means|proves)\s+"
-                                r"(?:there is )?no listener\b"
-                            ),
-                        ),
-                        rubric=(
-                            "Report the local backend observation, including a working manual "
-                            "server. Do not infer no listener merely from the absence of a unit."
-                        ),
-                    ),
-                    AnswerConcept(
-                        id="failure-boundary",
-                        aliases=(
-                            _WORKING_BACKEND_PATTERN,
-                            _PROXY_502_PATTERN,
-                            r"\blocal curl was refused and shared caddy returned 502\b",
-                            (
-                                r"\b(?:dns|tls)\s+(?:failed|failure)\s+before\s+(?:any |an )?"
-                                r"http(?: response)?\b"
-                            ),
-                        ),
-                        forbidden_patterns=_PROXY_502_FORBIDDEN_PATTERNS,
-                        rubric=(
-                            "Use the actual observations to distinguish backend, proxy, path, "
-                            "DNS, or TLS trouble, or explain why the routes already worked. "
-                            "A 502 alone cannot establish a stopped process."
-                        ),
-                    ),
-                    AnswerConcept(
-                        id="recovery-or-working-route",
-                        aliases=(
-                            rf"{_WORKING_BACKEND_PATTERN}[.;,]?\s+no repair was needed\b",
-                            (
-                                r"\b(?:started|restarted) personal caddy\b[^.;]{0,40}"
-                                r"\b(?:it|the page|local curl)\s+(?:loaded|worked|returned 200)\b"
-                            ),
-                            (
-                                r"\b(?:dns|tls)\s+(?:is |remains )?unresolved\b[^.]{0,40}"
-                                r"\b(?:ask|asked|asking) staff\b"
-                            ),
-                        ),
-                        rubric=(
-                            "Explain the change and subsequent request used to assess recovery, "
-                            "an unresolved blocker, or why an already working route needed no "
-                            "repair."
-                        ),
-                    ),
-                ),
+            validation=CommandHistoryValidation(
+                required_patterns=(_LOCAL_SERVICE_COMMAND_PATTERN,),
+                observed_commands=("curl",),
             ),
-            goal="Locate the observed failure without assuming the backend is absent.",
+            goal="Compare the local, service, and static responses.",
             evidence=(
-                "Describe the local result, public failure boundary, and recovery or already "
-                "working route. The guide checks your explanation, not captured responses."
+                "The guide needs one completed local request; inspect the service and static "
+                "routes yourself."
             ),
         ),
         _quest(

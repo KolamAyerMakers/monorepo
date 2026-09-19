@@ -1,6 +1,6 @@
 # Platform Reference
 
-Use this page when a quest says "your server", "your first URL", "your second URL", "your port", IRC, Forgejo, or web SSH.
+Use this page when a quest says "your server", "your local URL", "your service URL", "your static URL", "your port", IRC, Forgejo, or web SSH.
 
 ## Fixed Names
 

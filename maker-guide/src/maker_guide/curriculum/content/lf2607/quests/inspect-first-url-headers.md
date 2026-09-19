@@ -1,4 +1,4 @@
-# Inspect first URL headers
+# Inspect your static URL headers
 
 Quest: inspect-first-url-headers
 

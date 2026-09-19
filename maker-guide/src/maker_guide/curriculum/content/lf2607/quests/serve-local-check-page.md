@@ -10,7 +10,7 @@ Run your own foreground backend and fetch its page locally with curl. Then try t
 
 Use your own classroom account and existing published site in `~/public_html`. If the site needs publishing, run `build-website` and resolve any error first. Do not create another source tree.
 
-If your own `site.service` is already running, inspect it and agree to a short interruption before using `systemctl --user stop site.service`. Record that you need to restore it. If an unknown process occupies the port, ask staff rather than killing it.
+If an unknown process already occupies your port, ask staff rather than killing it.
 
 ```bash
 PORT="$((10000 + $(id -u)))"
@@ -38,7 +38,7 @@ If public access fails, keep the actual error and compare it with the successful
 
 ## Leave It Working
 
-After any optional extension below, press `Ctrl-C` in your server terminal when finished. If you stopped an existing user service for this experiment, restore it with `systemctl --user start site.service` only after the manual server stops, then repeat local and browser requests. Otherwise the manual process can end; your static site remains available.
+After any optional extension below, press `Ctrl-C` in your server terminal when finished. The manual process can end; your static site remains available.
 
 Do not use `caddy stop` or `caddy reload`: these admin-API commands might target the shared Caddy instead of your file server. Do not edit shared configuration.
 

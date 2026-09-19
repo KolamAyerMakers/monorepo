@@ -127,7 +127,7 @@ async def test_s2_learner_journey(
                 source="test",
             )
 
-        assert "Today's quest: Prove the shell is alive" in guide(
+        assert "Current quest: Prove the shell is alive" in guide(
             database_connection,
             "now",
             "2026-07-24T09:00:00Z",
@@ -190,7 +190,7 @@ async def test_s2_learner_journey(
             CATALOG.course.id,
             "S2",
         ) == frozenset({"ssh-public-key"})
-        assert "Today's quest: Build a playground" in guide(
+        assert "Current quest: Build a playground" in guide(
             database_connection,
             "now",
             "2026-07-25T09:03:00Z",
@@ -215,7 +215,7 @@ async def test_s2_learner_journey(
             )
         database_connection.commit()
 
-        assert "Today's quest: Personalize your homepage" in guide(
+        assert "Current quest: Personalize your homepage" in guide(
             database_connection,
             "now",
             "2026-07-25T09:13:00Z",
@@ -235,7 +235,7 @@ async def test_s2_learner_journey(
             "check",
             "2026-07-25T09:15:00Z",
         )
-        assert "Today's quest: Prove the shell is alive" in guide(
+        assert "Current quest: Prove the shell is alive" in guide(
             database_connection,
             "now",
             "2026-07-25T09:16:00Z",

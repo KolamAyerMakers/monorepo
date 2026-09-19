@@ -6,18 +6,17 @@ from typing import cast
 
 from maker_guide.chat.contract import ChatError
 from maker_guide.chat.doc_selection import learner_document_path
-from maker_guide.curriculum.models import CourseCatalog, Quest
-from maker_guide.curriculum.tiers import current_tier_id
+from maker_guide.curriculum.models import Quest
 from maker_guide.progress.feedback import failure_explanation, site_check_feedback
 from maker_guide.progress.models import QuestCompletionResult
 from maker_guide.progress.validation import QuestValidationResult, validation_answer_question
 from maker_guide.repositories.tier_promotion import TierPromotion
 
 
-def format_today_quest(quest: Quest) -> str:
+def format_current_quest(quest: Quest) -> str:
     """Format the deterministic current quest assignment."""
     response_parts = [
-        f"Today's quest: {quest.title}",
+        f"Current quest: {quest.title}",
         f"Goal:\n{quest.learner_goal}",
         f"Task:\n{quest.prompt}",
     ]
@@ -45,7 +44,6 @@ def format_today_quest(quest: Quest) -> str:
 
 
 def format_completed_quest(
-    catalog: CourseCatalog,
     quest: Quest,
     completion_result: QuestCompletionResult,
     *,
@@ -57,17 +55,7 @@ def format_completed_quest(
     response_parts = [
         "Done.",
         f"Completed quest: {quest.title}",
-        f"Score: {completion_result.score_total}",
-        f"Tier: {current_tier_id(catalog, completion_result.score_total) or 'none'}",
     ]
-    if completion_result.tier_promotions:
-        response_parts.append(
-            "New tier: "
-            + ", ".join(
-                catalog.tier(promotion.tier_id).title
-                for promotion in completion_result.tier_promotions
-            ),
-        )
     if include_next_instruction:
         response_parts.append("Next: guide now")
     return "\n\n".join(response_parts)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import cast
 
@@ -10,11 +10,11 @@ from maker_guide.chat.contract import ChatDependencies, ChatError, PreparedAnswe
 from maker_guide.chat.doc_selection import learner_document_path
 from maker_guide.chat.presenter import (
     format_completed_quest,
+    format_current_quest,
     format_failed_check,
-    format_today_quest,
 )
 from maker_guide.chat.snapshot import build_learner_snapshot
-from maker_guide.curriculum.models import CommandHistoryValidation
+from maker_guide.curriculum.models import CommandHistoryValidation, Quest
 from maker_guide.progress.feedback import site_check_feedback
 from maker_guide.progress.models import (
     CurrentSessionObjectiveResult,
@@ -84,8 +84,6 @@ def progress_response(
     response_parts = [
         "Progress:",
         f"Session: {learner_snapshot.current_session or 'Not available yet'}",
-        f"Score: {learner_snapshot.score}",
-        f"Tier: {learner_snapshot.tier or 'none'}",
         f"Objectives completed: {completed_objective_count}",
         f"Quests completed: {len(learner_snapshot.completed_quests)}",
     ]
@@ -144,7 +142,7 @@ def _current_quest_response(
     )
     if current_quest_result.quest is None:
         return _NO_CURRENT_QUEST_TEXT
-    return format_today_quest(current_quest_result.quest)
+    return _format_quest(dependencies, learner_handle, current_quest_result.quest)
 
 
 def now_response(
@@ -177,6 +175,17 @@ def _learner_prompt(prompt: str, dependencies: ChatDependencies, learner_handle:
         prompt.replace("{handle}", learner_handle)
         .replace("{port}", port)
         .replace("{host}", dependencies.public_hostname)
+    )
+
+
+def _format_quest(
+    dependencies: ChatDependencies,
+    learner_handle: str,
+    quest: Quest,
+) -> str:
+    """Format the current quest with learner-specific prompt tokens."""
+    return format_current_quest(
+        replace(quest, prompt=_learner_prompt(quest.prompt, dependencies, learner_handle)),
     )
 
 
@@ -369,17 +378,25 @@ def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evid
         None,
         current_quest_result.assignment.assigned_at,
     ):
-        return CheckResponse(text=format_today_quest(current_quest_result.quest))
+        return CheckResponse(
+            text=_format_quest(dependencies, learner_handle, current_quest_result.quest)
+        )
     if refresh_current and current_quest_result.assigned_now:
-        return CheckResponse(text=format_today_quest(current_quest_result.quest))
+        return CheckResponse(
+            text=_format_quest(dependencies, learner_handle, current_quest_result.quest)
+        )
     if prepared_answer_interpretation is not None and (
         prepared_answer_interpretation.target_type != "quest"
         or prepared_answer_interpretation.target_id != current_quest_result.quest.id
     ):
-        return CheckResponse(text=format_today_quest(current_quest_result.quest))
+        return CheckResponse(
+            text=_format_quest(dependencies, learner_handle, current_quest_result.quest)
+        )
     expects_answer = validation_answer_question(current_quest_result.quest.validation) is not None
     if expects_answer != is_answer or (answer_text is None and is_answer):
-        return CheckResponse(text=format_today_quest(current_quest_result.quest))
+        return CheckResponse(
+            text=_format_quest(dependencies, learner_handle, current_quest_result.quest)
+        )
 
     validation_result = validate_quest(
         QuestValidationInput(
@@ -433,7 +450,7 @@ def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evid
         return CheckResponse(
             text=(
                 (
-                    format_today_quest(current_quest_result.quest) + "\n\n"
+                    _format_quest(dependencies, learner_handle, current_quest_result.quest) + "\n\n"
                     if refresh_current and validation_result.failure_reason != "site-check-failed"
                     else ""
                 )
@@ -453,7 +470,6 @@ def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evid
         )
     return CheckResponse(
         text=format_completed_quest(
-            dependencies.catalog,
             current_quest_result.quest,
             complete_quest(
                 dependencies.database_connection,

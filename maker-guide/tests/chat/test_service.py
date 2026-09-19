@@ -272,8 +272,6 @@ def test_progress_reports_recorded_state_without_assigning_work(
         assert response.text == (
             "Progress:\n"
             "Session: S1\n"
-            "Score: 0\n"
-            "Tier: newcomer\n"
             "Objectives completed: 1\n"
             "Quests completed: 0\n"
             "Current objective: Confirm that your shell is working (S1)\n"
@@ -1023,10 +1021,10 @@ def test_session_objective_completion_returns_tier_announcement(
     assert response.learner_snapshot.tier == "apprentice"
 
 
-def test_quest_promotion_stays_in_private_learner_response(
+def test_quest_promotion_is_not_exposed_in_guide_or_announced(
     migrated_database_path: Path,
 ) -> None:
-    """Quest promotions inform the learner without requesting a public broadcast."""
+    """Quest promotions stay out of learner-facing text and public broadcasts."""
     request_context = CliChatContext(username="alice", terminal="/dev/pts/1")
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection)
@@ -1059,7 +1057,7 @@ def test_quest_promotion_stays_in_private_learner_response(
             _chat_dependencies(database_connection, timestamp="2026-07-19T09:02:00Z"),
         )
 
-    assert "New tier: Apprentice" in response.text
+    assert "Tier" not in response.text
     assert response.public_announcements == ()
 
 
@@ -1086,7 +1084,7 @@ def test_now_completes_proven_quest_and_displays_unanswered_successor(
         )
 
         assert "Completed quest: Prove the shell is alive" in response.text
-        assert "Today's quest: Name the system" in response.text
+        assert "Current quest: Name the system" in response.text
         assert "guide answer" in response.text
         assert _attempt_count(database_connection) == 1
         assert _latest_attempt_record(database_connection)[:2] == ("passed", None)
@@ -1220,7 +1218,7 @@ def test_check_intent_prioritizes_current_session_objective(
         assert response.text.startswith(
             "Current session objective: Confirm that your shell is working",
         )
-        assert "Today's quest:" not in response.text
+        assert "Current quest:" not in response.text
         assert _attempt_count(database_connection) == 0
         assert list_assignments(database_connection, "alice", CATALOG.course.id) == []
         assert (
@@ -1309,7 +1307,7 @@ def test_answer_intent_validates_answer_bearing_session_objective(
         assert response.text.startswith(
             "Answer accepted. Objective complete: Report a process ID and command.",
         )
-        assert "Session objectives complete.\n\nToday's quest: Count a stream" in response.text
+        assert "Session objectives complete.\n\nCurrent quest: Count a stream" in response.text
         assert tutor_client.requests == []
 
 
@@ -1571,7 +1569,7 @@ def test_s7_local_request_and_honest_diagnosis_unlock_server_quest(
         )
 
         assert answer_response.text.startswith("Answer accepted. Objective complete:")
-        assert "Session objectives complete.\n\nToday's quest: Serve a local check page" in (
+        assert "Session objectives complete.\n\nCurrent quest: Serve a local check page" in (
             answer_response.text
         )
         assert list_completed_objective_ids(
@@ -1598,6 +1596,18 @@ def test_s7_local_request_and_honest_diagnosis_unlock_server_quest(
 
         assert quest_check_response.text.startswith("Done.")
         assert "Completed quest: Serve a local check page" in quest_check_response.text
+
+        diagnose_check_response = handle_chat_request(
+            _private_chat_request("check"),
+            _chat_dependencies(
+                database_connection,
+                account_lookup=_account_lookup(learner_home),
+                timestamp="2026-09-19T09:05:00Z",
+            ),
+        )
+
+        assert diagnose_check_response.text.startswith("Done.")
+        assert "Completed quest: Diagnose your service URL" in diagnose_check_response.text
 
 
 @pytest.mark.parametrize("session_reached", ["S3", "S4"])
@@ -1985,7 +1995,7 @@ def test_check_intent_completes_current_quest_from_command_observations(
             _chat_dependencies(database_connection, timestamp="2026-07-19T09:02:00Z"),
         )
 
-        assert response.text == _completed_quest_text("Prove the shell is alive", 30)
+        assert response.text == _completed_quest_text("Prove the shell is alive")
         assert response.learner_snapshot.completed_quests == ("prove-shell-alive",)
         assert response.learner_snapshot.score == 30
         assert total_score_for_course(database_connection, "alice", CATALOG.course.id) == 30
@@ -2024,7 +2034,7 @@ def test_answer_does_not_validate_practical_quest(migrated_database_path: Path) 
             _chat_dependencies(database_connection),
         )
 
-        assert response.text.startswith("Today's quest: Prove the shell is alive")
+        assert response.text.startswith("Current quest: Prove the shell is alive")
         assert _attempt_count(database_connection) == 0
         assert (
             get_quest_completion(
@@ -2136,7 +2146,7 @@ def test_now_shows_answer_question_for_interactive_current_quest(
                 _chat_dependencies(database_connection),
             )
 
-            assert response.text.startswith("Today's quest: Name the system")
+            assert response.text.startswith("Current quest: Name the system")
             assert "PRETTY_NAME value" in response.text
             assert "When ready, run: guide answer 'your answer'" in response.text
             assert _attempt_count(database_connection) == 1
@@ -2157,7 +2167,7 @@ def test_check_without_answer_returns_missing_answer_feedback_without_recording_
             _chat_dependencies(database_connection),
         )
 
-        assert response.text.startswith("Today's quest: Name the system")
+        assert response.text.startswith("Current quest: Name the system")
         assert "When ready, run: guide answer 'your answer'" in response.text
         assert _attempt_count(database_connection) == 1
 
@@ -2177,7 +2187,7 @@ def test_answer_intent_records_raw_help_question_and_structured_evidence(
             _chat_dependencies(database_connection, tutor_client=tutor_client),
         )
 
-        assert response.text == _completed_quest_text("Name the system", 60)
+        assert response.text == _completed_quest_text("Name the system")
         assert tutor_client.requests == []
         attempt_record = _latest_attempt_record(database_connection)
         assert attempt_record[:2] == ("passed", None)
@@ -2245,7 +2255,7 @@ def test_cli_bare_text_answers_interactive_quest_without_llm(
             _chat_dependencies(database_connection, tutor_client=tutor_client),
         )
 
-        assert response.text == _completed_quest_text("Name the system", 60)
+        assert response.text == _completed_quest_text("Name the system")
         assert tutor_client.requests == []
         assert response.learner_snapshot.completed_quests == ("prove-shell-alive", "name-system")
         assert _latest_attempt_record(database_connection)[:2] == ("passed", None)
@@ -2359,7 +2369,7 @@ def test_cli_bare_count_completes_home_entries_quest(
             _chat_dependencies(database_connection),
         )
 
-        assert response.text == _completed_quest_text("Count your home entries", 30)
+        assert response.text == _completed_quest_text("Count your home entries")
         assert response.learner_snapshot.completed_quests == (
             "prove-shell-alive",
             "name-system",
@@ -2398,7 +2408,7 @@ def test_check_intent_completes_file_only_quest_from_filesystem(
             _chat_dependencies(database_connection, account_lookup=_account_lookup(learner_home)),
         )
 
-        assert response.text == _completed_quest_text("Edit with micro", 30)
+        assert response.text == _completed_quest_text("Edit with micro")
         assert _latest_attempt_record(database_connection)[:2] == ("passed", None)
         assert load_json(_latest_attempt_record(database_connection)[2]) == {
             "byte_count": 18,
@@ -2456,7 +2466,7 @@ def test_guide_check_completes_ownership_proof(
             ),
         )
 
-        assert response.text == _completed_quest_text("Copy and inspect ownership", 30)
+        assert response.text == _completed_quest_text("Copy and inspect ownership")
         assert _latest_attempt_record(database_connection)[:2] == ("passed", None)
 
 
@@ -2496,7 +2506,7 @@ def test_now_assigns_then_completes_only_current_practical_quest(
             _chat_dependencies(database_connection, account_lookup=account_lookup),
         )
 
-        assert "Today's quest: Build a playground" in assignment_response.text
+        assert "Current quest: Build a playground" in assignment_response.text
         assert account_lookups == []
         assert _attempt_count(database_connection) == 0
 
@@ -2506,7 +2516,7 @@ def test_now_assigns_then_completes_only_current_practical_quest(
         )
 
         assert "Completed quest: Build a playground" in response.text
-        assert "Today's quest: Edit with micro" in response.text
+        assert "Current quest: Edit with micro" in response.text
         assert _attempt_count(database_connection) == 1
         attempt_record = _latest_attempt_record(database_connection)
         assert attempt_record[:2] == ("passed", None)
@@ -2589,7 +2599,7 @@ def test_check_intent_completes_executable_file_quest(
             ),
         )
 
-        assert response.text == _completed_quest_text("Make a file executable", 30)
+        assert response.text == _completed_quest_text("Make a file executable")
         attempt_record = _latest_attempt_record(database_connection)
         assert attempt_record[:2] == ("passed", None)
         evidence = load_json(attempt_record[2])
@@ -2692,7 +2702,7 @@ WantedBy=default.target
             ),
         )
 
-        assert response.text == _completed_quest_text("Enable site.service", 30)
+        assert response.text == _completed_quest_text("Enable site.service")
         attempt_record = _latest_attempt_record(database_connection)
         assert attempt_record[:2] == ("passed", None)
         evidence = load_json(attempt_record[2])
@@ -3431,11 +3441,8 @@ def _completed_quest_ids_before(quest_id: str) -> tuple[str, ...]:
     )
 
 
-def _completed_quest_text(quest_title: str, score: int) -> str:
-    return (
-        f"Done.\n\nCompleted quest: {quest_title}\n\nScore: {score}\n\n"
-        "Tier: newcomer\n\nNext: guide now"
-    )
+def _completed_quest_text(quest_title: str) -> str:
+    return f"Done.\n\nCompleted quest: {quest_title}\n\nNext: guide now"
 
 
 def _llm_audit_log() -> LlmAuditLog:

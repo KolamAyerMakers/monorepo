@@ -1013,8 +1013,8 @@ def test_help_today_is_a_now_alias(
     assert _run_command(
         monkeypatch,
         ["--config", str(_write_configuration(tmp_path, migrated_database_path)), "today"],
-        daemon_response="Today's quest: Prove the shell is alive\n\nGoal:",
-    ).startswith("Today's quest: Prove the shell is alive\n\nGoal:")
+        daemon_response="Current quest: Prove the shell is alive\n\nGoal:",
+    ).startswith("Current quest: Prove the shell is alive\n\nGoal:")
 
 
 def test_help_ignores_spoofed_environment_identity(
