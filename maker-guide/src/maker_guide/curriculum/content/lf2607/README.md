@@ -91,18 +91,16 @@ Use the [diagnostic cases](sessions/S06/self-study.md#diagnostic-cases) to reaso
 - [Recap](sessions/S06/recap.md)
 - [Reinforcement quests](quests/README.md#s06-reinforcement)
 - [Concept cards](concepts/README.md#s06-control-flow-and-networking)
-- [Instructor runbook](mentors/S06.md)
 
 ### S07: Run Your Own Web Server
 
-Run a foreground Caddy file server, request it locally and publicly, and watch visitor logs. Reuse `ps` and add `ss` to connect your ownership and PID to the listening port. Construct raw HTTP over loopback, change only the path, and compare response status with the log. Diagnose three safe incidents: an occupied own port, an empty public practice root, and a stopped backend. Restore the real root before comparing local refusal, shared Caddy's `502`, and independent static delivery, then restart. Raw HTTP and the incidents are core; publishing changes, notes, and Git remain optional self-study.
+Run a foreground Caddy file server, request it locally and publicly, and watch visitor logs. Reuse `ps` and add `ss` to connect your ownership and PID to the listening port. Construct raw HTTP over loopback, change only the path, and compare response status with the log. Diagnose two safe incidents: an empty public practice root and a stopped backend. Restore the real root before comparing local refusal, shared Caddy's `502`, and independent static delivery, then restart. Raw HTTP and the incidents are core; publishing changes, notes, and Git remain optional self-study.
 
 - [Slides](sessions/S07/slides.md)
 - [Self-study](sessions/S07/self-study.md)
 - [Recap](sessions/S07/recap.md)
 - [Reinforcement quests](quests/README.md#s07-reinforcement)
 - [Concept cards](concepts/README.md#s07-web-servers-and-diagnostics)
-- [Instructor delivery notes](mentors/S07-S10.md)
 
 ### S08: Keep Your Server Running
 

@@ -267,7 +267,7 @@ def _write_content_files(
         expected_files=set(),
     )
     _ensure_directory(documents_root)
-    for directory_name in ("commands", "concepts", "guides", "mentors"):
+    for directory_name in ("commands", "concepts", "guides"):
         _write_content_resource(
             write_context,
             content_resource.joinpath(directory_name),

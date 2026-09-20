@@ -421,7 +421,6 @@ def test_makers_projection_publishes_open_references_and_gates_coursework(
         .read_bytes()
     )
     assert provided_report.stat().st_mode & 0o444 == 0o444
-    assert (documents_root / "mentors" / "commands.md").exists()
     assert not (documents_root / "sessions").exists()
     assert not (documents_root / "quests").exists()
     assert not (documents_root / "stale.md").exists()
