@@ -1,59 +1,33 @@
-# Linux Foundations S9
+# Automate It. Hand It Over.
 
 Session: S9
 
-Automate It. Hand It Over.
-
 2026-10-10
+
+Your service runs when asked. Can it run on its own?
 
 <!-- end_slide -->
 
 # Two Workshops
 
-1. Automatically refresh report facts, then build and prove the published change.
-2. Peer-test an operations README and preserve the working source handoff.
+1. A timer refreshes the report and rebuilds the published site.
+2. A peer operates your README, and you preserve the source handoff.
 
-Keep the same site, two scripts, and user service. No new helper is needed.
-
-`site.service` runs personal Caddy; shared Caddy still handles public HTTPS. Keep the [S8 unit](../S08/self-study.md#2-create-the-user-unit), including `--root` and `--access-log`, so new publications and request logs remain visible.
+Keep the same site, scripts, and `site.service`. No new helper is needed.
 
 <!-- end_slide -->
 
-# Today's Three Hours
-
-| Minutes | Work |
-|---|---|
-| 0-15 | Inspect the working project and report safety |
-| 15-75 | Workshop 1: refresh, build, observe automation |
-| 75-85 | Break |
-| 85-160 | Workshop 2: README, peer operation, source handoff |
-| 160-180 | Verify the handoff and rehearse one explanation |
-
-<!-- end_slide -->
-
-# Workshop 1: Fresh Facts
+# One Task, In Order
 
 ```text
-timer -> report script -> Markdown -> build -> published HTML
+report script -> report facts -> build -> published site
 ```
 
-`maker-report.sh "System Report"` collects new facts.
-
-The builder alone does not regenerate the report.
+A failed report must stop the build and keep the last valid report. Never publish a partial report.
 
 <!-- end_slide -->
 
-# Failure Must Stop The Chain
-
-A failed report must prevent the build and preserve the last valid report.
-
-Use the current supplied report generator: it collects into a temporary file and replaces the report only on success. Compare older copies and preserve personal changes before updating; the self-study explains the backup and replacement.
-
-Do not work around it by building a partial report.
-
-<!-- end_slide -->
-
-# One Service, In Order
+# A Task Described Once
 
 `~/.config/systemd/user/site-build.service`:
 
@@ -68,30 +42,64 @@ ExecStartPre=/bin/bash %h/scripts/maker-report.sh "System Report"
 ExecStart=/usr/local/bin/npm run build
 ```
 
-A nonzero pre-start exit prevents `ExecStart`. `build-website` is an interactive alias, not an executable for systemd.
+`ExecStartPre` runs first; a nonzero exit stops the build. `build-website` is an alias for your shell, not an executable for systemd.
+
+A oneshot service runs its task and returns to inactive. That is normal.
 
 <!-- end_slide -->
 
-# Wait For A Real Activation
+# The Timer Decides When
 
-Use the [classroom timer and observation sequence](self-study.md#timer-files).
+`~/.config/systemd/user/site-build.timer`:
 
-- First activation: 30 seconds after starting the timer.
-- Later activations: two minutes after the build service finishes.
-- Watch the journal without manually starting another build.
-- Compare the old and new report date in the published page.
+```ini
+[Unit]
+Description=Observe automatic refresh and build
 
-Timer listings show a schedule, not successful automation.
+[Timer]
+OnActiveSec=30s
+OnUnitInactiveSec=2min
+
+[Install]
+WantedBy=timers.target
+```
+
+Same name, different suffix: this timer starts `site-build.service`. The short delays are for this classroom observation. We will change them to hourly.
 
 <!-- end_slide -->
 
-# Leave A Reasonable Schedule
+# Prove It Ran Automatically
 
-After witnessing the automatic refresh, change to hourly operation.
+Save the current report, then start the timer:
 
-Stop the timer, let any build finish, replace the short schedule, reload units, then start the timer again. Do not leave both schedules in place.
+```bash
+cp ~/src/pages/maker-report.md "$HOME/report-before.md"
+systemctl --user daemon-reload
+systemctl --user enable --now site-build.timer
+systemctl --user list-timers --all site-build.timer
+journalctl --user -u site-build.service -f
+```
 
-Use [Hourly Schedule](self-study.md#hourly-schedule). Pause the timer before standalone builds or source handoff work; one systemd unit prevents overlap only for work started through that unit.
+Wait for a run you did not start, then compare the old and new report date. A timer listing is not proof; a new activation is.
+
+<!-- end_slide -->
+
+# Hourly From Now On
+
+Stop the timer and let any build finish, then replace the two timing values:
+
+```ini
+OnActiveSec=1h
+OnUnitInactiveSec=1h
+```
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now site-build.timer
+systemctl --user list-timers --all site-build.timer
+```
+
+Do not leave both the classroom and hourly schedules in place.
 
 <!-- end_slide -->
 
@@ -99,50 +107,46 @@ Use [Hourly Schedule](self-study.md#hourly-schedule). Pause the timer before sta
 
 Write an operations README: what runs, where it lives, how to refresh, how to inspect, how to recover.
 
-The peer reads and directs from the README. The owner reviews and runs commands in their own account.
+The peer reads and directs. You run the commands in your own account.
 
-No password swapping. No guessing missing commands aloud: write the missing instruction, then retry.
+No password sharing. When an instruction is unclear, improve it, then retry.
 
 <!-- end_slide -->
 
 # Test The Instructions
 
-- Find the site's public page and its source.
-- Refresh and build through the oneshot service; inspect logs and changed content.
-- Agree to a brief stop of the owner's web service, then recover it from the README.
-- Confirm the local response and the public service response after recovery.
+- Find the public page and its source.
+- Refresh and build through the oneshot service.
+- Agree to a brief stop, then recover the service from the README.
+- Check local and public responses after recovery.
 
-Swap roles. Record one ambiguity fixed and one observed recovery.
-
-Use `systemctl --user stop site.service` and `systemctl --user start site.service`. Never use `caddy stop` or `caddy reload`; they can target shared Caddy.
+Swap roles. Record one ambiguity you fixed and one recovery you observed.
 
 <!-- end_slide -->
 
 # Preserve Five Working Files
 
-| Active Files | Source Copies |
+| Active files | Source copies |
 |---|---|
 | `~/scripts/maker-report.sh`, `~/scripts/site-check.sh` | `~/src/scripts/` |
-| `site.service`, `site-build.service`, `site-build.timer` under `~/.config/systemd/user/` | `~/src/services/` |
+| `site.service`, `site-build.service`, `site-build.timer` in `~/.config/systemd/user/` | `~/src/services/` |
 
-Copy, do not move. Include README and site source in the existing repository.
-
-Follow [Prepare a source handoff](../../quests/prepare-source-handoff.md): inspect, stage explicit paths, commit, push, verify the actual files in Forgejo.
+Copy, do not move. Follow [Prepare a source handoff](../../quests/prepare-source-handoff.md) to commit, push, and verify the files in Forgejo.
 
 <!-- end_slide -->
 
 # Exit Evidence
 
-Show an automatic activation in the journal and changed published report facts.
+Show a timer run you did not start, with changed report facts and a matching journal entry.
 
-Show the peer-tested README and the pushed two scripts plus three units.
+Show the peer-tested README and the pushed scripts and units.
 
-Explain which step collects facts, which builds, and what happens when collection fails.
+Explain what collects the facts, what builds the site, and what happens when collection fails.
 
 <!-- end_slide -->
 
-# Help Between Sessions
+# Next: Show What You Can Do
 
-S10 is **2026-10-24: Show What You Can Do**. Rehearse a five-minute [demo](../../quests/demo-site.md) with evidence you choose and one real recovery story.
+S10 is 2026-10-24: a short celebration of the work, with your websites and reports on screen.
 
-Use the [self-study instructions](self-study.md) for recovery. Between sessions, ask the instructor or the guide for help with the command, error, and your next test. Never share secrets.
+No preparation required. Bring your project and your questions.
