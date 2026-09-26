@@ -11,6 +11,7 @@ from typing import Literal
 from maker_guide.chat.snapshot import LearnerSnapshot
 from maker_guide.curriculum.models import AnswerConceptAssessment, CourseCatalog
 from maker_guide.llm_tutor import DEFAULT_TUTOR_MAX_TOKENS, AnswerInterpreter, TutorClient
+from maker_guide.service_lab import ServiceLabAction, ServiceLabReport
 from maker_guide.site_check import SiteCheckReport
 from maker_guide.validation_paths import UnixAccountLookup, lookup_unix_account
 
@@ -98,6 +99,10 @@ class ChatDependencies:
     """Authenticated CLI bridge, called with the expected source SHA-256 before writes."""
     site_check_result: PreparedSiteCheck | None = None
     """One server-selected task result prepared for this request only."""
+    service_lab_runner: Callable[[ServiceLabAction], ServiceLabReport] | None = None
+    """Authenticated learner-side service action, never executed as the daemon."""
+    service_lab_result: PreparedServiceLab | None = None
+    """Fresh local observation bound to this request's current objective."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -142,6 +147,20 @@ class PreparedSiteCheck:
     target_session_id: str | None
     evidence_since: str
     report: SiteCheckReport | None
+    failure_reason: str | None = None
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
+class PreparedServiceLab:
+    """Fresh local lab evidence bound to the selected objective and stable run."""
+
+    course_id: str
+    session_id: str
+    objective_id: str
+    evidence_since: str
+    action: ServiceLabAction
+    report: ServiceLabReport | None = None
+    launch_message: str | None = None
     failure_reason: str | None = None
 
 

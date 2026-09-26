@@ -8,6 +8,7 @@ from typing import cast
 
 import pytest
 
+from maker_guide.chat.snapshot import build_learner_snapshot
 from maker_guide.curriculum.catalogs import DEFAULT_CATALOG as CATALOG
 from maker_guide.curriculum.models import Quest
 from maker_guide.enrollment.models import EnrollmentInput
@@ -35,7 +36,11 @@ from maker_guide.repositories.course_release import get_course_release
 from maker_guide.repositories.helpers import RepositoryError, connect_database
 from maker_guide.repositories.outbox_item import list_pending_outbox_items
 from maker_guide.repositories.quest_assignment import QuestAssignment, assign_quest, get_assignment
-from maker_guide.repositories.quest_attempt import QuestAttempt, record_quest_attempt
+from maker_guide.repositories.quest_attempt import (
+    QuestAttempt,
+    get_quest_attempt,
+    record_quest_attempt,
+)
 from maker_guide.repositories.quest_completion import (
     QuestCompletion,
     get_quest_completion,
@@ -136,6 +141,29 @@ def test_current_quest_requires_session_placement(migrated_database_path: Path) 
     [
         ("S7", ("create-setup-page",), "serve-local-check-page", "inspect-first-url-headers"),
         ("S8", ("keep-tmux-workbench",), "serve-local-check-page", "enable-site-service"),
+        (
+            "S8",
+            (
+                "enable-site-service",
+                "test-logout-survival",
+                "watch-service-logs",
+                "break-and-read-error",
+            ),
+            "fix-and-restart-service",
+            "repair-service-arguments",
+        ),
+        (
+            "S8",
+            ("enable-site-service", "test-logout-survival", "watch-service-logs"),
+            "break-and-read-error",
+            "break-and-read-error",
+        ),
+        (
+            "S8",
+            tuple(objective.id for objective in CATALOG.session("S8").objectives),
+            "break-and-read-error",
+            None,
+        ),
         ("S9", ("transform-heading-with-sed",), "serve-local-check-page", "schedule-site-rebuilds"),
         (
             "S7",
@@ -190,17 +218,33 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
                     created_at=JOINED_AT,
                 ),
             )
+        historical_attempt_id = _record_repository_attempt(
+            database_connection, historical_quest_id, "passed", JOINED_AT
+        )
+        historical_attempt = get_quest_attempt(database_connection, historical_attempt_id)
+        assert historical_attempt is not None
         write_quest_completion(
             database_connection,
             QuestCompletion(
                 handle=HANDLE,
                 course_id=CATALOG.course.id,
                 quest_id=historical_quest_id,
-                attempt_id=_record_repository_attempt(
-                    database_connection, historical_quest_id, "passed", JOINED_AT
-                ),
+                attempt_id=historical_attempt_id,
                 completed_at=JOINED_AT,
                 source=SOURCE,
+            ),
+        )
+        add_score_entry(
+            database_connection,
+            ScoreLedgerEntry(
+                id=None,
+                handle=HANDLE,
+                course_id=CATALOG.course.id,
+                amount=25,
+                reason="quest_completed",
+                related_type="quest",
+                related_id=historical_quest_id,
+                created_at=JOINED_AT,
             ),
         )
         historical_quests = list_quest_completions(database_connection, HANDLE, CATALOG.course.id)
@@ -218,19 +262,22 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
                     completed_at="2026-09-19T09:01:00Z",
                     evidence={"replacement": True},
                 )
+            stale_quest_id = (
+                "fix-and-restart-service" if session_id == "S8" else "record-http-headers"
+            )
             assign_quest(
                 database_connection,
                 QuestAssignment(
                     id=None,
                     handle=HANDLE,
                     course_id=CATALOG.course.id,
-                    quest_id="record-http-headers",
+                    quest_id=stale_quest_id,
                     assigned_at=JOINED_AT,
                     source=SOURCE,
                 ),
             )
             stale_assignment = get_assignment(
-                database_connection, HANDLE, CATALOG.course.id, "record-http-headers"
+                database_connection, HANDLE, CATALOG.course.id, stale_quest_id
             )
             assert stale_assignment is not None
 
@@ -242,18 +289,28 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
                 source=SOURCE,
             )
 
-            assert quest_result.quest == CATALOG.quest("serve-local-check-page")
+            expected_quest_id = (
+                "keep-tmux-workbench" if session_id == "S8" else "serve-local-check-page"
+            )
+            assert quest_result.quest == CATALOG.quest(expected_quest_id)
             assert quest_result.assigned_now is True
+            snapshot = build_learner_snapshot(database_connection, CATALOG, HANDLE)
+            assert snapshot.pending_quests == (
+                (expected_quest_id,) if session_id == "S8" else (expected_quest_id, stale_quest_id)
+            )
+            assert snapshot.completed_quests == (
+                () if session_id == "S8" else (historical_quest_id,)
+            )
+            assert snapshot.score == 50 * len(historical_objective_ids) + 25
+            _record_attempt(
+                database_connection, expected_quest_id, "failed", "2026-09-19T09:03:00Z"
+            )
             assert (
-                get_assignment(
-                    database_connection, HANDLE, CATALOG.course.id, "record-http-headers"
-                )
+                get_assignment(database_connection, HANDLE, CATALOG.course.id, stale_quest_id)
                 == stale_assignment
             )
             assert (
-                get_quest_completion(
-                    database_connection, HANDLE, CATALOG.course.id, "record-http-headers"
-                )
+                get_quest_completion(database_connection, HANDLE, CATALOG.course.id, stale_quest_id)
                 is None
             )
         else:
@@ -276,11 +333,12 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
             list_quest_completions(database_connection, HANDLE, CATALOG.course.id)
             == historical_quests
         )
+        assert get_quest_attempt(database_connection, historical_attempt_id) == historical_attempt
         assert (
             list_score_entries(database_connection, HANDLE, CATALOG.course.id) == historical_scores
         )
         assert total_score_for_course(database_connection, HANDLE, CATALOG.course.id) == (
-            50 * len(historical_objective_ids)
+            50 * len(historical_objective_ids) + 25
         )
 
 

@@ -29,8 +29,8 @@ After reporting what you saw, repair a service that should be running:
 
 - If the unit is missing, follow [enable-site-service](enable-site-service.md).
 - If it is inactive, run `systemctl --user start site.service`, then inspect status again.
-- If it failed, read `journalctl --user -u site.service --no-pager -n 50` before editing. Stop your manual server if the assigned port is occupied; do not change the assigned port or kill another learner's process.
-- After a unit edit, run `systemctl --user daemon-reload`, then `systemctl --user restart site.service`, and repeat the endpoint checks in the enable-service quest.
+- If it failed, read `journalctl --user -u site.service --since "5 minutes ago"` before editing. Stop your manual server if the assigned port is occupied; do not change the assigned port or kill another learner's process.
+- After a unit edit, [verify, reload, and restart](../sessions/S08/self-study.md#8-restore-and-recover), then check the page again.
 
 Repair is a next step, not permission to rewrite the original observation. Keep `--user`; do not use `sudo`.
 

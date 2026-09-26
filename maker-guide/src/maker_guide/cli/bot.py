@@ -25,6 +25,12 @@ from maker_guide.llm_tutor import (
 )
 from maker_guide.repositories.helpers import connect_database
 from maker_guide.router import route_events
+from maker_guide.service_lab import (
+    SERVICE_LAB_TIMEOUT_SECONDS,
+    ServiceLabAction,
+    ServiceLabError,
+    ServiceLabReport,
+)
 from maker_guide.site_check import SITE_CHECK_TIMEOUT_SECONDS, SiteCheckError, SiteCheckReport
 from maker_guide.unix_socket import HelpChunkWriter, SocketHelpRequest, UnixSocketServer
 
@@ -126,7 +132,7 @@ def _tutor_client_from_config(configuration: LlmTutorConfig | None) -> TutorProv
     )
 
 
-async def _handle_socket_help_request(
+async def _handle_socket_help_request(  # noqa: C901 - Bind both worker continuations to this request.
     request: SocketHelpRequest,
     configuration: AppConfig,
     tutor_client: TutorProviderClient | None,
@@ -147,6 +153,19 @@ async def _handle_socket_help_request(
         except TimeoutError as error:
             pending.cancel()
             raise SiteCheckError("timeout") from error
+
+    def run_service_lab(action: ServiceLabAction) -> ServiceLabReport:
+        async def receive_report() -> ServiceLabReport:
+            if request.service_lab_runner is None:
+                raise ServiceLabError("runner-unavailable")
+            return await request.service_lab_runner(action)
+
+        pending = asyncio.run_coroutine_threadsafe(receive_report(), loop)
+        try:
+            return pending.result(timeout=SERVICE_LAB_TIMEOUT_SECONDS + 3.0)
+        except TimeoutError as error:
+            pending.cancel()
+            raise ServiceLabError("timeout") from error
 
     def handle_request() -> ChatResponse:
         with connect_database(configuration.database.path) as database_connection:
@@ -176,6 +195,9 @@ async def _handle_socket_help_request(
                         ),
                         response_chunk_writer=chunk_writer,
                         site_check_runner=(run_site_check if request.site_check_runner else None),
+                        service_lab_runner=(
+                            run_service_lab if request.service_lab_runner else None
+                        ),
                     ),
                 )
             except sqlite3.Error as error:

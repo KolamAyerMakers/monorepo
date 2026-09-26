@@ -17,8 +17,18 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol, Self, cast, runtime_checkable
 
+from maker_guide.chat.intents import chat_intent
 from maker_guide.config import SocketConfig
 from maker_guide.events import EventParseError, PeerCredentials, ShellEvent, parse_shell_event
+from maker_guide.service_lab import (
+    SERVICE_LAB_MAX_FRAME_BYTES,
+    SERVICE_LAB_TIMEOUT_SECONDS,
+    ServiceLabAction,
+    ServiceLabError,
+    ServiceLabReport,
+    parse_service_lab_report,
+    service_lab_action_payload,
+)
 from maker_guide.site_check import (
     SITE_CHECK_TIMEOUT_SECONDS,
     SITE_CHECK_VERSION,
@@ -47,6 +57,9 @@ class SocketHelpRequest:
     supports_site_check: bool = False
     site_check_runner: Callable[[str], Awaitable[SiteCheckReport]] | None = None
     """Server-only, one-shot continuation on this authenticated connection."""
+    supports_service_lab: bool = False
+    service_lab_runner: Callable[[ServiceLabAction], Awaitable[ServiceLabReport]] | None = None
+    """Server-only continuation sharing the connection's single local action budget."""
 
 
 @runtime_checkable
@@ -209,7 +222,7 @@ class UnixSocketServer:
         if response_requested:
             await _write_response(writer, True, None)
 
-    async def _handle_help_request(  # noqa: C901 - Keep continuation state with its connection.
+    async def _handle_help_request(  # noqa: C901, PLR0915 - Keep one-shot state and peer checks together.
         self,
         payload: bytes,
         credentials: PeerCredentials,
@@ -219,14 +232,15 @@ class UnixSocketServer:
         if self._help_handler is None:
             await _write_response(writer, False, "help handler is not configured")
             return
-        site_check_used = False
+        action_used = False
+        service_lab_used = False
         request_active = True
 
         async def run_site_check(source_sha256: str) -> SiteCheckReport:
-            nonlocal site_check_used
-            if site_check_used or not request_active:
+            nonlocal action_used
+            if action_used or not request_active:
                 raise SiteCheckError("invalid-report")
-            site_check_used = True
+            action_used = True
             if re.fullmatch("[0-9a-f]{64}", source_sha256) is None:
                 raise SiteCheckError("invalid-report")
             try:
@@ -268,13 +282,76 @@ class UnixSocketServer:
             except (ValueError, OSError, RecursionError):
                 raise SiteCheckError("invalid-report") from None
 
+        async def run_service_lab(action: ServiceLabAction) -> ServiceLabReport:
+            nonlocal action_used, service_lab_used
+            if action_used or not request_active:
+                raise ServiceLabError("invalid-report")
+            action_used = service_lab_used = True
+            action_payload = service_lab_action_payload(action)
+            intent = chat_intent(help_request.text)
+            if intent not in {"now", "check", "answer", "freeform"} or (
+                action.operation == "start" and intent != "now"
+            ):
+                raise ServiceLabError("invalid-action")
+            try:
+                if _peer_credentials(writer) != credentials:
+                    raise ServiceLabError("invalid-report")
+                await _reject_buffered_service_lab_input(reader)
+                async with asyncio.timeout(SERVICE_LAB_TIMEOUT_SECONDS + 2.0):
+                    writer.write(
+                        json.dumps(
+                            {"ok": True, "service_lab": action_payload},
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                        + b"\n",
+                    )
+                    await writer.drain()
+                    result = await reader.readline()
+                if not result.endswith(b"\n") or len(result) > min(
+                    self._config.max_line_bytes, SERVICE_LAB_MAX_FRAME_BYTES
+                ):
+                    raise ServiceLabError("invalid-report")
+                await _reject_buffered_service_lab_input(reader)
+                loaded = cast(
+                    "object",
+                    json.loads(result.decode("utf-8"), object_pairs_hook=_unique_json_fields),
+                )
+                if not isinstance(loaded, dict):
+                    raise ServiceLabError("invalid-report")
+                result_object = cast("dict[object, object]", loaded)
+                if (
+                    set(result_object) != {"kind", "report"}
+                    or result_object["kind"] != "service_lab_result"
+                    or _peer_credentials(writer) != credentials
+                ):
+                    raise ServiceLabError("invalid-report")
+                return parse_service_lab_report(result_object["report"], action)
+            except TimeoutError:
+                raise ServiceLabError("timeout") from None
+            except (ValueError, OSError, RecursionError):
+                raise ServiceLabError("invalid-report") from None
+
+        write_chunk = _help_chunk_writer(writer)
+
+        def write_help_chunk(chunk: str) -> None:
+            if request_active:
+                # Preserve streaming activity without exposing unvalidated service hints.
+                write_chunk("" if service_lab_used else chunk)
+
         try:
             await self._ingest_queue.join()
             help_request = _parse_help_request(payload, self._authorizer.username_for(credentials))
             if help_request.supports_site_check:
                 help_request = replace(help_request, site_check_runner=run_site_check)
-            chunk_writer = _help_chunk_writer(writer) if help_request.stream else None
+            if help_request.supports_service_lab:
+                help_request = replace(help_request, service_lab_runner=run_service_lab)
+            chunk_writer = write_help_chunk if help_request.stream else None
             response_text = await self._help_handler(help_request, chunk_writer)
+            if service_lab_used:
+                await _reject_buffered_service_lab_input(reader)
+        except ServiceLabError:
+            await _write_response(writer, False, "service lab failed")
+            return
         except SiteCheckError:
             await _write_response(writer, False, "site check failed")
             return
@@ -287,6 +364,17 @@ class UnixSocketServer:
         finally:
             request_active = False
         await _write_response(writer, True, None, text=response_text)
+
+
+async def _reject_buffered_service_lab_input(reader: asyncio.StreamReader) -> None:
+    # A zero deadline reads already-buffered bytes, but never waits for another frame.
+    try:
+        async with asyncio.timeout(0):
+            unexpected = await reader.read(1)
+    except TimeoutError:
+        return
+    if unexpected:
+        raise ServiceLabError("invalid-report")
 
 
 def _help_chunk_writer(writer: asyncio.StreamWriter) -> HelpChunkWriter:
@@ -440,6 +528,7 @@ def _parse_help_request(  # noqa: C901 - Validate the small, fixed request direc
         "ssh_connection",
         "stream",
         "supports_site_check",
+        "supports_service_lab",
     }:
         raise EventParseError("unknown help request fields")
     if type(request_object.get("version")) is not int or request_object["version"] != 1:
@@ -458,7 +547,7 @@ def _parse_help_request(  # noqa: C901 - Validate the small, fixed request direc
     ssh_connection = request_object.get("ssh_connection")
     if ssh_connection is not None and not isinstance(ssh_connection, str):
         raise EventParseError("ssh_connection must be null or a string")
-    for field in ("stream", "supports_site_check"):
+    for field in ("stream", "supports_site_check", "supports_service_lab"):
         if not isinstance(request_object.get(field, False), bool):
             raise EventParseError("help capabilities must be booleans")
     return SocketHelpRequest(
@@ -469,4 +558,5 @@ def _parse_help_request(  # noqa: C901 - Validate the small, fixed request direc
         ssh_connection=ssh_connection,
         stream=request_object.get("stream") is True,
         supports_site_check=request_object.get("supports_site_check") is True,
+        supports_service_lab=request_object.get("supports_service_lab") is True,
     )

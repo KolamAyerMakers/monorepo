@@ -51,9 +51,7 @@ Practise the observations and checker from the [S6 self-study](../sessions/S06/s
 
 ## S07 Reinforcement
 
-Run Your Own Web Server: foreground requests and visitor logs, own PID/listening-port correlation with `ps` and `ss`, and core raw HTTP with a path-only change. The [S7 self-study](../sessions/S07/self-study.md) covers three safe incidents: occupied own port, empty public practice root, and stopped backend, with recovery and comparison to independent static delivery. Publishing, notes, Git, and extra page quests below remain optional reinforcement; they are not required live-session deliverables.
-
-The S7 reinforcement order puts core server work and diagnosis before publishing. Optional for the live lesson does not mean skippable within the bot's linear quest sequence.
+Run Your Own Web Server: requests and responses, visitor logs, processes, and listening ports. The [S7 self-study](../sessions/S07/self-study.md) covers an empty practice root and a stopped backend. Use the quests below to practise serving pages, inspecting headers, and interpreting connection failures.
 
 - [serve-local-check-page](serve-local-check-page.md)
 - [diagnose-second-url](diagnose-second-url.md)
@@ -64,14 +62,12 @@ The S7 reinforcement order puts core server work and diagnosis before publishing
 
 ## S08 Reinforcement
 
-Keep Your Server Running: supervision, journal evidence, safe repair, and logout observations. Tmux and helper functions are optional, not prerequisites for the service.
+Keep Your Server Running: user services, request logs, and logout observations. The [five guided mysteries](../sessions/S08/self-study.md#7-break-and-read-the-error) already require repair explanations. Tmux and helper functions are optional extensions to the lesson, not prerequisites for running the service.
 
 - [keep-tmux-workbench](keep-tmux-workbench.md)
 - [write-site-helper-functions](write-site-helper-functions.md)
 - [enable-site-service](enable-site-service.md)
 - [watch-service-logs](watch-service-logs.md)
-- [break-and-read-error](break-and-read-error.md)
-- [fix-and-restart-service](fix-and-restart-service.md)
 - [check-service-status](check-service-status.md)
 - [restart-service-cleanly](restart-service-cleanly.md)
 - [read-recent-logs](read-recent-logs.md)

@@ -51,7 +51,7 @@ def test_ops_status_reports_recovery_backlogs(
     assert f"database_path={migrated_database_path}" in output
     assert "sqlite_integrity=ok" in output
     assert "migration_revision=" in output
-    assert "migration_head=20260801_0016" in output
+    assert "migration_head=20260925_0017" in output
     assert "audit_unexported=1" in output
     assert "unsupported_validation_attempts=0" in output
     assert "outbox kind=group_sync status=failed count=1" in output
@@ -163,7 +163,7 @@ def test_ops_check_fails_when_migration_revision_is_stale(
         )
 
     assert run(["check", "--database", str(migrated_database_path)]) == 1
-    assert "migration revision is 20260529_0001; expected 20260801_0016" in capsys.readouterr().err
+    assert "migration revision is 20260529_0001; expected 20260925_0017" in capsys.readouterr().err
 
 
 def test_ops_check_rejects_negative_audit_backlog_limit(migrated_database_path: Path) -> None:

@@ -4,52 +4,45 @@ Quest: write-site-helper-functions
 
 ## Optional Mission
 
-Give a repeated read-only service command a memorable name. This is optional shell practice after the backend works, not a prerequisite for a user service or a required `site.sh` dispatcher.
+Give a repeated service command a memorable name. A **function definition** names commands without running them; calling that name runs its body.
 
 ## Try Functions In Your Shell
 
-In your own classroom SSH shell, with `site.service` already created:
+Define these functions in your SSH shell:
 
 ```bash
 site_status() {
-  systemctl --user status site.service --no-pager
+  systemctl --user status site.service
 }
 
 site_logs() {
-  journalctl --user -u site.service --no-pager -n 20
+  journalctl --user -u site.service --since "5 minutes ago"
 }
-
-site_status
-site_logs
 ```
 
-A definition names commands without running them. Calling the name runs its body. These functions only read state and recent logs; they do not start, stop, or supervise your Caddy. Read the actual service state and request lines rather than treating function execution as proof that the page works.
-
-There is no dispatcher and no arbitrary command execution from supplied arguments. Direct `systemctl` and `journalctl` remain the simplest choice if you do not repeat this enough to need names.
+Call `site_status`, then press `q` to leave the view. Call `site_logs` and leave with `q` too. These functions read state and logs; they do not start or stop Caddy.
 
 ## Keep Only If Useful
 
-The definitions disappear when this shell ends. If you want to preserve them, first inspect any existing file, then save just the definitions above in `~/src/scripts/site-functions.sh`, outside the published pages. Do not overwrite existing content or replace someone else's helper.
+The definitions disappear when this shell ends. To keep them, save just the definitions in `~/src/scripts/site-functions.sh`, outside published pages. Preserve any existing content:
 
 ```bash
 mkdir -p ~/src/scripts
 micro ~/src/scripts/site-functions.sh
 ```
 
-Load your own inspected file into a fresh SSH shell and call a function:
+`source` runs a file in your current shell, making its definitions available there. Read the file first and source only content you trust. In a fresh SSH shell:
 
 ```bash
 source ~/src/scripts/site-functions.sh
 site_status
 ```
 
-Sourcing executes a file in your current shell, so source only content you trust and have read. This file needs no executable bit and no `"$@"` dispatcher. Do not change the systemd unit to depend on it; keep the unit's numeric assigned port, all-interface listener, stable `WorkingDirectory=%h`, explicit `--root %h/public_html`, and `--access-log` unchanged.
-
-Use the [source preservation workflow](../sessions/S07/self-study.md#6-preserve-source-now), staging only `scripts/site-functions.sh` for this extension after review. Preserve unrelated work and exclude credentials. No generated files or private backups belong in the commit.
+The service does not depend on these shortcuts. If you keep the file, review and commit it with your other source.
 
 ## Explain To A Peer
 
-Ask a peer what calling `site_logs` will do before running it. Explain why reading logs does not change the service lifecycle. If the names made the workflow clearer, add a brief note to existing `setup.md`; otherwise keep using the original commands and skip persistence.
+Explain what happens when you define `site_logs`, when you call it, and when you source the saved file. Why does none of this stop the website? Use `guide answer 'Your explanation'` when this quest is current.
 
 ## Related Reading
 

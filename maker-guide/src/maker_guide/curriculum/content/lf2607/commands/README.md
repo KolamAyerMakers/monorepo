@@ -106,6 +106,7 @@ Use command cards when you need a command's shape, purpose, or common failure mo
 
 ## Supervision And Scheduling
 
+- [systemd-analyze](systemd-analyze.md)
 - [systemctl](systemctl.md)
 - [journalctl](journalctl.md)
 - [systemd timer](systemd-timer.md)

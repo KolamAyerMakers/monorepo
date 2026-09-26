@@ -104,7 +104,7 @@ Run a foreground Caddy file server, request it locally and publicly, and watch v
 
 ### S08: Keep Your Server Running
 
-Let a systemd user service supervise the backend. Read its journal, safely break and repair your own unit, and investigate logout survival. Tmux and helper functions are optional extensions.
+Give your web server to a systemd user service. Test it while logged out, follow requests in its journal, and publish without restarting. Then diagnose and repair five guide-launched mysteries, explaining each cause.
 
 - [Slides](sessions/S08/slides.md)
 - [Self-study](sessions/S08/self-study.md)

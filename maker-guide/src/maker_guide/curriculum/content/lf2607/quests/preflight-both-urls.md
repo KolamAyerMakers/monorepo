@@ -6,51 +6,36 @@ Quest: preflight-both-urls
 
 Reuse the static checker, request both the static homepage and the service hostname with `curl -I`, and inspect the actual service state.
 
-## Commands You Will Use
-
-- `curl -I`
-- `curl -i`
-- `systemctl --user`
-- `journalctl --user`
-
 ## Steps
 
-On the classroom server, confirm `$USER` matches your course login, then run:
+`systemctl show` prints service properties. `ActiveState` is the overall state and `SubState` gives more detail; `-p` selects each property. In your SSH shell:
 
 ```bash
 bash ~/scripts/site-check.sh "" maker-report.html
 curl -I --max-time 10 "https://lf2607.kolamayermakers.org/~$USER/"
 curl -I --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
 systemctl --user show site.service -p ActiveState -p SubState
-PORT="$((10000 + $(id -u)))"
-curl -i --max-time 10 "http://127.0.0.1:$PORT/"
+curl -i --max-time 10 "http://127.0.0.1:$((10000 + $(id -u)))/"
 ```
 
-Keep `~/scripts/site-check.sh` unchanged: these arguments check the static homepage and report. It does not check the service hostname. The explicit curl commands request two different hostnames; requesting the static URL twice does not cover the service.
+The script checks the static homepage and report. The two public curl commands check different routes: shared Caddy serves the static URL directly, while the service hostname forwards to your Caddy.
 
-Read each response's HTTP status line and the unit's `ActiveState` and `SubState`. `show` reports these properties without treating an inactive or failed state as a failed query. Record that state honestly instead of assuming success because a command ran. Curl can exit `0` after `404` or `502`.
+Read each HTTP status and the service state. A successful curl command can still report `404` or `502`.
 
 Replace `your-handle` and open the [static homepage](https://lf2607.kolamayermakers.org/~your-handle/), [report](https://lf2607.kolamayermakers.org/~your-handle/maker-report.html), and [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in your laptop browser. Inspect the content as well as reachability.
 
-If you use recorded progress, run `guide check` for the two distinct public curl observations and the service-status command. The guide checks recorded commands, not independent proof of HTTP 200 or browser access.
-
-## Hints
-
-1. Local curl tests your process directly; public-hostname curl from the server tests its proxy route and may use local host mappings. Neither proves outside access.
-2. Your laptop browser adds evidence from one outside network, not every visitor's network. A header-only response cannot prove the page content is correct.
-3. Use failures as a debugging list. Resolve them before automating publication or handing over operations; record unresolved observations honestly instead of fabricating a working service.
+Run `guide check` when this quest is current. Investigate any failed responses before moving on.
 
 ## If Check Fails
 
 Repeat both distinct `curl -I` requests and the status command. A static homepage `404` points to build/output trouble; use the unchanged checker for report-specific repair advice. For service trouble, collect:
 
 ```bash
-PORT="$((10000 + $(id -u)))"
-curl -i --max-time 10 "http://127.0.0.1:$PORT/"
-journalctl --user -u site.service --no-pager -n 50
+curl -i --max-time 10 "http://127.0.0.1:$((10000 + $(id -u)))/"
+journalctl --user -u site.service --since "5 minutes ago"
 ```
 
-A service `502` points to the process, assigned port, or proxy route; a direct local refusal has no HTTP status. The static route is independent of your backend process, so static success alone cannot establish service health. For name-resolution failure, also run `host "$USER.lf2607.kolamayermakers.org"`. Use [enable-site-service](enable-site-service.md) for unit repair and bring unresolved routing evidence to staff; do not kill unknown listeners, change shared DNS or proxy settings, or disable TLS verification.
+Press `q` to leave the journal. A local refusal means no connection was established; a public `502` means the proxy could not get a usable backend response. Use the [troubleshooting guide](../sessions/S08/self-study.md#troubleshooting), then ask for help with the results if still stuck. Do not change shared routing or bypass TLS checks.
 
 ## Related Reading
 

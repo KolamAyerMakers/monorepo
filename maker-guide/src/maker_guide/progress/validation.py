@@ -32,6 +32,7 @@ from maker_guide.curriculum.models import (
     Quest,
     QuestValidation,
     QuestValidationLeaf,
+    ServiceLabValidation,
     SessionObjectiveValidation,
     SiteCheckValidation,
     SshPublicKeyObservedValidation,
@@ -43,6 +44,7 @@ from maker_guide.repositories.command_observation import (
     list_recent_command_observations,
 )
 from maker_guide.repositories.helpers import JsonPayload
+from maker_guide.service_lab import ServiceLabReport
 from maker_guide.site_check import (
     SITE_CHECK_CASES,
     SiteCheckError,
@@ -115,6 +117,10 @@ GENERIC_VALIDATION_FAILURE_REASONS = frozenset(
         "site-check-required",
         "site-check-stale",
         "site-check-failed",
+        "service-lab-required",
+        "service-lab-unavailable",
+        "service-lab-unrepaired",
+        "service-lab-explanation-unavailable",
     },
 )
 """Failure reasons with generic learner-facing fallback copy."""
@@ -150,6 +156,7 @@ _SUPPORTED_VALIDATION_TYPE_IDS = frozenset(
     {
         "command_history",
         "site_check",
+        "service_lab",
         "path_exists",
         "executable_path",
         "owned_path",
@@ -190,6 +197,8 @@ class QuestValidationInput:
     """Prepared outcomes; validation itself never executes learner code."""
     site_check_failure_reason: str | None = None
     """Source or transport failure encountered before the progress transaction."""
+    service_lab_report: ServiceLabReport | None = None
+    """Fresh invocation report; stored progress is never a substitute for inspection."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -265,6 +274,8 @@ def validate_session_objective(
     validation: SessionObjectiveValidation,
 ) -> QuestValidationResult:
     """Validate dedicated session-objective evidence."""
+    if isinstance(validation, ServiceLabValidation):
+        return _validate_service_lab(validation_input, validation)
     if isinstance(validation, SshPublicKeyObservedValidation):
         events = list_recent_audit_events_by_type(
             validation_input.database_connection,
@@ -317,7 +328,46 @@ def validate_session_objective(
     )
 
 
-def validation_support(validation: QuestValidation) -> QuestValidationSupport:
+def _validate_service_lab(
+    validation_input: QuestValidationInput,
+    validation: ServiceLabValidation,
+) -> QuestValidationResult:
+    report = validation_input.service_lab_report
+    if report is None:
+        failure_reason = "service-lab-required"
+    elif report.scenario != validation.scenario or report.error is not None:
+        failure_reason = "service-lab-unavailable"
+    elif not report.started:
+        failure_reason = "service-lab-required"
+    elif not report.healthy:
+        failure_reason = "service-lab-unrepaired"
+    elif (
+        validation_input.answer_text
+        and validation_input.answer_text.strip()
+        and (
+            len(validation_input.answer_concept_assessments)
+            != len(validation.answer.required_concepts)
+            or {assessment.concept_id for assessment in validation_input.answer_concept_assessments}
+            != {concept.id for concept in validation.answer.required_concepts}
+        )
+    ):
+        # ponytail: causal explanations need semantic assessment, not a second regex grader.
+        failure_reason = "service-lab-explanation-unavailable"
+    else:
+        answer_result = _validate_interactive_question(validation_input, validation.answer)
+        return QuestValidationResult(
+            passed=answer_result.passed,
+            failure_reason=answer_result.failure_reason,
+            evidence={**answer_result.evidence, "validation_type": "service_lab"},
+        )
+    return QuestValidationResult(
+        passed=False,
+        failure_reason=failure_reason,
+        evidence=_validation_evidence("service_lab", False, failure_reason),
+    )
+
+
+def validation_support(validation: SessionObjectiveValidation) -> QuestValidationSupport:
     """Return runtime support status for a validation tree."""
     unsupported_validation_types = _unsupported_validation_types(validation)
     return QuestValidationSupport(
@@ -326,8 +376,18 @@ def validation_support(validation: QuestValidation) -> QuestValidationSupport:
     )
 
 
-def validation_failure_reasons(validation: QuestValidation) -> frozenset[str]:
+def validation_failure_reasons(validation: SessionObjectiveValidation) -> frozenset[str]:
     """Return stable failure reasons the runtime can emit for a validation tree."""
+    if isinstance(validation, ServiceLabValidation):
+        return validation_failure_reasons(validation.answer) | frozenset(
+            {
+                "service-lab-required",
+                "service-lab-unavailable",
+                "service-lab-unrepaired",
+                "service-lab-explanation-unavailable",
+                "contradicted-concept",
+            }
+        )
     if isinstance(validation, AllOfValidation):
         return frozenset(
             failure_reason
@@ -339,8 +399,6 @@ def validation_failure_reasons(validation: QuestValidation) -> frozenset[str]:
         if validation.forbidden_regex is None:
             failure_reasons -= frozenset({"forbidden-content-present"})
         return failure_reasons
-    if isinstance(validation, FileMatchesPathValidation):
-        return _VALIDATION_FAILURE_REASONS_BY_ID["file_matches_path"]
     if isinstance(validation, InteractiveQuestionValidation):
         failure_reasons = _VALIDATION_FAILURE_REASONS_BY_ID["interactive_question"]
         if not any(concept.forbidden_patterns for concept in validation.required_concepts):
@@ -1410,7 +1468,7 @@ def _validation_evidence(
     }
 
 
-def _unsupported_validation_types(validation: QuestValidation) -> frozenset[str]:
+def _unsupported_validation_types(validation: SessionObjectiveValidation) -> frozenset[str]:
     if isinstance(validation, AllOfValidation):
         return frozenset(
             validation_type
@@ -1428,6 +1486,8 @@ def validation_answer_question(
 ) -> str | None:
     """Return the first learner-answer question in one validation tree."""
     match validation:
+        case ServiceLabValidation(answer=answer):
+            return answer.question
         case InteractiveQuestionValidation(question=question):
             return question
         case LearnerHandleQuestionValidation(question=question):

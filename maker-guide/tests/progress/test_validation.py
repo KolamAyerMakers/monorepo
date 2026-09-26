@@ -26,10 +26,12 @@ from maker_guide.curriculum.models import (
     LearnerHandleQuestionValidation,
     PathExistsValidation,
     QuestValidation,
+    ServiceLabValidation,
     SiteCheckValidation,
     SshPublicKeyObservedValidation,
     UserPortFileValidation,
 )
+from maker_guide.llm_tutor import AnswerVerdict
 from maker_guide.progress.validation import (
     QuestValidationInput,
     validate_quest,
@@ -40,6 +42,7 @@ from maker_guide.progress.validation import (
 from maker_guide.repositories.audit_event import AuditEvent, append_audit_event
 from maker_guide.repositories.command_observation import CommandObservation, add_command_observation
 from maker_guide.repositories.helpers import connect_database
+from maker_guide.service_lab import ServiceLabReport
 from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckReport
 from maker_guide.validation_paths import UnixAccount, UnixAccountLookup
 from tests.repositories.helpers import write_learner
@@ -68,6 +71,218 @@ _GENERIC_FALLBACK_ALLOWED_VALIDATION_FAILURE_REASONS = frozenset(
         "site-check-failed",
     },
 )
+
+
+@pytest.mark.parametrize(
+    ("report_kind", "failure_reason"),
+    [
+        ("missing", "service-lab-required"),
+        ("not-started", "service-lab-required"),
+        ("wrong-scenario", "service-lab-unavailable"),
+        ("error", "service-lab-unavailable"),
+        ("unhealthy", "service-lab-unrepaired"),
+    ],
+)
+def test_service_lab_requires_fresh_recovery_before_semantic_credit(
+    migrated_database_path: Path, report_kind: str, failure_reason: str
+) -> None:
+    """Even a fully demonstrated explanation cannot replace current recovery evidence."""
+    validation = next(
+        objective.validation
+        for objective in CATALOG.session("S8").objectives
+        if objective.id == "break-and-read-error"
+    )
+    assert isinstance(validation, ServiceLabValidation)
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_session_objective(
+            QuestValidationInput(
+                database_connection=database_connection,
+                catalog=CATALOG,
+                handle="alice",
+                assigned_at="2026-09-26T09:00:00Z",
+                checked_at="2026-09-26T10:00:00Z",
+                answer_text="I corrected the executable path and restarted the service.",
+                answer_concept_assessments=(
+                    AnswerConceptAssessment(concept_id="cause", verdict="demonstrated"),
+                    AnswerConceptAssessment(concept_id="repair", verdict="demonstrated"),
+                ),
+                service_lab_report=(
+                    None
+                    if report_kind == "missing"
+                    else ServiceLabReport(
+                        run_id="a" * 32,
+                        scenario="empty-root"
+                        if report_kind == "wrong-scenario"
+                        else validation.scenario,
+                        started=report_kind != "not-started",
+                        healthy=report_kind not in {"unhealthy", "error"},
+                        error="timeout" if report_kind == "error" else None,
+                        unit="private unit diagnostic",
+                        journal="private journal diagnostic",
+                        http_status=200,
+                    )
+                ),
+            ),
+            validation,
+        )
+    assert not result.passed
+    assert result.failure_reason == failure_reason
+    assert result.evidence == {
+        "validation_type": "service_lab",
+        "passed": False,
+        "failure_reason": failure_reason,
+    }
+
+
+@pytest.mark.parametrize(
+    ("objective_id", "cause", "repair"),
+    [
+        (
+            "break-and-read-error",
+            "ExecStart path was missing",
+            "I restored ExecStart path to /usr/bin/caddy, reloaded and restarted",
+        ),
+        (
+            "repair-service-arguments",
+            "Caddy rejected an unknown flag",
+            "I corrected the flag, reloaded and restarted",
+        ),
+        (
+            "repair-service-content",
+            "root pointed to an empty directory so the homepage returned 404",
+            "I restored root to public_html, reloaded and restarted",
+        ),
+        (
+            "repair-service-response",
+            "root pointed to the wrong directory so HTTP 200 delivered the wrong page",
+            "I restored root to public_html, reloaded and restarted",
+        ),
+        (
+            "rebuild-published-site",
+            "public_html was missing",
+            "I ran build-website to regenerate the output from source",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("answer_kind", "cause_verdict", "repair_verdict", "failure_reason"),
+    [
+        ("complete", "demonstrated", "demonstrated", None),
+        ("cause-only", "demonstrated", "not_demonstrated", "missing-concept"),
+        ("repair-only", "not_demonstrated", "demonstrated", "missing-concept"),
+        ("wrong-cause", "contradicted", "demonstrated", "contradicted-concept"),
+    ],
+)
+def test_service_lab_requires_both_semantic_concepts_for_each_objective(  # noqa: PLR0913
+    migrated_database_path: Path,
+    objective_id: str,
+    cause: str,
+    repair: str,
+    answer_kind: str,
+    cause_verdict: AnswerVerdict,
+    repair_verdict: AnswerVerdict,
+    failure_reason: str | None,
+) -> None:
+    """Every challenge requires demonstrated cause and repair, not just a healthy site."""
+    validation = next(
+        objective.validation
+        for objective in CATALOG.session("S8").objectives
+        if objective.id == objective_id
+    )
+    assert isinstance(validation, ServiceLabValidation)
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_session_objective(
+            QuestValidationInput(
+                database_connection=database_connection,
+                catalog=CATALOG,
+                handle="alice",
+                assigned_at="2026-09-26T09:00:00Z",
+                checked_at="2026-09-26T10:00:00Z",
+                service_lab_report=ServiceLabReport(
+                    run_id="a" * 32,
+                    scenario=validation.scenario,
+                    started=True,
+                    healthy=True,
+                    http_status=200,
+                ),
+                answer_concept_assessments=(
+                    AnswerConceptAssessment(concept_id="cause", verdict=cause_verdict),
+                    AnswerConceptAssessment(concept_id="repair", verdict=repair_verdict),
+                ),
+                answer_text={
+                    "complete": f"{cause}, so {repair}.",
+                    "cause-only": cause,
+                    "repair-only": repair,
+                    "wrong-cause": f"The port was busy, so {repair}.",
+                }[answer_kind],
+            ),
+            validation,
+        )
+
+    assert result.passed is (failure_reason is None)
+    assert result.failure_reason == failure_reason
+    assert result.evidence["validation_type"] == "service_lab"
+    if failure_reason is not None:
+        assert failure_reason in validation_failure_reasons(validation)
+
+
+@pytest.mark.parametrize(
+    ("answer", "assessment_ids", "failure_reason"),
+    [
+        (None, (), "missing-answer"),
+        ("   ", ("cause", "repair"), "missing-answer"),
+        ("negated", (), "service-lab-explanation-unavailable"),
+        ("negated", ("cause",), "service-lab-explanation-unavailable"),
+        ("negated", ("cause", "cause"), "service-lab-explanation-unavailable"),
+        ("negated", ("cause", "other"), "service-lab-explanation-unavailable"),
+        ("negated", ("cause", "repair", "repair"), "service-lab-explanation-unavailable"),
+    ],
+)
+def test_service_lab_never_falls_back_without_complete_unique_assessments(
+    migrated_database_path: Path,
+    answer: str | None,
+    assessment_ids: tuple[str, ...],
+    failure_reason: str,
+) -> None:
+    """Old regex keywords, even in explicit negation, cannot replace semantic assessment."""
+    validation = next(
+        objective.validation
+        for objective in CATALOG.session("S8").objectives
+        if objective.id == "break-and-read-error"
+    )
+    assert isinstance(validation, ServiceLabValidation)
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_session_objective(
+            QuestValidationInput(
+                database_connection=database_connection,
+                catalog=CATALOG,
+                handle="alice",
+                assigned_at="2026-09-26T09:00:00Z",
+                checked_at="2026-09-26T10:00:00Z",
+                answer_text=(
+                    (
+                        "It is false that ExecStart path was missing, and false that I restored "
+                        "ExecStart path to /usr/bin/caddy, reloaded and restarted."
+                    )
+                    if answer == "negated"
+                    else answer
+                ),
+                answer_concept_assessments=tuple(
+                    AnswerConceptAssessment(concept_id=concept_id, verdict="demonstrated")
+                    for concept_id in assessment_ids
+                ),
+                service_lab_report=ServiceLabReport(
+                    run_id="a" * 32,
+                    scenario=validation.scenario,
+                    started=True,
+                    healthy=True,
+                    http_status=200,
+                ),
+            ),
+            validation,
+        )
+    assert not result.passed
+    assert result.failure_reason == failure_reason
 
 
 def test_command_history_validation_uses_sqlite_observations_not_audit(

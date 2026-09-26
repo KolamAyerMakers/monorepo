@@ -105,7 +105,10 @@ def _pending_quest_ids(
         if assignment.quest_id in available_quest_ids
         and assignment.quest_id not in completed_quest_ids
     )
-    next_quest = catalog.next_assignable_quest(session_reached, completed_quest_ids)
+    next_quest = catalog.next_assignable_quest(
+        session_reached,
+        completed_quest_ids & frozenset(quest.id for quest in catalog.course.quests),
+    )
     pending_quests = assigned_incomplete_quests
     if next_quest is not None and next_quest.id not in {
         quest.id for quest in assigned_incomplete_quests

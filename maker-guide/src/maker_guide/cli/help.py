@@ -24,6 +24,7 @@ from maker_guide.chat.contract import (
     DEFAULT_CHAT_MAX_INPUT_CHARS,
 )
 from maker_guide.chat.intents import chat_intent
+from maker_guide.cli.service_lab import run_service_lab
 from maker_guide.cli.site_check import run_site_check
 from maker_guide.config import (
     DEFAULT_CONFIG_PATH,
@@ -31,6 +32,12 @@ from maker_guide.config import (
     load_socket_path,
 )
 from maker_guide.llm_tutor import DEFAULT_TUTOR_TIMEOUT_SECONDS
+from maker_guide.service_lab import (
+    SERVICE_LAB_MAX_FRAME_BYTES,
+    parse_service_lab_action,
+    parse_service_lab_report,
+    service_lab_report_payload,
+)
 from maker_guide.site_check import (
     SITE_CHECK_VERSION,
     parse_site_check_report,
@@ -133,7 +140,7 @@ class _SocketReader(Protocol):
         ...
 
     def sendall(self, data: bytes, /) -> None:
-        """Send a site check result on the original connection."""
+        """Send a local action result on the original connection."""
         ...
 
 
@@ -340,6 +347,7 @@ def _send_help_request(
                 "ssh_connection": os.environ.get("SSH_CONNECTION"),
                 "stream": chunk_writer is not None,
                 "supports_site_check": True,
+                "supports_service_lab": True,
             },
             separators=(",", ":"),
         ).encode("utf-8")
@@ -347,6 +355,7 @@ def _send_help_request(
     )
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client_socket:
+            # Socket timeouts bound reads, not the intervening 25-second local runner.
             client_socket.settimeout(_HELP_SOCKET_TIMEOUT_SECONDS)
             client_socket.connect(str(socket_path))
             client_socket.sendall(payload)
@@ -509,13 +518,14 @@ def _help_response_text(response: bytes) -> str:
     return text
 
 
-def _read_help_response(  # noqa: C901 - Keep the one-shot action in the existing read loop.
+def _read_help_response(  # noqa: C901, PLR0911, PLR0912 - Keep frame guards and one-shot actions together.
     client_socket: _SocketReader,
     chunk_writer: Callable[[str], None] | None,
     message: str = "",
 ) -> str:
     buffered = b""
-    site_check_allowed = chat_intent(message) in {"now", "check"}
+    intent = chat_intent(message)
+    action_used = False
     while True:
         if b"\n" not in buffered:
             received = client_socket.recv(4096)
@@ -535,14 +545,26 @@ def _read_help_response(  # noqa: C901 - Keep the one-shot action in the existin
             if not isinstance(loaded, dict):
                 return _BAD_HELP_RESPONSE_TEXT
             response_object = cast("dict[object, object]", loaded)
+            if "service_lab" in response_object:
+                if (
+                    action_used
+                    or not separator
+                    or len(response_line) + 1 > SERVICE_LAB_MAX_FRAME_BYTES
+                ):
+                    return _BAD_HELP_RESPONSE_TEXT
+                action_used = True
+                client_socket.sendall(_service_lab_reply(response_object, message))
+                chunk_writer = None
+                continue
             if "site_check" in response_object:
                 if (
-                    not site_check_allowed
+                    action_used
+                    or intent not in {"now", "check"}
                     or not separator
                     or len(response_line) + 1 > _SITE_CHECK_MAX_FRAME_BYTES
                 ):
                     return _BAD_HELP_RESPONSE_TEXT
-                site_check_allowed = False
+                action_used = True
                 client_socket.sendall(_site_check_reply(response_object, chunk_writer))
                 continue
         except (ValueError, TypeError, RecursionError):
@@ -560,6 +582,28 @@ def _unique_json_fields(pairs: list[tuple[str, object]]) -> dict[str, object]:
     if len(fields) != len(pairs):
         raise ValueError("duplicate JSON fields")
     return fields
+
+
+def _service_lab_reply(response: dict[object, object], message: str) -> bytes:
+    if set(response) != {"ok", "service_lab"} or response["ok"] is not True:
+        raise ValueError("invalid service lab action")
+    action = parse_service_lab_action(response["service_lab"])
+    intent = chat_intent(message)
+    if intent not in {"now", "check", "answer", "freeform"} or (
+        action.operation == "start" and intent != "now"
+    ):
+        raise ValueError("invalid service lab action")
+    report = service_lab_report_payload(run_service_lab(action))
+    parse_service_lab_report(report, action)
+    reply = (
+        json.dumps({"kind": "service_lab_result", "report": report}, separators=(",", ":")).encode(
+            "utf-8",
+        )
+        + b"\n"
+    )
+    if len(reply) > SERVICE_LAB_MAX_FRAME_BYTES:
+        raise ValueError("service lab result too large")
+    return reply
 
 
 def _site_check_reply(

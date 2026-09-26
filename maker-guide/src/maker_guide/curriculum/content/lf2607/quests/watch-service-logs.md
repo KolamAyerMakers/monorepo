@@ -4,46 +4,40 @@ Quest: watch-service-logs
 
 ## Mission
 
-Match real page requests to your service journal and distinguish a missing page from a failed process. Use two SSH shells; tmux is optional.
+Match page requests to your service journal. Distinguish a missing page from a failed process.
 
 ## Follow And Request
 
-Start with your own working [user service](enable-site-service.md). In one SSH shell:
+Start with your working [user service](enable-site-service.md). `journalctl` reads its journal; `-f` follows new messages:
 
 ```bash
 journalctl --user -u site.service -f
 ```
 
-In the other, with `$USER` matching your classroom login:
+Ask a peer to visit your [service homepage](https://your-handle.lf2607.kolamayermakers.org/), replacing `your-handle`, then `/missing.html` on that site. If working alone, make the requests from a second SSH shell:
 
 ```bash
-curl -i --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
-curl -i --max-time 10 "https://$USER.lf2607.kolamayermakers.org/missing-log-page.html"
+curl -i "https://$USER.lf2607.kolamayermakers.org/"
+curl -i "https://$USER.lf2607.kolamayermakers.org/missing.html"
 ```
 
-Choose a different missing path if that file exists. Ask a peer to open your [service homepage](https://your-handle.lf2607.kolamayermakers.org/), replacing `your-handle`, and an agreed missing path from their browser too.
-
-The unit's `--access-log` enables structured request logs. Find the new entries by time (`ts` in JSON), `request.method`, `request.uri`, and `status`; formatting can differ from the foreground terminal. Do not assume the most recent line belongs to your peer: browsers may make extra requests or reuse a cached page. Your personal Caddy often logs `request.remote_ip` as `127.0.0.1` because shared Caddy is its direct client, not because the visitor is on the server.
+Choose another missing path if that file exists. Find each request's time (`ts` in JSON), `request.method`, `request.uri`, and `status`. Browsers can make extra requests, so match the path and time rather than assuming the last entry is yours.
 
 ## Stop Following, Not Serving
 
-Press `Ctrl-C` in the follower shell, then:
+Press `Ctrl-C`, then reload the homepage. Caddy should still respond: you stopped `journalctl`, not the server. Read the recent entries again:
 
 ```bash
-journalctl --user -u site.service --no-pager -n 20
+journalctl --user -u site.service --since "5 minutes ago"
 ```
 
-Reload the homepage. It should still work: stopping `journalctl` does not stop your Caddy. A missing path's `404` is an HTTP response from the running backend, not proof of a failed unit. With browsing disabled, a missing index can also produce `404` at `/`.
+Press `q` to leave. A `404` for the missing page means the server answered, not that it stopped.
 
-## If No Request Appears
+## Explain One Request
 
-Confirm the request used the service hostname, not shared Caddy's direct static route. Check the actual public error and `systemctl --user status site.service --no-pager`, and confirm the unit includes `--access-log`. A public DNS failure or proxy `502` may never reach your personal Caddy. Confirm with local curl using your assigned port, then ask staff about unresolved routing; do not change shared services or TLS verification.
+Report its method, path, status, and time, then explain why ending the log follower left the site available. Use `guide answer 'Your observation and explanation'` when this quest is current. Summarize the request rather than publishing private logs; no notes page is required.
 
-## Keep A Useful Observation
-
-Add a brief explanation to existing `~/src/pages/setup.md`: which request you recognized, what its status meant, and why stopping the follower left the page available. Summarize rather than publishing private logs. Ask before naming a peer. Build and [preserve only the intended source change](../sessions/S07/self-study.md#6-preserve-source-now).
-
-Success is recognizing a visitor's request and explaining the result, not producing a particular command history.
+If nothing appears, check that you used the service hostname, not the static route, and that the unit includes `--access-log`. A DNS failure or public proxy error may never reach your Caddy. Use the [S8 troubleshooting table](../sessions/S08/self-study.md#troubleshooting) rather than changing shared services.
 
 ## Related Reading
 

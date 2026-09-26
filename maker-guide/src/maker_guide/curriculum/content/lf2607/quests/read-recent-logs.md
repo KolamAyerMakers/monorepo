@@ -1,36 +1,27 @@
-# Read recent logs
+# Read Recent Logs
 
 Quest: read-recent-logs
 
 ## Mission
 
-Read recent `site.service` logs after making a request with `curl`.
+Find one fresh web request in your service's journal.
 
-## Commands You Will Use
+## Request, Then Read
 
-- `journalctl --user`
-- `curl`
+From your classroom SSH shell, request your service homepage. Then read the last five minutes of messages:
 
-## Steps
+```bash
+curl -i "https://$USER.lf2607.kolamayermakers.org/"
+journalctl --user -u site.service --since "5 minutes ago"
+```
 
-1. Make a request to your service with `curl`.
-2. Run `journalctl --user -u site.service`.
-3. Look for recent log lines.
-4. Ask the guide to check your command history.
+Find the request's time, `request.method`, `request.uri`, and `status`. Compare its status with the curl response. Press `q` to leave the journal view.
 
-## Hints
+If the request is missing, check the unit's `--access-log` setting and the error from curl. A request that fails before reaching your Caddy will not appear in its access log. See [Watch service logs](watch-service-logs.md) for a live request experiment.
 
-1. Logs are easier to read after a fresh request.
-2. The unit name is `site.service`.
-3. Run both commands before asking for a check.
-
-## If Check Fails
-
-Run a `curl` request and then inspect `site.service` with `journalctl --user`.
+Run `guide check` when this quest is current to check the recorded commands. Read the result yourself: command history does not show what the server returned.
 
 ## Related Reading
 
-- [journalctl](../commands/journalctl.md)
-- [curl](../commands/curl.md)
-- [service logs](../concepts/service-logs.md)
-- [logging](../concepts/logging.md)
+- [Journalctl](../commands/journalctl.md)
+- [Service logs](../concepts/service-logs.md)

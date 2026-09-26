@@ -13,8 +13,9 @@ from maker_guide.chat.presenter import (
     format_current_quest,
     format_failed_check,
 )
+from maker_guide.chat.service_lab import current_lab_report, lab_status_text
 from maker_guide.chat.snapshot import build_learner_snapshot
-from maker_guide.curriculum.models import CommandHistoryValidation, Quest
+from maker_guide.curriculum.models import CommandHistoryValidation, Quest, ServiceLabValidation
 from maker_guide.progress.feedback import site_check_feedback
 from maker_guide.progress.models import (
     CurrentSessionObjectiveResult,
@@ -313,6 +314,20 @@ def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evid
         handle=learner_handle,
     )
     if objective_result.objective is not None:
+        if dependencies.service_lab_result is not None and (
+            dependencies.service_lab_result.course_id,
+            dependencies.service_lab_result.session_id,
+            dependencies.service_lab_result.objective_id,
+            dependencies.service_lab_result.evidence_since,
+        ) != (
+            dependencies.catalog.course.id,
+            objective_result.session_id,
+            objective_result.objective.id,
+            objective_result.evidence_since,
+        ):
+            return CheckResponse(
+                text=_current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
+            )
         if dependencies.site_check_result is not None and (
             dependencies.site_check_result.course_id,
             dependencies.site_check_result.target_type,
@@ -348,6 +363,10 @@ def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evid
             refresh_current=refresh_current,
             cwd=cwd,
         )
+    if dependencies.service_lab_result is not None:
+        return CheckResponse(
+            text=_current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
+        )
     current_quest_result = current_quest(
         dependencies.database_connection,
         dependencies.catalog,
@@ -381,13 +400,12 @@ def check_response(  # noqa: C901, PLR0911, PLR0913 - Routing pins prepared evid
         return CheckResponse(
             text=_format_quest(dependencies, learner_handle, current_quest_result.quest)
         )
-    if refresh_current and current_quest_result.assigned_now:
-        return CheckResponse(
-            text=_format_quest(dependencies, learner_handle, current_quest_result.quest)
+    if (refresh_current and current_quest_result.assigned_now) or (
+        prepared_answer_interpretation is not None
+        and (
+            prepared_answer_interpretation.target_type != "quest"
+            or prepared_answer_interpretation.target_id != current_quest_result.quest.id
         )
-    if prepared_answer_interpretation is not None and (
-        prepared_answer_interpretation.target_type != "quest"
-        or prepared_answer_interpretation.target_id != current_quest_result.quest.id
     ):
         return CheckResponse(
             text=_format_quest(dependencies, learner_handle, current_quest_result.quest)
@@ -514,6 +532,18 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
     if objective_result.objective is None:
         raise ChatError("current session objective was not found")
     objective = objective_result.objective
+    if isinstance(objective.validation, ServiceLabValidation):
+        report = current_lab_report(dependencies, learner_handle)
+        if (
+            not is_answer
+            or report is None
+            or not report.started
+            or not report.healthy
+            or report.error is not None
+        ):
+            return CheckResponse(
+                text=_current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
+            )
     expects_answer = validation_answer_question(objective.validation) is not None
     if (
         (refresh_current and expects_answer)
@@ -540,6 +570,7 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
                 else ()
             ),
             account_lookup=dependencies.account_lookup,
+            service_lab_report=current_lab_report(dependencies, learner_handle),
             site_check_report=(
                 dependencies.site_check_result.report
                 if dependencies.site_check_result is not None
@@ -643,6 +674,39 @@ def _format_session_objective(  # noqa: PLR0913 - Check and display share object
     if objective is None:
         raise ChatError("current session objective was not found")
     response_parts = [f"Current session objective: {objective.title}"]
+    if isinstance(objective.validation, ServiceLabValidation):
+        if validation_result is not None and not validation_result.passed:
+            response_parts.append(
+                (
+                    "Your site is repaired. Explain what caused the problem "
+                    "and why your change fixed it."
+                )
+                if tutor_feedback is None
+                and validation_result.failure_reason in {"missing-concept", "contradicted-concept"}
+                else _objective_status(validation_result, tutor_feedback)
+            )
+            return "\n\n".join(response_parts)
+        prepared = dependencies.service_lab_result
+        response_parts.append(
+            lab_status_text(
+                prepared
+                if prepared is not None
+                and (
+                    prepared.course_id,
+                    prepared.session_id,
+                    prepared.objective_id,
+                    prepared.evidence_since,
+                )
+                == (
+                    dependencies.catalog.course.id,
+                    objective_result.session_id,
+                    objective.id,
+                    objective_result.evidence_since,
+                )
+                else None
+            )
+        )
+        return "\n\n".join(response_parts)
     if include_instructions:
         prompt = _learner_prompt(objective.prompt, dependencies, learner_handle)
         response_parts.append(next_step or f"Start here:\n{prompt}")
@@ -688,6 +752,11 @@ def _objective_status(  # noqa: C901, PLR0911 - Each validation failure has one 
     """Format concise missing evidence for a session objective."""
     if (feedback := site_check_feedback(validation_result)) is not None:
         return feedback
+    if validation_result.failure_reason == "service-lab-explanation-unavailable":
+        return (
+            "Your site works again, but I couldn't assess your explanation just now. "
+            "Please submit it again shortly; if this persists, ask for help."
+        )
     if validation_result.failure_reason == "missing-ssh-publickey":
         return "No SSH key login observed. Reconnect using your SSH key, then run `guide check`."
     if validation_result.failure_reason == "missing-irc-channel-join":

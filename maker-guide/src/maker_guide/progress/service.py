@@ -217,7 +217,7 @@ def current_quest(
         )
         next_quest = catalog.next_assignable_quest(
             course_release.session_reached,
-            completed_quest_ids,
+            completed_quest_ids & frozenset(quest.id for quest in catalog.course.quests),
         )
         selected_quest = _current_quest(
             catalog,
@@ -1005,7 +1005,7 @@ def _require_current_assignment(
     )
     next_quest = catalog.next_assignable_quest(
         course_release.session_reached,
-        completed_quest_ids,
+        completed_quest_ids & frozenset(quest.id for quest in catalog.course.quests),
     )
     selected_quest = _current_quest(
         catalog,

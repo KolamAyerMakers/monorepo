@@ -11,6 +11,7 @@ from maker_guide.chat.contract import (
     RestrictedLlmAuditLogInput,
 )
 from maker_guide.chat.intents import answer_text, chat_intent
+from maker_guide.chat.service_lab import current_lab_report
 from maker_guide.chat.snapshot import build_learner_snapshot
 from maker_guide.chat.tutor import routes_bare_interactive_answer
 from maker_guide.curriculum.models import (
@@ -18,6 +19,7 @@ from maker_guide.curriculum.models import (
     AnswerConceptAssessment,
     InteractiveQuestionValidation,
     QuestValidation,
+    ServiceLabValidation,
     SessionObjectiveValidation,
 )
 from maker_guide.llm_tutor import (
@@ -44,12 +46,13 @@ def prepare_answer_interpretation(
     if request.visibility != "private" or dependencies.answer_interpreter is None:
         return None
     learner_answer = _learner_answer(request, dependencies, learner_handle)
-    if learner_answer is None:
-        return None
-    target = _answer_target(dependencies, learner_handle)
-    if target is None:
+    if learner_answer is None or (target := _answer_target(dependencies, learner_handle)) is None:
         return None
     target_type, target_id, target_session_id, validation = target
+    if isinstance(validation, ServiceLabValidation):
+        report = current_lab_report(dependencies, learner_handle)
+        if report is None or not report.started or not report.healthy or report.error is not None:
+            return None
     interactive_validation = _interactive_validation(validation)
     if interactive_validation is None:
         return None
@@ -177,6 +180,8 @@ def _answer_target(
 def _interactive_validation(
     validation: QuestValidation | SessionObjectiveValidation,
 ) -> InteractiveQuestionValidation | None:
+    if isinstance(validation, ServiceLabValidation):
+        return validation.answer
     if isinstance(validation, InteractiveQuestionValidation):
         return validation
     if isinstance(validation, AllOfValidation):

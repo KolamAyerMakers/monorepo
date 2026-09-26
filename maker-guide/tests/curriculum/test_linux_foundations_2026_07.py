@@ -32,6 +32,7 @@ from maker_guide.curriculum.models import (
     IrcCtcpVersionValidation,
     OwnedPathValidation,
     PathExistsValidation,
+    ServiceLabValidation,
     SiteCheckValidation,
     SshPublicKeyObservedValidation,
     UserPortFileValidation,
@@ -314,9 +315,13 @@ def test_sessions_expose_independent_objective_validators() -> None:
         ),
         "S8": (
             AllOfValidation,
-            CommandHistoryValidation,
-            AllOfValidation,
             InteractiveQuestionValidation,
+            CommandHistoryValidation,
+            ServiceLabValidation,
+            ServiceLabValidation,
+            ServiceLabValidation,
+            ServiceLabValidation,
+            ServiceLabValidation,
         ),
         "S9": (
             AllOfValidation,
@@ -893,9 +898,11 @@ def test_catalog_exposes_taught_commands_and_skills_by_session() -> None:
     assert "regular-expression" in CATALOG.skills_available_through("S9")
     assert "devices" not in CATALOG.all_skills_available_through("S10")
     assert "tmux" not in CATALOG.commands_available_through("S7")
-    assert "tmux" in CATALOG.commands_available_through("S8")
+    assert "tmux" not in CATALOG.commands_available_through("S8")
+    assert "tmux" in CATALOG.session("S8").enrichment_commands
     assert "terminal-multiplexing" not in CATALOG.skills_available_through("S7")
-    assert "terminal-multiplexing" in CATALOG.skills_available_through("S8")
+    assert "terminal-multiplexing" not in CATALOG.skills_available_through("S8")
+    assert "terminal-multiplexing" in CATALOG.enrichment_skills_available_through("S8")
     assert "systemd-user-services" not in CATALOG.skills_available_through("S3")
     assert "kernel" not in CATALOG.skills_available_through("S1")
     assert "kernel" in CATALOG.enrichment_skills_available_through("S1")
@@ -1402,12 +1409,16 @@ def test_s8_tmux_and_service_quests_require_real_evidence() -> None:
     tmux_validation = CATALOG.quest("keep-tmux-workbench").validation
     log_validation = CATALOG.quest("watch-service-logs").validation
 
-    assert set(objectives) == {
+    assert tuple(objectives) == (
         "enable-site-service",
+        "test-logout-survival",
         "watch-service-logs",
         "break-and-read-error",
-        "test-logout-survival",
-    }
+        "repair-service-arguments",
+        "repair-service-content",
+        "repair-service-response",
+        "rebuild-published-site",
+    )
     assert isinstance(tmux_validation, CommandHistoryValidation)
     assert tmux_validation.ordered is True
     assert tmux_validation.required_patterns == (
@@ -1452,6 +1463,10 @@ def test_s8_tmux_and_service_quests_require_real_evidence() -> None:
         assert re.search(required_regex, reference_unit.replace("12345", "11234"))
         assert re.search(
             required_regex,
+            reference_unit.replace("12345", "11234").replace(" --", " \\\n  --"),
+        )
+        assert re.search(
+            required_regex,
             reference_unit.replace("--listen :12345", "--listen 127.0.0.1:11234"),
         )
         for invalid_port in ("12345", "11235", "$PORT", "$((10000 + $(id -u)))"):
@@ -1471,6 +1486,10 @@ def test_s8_tmux_and_service_quests_require_real_evidence() -> None:
         )
         assert all(
             any(re.search(pattern, command) for command in service_commands)
+            for pattern in history_validation.required_patterns
+        )
+        assert any(
+            re.search(pattern, 'curl -i "http://127.0.0.1:$((10000 + $(id -u)))/"')
             for pattern in history_validation.required_patterns
         )
         for omitted_text in ("systemctl --user enable", "http://", "https://"):
@@ -1534,49 +1553,43 @@ def test_s8_tmux_and_service_quests_require_real_evidence() -> None:
         ), omitted_text
 
 
-def test_s8_repair_and_logout_checks_accept_reported_observations() -> None:
-    """Consent-based observation counts without requiring failed commands or claimed uptime."""
-    objectives = {objective.id: objective for objective in CATALOG.session("S8").objectives}
-    enable_validation = objectives["enable-site-service"].validation
-    assert isinstance(enable_validation, AllOfValidation)
-    for repair_validation in (
-        objectives["break-and-read-error"].validation,
-        CATALOG.quest("break-and-read-error").validation,
-    ):
-        assert isinstance(repair_validation, AllOfValidation)
-        assert any(
-            isinstance(validation, UserPortFileValidation)
-            and validation in enable_validation.validations
-            for validation in repair_validation.validations
-        )
-        assert not any(
-            isinstance(validation, CommandHistoryValidation)
-            for validation in repair_validation.validations
-        )
-        explanation = next(
-            validation
-            for validation in repair_validation.validations
-            if isinstance(validation, InteractiveQuestionValidation)
-        )
-        assert all(
-            any(
-                re.search(
-                    alias,
-                    (
-                        "i observed staff get 203/exec from the bad executable path, then restored "
-                        "the backup, reloaded, restarted, and checked the page response"
-                    ),
-                )
-                for alias in concept.aliases
-            )
-            for concept in explanation.required_concepts
-        )
-    logout_validation = objectives["test-logout-survival"].validation
+def test_s8_lab_cases_are_distinct_and_keep_faults_out_of_public_prompts() -> None:
+    """Ordered mysteries require separate repairs without exposing their causes."""
+    objectives = CATALOG.session("S8").objectives[3:]
+
+    assert tuple(
+        objective.validation.scenario
+        for objective in objectives
+        if isinstance(objective.validation, ServiceLabValidation)
+    ) == (
+        "missing-executable",
+        "invalid-argument",
+        "empty-root",
+        "wrong-content",
+        "missing-published-site",
+    )
+    for objective in objectives:
+        assert isinstance(objective.validation, ServiceLabValidation)
+        public_text = (
+            f"{objective.title} {objective.prompt} {objective.validation.answer.question}"
+        ).casefold()
+        for spoiler in ("execstart", "--access-logs", "unknown flag", "--root", "203/exec"):
+            assert spoiler not in public_text
+        assert objective.validation.scenario not in public_text
+
+
+def test_s8_logout_checks_accept_reported_observations() -> None:
+    """Logout checks accept failed and inconclusive observations without claiming survival."""
+    logout_validation = next(
+        objective.validation
+        for objective in CATALOG.session("S8").objectives
+        if objective.id == "test-logout-survival"
+    )
     assert isinstance(logout_validation, InteractiveQuestionValidation)
     for answer in (
-        "linger=yes; the browser worked while logged out; pid and start time were unchanged",
-        "linger=no; the browser failed while logged out; the pid and start time changed on login",
-        "lingering was unknown; another login remained so the browser and pid were inconclusive",
+        "the browser worked while logged out; pid and activation time were unchanged",
+        "the browser failed while logged out; the pid and since timestamp changed on login",
+        "another ssh connection remained open so the browser and pid result was inconclusive",
     ):
         assert all(
             any(re.search(alias, answer) for alias in concept.aliases)
@@ -1585,22 +1598,6 @@ def test_s8_repair_and_logout_checks_accept_reported_observations() -> None:
     assert not all(
         any(re.search(alias, "the service is active after login") for alias in concept.aliases)
         for concept in logout_validation.required_concepts
-    )
-    content_repair = CATALOG.quest("fix-and-restart-service").validation
-    assert isinstance(content_repair, InteractiveQuestionValidation)
-    assert all(
-        any(
-            re.search(
-                alias,
-                (
-                    "the page returned 404; i fixed its source path, built, and reloaded the "
-                    "browser. the response contained the right page without restarting "
-                    "personal caddy."
-                ),
-            )
-            for alias in concept.aliases
-        )
-        for concept in content_repair.required_concepts
     )
 
 

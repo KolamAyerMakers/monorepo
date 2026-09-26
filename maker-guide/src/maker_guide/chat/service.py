@@ -19,6 +19,7 @@ from maker_guide.chat.contract import (
     UnknownLearnerError,
 )
 from maker_guide.chat.router import build_response_draft
+from maker_guide.chat.service_lab import prepare_service_lab
 from maker_guide.chat.site_check import prepare_site_check
 from maker_guide.chat.snapshot import build_learner_snapshot
 from maker_guide.chat.tutor import (
@@ -47,6 +48,13 @@ def handle_chat_request(request: ChatRequest, dependencies: ChatDependencies) ->
                 ),
             )
 
+    _require_learner(dependencies.database_connection, learner_handle)
+    dependencies = replace(
+        dependencies,
+        service_lab_result=prepare_service_lab(
+            request, dependencies, learner_handle, interaction_timestamp
+        ),
+    )
     if calls_private_tutor(request, dependencies, learner_handle):
         _require_learner(dependencies.database_connection, learner_handle)
         response_draft = build_response_draft(
@@ -68,7 +76,11 @@ def handle_chat_request(request: ChatRequest, dependencies: ChatDependencies) ->
     _require_learner(dependencies.database_connection, learner_handle)
     dependencies = replace(
         dependencies,
-        site_check_result=prepare_site_check(request, dependencies, learner_handle),
+        site_check_result=(
+            prepare_site_check(request, dependencies, learner_handle)
+            if dependencies.service_lab_result is None
+            else None
+        ),
     )
     prepared_answer_interpretation = prepare_answer_interpretation(
         request,

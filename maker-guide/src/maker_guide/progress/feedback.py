@@ -50,6 +50,10 @@ _CHECK_DESCRIPTIONS = MappingProxyType(
         "site-check-required": "Simulated behavior of ~/scripts/site-check.sh.",
         "site-check-stale": "The script digest bound to the simulated checks.",
         "site-check-failed": "The seven simulated site-check outcomes.",
+        "service-lab-required": "A started troubleshooting challenge and fresh local inspection.",
+        "service-lab-unavailable": "Fresh diagnostic evidence for the current challenge.",
+        "service-lab-unrepaired": "The service and page after your repair.",
+        "service-lab-explanation-unavailable": "Assessment of your cause-and-repair explanation.",
     },
 )
 _FALLBACK_FAILURE_FINDINGS = MappingProxyType(
@@ -105,6 +109,17 @@ _FALLBACK_FAILURE_FINDINGS = MappingProxyType(
         "site-check-failed": (
             "`~/scripts/site-check.sh` has not passed all simulated cases. "
             "Run `guide now` or `guide check` again in the classroom shell."
+        ),
+        "service-lab-required": (
+            "Run `guide now` in your SSH shell to start or inspect the challenge."
+        ),
+        "service-lab-unavailable": "The local inspection could not finish. Run `guide now` again.",
+        "service-lab-unrepaired": (
+            "The site is not repaired yet. Read the status, journal, and page."
+        ),
+        "service-lab-explanation-unavailable": (
+            "Your site works again, but I couldn't assess your explanation. "
+            "Please submit it again shortly; ask for help if this persists."
         ),
     },
 )

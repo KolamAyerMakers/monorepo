@@ -6,82 +6,63 @@ Date: 2026-09-26
 
 ## What Changed
 
-In S7 your SSH shell owned a foreground personal Caddy process. In S8 you restarted it, stopped it to release the port, then gave the same job to your systemd user manager. Shared Caddy still handles public HTTPS and forwards to personal Caddy over loopback HTTP. Same software, two separate processes; the static route still serves files independently.
+In S7, Caddy ran in an open terminal. In S8, **systemd** took over: a **unit file** describes the service, and your **user manager** runs it independently of your terminal.
 
-## The Unit Contract
+During startup, the kernel starts **PID 1**, which fills the **init** role of bringing up the rest of the system. On our machine, this is systemd's system manager. Your user manager is a separate process; `systemctl --user` talks to it, not PID 1.
 
-The installed file is `~/.config/systemd/user/site.service`:
+Shared Caddy still handles public HTTPS and forwards to your Caddy. The static route serves files independently, so it does not test your service.
 
-```ini
-[Unit]
-Description=Personal website service
+## Remember The Unit
 
-[Service]
-WorkingDirectory=%h
-ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log
-Restart=on-failure
+The installed unit is `~/.config/systemd/user/site.service`. Keep a working source copy at `~/src/services/site.service`, outside published pages. See the [complete unit and preservation steps](self-study.md#2-create-the-user-unit).
 
-[Install]
-WantedBy=default.target
-```
+- `ExecStart` names the command. Use your actual numeric port, not a shell calculation.
+- `%h` means your home directory. Keep `WorkingDirectory=%h` and explicit `--root %h/public_html` so Caddy reads the current published files.
+- `Restart=on-failure` retries failures, not intentional stops.
+- `WantedBy=default.target` lets `enable` arrange startup with your user manager; it does not start the service by itself.
 
-Replace `12345` with your actual numeric result of `10000 + uid`. If the result exceeds `65535`, ask the instructor rather than choosing another port. `ExecStart` is not Bash; it does not calculate shell expressions.
+Keep private files and symlinks to them out of the published root. Use `systemctl --user`, never `caddy stop` or `caddy reload`, which can target shared Caddy. No `sudo` or shared configuration changes are needed.
 
-`%h` means your home directory. The publisher replaces `public_html`, so the working directory stays at `%h` and personal Caddy follows the explicit `--root %h/public_html` path on new requests. The listener uses all interfaces; the classroom firewall blocks new direct external connections to the port. Do not add `--domain`; shared HTTPS is already configured. The root is not a sandbox: keep private files and symlinks to them out. Without `--browse`, a missing index does not produce an automatic directory listing.
+## Choose The Right Action
 
-## Lifecycle Decisions
-
-| Change or question | Action |
+| Task | Command |
 | --- | --- |
-| New unit | `systemctl --user daemon-reload`, then `systemctl --user enable --now site.service` |
-| Installed unit edited | Reread with `daemon-reload`, then restart the service |
-| Page source edited | `build-website`, then browser reload, no service restart |
-| Need to stop it | `systemctl --user stop site.service` |
-| Need to see its state | `systemctl --user status site.service --no-pager` |
-| Need recent errors or requests | `journalctl --user -u site.service --no-pager -n 50` |
-| Need new log lines live | `journalctl --user -u site.service -f` |
+| Check a unit without starting it | `systemd-analyze --user verify ~/.config/systemd/user/site.service` |
+| Reread saved units | `systemctl --user daemon-reload` |
+| Start now | `systemctl --user start site.service` |
+| Arrange automatic startup | `systemctl --user enable site.service` |
+| Stop deliberately | `systemctl --user stop site.service` |
+| Apply an edited unit | Verify it, run `daemon-reload`, then `systemctl --user restart site.service` |
+| Publish source changes or recreate missing output | `build-website`, then reload the browser, without restarting Caddy |
+| Read service state | `systemctl --user status site.service` |
+| Read recent messages | `journalctl --user -u site.service --since "5 minutes ago"` |
+| Follow new messages | `journalctl --user -u site.service -f` |
 
-`Restart=on-failure` retries failures, not intentional stops. `Ctrl-C` stops a journal follower, not the service. Keep `--user`; no `sudo`, shared routing changes, or TLS bypasses.
+Press `q` to leave a paged view. `Ctrl-C` stops the journal follower, not Caddy. Match requests by time, `request.method`, `request.uri`, and `status`.
 
-Never use `caddy stop` or `caddy reload`: they can target shared Caddy. Stop the supervised personal process with `systemctl --user stop site.service` only.
+## Check The Actual Page
 
-## Observe Real Outcomes
-
-An active unit alone does not prove that the page works. Request personal Caddy locally, then load the public service page in the laptop browser:
-
-```bash
-PORT="$((10000 + $(id -u)))"
-curl -i --max-time 10 "http://127.0.0.1:$PORT/"
-curl -I --max-time 10 "https://$USER.lf2607.kolamayermakers.org/"
-```
-
-Replace `your-handle` in the [service homepage](https://your-handle.lf2607.kolamayermakers.org/) and [static homepage](https://lf2607.kolamayermakers.org/~your-handle/). Confirm recognizable content through both routes. `--access-log` records structured fields `request.method`, `request.uri`, `status`, and a timestamp or time (`ts` in JSON). Match them to a peer's requests; journal and terminal formatting can differ. Personal Caddy may log shared Caddy's loopback address, not the peer's address. Shared Caddy is a server to the browser and a client to personal Caddy. A missing path can yield `404` while the service is healthy.
-
-## Repair Safely
-
-Agree to any interruption first. Back up your own working unit to a unique private directory, preserving previous backups and custom content. The class exercise changes only `/usr/bin/caddy` to `/no/such/caddy`, reads the executable failure (often `203/EXEC`), and stops retries. Restore only after comparing the backup with the broken file and consenting to replacement; preserve any unrelated edits.
-
-After restoration, use `daemon-reload`, `reset-failed`, and `restart`, then confirm local and public access. `reset-failed` clears failure and retry-limit state; it does not repair configuration. Do not leave a deliberate break behind or interfere with another learner's processes. The [self-study repair lab](self-study.md#7-break-and-read-the-error) contains the complete backup and recovery sequence.
-
-## Logout Is A Separate Experiment
-
-Check lingering and the logout observation interval:
+An active unit does not prove your site works; HTTP `200` can deliver the wrong page. Read the local response and open your service homepage in the laptop browser:
 
 ```bash
-loginctl show-user "$USER" -p Linger
-systemctl --user show site.service -p MainPID -p ExecMainStartTimestamp
+curl -i "http://127.0.0.1:$((10000 + $(id -u)))/"
+curl -I "https://$USER.lf2607.kolamayermakers.org/"
 ```
 
-Enabling a unit arranges startup with the user manager. `Linger=yes` lets that manager run without a login; enablement alone does not set it or guarantee logout survival. Ask the instructor about the policy. Learners do not enable lingering themselves.
+## Diagnose, Repair, Explain
 
-Record process identity and start time. Close **all** SSH, browser-terminal, remote editor, and other account logins; end any optional tmux shells rather than merely detaching. Stay logged out past the delay confirmed by the instructor, and request the public page freshly from your laptop or a peer before reconnecting. Compare identity and start time after reconnecting. A service can start again on login, so `active` afterward alone is not proof of survival. Report only the interval you observed, not indefinite uptime.
+The five mysteries use `guide now` to launch each challenge once. Later calls inspect it without breaking it again. The guide changes your service or published files, never your source in `~/src`. Ask it a question for one hint based on fresh diagnostics.
 
-## Keep
+Read the unit, state, recent journal, and local response before editing. Make the smallest repair that explains them. After a unit edit, verify, reload, and restart. If retries reached the start limit, use `reset-failed` before restarting; it clears the limit, not the cause. Missing published output needs a build from source, not a service restart.
 
-Keep the working unit source copy at `~/src/services/site.service`, outside published pages. Keep operational notes in linked `setup.md`: numeric port, lifecycle, observed failure and repair, logout result, and useful peer feedback with consent before naming anyone. Build and browse updates without restarting. Review and commit only intended source files as they are created; preserve unrelated work and exclude credentials, private backups, and generated output.
+Each challenge needs your working local page and one short sentence explaining the cause and why the repair worked. Answer with `guide answer 'Your explanation'` or in the interactive guide. There is no skip. Leave the site working and [preserve the repaired unit](self-study.md#4-preserve-the-working-unit).
 
-Success is a page a peer can load, requests you can locate in the journal, a failure you can diagnose and repair, and an honest explanation of logout behavior. Tmux and helper functions are optional; no `site.sh` dispatcher is needed.
+## Did It Survive Logout?
+
+Use `systemctl --user status site.service` before and after closing all SSH connections. Keep `Main PID` and the date and time after `since` on the `Active:` line. Refresh the public service page while logged out, before reconnecting.
+
+If the PID or activation time changed, Caddy restarted. A working page while logged out and unchanged values support continued operation during that test. `active` after login alone is not enough. If it stopped, report that and ask the instructor about logout settings; enabling a unit does not set those policies.
 
 ## Next Session
 
-S9: **2026-10-10**, Automate It. Hand It Over. Bring your working service, source history, setup notes, and unresolved issues. Use the [self-study route](self-study.md) for complete examples.
+S9: **2026-10-10**, Automate It. Hand It Over. Bring your working service, source copy, and questions. Use the [self-study guide](self-study.md) for procedures and troubleshooting.

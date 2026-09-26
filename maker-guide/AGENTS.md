@@ -10,6 +10,15 @@
 - The typed frozen Python dataclasses under `src/maker_guide/curriculum` define the curriculum catalog. Learner-facing curriculum material is packaged Markdown under `src/maker_guide/curriculum/content`.
 - Reference cards under `content/<course>/commands/` and `content/<course>/concepts/` are session-agnostic and self-contained: they must not name specific sessions (S1-S10), and every example must introduce its own files and inputs rather than relying on session artifacts such as a course project. Point to another card for required background.
 
+## Teaching Slides
+
+- Slides support a live lesson, not a book: use short, scannable sections and one clear purpose per slide. Put detailed procedures and caveats in self-study material.
+- Explain new concepts before commands; keep hands-on steps self-contained without repeating editor shortcuts, familiar flags, or instructions about how to follow the lesson.
+- Default to single-line commands and unit directives. Use backslash continuations only when explicitly requested for the layout.
+- Describe commands precisely: configuration validation does not prove runtime behavior. Do not attribute a subcommand's effect to an unrelated flag.
+- Omit grading mechanics, unnecessary safety asides, duplicate exercise introductions, and peer requirements for tasks learners can do themselves. Keep only warnings needed for the action shown.
+- Introduce troubleshooting exercises once: what the guide breaks, what learners should investigate and fix, and how to get help. Do not expose progression gates or internal diagnostic mechanics.
+
 ## Validation
 
 - Never run checks before committing. Commit completed changes and trust Lefthook's pre-commit gate; fix and recommit only when that gate fails.

@@ -6,25 +6,15 @@ Quest: explain-user-services
 
 Explain the difference between a user service and a system service.
 
-## Commands You Will Use
+## Inspect And Explain
 
-- `systemctl --user`
+```bash
+systemctl --user status site.service
+```
 
-## Steps
+Press `q` to leave. Which manager runs this service, and under whose account? Why does controlling it not change the machine's SSH service?
 
-1. Inspect your user service with `systemctl --user`.
-2. Identify which account owns it.
-3. Answer the guide with why it is a user service.
-
-## Hints
-
-1. `--user` is the clue.
-2. Your account owns this service.
-3. Mention user service scope in the answer.
-
-## If Check Fails
-
-Answer again and explicitly mention that `site.service` runs in user scope.
+Explain in your own words with `guide answer 'Your explanation'` when this quest is current.
 
 ## Related Reading
 

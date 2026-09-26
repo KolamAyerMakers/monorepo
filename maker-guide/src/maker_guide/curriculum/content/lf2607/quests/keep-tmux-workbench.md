@@ -2,33 +2,23 @@
 
 Quest: keep-tmux-workbench
 
-## Mission
+## Optional Mission
 
-Create a named tmux session, detach without ending it, list it, reattach, then end it.
-
-## Commands You Will Use
-
-- `tmux`
+**tmux** keeps a terminal session running while you disconnect from its view. Practise creating, leaving, and returning to a session; it is not needed for your systemd service.
 
 ## Steps
 
 1. Run `tmux new -s quest-workbench`.
-2. Detach with `Ctrl-b d`.
+2. Detach: press `Ctrl-b`, release both keys, then press `d`. The session keeps running.
 3. Run `tmux ls`.
 4. Reattach with `tmux attach -t quest-workbench`.
 5. Detach again with `Ctrl-b d`.
 6. Run `tmux kill-session -t quest-workbench`.
-7. Ask the guide to check your work.
-
-## Hints
-
-1. Press `Ctrl-b`, release both keys, then press `d`.
-2. Detach does not kill the session.
-3. The guide needs to see create, list, attach, and kill-session commands for `quest-workbench`.
+7. Run `guide check` when this quest is current.
 
 ## If Check Fails
 
-- If `quest-workbench` already exists, run `tmux kill-session -t quest-workbench`, then create it again.
+- If `quest-workbench` already exists, attach and inspect it first. Do not kill a session containing work you want to keep.
 - If `tmux ls` says no server is running, create `quest-workbench` again.
 - If tmux warns about nesting, detach from the current session first.
 

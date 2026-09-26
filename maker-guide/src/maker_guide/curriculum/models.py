@@ -6,7 +6,9 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import PurePosixPath
-from typing import Literal
+from typing import Literal, cast
+
+from maker_guide.service_lab import SERVICE_LAB_SCENARIOS, ServiceLabScenario
 
 type ContentAudience = Literal["learner", "instructor", "slides"]
 type ContentPurpose = Literal[
@@ -87,6 +89,8 @@ class Session:
     """Live teaching and learner follow-up content for this session."""
     enrichment_skills: tuple[str, ...] = ()
     """Optional skill ids available for curious learners, not required for critical path."""
+    enrichment_commands: tuple[str, ...] = ()
+    """Optional commands available to extension quests, not claimed as already taught."""
     objectives: tuple[SessionObjective, ...] = ()
     """Measurable objectives that must precede post-session quests."""
 
@@ -181,8 +185,8 @@ class AnswerConcept:
 
     id: str
     """Stable concept id used in validation evidence."""
-    aliases: tuple[str, ...]
-    """Regex aliases that can satisfy this concept."""
+    aliases: tuple[str, ...] = ()
+    """Regex aliases where deterministic fallback is supported."""
     rubric: str
     """Human-readable semantic expectations for grading this concept."""
     forbidden_patterns: tuple[str, ...] = ()
@@ -205,6 +209,14 @@ class InteractiveQuestionValidation:
     """Question the bot asks after the learner attempts the quest."""
     required_concepts: tuple[AnswerConcept, ...]
     """Concepts that must be present in the learner answer."""
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
+class ServiceLabValidation:
+    """A witnessed local repair followed by a semantically assessed causal explanation."""
+
+    scenario: ServiceLabScenario
+    answer: InteractiveQuestionValidation
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -360,7 +372,10 @@ class Tier:
 type QuestValidation = QuestValidationLeaf | AllOfValidation
 type QuestData = GeneratedFileData
 type SessionObjectiveValidation = (
-    QuestValidation | IrcChannelJoinObservedValidation | SshPublicKeyObservedValidation
+    QuestValidation
+    | IrcChannelJoinObservedValidation
+    | SshPublicKeyObservedValidation
+    | ServiceLabValidation
 )
 
 
@@ -541,6 +556,12 @@ def _validate_session(session: Session) -> None:
     _require_non_empty("session id", session.id)
     _require_non_empty("session title", session.title)
     _require_non_empty_values("session command", session.introduced_commands)
+    _require_non_empty_values_if_present("session enrichment command", session.enrichment_commands)
+    _require_disjoint_values(
+        "session core and enrichment commands",
+        session.introduced_commands,
+        session.enrichment_commands,
+    )
     _require_non_empty_values("session skill", session.introduced_skills)
     _require_non_empty_values_if_present("session enrichment skill", session.enrichment_skills)
     _require_disjoint_values(
@@ -578,6 +599,15 @@ def _validate_session(session: Session) -> None:
 
 
 def _validate_session_objective_validation(validation: object) -> None:
+    if isinstance(validation, ServiceLabValidation):
+        if validation.scenario not in SERVICE_LAB_SCENARIOS:
+            raise ValueError("unknown service lab scenario")
+        answer = cast("object", validation.answer)
+        if not isinstance(answer, InteractiveQuestionValidation):
+            raise ValueError("service lab requires an interactive question")
+        _require_non_empty("interactive question", answer.question)
+        _require_answer_concepts(answer.required_concepts, require_aliases=False)
+        return
     if isinstance(
         validation,
         IrcChannelJoinObservedValidation | SshPublicKeyObservedValidation,
@@ -660,13 +690,20 @@ def _validate_command_or_question_validation(validation: object) -> bool:
     return False
 
 
-def _require_answer_concepts(concepts: tuple[AnswerConcept, ...]) -> None:
+def _require_answer_concepts(
+    concepts: tuple[AnswerConcept, ...], *, require_aliases: bool = True
+) -> None:
     if not concepts:
         raise ValueError("missing interactive answer concept")
     _require_unique("interactive answer concept ids", tuple(concept.id for concept in concepts))
     for concept in concepts:
         _require_non_empty("interactive answer concept id", concept.id)
-        _require_non_empty_values("interactive answer concept alias", concept.aliases)
+        if require_aliases:
+            _require_non_empty_values("interactive answer concept alias", concept.aliases)
+        else:
+            _require_non_empty_values_if_present(
+                "interactive answer concept alias", concept.aliases
+            )
         _require_non_empty("interactive answer concept rubric", concept.rubric)
         for alias_pattern in concept.aliases:
             _require_regex("interactive answer concept alias", alias_pattern)
@@ -957,14 +994,14 @@ class _UncheckedCourseCatalog:
         return frozenset(
             command
             for session in self._sessions_through(session_id)
-            for command in session.introduced_commands
+            for command in (*session.introduced_commands, *session.enrichment_commands)
         )
 
     def skills_available_through(self, session_id: str) -> frozenset[str]:
         return frozenset(
             skill
             for session in self._sessions_through(session_id)
-            for skill in session.introduced_skills
+            for skill in (*session.introduced_skills, *session.enrichment_skills)
         )
 
     def _sessions_through(self, session_id: str) -> tuple[Session, ...]:

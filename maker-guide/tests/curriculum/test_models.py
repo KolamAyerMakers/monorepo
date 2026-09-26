@@ -26,6 +26,7 @@ from maker_guide.curriculum.models import (
     PathExistsValidation,
     Quest,
     QuestValidation,
+    ServiceLabValidation,
     Session,
     SessionObjective,
     SiteCheckValidation,
@@ -33,6 +34,7 @@ from maker_guide.curriculum.models import (
     UserPortFileValidation,
     validate_courses,
 )
+from maker_guide.service_lab import ServiceLabScenario
 
 
 def test_validate_courses_rejects_duplicate_course_ids() -> None:
@@ -134,13 +136,17 @@ def test_course_catalog_rejects_future_session_skills() -> None:
 
 
 def test_course_catalog_keeps_enrichment_skills_off_required_path() -> None:
-    """Optional deep-dive skills are discoverable without becoming quest gates."""
+    """Extensions remain available to quests without being reported as taught material."""
     course = _course()
     course_catalog = CourseCatalog(
         replace(
             course,
             sessions=(
-                replace(course.sessions[0], enrichment_skills=("kernel",)),
+                replace(
+                    course.sessions[0],
+                    enrichment_skills=("kernel",),
+                    enrichment_commands=("tmux",),
+                ),
                 course.sessions[1],
             ),
         ),
@@ -149,14 +155,22 @@ def test_course_catalog_keeps_enrichment_skills_off_required_path() -> None:
     assert "kernel" not in course_catalog.skills_available_through("S1")
     assert "kernel" in course_catalog.enrichment_skills_available_through("S1")
     assert "kernel" in course_catalog.all_skills_available_through("S1")
-
-    with pytest.raises(ValueError, match="quest references future skill"):
-        CourseCatalog(
-            replace(
-                course_catalog.course,
-                quests=(replace(course.quests[0], practiced_skills=("kernel",)),),
+    assert "tmux" not in course_catalog.commands_available_through("S1")
+    CourseCatalog(
+        replace(
+            course_catalog.course,
+            quests=(
+                replace(
+                    course.quests[0],
+                    practiced_skills=("kernel",),
+                    required_commands=("tmux",),
+                    validation=CommandHistoryValidation(
+                        required_patterns=(r"^tmux ls$",), observed_commands=("tmux",)
+                    ),
+                ),
             ),
-        )
+        ),
+    )
 
 
 def test_course_catalog_rejects_bad_enrichment_skills() -> None:
@@ -762,6 +776,63 @@ def test_course_catalog_rejects_unsafe_validation_paths(
                 quests=(replace(course.quests[0], validation=validation),),
             ),
         )
+
+
+def test_service_lab_is_session_only_and_validates_its_question() -> None:
+    """Lab configuration must name a supported scenario and cannot become a quest injector."""
+    course = _course()
+    validation = ServiceLabValidation(
+        scenario="missing-executable",
+        answer=InteractiveQuestionValidation(
+            question="Why did your repair work?",
+            required_concepts=(AnswerConcept(id="cause", rubric="Explain the cause."),),
+        ),
+    )
+    objective = SessionObjective(
+        id="repair",
+        title="Repair the service",
+        prompt="Find the cause and repair the service.",
+        validation=validation,
+    )
+    CourseCatalog(
+        replace(
+            course,
+            sessions=(
+                replace(course.sessions[0], objectives=(objective,)),
+                *course.sessions[1:],
+            ),
+        )
+    )
+    with pytest.raises(ValueError, match="unknown quest validation: ServiceLabValidation"):
+        replace(
+            course,
+            quests=(replace(course.quests[0], validation=cast("QuestValidation", validation)),),
+        )
+    for invalid_validation, error_pattern in (
+        (
+            replace(validation, scenario=cast("ServiceLabScenario", "unknown")),
+            "unknown service lab scenario",
+        ),
+        (
+            replace(validation, answer=replace(validation.answer, required_concepts=())),
+            "missing interactive answer concept",
+        ),
+        (
+            replace(validation, answer=cast("InteractiveQuestionValidation", object())),
+            "service lab requires an interactive question",
+        ),
+    ):
+        with pytest.raises(ValueError, match=error_pattern):
+            replace(
+                course,
+                sessions=(
+                    replace(
+                        course.sessions[0],
+                        objectives=(replace(objective, validation=invalid_validation),),
+                    ),
+                    *course.sessions[1:],
+                ),
+            )
 
 
 def test_course_catalog_rejects_unknown_validation_object() -> None:

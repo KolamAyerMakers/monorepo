@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from textwrap import dedent
@@ -21,14 +22,16 @@ from maker_guide.chat.doc_selection import (
     select_tutor_docs,
 )
 from maker_guide.chat.intents import chat_intent
+from maker_guide.chat.service_lab import current_lab_report, lab_status_text
 from maker_guide.chat.snapshot import build_learner_snapshot
-from maker_guide.curriculum.models import CourseCatalog, Quest
+from maker_guide.curriculum.models import CourseCatalog, Quest, ServiceLabValidation
 from maker_guide.llm_tutor import (
     ReadOnlyCommandObservation,
     ReadOnlyInteractionContext,
     ReadOnlyLearnerState,
     ReadOnlyObjectiveContext,
     ReadOnlyQuestContext,
+    ReadOnlyServiceLabContext,
     ReadOnlySessionContext,
     ReadOnlyTutorContext,
     ReadOnlyValidationStatus,
@@ -54,7 +57,9 @@ from maker_guide.repositories.help_interaction import list_recent_help_interacti
 from maker_guide.repositories.helpers import transaction
 from maker_guide.repositories.llm_audit_log import LlmAuditLog, append_llm_audit_log
 from maker_guide.repositories.quest_assignment import get_assignment
+from maker_guide.repositories.service_lab_attempt import get_attempt
 from maker_guide.retention import llm_audit_expires_at
+from maker_guide.service_lab import ServiceLabReport
 
 _FREEFORM_TUTOR_DISABLED_TEXT = (
     dedent(
@@ -76,6 +81,7 @@ _QUESTION_PREFIXES = (
     "do ",
     "does ",
     "explain ",
+    "give me ",
     "how ",
     "is ",
     "tell me ",
@@ -122,6 +128,19 @@ def routes_bare_interactive_answer(
         handle=learner_handle,
     )
     if objective_result.objective is not None:
+        if isinstance(objective_result.objective.validation, ServiceLabValidation):
+            report = current_lab_report(dependencies, learner_handle)
+            return (
+                report is not None
+                and report.started
+                and report.healthy
+                and report.error is None
+                and re.match(
+                    r"(?:please\b|help\b|i(?:'m| am)\s+stuck\b|i need (?:a )?(?:hint|help)\b)",
+                    request.text.casefold().lstrip(),
+                )
+                is None
+            )
         return validation_answer_question(objective_result.objective.validation) is not None
     if not learner_snapshot.pending_quests:
         return False
@@ -134,7 +153,22 @@ def routes_bare_interactive_answer(
 
 
 def _is_question(text: str) -> bool:
-    return "?" in text or text.casefold().lstrip().startswith(_QUESTION_PREFIXES)
+    return (
+        "?" in text
+        or text.casefold().lstrip().startswith(_QUESTION_PREFIXES)
+        or text.casefold().strip().rstrip(".!")
+        in {
+            "hint",
+            "hint please",
+            "another hint",
+            "another hint please",
+            "one more hint",
+            "help me",
+            "i'm stuck",
+            "i am stuck",
+            "i need a hint",
+        }
+    )
 
 
 def freeform_response_draft(
@@ -145,6 +179,21 @@ def freeform_response_draft(
 ) -> ResponseDraft:
     """Build a response draft for free-form learner text."""
     if dependencies.tutor_client is None:
+        if (
+            request.visibility == "private"
+            and (report := current_lab_report(dependencies, learner_handle)) is not None
+        ):
+            return ResponseDraft(
+                text=(
+                    lab_status_text(dependencies.service_lab_result)
+                    if report.error is not None or report.healthy or not report.started
+                    else (
+                        "What does `systemctl --user status site.service` tell you about whether "
+                        "the service started? Compare that with its recent journal messages."
+                    )
+                ),
+                topic_tags=("service-lab", "hint"),
+            )
         return _freeform_tutor_disabled_draft()
     if request.visibility == "public":
         return ResponseDraft(
@@ -154,12 +203,14 @@ def freeform_response_draft(
     return _tutor_response_draft(request, dependencies, learner_handle, timestamp)
 
 
-def build_read_only_tutor_context(
+def build_read_only_tutor_context(  # noqa: PLR0913 - Keep fresh evidence separate from stored state.
     database_connection: sqlite3.Connection,
     catalog: CourseCatalog,
     request: ChatRequest,
     handle: str,
     timestamp: str,
+    *,
+    service_lab_report: ServiceLabReport | None = None,
 ) -> ReadOnlyTutorContext:
     """Build immutable tutor context without exposing mutation handles."""
     learner_snapshot = build_learner_snapshot(database_connection, catalog, handle)
@@ -181,6 +232,32 @@ def build_read_only_tutor_context(
             for quest_id in focused_pending_quest_ids
             if catalog.quest(quest_id).available_after_session == focused_session_id
         )
+    service_lab = None
+    if (
+        objective_result is not None
+        and objective_result.objective is not None
+        and isinstance(objective_result.objective.validation, ServiceLabValidation)
+    ):
+        attempt = get_attempt(
+            database_connection,
+            handle,
+            catalog.course.id,
+            objective_result.session_id,
+            objective_result.objective.id,
+        )
+        if service_lab_report is not None and (
+            attempt is None
+            or service_lab_report.run_id != attempt.run_id
+            or service_lab_report.scenario != objective_result.objective.validation.scenario
+        ):
+            service_lab_report = None
+        service_lab = ReadOnlyServiceLabContext(
+            scenario=objective_result.objective.validation.scenario,
+            started=attempt is not None and attempt.started_at is not None,
+            observation=service_lab_report,
+        )
+    else:
+        service_lab_report = None
     return ReadOnlyTutorContext(
         course_title=catalog.course.title,
         course_system_prompt=catalog.course.tutor_system_prompt,
@@ -261,6 +338,7 @@ def build_read_only_tutor_context(
             timestamp,
             focused_pending_quest_ids,
             objective_result,
+            service_lab_report,
         ),
         session=ReadOnlySessionContext(
             terminal=request.context.terminal
@@ -271,6 +349,7 @@ def build_read_only_tutor_context(
             else None,
             source=request.context.source,
         ),
+        service_lab=service_lab,
     )
 
 
@@ -319,6 +398,7 @@ def _tutor_response_draft(
             request,
             learner_handle,
             timestamp,
+            service_lab_report=current_lab_report(dependencies, learner_handle),
         ),
         max_tokens=dependencies.tutor_max_tokens,
     )
@@ -417,6 +497,7 @@ def _read_only_validation_status(  # noqa: PLR0913, validation context is assemb
     timestamp: str,
     pending_quest_ids: tuple[str, ...],
     objective_result: CurrentSessionObjectiveResult | None,
+    service_lab_report: ServiceLabReport | None = None,
 ) -> ReadOnlyValidationStatus | None:
     if objective_result is not None and objective_result.objective is not None:
         validation_result = validate_session_objective(
@@ -426,6 +507,7 @@ def _read_only_validation_status(  # noqa: PLR0913, validation context is assemb
                 handle=handle,
                 checked_at=timestamp,
                 assigned_at=objective_result.evidence_since,
+                service_lab_report=service_lab_report,
             ),
             objective_result.objective.validation,
         )

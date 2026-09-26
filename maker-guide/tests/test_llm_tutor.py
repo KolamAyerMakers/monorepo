@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Never, cast
 
 import pytest
+from httpx import ReadTimeout
+from openrouter.chat import Chat
 
 from maker_guide import llm_tutor
 from maker_guide.llm_tutor import (
@@ -467,6 +469,77 @@ def test_openrouter_tutor_client_preserves_exhausted_tool_call_error(
     assert sender.send_attempt_count == 2
 
 
+@pytest.mark.parametrize(
+    ("first_elapsed_seconds", "first_result"),
+    [
+        (15.0, "transport-error"),
+        (15.0, "malformed"),
+        (20.0, "transport-error"),
+        (20.0, "malformed"),
+        (20.0, "timeout"),
+        (20.0, "success"),
+    ],
+)
+def test_answer_interpretation_uses_one_provider_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+    first_elapsed_seconds: float,
+    first_result: str,
+) -> None:
+    """SDK calls receive the remaining budget, without SDK retries or accepting late credit."""
+    current_time = 100.0
+    timeouts: list[int] = []
+    monkeypatch.setattr(llm_tutor.time, "monotonic", lambda: current_time)
+
+    def send(_chat: Chat, *, timeout_ms: int, retries: object, **_arguments: object) -> _Response:
+        nonlocal current_time
+        assert retries is None
+        timeouts.append(timeout_ms)
+        if len(timeouts) == 1:
+            current_time += first_elapsed_seconds
+            if first_result == "transport-error":
+                raise OSError("provider unavailable")
+            if first_result == "timeout":
+                raise ReadTimeout("provider timed out")
+            if first_result == "malformed":
+                return _Response(choices=(), model="test-model")
+        else:
+            current_time += 1.0
+        return _Response(
+            model="test-model",
+            choices=(
+                _ResponseChoice(
+                    message=_ResponseMessage(
+                        content=None,
+                        tool_calls=(
+                            _ToolCall(
+                                function=_ToolFunction(
+                                    name="submit_answer_analysis",
+                                    arguments=_analysis_arguments(
+                                        ("expansion", "demonstrated", "expands $HOME"),
+                                        ("quoting", "not_demonstrated", None),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(Chat, "send", send)
+    tutor_client = OpenRouterTutorClient(api_key="unused")
+    if first_elapsed_seconds >= llm_tutor.DEFAULT_TUTOR_TIMEOUT_SECONDS:
+        with pytest.raises(TutorError):
+            tutor_client.interpret_answer(_answer_interpretation_request())
+        assert timeouts == [20_000]
+    else:
+        assert (
+            tutor_client.interpret_answer(_answer_interpretation_request()).components[0].verdict
+            == "demonstrated"
+        )
+        assert timeouts == [20_000, 5_000]
+
+
 class _ToolCallOpenRouterSender:
     def __init__(self, arguments: str, *, tool_call_counts: tuple[int, ...] = (1,)) -> None:
         self.arguments = arguments
@@ -509,8 +582,9 @@ class _ToolCallOpenRouterSender:
         tool_choice: ChatToolChoiceTypedDict,
         temperature: float,
         provider: ProviderPreferencesTypedDict,
+        timeout_ms: int,
     ) -> _Response:
-        del model
+        del model, timeout_ms
         tool_call_count = self.tool_call_counts[
             min(self.send_attempt_count, len(self.tool_call_counts) - 1)
         ]

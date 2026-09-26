@@ -4,30 +4,26 @@ Quest: add-health-page
 
 ## Mission
 
-Create `~/src/pages/health.md`, rebuild, and fetch the generated page.
+Publish a small page you can request to check that your server serves files.
 
-## Commands You Will Use
+## Create And Publish
 
-- `micro`
-- `build-website`
-- `curl`
+Open `micro ~/src/pages/health.md` and add:
 
-## Steps
+```markdown
+# Health
 
-1. Create `~/src/pages/health.md`.
-2. Add a heading or note that says health.
-3. Run `build-website`.
-4. Fetch the generated page with `curl`.
+The web server can serve this page.
+```
 
-## Hints
+Save, exit, and publish:
 
-1. Source belongs under `~/src/pages`.
-2. Rebuild before checking the generated page.
-3. Keep the page simple.
+```bash
+build-website
+curl -i "https://$USER.lf2607.kolamayermakers.org/health.html"
+```
 
-## If Check Fails
-
-Make sure `~/src/pages/health.md` contains a health heading or note.
+Check the status and page text. This tests one file request, not every part of your website. Keep editing the source under `~/src/pages`, not the generated HTML.
 
 ## Related Reading
 

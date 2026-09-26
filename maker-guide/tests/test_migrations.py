@@ -32,6 +32,7 @@ EXPECTED_STATE_TABLES = frozenset(
         "session_objective_completions",
         "peer_thanks",
         "outbox_items",
+        "service_lab_attempts",
     },
 )
 
@@ -55,7 +56,30 @@ def test_alembic_current_reports_latest_revision(temporary_path: Path) -> None:
     database_path = temporary_path / "state.db"
     run_alembic(database_path, "upgrade", "head")
 
-    assert "20260801_0016" in run_alembic(database_path, "current").stdout
+    assert "20260925_0017" in run_alembic(database_path, "current").stdout
+
+
+def test_service_lab_attempts_are_deleted_with_learner(migrated_database_path: Path) -> None:
+    """Deleting a learner cascades to their service lab coordination records."""
+    with sqlite3.connect(migrated_database_path) as database_connection:
+        database_connection.execute("pragma foreign_keys = on")
+        database_connection.execute(
+            """insert into learners (handle, joined_at, tagline, created_at)
+            values ('alice', '2026-09-25T09:00:00Z', null, '2026-09-25T09:00:00Z')""",
+        )
+        database_connection.execute(
+            """insert into service_lab_attempts
+            (handle, course_id, session_id, objective_id, run_id, scenario,
+             message_index, created_at)
+            values ('alice', 'lf2607', 'S8', 'fix-and-restart-service', 'run-1',
+                    'broken-service', 1, '2026-09-25T09:00:00Z')""",
+        )
+
+        database_connection.execute("delete from learners where handle = 'alice'")
+
+        assert database_connection.execute(
+            "select count(*) from service_lab_attempts",
+        ).fetchone() == (0,)
 
 
 def test_rank_eligibility_migration_defaults_existing_memberships_to_true(

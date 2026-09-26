@@ -19,8 +19,36 @@ import pytest
 from maker_guide.repositories.helpers import load_json
 
 
-def test_service_serves_replaced_public_directory_without_restart(temporary_path: Path) -> None:
-    """Real Caddy survives an empty-root 404 and serves republished content without restart."""
+def test_invalid_caddy_argument_is_an_application_failure(temporary_path: Path) -> None:
+    """A real executable rejects the faulty flag with exit 1, not systemd's EXEC failure."""
+    caddy_path = shutil.which("caddy")
+    assert caddy_path is not None, "Install Caddy before running pytest."
+    result = subprocess.run(
+        [
+            caddy_path,
+            "file-server",
+            "--listen",
+            "127.0.0.1:0",
+            "--root",
+            str(temporary_path),
+            "--access-logs",
+        ],
+        cwd=temporary_path,
+        env={"HOME": str(temporary_path)},
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=5,
+    )
+    assert result.returncode == 1
+    assert "unknown flag: --access-logs" in result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("root_missing", [False, True])
+def test_service_serves_replaced_public_directory_without_restart(
+    temporary_path: Path, root_missing: bool
+) -> None:
+    """Real Caddy survives empty or absent output and serves a rebuild without restarting."""
     caddy_path = shutil.which("caddy")
     assert caddy_path is not None, (
         "Install Caddy before running pytest; this test needs real Caddy."
@@ -29,7 +57,8 @@ def test_service_serves_replaced_public_directory_without_restart(temporary_path
         r"(?m)^ExecStart=(?P<command>/usr/bin/caddy file-server .+)$",
         files("maker_guide.curriculum")
         .joinpath("content/lf2607/sessions/S08/self-study.md")
-        .read_text(encoding="utf-8"),
+        .read_text(encoding="utf-8")
+        .replace("\\\n", " "),
     )
     assert command_match is not None
     arguments = [
@@ -79,8 +108,10 @@ def test_service_serves_replaced_public_directory_without_restart(temporary_path
                 assert server.poll() is None, log_path.read_text(encoding="utf-8")
                 if expected_body == b"before publication":
                     public_directory.rename(temporary_path / "old-public-html")
-                    public_directory.mkdir()
+                    if not root_missing:
+                        public_directory.mkdir()
                 elif uri == "/" and expected_body is None:
+                    public_directory.mkdir(exist_ok=True)
                     public_directory.joinpath("index.html").write_text(
                         "after publication", encoding="utf-8"
                     )
@@ -122,9 +153,9 @@ def _wait_for_server(server: subprocess.Popen[bytes], port: int, log_path: Path)
 @pytest.mark.parametrize(
     ("function_name", "command_name", "arguments", "exit_status"),
     [
-        ("site_status", "systemctl", "--user\nstatus\nsite.service\n--no-pager\n", 0),
-        ("site_status", "systemctl", "--user\nstatus\nsite.service\n--no-pager\n", 3),
-        ("site_logs", "journalctl", "--user\n-u\nsite.service\n--no-pager\n-n\n20\n", 0),
+        ("site_status", "systemctl", "--user\nstatus\nsite.service\n", 0),
+        ("site_status", "systemctl", "--user\nstatus\nsite.service\n", 3),
+        ("site_logs", "journalctl", "--user\n-u\nsite.service\n--since\n5 minutes ago\n", 0),
     ],
 )
 def test_sourced_helper_calls_only_read_only_commands(

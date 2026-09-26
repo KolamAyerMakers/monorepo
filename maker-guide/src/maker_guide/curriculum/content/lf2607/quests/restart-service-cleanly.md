@@ -14,27 +14,20 @@ Restart your own `site.service` deliberately and verify its actual local respons
 
 ## Steps
 
-Use your classroom SSH account and the existing unit from [Enable your site service](enable-site-service.md). Confirm `$USER` is your classroom login and agree to the brief interruption before restarting your own service. Do not start a competing manual server.
+Use your classroom SSH account and the existing unit from [Enable your site service](enable-site-service.md). Restarting briefly stops your server; it does not affect anyone else's service. Do not start a competing manual server.
 
-If you changed the unit, first inspect it with `systemctl --user cat site.service` and run `systemctl --user daemon-reload`. Its Caddy file-server configuration should keep `WorkingDirectory=%h`, the all-interface listener on the assigned port, explicit `--root %h/public_html`, and `--access-log`. Use systemd, not `caddy stop` or `caddy reload`, which might target shared Caddy. Then:
+If you changed the unit, first [verify and reload it](../sessions/S08/self-study.md#8-restore-and-recover). Use `systemctl --user`, not `caddy stop` or `caddy reload`, which might target shared Caddy. Then:
 
 ```bash
 systemctl --user restart site.service
-systemctl --user status site.service --no-pager
-PORT="$((10000 + $(id -u)))"
-curl -i --max-time 10 "http://127.0.0.1:$PORT/"
-journalctl --user -u site.service --no-pager -n 50
+systemctl --user status site.service
+curl -i "http://127.0.0.1:$((10000 + $(id -u)))/"
+journalctl --user -u site.service --since "5 minutes ago"
 ```
 
-Read the real HTTP status and recognizable page content, then match the request to the journal. Reload your [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in your laptop browser, replacing `your-handle`. A local response does not prove the public route works.
+Press `q` to leave each paged view. Read the HTTP status and page content, then match the request to the journal. Reload your [service homepage](https://your-handle.lf2607.kolamayermakers.org/) in your laptop browser, replacing `your-handle`. A local response does not prove the public route works.
 
 If you use recorded progress, ask the guide to check your command history. A recorded restart and curl command do not independently prove recovery.
-
-## Hints
-
-1. Restart first, verify second.
-2. Use the local port for a direct check.
-3. Do not trust a restart without a request afterward.
 
 ## If Check Fails
 

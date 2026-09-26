@@ -87,6 +87,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "S106", "S603", "S604"]
+"tests/chat/__init__.py" = ["D104"]
 
 [tool.basedpyright]
 include = ["src", "tests"]
