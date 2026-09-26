@@ -140,7 +140,7 @@ def test_current_quest_requires_session_placement(migrated_database_path: Path) 
     ("session_id", "historical_objective_ids", "historical_quest_id", "expected_objective_id"),
     [
         ("S7", ("create-setup-page",), "serve-local-check-page", "inspect-first-url-headers"),
-        ("S8", ("keep-tmux-workbench",), "serve-local-check-page", "enable-site-service"),
+        ("S8", ("keep-tmux-workbench",), "serve-local-check-page", "break-and-read-error"),
         (
             "S8",
             (
@@ -251,6 +251,15 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
         historical_scores = list_score_entries(database_connection, HANDLE, CATALOG.course.id)
         objective_result = current_session_objective(database_connection, CATALOG, handle=HANDLE)
         if expected_objective_id is None:
+            if session_id == "S8":
+                assert objective_result.session_id == "S1"
+                assert objective_result.objective == CATALOG.session("S1").objectives[0]
+                # Finish older objectives before testing fallback quest assignment.
+                for session in CATALOG.sessions_through("S7"):
+                    _write_completed_session_objectives(database_connection, session.id)
+                objective_result = current_session_objective(
+                    database_connection, CATALOG, handle=HANDLE
+                )
             assert objective_result.objective is None
             for objective_id in historical_objective_ids:
                 complete_session_objective(
@@ -290,16 +299,16 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
             )
 
             expected_quest_id = (
-                "keep-tmux-workbench" if session_id == "S8" else "serve-local-check-page"
+                "prove-shell-alive" if session_id == "S8" else "serve-local-check-page"
             )
             assert quest_result.quest == CATALOG.quest(expected_quest_id)
             assert quest_result.assigned_now is True
             snapshot = build_learner_snapshot(database_connection, CATALOG, HANDLE)
             assert snapshot.pending_quests == (
-                (expected_quest_id,) if session_id == "S8" else (expected_quest_id, stale_quest_id)
+                (expected_quest_id, stale_quest_id) if session_id != "S8" else (expected_quest_id,)
             )
             assert snapshot.completed_quests == (
-                () if session_id == "S8" else (historical_quest_id,)
+                (historical_quest_id,) if session_id != "S8" else ()
             )
             assert snapshot.score == 50 * len(historical_objective_ids) + 25
             _record_attempt(

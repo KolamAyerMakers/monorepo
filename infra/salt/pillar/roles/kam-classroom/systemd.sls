@@ -1,5 +1,16 @@
 systemd:
   drop_ins:
+    user_journals:
+      drop_in_directory: /etc/systemd/journald.conf.d
+      drop_in_file: /etc/systemd/journald.conf.d/80-user-journals.conf
+      persistent_storage_directory: /var/log/journal
+      persistent_storage_group: systemd-journal
+      persistent_storage_flushed_file: /run/systemd/journal/flushed
+      configuration:
+        Journal:
+          Storage: persistent
+          SplitMode: uid
+      service: systemd-journald
     session_policy:
       drop_in_directory: /etc/systemd/logind.conf.d
       drop_in_file: /etc/systemd/logind.conf.d/80-session-policy.conf

@@ -39,6 +39,14 @@ Account deletion disables scoped lingering before deleting the identity; full cl
 
 Lingering preserves the user manager, not arbitrary processes started in an SSH session. Learners must still enable their own units. After authorized deployment, check each participant's effective `Linger` value and test an enabled service after closing every login session. No live logout or reboot behavior is established by these declarations alone.
 
+## Learner Journals
+
+The [systemd pillar](pillar/roles/kam-classroom/systemd.sls) enables persistent journals with `SplitMode=uid`. Salt creates `/var/log/journal` as `root:systemd-journal` with mode `2755`, restarts journald when either the directory or its configuration changes, then runs `journalctl --flush` if this boot has no `/run/systemd/journal/flushed` marker. The flush is not restricted to configuration changes, so reapplying activates an unflushed boot even when the earlier configuration is already installed. Salt checks that the flush produced its marker; a failed command or missing marker fails the state, and an absent marker allows retry on the next application. The marker is systemd's flush bookkeeping, not proof of learner access or healthy storage. No manual restart or flush is part of deployment.
+
+Journald grants each ordinary UID read access to its own journal through file ACLs. Learners are not added to `adm` or `systemd-journal`, and system journals are not made world-readable. Splitting applies to new records after activation: flushing existing runtime records copies them into the system journal, not into per-user journals. A learner with no new records may still have no user journal to read.
+
+After authorized deployment, verify fresh user-service output and `journalctl --user -u` access as `ss79`, plus denial of another learner's journal and the system journal. Confirm the actual machine identity first: the roster defines separate `lf2607` and `lf-dev` targets, and a root prompt on one does not establish deployment on the other. If fresh records remain inaccessible on the confirmed host, inspect the effective journald configuration, learner UID, storage health, and journal ACLs. These live conditions are not established by Salt render tests. See the upstream [journald storage and splitting documentation](https://www.freedesktop.org/software/systemd/man/latest/journald.conf.html).
+
 ## Local Checks
 
 The commit gate requires Caddy 2 on `PATH` for the shared-admin regression. It starts an isolated HTTP-only loopback server with a private Unix admin socket; it does not invoke systemd or contact the classroom. Route-refresh tests stub privileged commands while exercising real temporary files and locks. CI already installs Caddy before the Salt checks. Follow the repository's commit-gate validation policy.

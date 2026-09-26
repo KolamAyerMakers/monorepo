@@ -436,6 +436,9 @@ def _kam_classroom_pillar() -> dict[str, object]:
                 },
             },
         },
+        "systemd": _role_pillar(
+            "pillar/roles/kam-classroom/systemd.sls", "systemd", "production-host"
+        ),
         "dns-nftsets": {
             "configuration": {
                 "path": "/etc/dns-nftsets/configuration.jsonl",
@@ -2336,6 +2339,25 @@ def test_classroom_readiness_dependency_graph_is_acyclic() -> None:
     assert graph.find_cycle_edges() == []
 
     expected_dependencies = {
+        ("service", "systemd::drop_ins::user_journals::service"): {
+            (RequisiteType.WATCH, "/etc/systemd/journald.conf.d/80-user-journals.conf"),
+            (
+                RequisiteType.WATCH,
+                "systemd::drop_ins::user_journals::persistent_storage_directory",
+            ),
+        },
+        ("cmd", "systemd::drop_ins::user_journals::flush"): {
+            (RequisiteType.REQUIRE, "systemd::drop_ins::user_journals::service"),
+            (RequisiteType.REQUIRE, "systemd::drop_ins::required_pillar"),
+            (
+                RequisiteType.REQUIRE,
+                "/etc/systemd/journald.conf.d/80-user-journals.conf",
+            ),
+            (
+                RequisiteType.REQUIRE,
+                "systemd::drop_ins::user_journals::persistent_storage_directory",
+            ),
+        },
         ("cmd", "kam-classroom::caddy::configuration::validate"): {
             (RequisiteType.REQUIRE, "/etc/caddy/learner-routes.caddy"),
             (RequisiteType.ONCHANGES, "/etc/caddy/learner-routes.caddy"),
@@ -2780,6 +2802,40 @@ def test_role_ttyd_pillar_marks_web_registration_command() -> None:
             },
         }
     }
+
+
+def test_user_journals_flush_even_when_configuration_is_unchanged() -> None:
+    """Recover an unflushed boot without granting access to the system journal."""
+    drop_ins = _load_state("systemd/drop_ins.sls", _kam_classroom_pillar())
+    user_journal = _state_arguments(
+        drop_ins["/etc/systemd/journald.conf.d/80-user-journals.conf"], "file.managed"
+    )
+    directory = _state_arguments(
+        drop_ins["systemd::drop_ins::user_journals::persistent_storage_directory"],
+        "file.directory",
+    )
+    assert (directory["user"], directory["group"], directory["mode"]) == (
+        "root",
+        "systemd-journal",
+        "2755",
+    )
+    assert user_journal["context"] == {
+        "configuration": {"Journal": {"Storage": "persistent", "SplitMode": "uid"}}
+    }
+    flush = _state_arguments(
+        drop_ins["systemd::drop_ins::user_journals::flush"], "cmd.run"
+    )
+    assert flush["creates"] == "/run/systemd/journal/flushed"
+    assert shlex.split(cast(str, flush["name"])) == [
+        "journalctl",
+        "--flush",
+        "&&",
+        "test",
+        "-f",
+        flush["creates"],
+    ]
+    assert not {"onchanges", "onlyif", "unless"} & flush.keys()
+    assert "systemd::drop_ins::session_policy::flush" not in drop_ins
 
 
 def test_identity_state_owns_lldap_sssd_and_user_helper() -> None:

@@ -94,7 +94,7 @@ curl -I "https://$USER.lf2607.kolamayermakers.org/"
 
 Read the HTTP statuses and your page's HTML in the local response. An active process or HTTP `200` alone does not prove it is the right page. Open your [service homepage](https://your-handle.lf2607.kolamayermakers.org/) on your laptop, replacing `your-handle`.
 
-Now [test logout survival](#9-test-logout-survival), as in the slides, then continue with [requests and logs](#5-follow-real-requests). Keep the working unit using the next section when you finish.
+With your service working, you can start [guided troubleshooting](#7-break-and-read-the-error). You can also practise [logout survival](#9-test-logout-survival) and [requests and logs](#5-follow-real-requests), as in the slides. Keep the working unit using the next section when you finish.
 
 ## 4. Preserve The Working Unit
 
@@ -215,7 +215,7 @@ Keep `Main PID` and the date and time after `since` on the `Active:` line in not
 
 Changed values mean Caddy restarted. A page that worked while you were away, with both values unchanged, is evidence it kept running during the test. `active` after reconnecting alone could hide a restart.
 
-Submit what you observed and what it means with `guide answer 'Your logout observation and explanation'`. A failed or inconclusive result is valid to report; explain what you could and could not establish.
+Keep notes on what you observed and what it means. If the result was failed or inconclusive, explain what you could and could not establish.
 
 If it stopped, record that result and ask the instructor about the account's logout settings. Enabling a service arranges startup with the user manager; it does not decide whether that manager stays running after logout. Do not change machine settings yourself. Start your service again if needed, then return to [requests and logs](#5-follow-real-requests).
 

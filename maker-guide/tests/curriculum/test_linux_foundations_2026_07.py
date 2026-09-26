@@ -35,7 +35,6 @@ from maker_guide.curriculum.models import (
     ServiceLabValidation,
     SiteCheckValidation,
     SshPublicKeyObservedValidation,
-    UserPortFileValidation,
     validate_courses,
 )
 
@@ -314,9 +313,6 @@ def test_sessions_expose_independent_objective_validators() -> None:
             InteractiveQuestionValidation,
         ),
         "S8": (
-            AllOfValidation,
-            InteractiveQuestionValidation,
-            CommandHistoryValidation,
             ServiceLabValidation,
             ServiceLabValidation,
             ServiceLabValidation,
@@ -936,7 +932,7 @@ def test_catalog_exposes_ordered_quest_lookup() -> None:
     assert [
         quest.id for quest in CATALOG.course.quests if quest.available_after_session == "S6"
     ] == ["resolve-hostname", "measure-ping", "read-http-headers", "check-personal-pages"]
-    assert CATALOG.quests_available_after("S8")[0].id == "keep-tmux-workbench"
+    assert CATALOG.quests_available_after("S8") == ()
     quest_index = _content_text(f"content/{COURSE_ID}/quests/README.md")
     for session in CATALOG.course.sessions:
         section_match = re.search(
@@ -1403,159 +1399,21 @@ def test_curriculum_avoids_shell_redirection_as_answer_placeholder() -> None:
     )
 
 
-def test_s8_tmux_and_service_quests_require_real_evidence() -> None:
-    """Core service gates are safe; tmux and the helper remain optional quests."""
-    objectives = {objective.id: objective for objective in CATALOG.session("S8").objectives}
-    tmux_validation = CATALOG.quest("keep-tmux-workbench").validation
-    log_validation = CATALOG.quest("watch-service-logs").validation
-
-    assert tuple(objectives) == (
-        "enable-site-service",
-        "test-logout-survival",
-        "watch-service-logs",
+def test_s8_exposes_only_guided_service_labs() -> None:
+    """The five guided repairs replace the old S8 reinforcement queue."""
+    assert tuple(objective.id for objective in CATALOG.session("S8").objectives) == (
         "break-and-read-error",
         "repair-service-arguments",
         "repair-service-content",
         "repair-service-response",
         "rebuild-published-site",
     )
-    assert isinstance(tmux_validation, CommandHistoryValidation)
-    assert tmux_validation.ordered is True
-    assert tmux_validation.required_patterns == (
-        r"^tmux new -s quest-workbench$",
-        r"^tmux ls$",
-        r"^tmux attach -t quest-workbench$",
-        r"^tmux kill-session -t quest-workbench$",
-    )
-    assert isinstance(log_validation, InteractiveQuestionValidation)
-    assert all(
-        any(
-            re.search(
-                alias,
-                (
-                    '{"ts":1790400000,"request":{"method":"get","uri":"/missing-page.html"},'
-                    '"status":404}; '
-                    "journalctl stopped, personal caddy kept serving"
-                ),
-            )
-            for alias in concept.aliases
-        )
-        for concept in log_validation.required_concepts
-    )
-    self_study = _content_text(f"content/{COURSE_ID}/sessions/S08/self-study.md")
-    reference_unit = next(
-        unit_match["unit"]
-        for unit_match in re.finditer(r"(?ms)^```ini\n(?P<unit>.*?)^```$", self_study)
-        if "ExecStart=/usr/bin/caddy file-server" in unit_match["unit"]
-    )
-    service_commands = self_study.splitlines()
-    for service_validation in (
-        objectives["enable-site-service"].validation,
-        CATALOG.quest("enable-site-service").validation,
-    ):
-        assert isinstance(service_validation, AllOfValidation)
-        port_validation = next(
-            validation
-            for validation in service_validation.validations
-            if isinstance(validation, UserPortFileValidation)
-        )
-        required_regex = port_validation.required_regex_template.replace("{port}", "11234")
-        assert re.search(required_regex, reference_unit.replace("12345", "11234"))
-        assert re.search(
-            required_regex,
-            reference_unit.replace("12345", "11234").replace(" --", " \\\n  --"),
-        )
-        assert re.search(
-            required_regex,
-            reference_unit.replace("--listen :12345", "--listen 127.0.0.1:11234"),
-        )
-        for invalid_port in ("12345", "11235", "$PORT", "$((10000 + $(id -u)))"):
-            assert not re.search(required_regex, reference_unit.replace("12345", invalid_port))
-        for unsafe_unit in (
-            reference_unit.replace(" --root %h/public_html", ""),
-            reference_unit.replace(" --root %h/public_html", " --root %h"),
-            reference_unit.replace("WorkingDirectory=%h\n", "WorkingDirectory=%h/public_html\n"),
-            reference_unit.replace(" --access-log", ""),
-            reference_unit.replace("/usr/bin/caddy", "/no/such/caddy"),
-        ):
-            assert not re.search(required_regex, unsafe_unit.replace("12345", "11234"))
-        history_validation = next(
-            validation
-            for validation in service_validation.validations
-            if isinstance(validation, CommandHistoryValidation)
-        )
-        assert all(
-            any(re.search(pattern, command) for command in service_commands)
-            for pattern in history_validation.required_patterns
-        )
-        assert any(
-            re.search(pattern, 'curl -i "http://127.0.0.1:$((10000 + $(id -u)))/"')
-            for pattern in history_validation.required_patterns
-        )
-        for omitted_text in ("systemctl --user enable", "http://", "https://"):
-            assert not all(
-                any(
-                    re.search(pattern, command)
-                    for command in service_commands
-                    if omitted_text not in command
-                )
-                for pattern in history_validation.required_patterns
-            ), omitted_text
-
-    helper_validation = CATALOG.quest("write-site-helper-functions").validation
-    assert isinstance(helper_validation, InteractiveQuestionValidation)
-    assert all(
-        any(
-            re.search(alias, "calling site_logs reads the journal; source only trusted definitions")
-            for alias in concept.aliases
-        )
-        for concept in helper_validation.required_concepts
-    )
-
-    preflight_validation = CATALOG.quest("preflight-both-urls").validation
-    assert isinstance(preflight_validation, CommandHistoryValidation)
-    preflight_commands = _content_text(
-        f"content/{COURSE_ID}/quests/preflight-both-urls.md"
-    ).splitlines()
-    for username, quote, accepted in (
-        ("$USER", '"', True),
-        ("${USER}", '"', True),
-        ("$USER", "", True),
-        ("${USER}", "", True),
-        ("learner", '"', True),
-        ("learner", "'", True),
-        ("learner", "", True),
-        ("$USER", "'", False),
-        ("${USER}", "'", False),
-    ):
-        assert (
-            all(
-                any(
-                    re.search(pattern, command.replace("$USER", username).replace('"', quote))
-                    for command in preflight_commands
-                )
-                for pattern in preflight_validation.required_patterns
-            )
-            is accepted
-        ), (username, quote)
-    for omitted_text in (
-        "https://lf2607.",
-        "https://$USER.",
-        "systemctl --user show site.service",
-    ):
-        assert not all(
-            any(
-                re.search(pattern, command)
-                for command in preflight_commands
-                if omitted_text not in command
-            )
-            for pattern in preflight_validation.required_patterns
-        ), omitted_text
+    assert CATALOG.quests_available_after("S8") == ()
 
 
 def test_s8_lab_cases_are_distinct_and_keep_faults_out_of_public_prompts() -> None:
     """Ordered mysteries require separate repairs without exposing their causes."""
-    objectives = CATALOG.session("S8").objectives[3:]
+    objectives = CATALOG.session("S8").objectives
 
     assert tuple(
         objective.validation.scenario
@@ -1576,29 +1434,6 @@ def test_s8_lab_cases_are_distinct_and_keep_faults_out_of_public_prompts() -> No
         for spoiler in ("execstart", "--access-logs", "unknown flag", "--root", "203/exec"):
             assert spoiler not in public_text
         assert objective.validation.scenario not in public_text
-
-
-def test_s8_logout_checks_accept_reported_observations() -> None:
-    """Logout checks accept failed and inconclusive observations without claiming survival."""
-    logout_validation = next(
-        objective.validation
-        for objective in CATALOG.session("S8").objectives
-        if objective.id == "test-logout-survival"
-    )
-    assert isinstance(logout_validation, InteractiveQuestionValidation)
-    for answer in (
-        "the browser worked while logged out; pid and activation time were unchanged",
-        "the browser failed while logged out; the pid and since timestamp changed on login",
-        "another ssh connection remained open so the browser and pid result was inconclusive",
-    ):
-        assert all(
-            any(re.search(alias, answer) for alias in concept.aliases)
-            for concept in logout_validation.required_concepts
-        )
-    assert not all(
-        any(re.search(alias, "the service is active after login") for alias in concept.aliases)
-        for concept in logout_validation.required_concepts
-    )
 
 
 def test_s9_optional_automation_quests_require_cleanup_and_output() -> None:

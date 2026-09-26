@@ -58,12 +58,13 @@ _SEMANTIC_ANSWER = (
 def test_service_lab_repair_and_explanation_advance_through_five_durable_challenges(  # noqa: PLR0915 - one learner lifecycle
     migrated_database_path: Path,
 ) -> None:
-    """Each separately launched repair earns credit once, surviving reconnects between steps."""
+    """With no prior exercise credit, all five repairs advance once and survive reconnects."""
     actions: list[ServiceLabAction] = []
     interpretations: list[AnswerInterpretationRequest] = []
     healthy = False
     with closing(connect_database(migrated_database_path)) as database_connection:
         completed = _seed_s8_prerequisites(database_connection)
+        assert not completed
 
     def run_service_lab(
         action: ServiceLabAction, database_connection: sqlite3.Connection
@@ -169,8 +170,9 @@ def test_service_lab_repair_and_explanation_advance_through_five_durable_challen
                 if entry.reason == "session_objective_completed"
             ] == [f"S8:{challenge[0]}" for challenge in challenges[: index + 1]]
             current = current_session_objective(database_connection, CATALOG, handle="alice")
+            assert current.session_id == ("S8" if index + 1 < len(challenges) else "S1")
             assert (current.objective.id if current.objective else None) == (
-                challenges[index + 1][0] if index + 1 < len(challenges) else None
+                challenges[index + 1][0] if index + 1 < len(challenges) else "join-course-irc"
             )
         count = len(actions)
         send(f"answer {answer}")
@@ -296,11 +298,13 @@ def test_service_lab_stale_callback_cannot_grade_or_complete_successor(
         assert interpreter.requests == []
         current = current_session_objective(database_connection, CATALOG, handle="alice")
         if staleness == "objectives-complete":
-            assert current.objective is None
+            assert current.session_id == "S1"
+            assert current.objective is not None
+            assert current.objective == CATALOG.session("S1").objectives[0]
             assert list_completed_objective_ids(
                 database_connection, "alice", CATALOG.course.id, "S8"
             ) == {objective.id for objective in CATALOG.session("S8").objectives}
-            assert CATALOG.quest("keep-tmux-workbench").title in response.text
+            assert current.objective.title in response.text
         else:
             assert list_completed_objective_ids(
                 database_connection, "alice", CATALOG.course.id, "S8"
@@ -635,11 +639,6 @@ def _seed_s8_prerequisites(database_connection: sqlite3.Connection) -> frozenset
                 released_at="2026-09-26T09:00:00Z",
             ),
         )
-        for session in CATALOG.sessions_through("S8"):
-            for objective in session.objectives:
-                if isinstance(objective.validation, ServiceLabValidation):
-                    break
-                _complete_objective(database_connection, objective.id, session.id)
     current = current_session_objective(database_connection, CATALOG, handle="alice")
     assert current.session_id == "S8"
     assert current.objective is not None

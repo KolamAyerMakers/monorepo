@@ -60,21 +60,6 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 - [inspect-first-url-headers](inspect-first-url-headers.md)
 - [record-http-headers](record-http-headers.md)
 
-## S08 Reinforcement
-
-Keep Your Server Running: user services, request logs, and logout observations. The [five guided mysteries](../sessions/S08/self-study.md#7-break-and-read-the-error) already require repair explanations. Tmux and helper functions are optional extensions to the lesson, not prerequisites for running the service.
-
-- [keep-tmux-workbench](keep-tmux-workbench.md)
-- [write-site-helper-functions](write-site-helper-functions.md)
-- [enable-site-service](enable-site-service.md)
-- [watch-service-logs](watch-service-logs.md)
-- [check-service-status](check-service-status.md)
-- [restart-service-cleanly](restart-service-cleanly.md)
-- [read-recent-logs](read-recent-logs.md)
-- [add-health-page](add-health-page.md)
-- [explain-user-services](explain-user-services.md)
-- [preflight-both-urls](preflight-both-urls.md)
-
 ## S09 Reinforcement
 
 Automate It. Hand It Over. Refresh report facts before building, observe automatic publication, and peer-test a recoverable handoff of two scripts and three units. No `site.sh` dispatcher is required. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
