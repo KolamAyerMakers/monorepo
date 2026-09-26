@@ -69,6 +69,9 @@ def test_service_lab_repair_and_explanation_advance_through_five_durable_challen
     def run_service_lab(
         action: ServiceLabAction, database_connection: sqlite3.Connection
     ) -> ServiceLabReport:
+        nonlocal healthy
+        if action.operation == "start":
+            healthy = False
         assert not database_connection.in_transaction
         with closing(connect_database(migrated_database_path)) as observer:
             current = current_session_objective(observer, CATALOG, handle="alice")
@@ -120,12 +123,12 @@ def test_service_lab_repair_and_explanation_advance_through_five_durable_challen
             "The output folder was gone, so I rebuilt it from source without restarting Caddy.",
         ),
     )
+    send(f"answer {_SEMANTIC_ANSWER}")
+    assert not actions
+    launch = send("now")
     for index, (objective_id, scenario, answer) in enumerate(challenges):
         healthy = False
         count = len(actions)
-        send(f"answer {answer}")
-        assert len(actions) == count
-        launch = send("now")
         assert actions[-1].operation == "start"
         assert actions[-1].scenario == scenario
         assert all(
@@ -151,11 +154,17 @@ def test_service_lab_repair_and_explanation_advance_through_five_durable_challen
                 == completed
             )
             before = list_score_entries(database_connection, "alice", CATALOG.course.id)
-        send(f"answer {answer}")
+        launch = send(f"answer {answer}")
         assert len(interpretations) == index + 1
         assert interpretations[-1].answer == answer
-        assert [action.operation for action in actions[count:]] == ["start", *(["inspect"] * 5)]
-        assert len({action.run_id for action in actions[count:]}) == 1
+        assert [action.operation for action in actions[count:] if action.scenario == scenario] == [
+            "inspect"
+        ] * 5
+        assert len({action.run_id for action in actions if action.scenario == scenario}) == 1
+        if index + 1 < len(challenges):
+            assert actions[-1].operation == "start"
+            assert actions[-1].scenario == challenges[index + 1][1]
+            assert "Run `guide now`" not in launch.text
         completed |= {objective_id}
         with closing(connect_database(migrated_database_path)) as database_connection:
             assert (
@@ -174,11 +183,8 @@ def test_service_lab_repair_and_explanation_advance_through_five_durable_challen
             assert (current.objective.id if current.objective else None) == (
                 challenges[index + 1][0] if index + 1 < len(challenges) else "join-course-irc"
             )
-        count = len(actions)
-        send(f"answer {answer}")
         with closing(connect_database(migrated_database_path)) as database_connection:
             assert list_score_entries(database_connection, "alice", CATALOG.course.id) == scores
-        assert len(actions) == count
     finished_actions = tuple(actions)
     with closing(connect_database(migrated_database_path)) as database_connection:
         finished_scores = list_score_entries(database_connection, "alice", CATALOG.course.id)

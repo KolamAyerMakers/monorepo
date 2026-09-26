@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import socket
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -14,6 +15,7 @@ from typing import Literal, cast
 import pytest
 
 import maker_guide.unix_socket as socket_module
+from maker_guide.cli import help as help_cli
 from maker_guide.config import SocketConfig
 from maker_guide.service_lab import (
     SERVICE_LAB_MAX_FRAME_BYTES,
@@ -35,6 +37,48 @@ _RESULT = (
     ).encode()
     + b"\n"
 )
+
+
+async def test_answer_allows_one_healthy_inspection_then_one_new_launch(
+    temporary_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """CLI and daemon permit a bounded transition, not a chain of new faults."""
+    actions: list[ServiceLabAction] = []
+
+    def run_lab(action: ServiceLabAction) -> ServiceLabReport:
+        actions.append(action)
+        return replace(
+            _REPORT,
+            run_id=action.run_id,
+            healthy=action.operation == "inspect",
+            http_status=200 if action.operation == "inspect" else 404,
+        )
+
+    monkeypatch.setattr(help_cli, "run_service_lab", run_lab)
+
+    async def handle_help(request: SocketHelpRequest, writer: HelpChunkWriter | None) -> str:
+        del writer
+        assert request.service_lab_runner is not None
+        assert (await request.service_lab_runner(replace(_ACTION, operation="inspect"))).healthy
+        assert not (await request.service_lab_runner(replace(_ACTION, run_id="b" * 32))).healthy
+        with pytest.raises(ServiceLabError):
+            await request.service_lab_runner(replace(_ACTION, run_id="c" * 32))
+        return "Repair accepted; next challenge started."
+
+    socket_path = temporary_path / "service-lab.sock"
+
+    def request_answer() -> str:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(5)
+            client.connect(str(socket_path))
+            client.sendall(
+                b'{"version":1,"kind":"help","text":"answer fixed","supports_service_lab":true}\n'
+            )
+            return help_cli._read_help_response(client, None, "answer fixed")  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001 - exercise the CLI frame reader against a real socket
+
+    async with _help_server(socket_path, handle_help):
+        assert await asyncio.to_thread(request_answer) == "Repair accepted; next challenge started."
+    assert [action.operation for action in actions] == ["inspect", "start"]
 
 
 @asynccontextmanager

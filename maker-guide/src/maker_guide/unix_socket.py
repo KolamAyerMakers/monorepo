@@ -282,15 +282,23 @@ class UnixSocketServer:
             except (ValueError, OSError, RecursionError):
                 raise SiteCheckError("invalid-report") from None
 
+        continuation_run_id: str | None = None
+
         async def run_service_lab(action: ServiceLabAction) -> ServiceLabReport:
-            nonlocal action_used, service_lab_used
-            if action_used or not request_active:
+            nonlocal action_used, service_lab_used, continuation_run_id
+            continuation = (
+                continuation_run_id is not None
+                and action.operation == "start"
+                and action.run_id != continuation_run_id
+            )
+            continuation_run_id = None
+            if (action_used and not continuation) or not request_active:
                 raise ServiceLabError("invalid-report")
             action_used = service_lab_used = True
             action_payload = service_lab_action_payload(action)
             intent = chat_intent(help_request.text)
             if intent not in {"now", "check", "answer", "freeform"} or (
-                action.operation == "start" and intent != "now"
+                action.operation == "start" and intent != "now" and not continuation
             ):
                 raise ServiceLabError("invalid-action")
             try:
@@ -325,11 +333,21 @@ class UnixSocketServer:
                     or _peer_credentials(writer) != credentials
                 ):
                     raise ServiceLabError("invalid-report")
-                return parse_service_lab_report(result_object["report"], action)
+                report = parse_service_lab_report(result_object["report"], action)
             except TimeoutError:
                 raise ServiceLabError("timeout") from None
             except (ValueError, OSError, RecursionError):
                 raise ServiceLabError("invalid-report") from None
+            if (
+                not continuation
+                and intent == "answer"
+                and action.operation == "inspect"
+                and report.started
+                and report.healthy
+                and report.error is None
+            ):
+                continuation_run_id = action.run_id
+            return report
 
         write_chunk = _help_chunk_writer(writer)
 

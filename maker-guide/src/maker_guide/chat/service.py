@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 import sqlite3
 from dataclasses import replace
 
@@ -19,7 +20,7 @@ from maker_guide.chat.contract import (
     UnknownLearnerError,
 )
 from maker_guide.chat.router import build_response_draft
-from maker_guide.chat.service_lab import prepare_service_lab
+from maker_guide.chat.service_lab import current_lab_report, lab_status_text, prepare_service_lab
 from maker_guide.chat.site_check import prepare_site_check
 from maker_guide.chat.snapshot import build_learner_snapshot
 from maker_guide.chat.tutor import (
@@ -29,6 +30,7 @@ from maker_guide.chat.tutor import (
 from maker_guide.repositories.help_interaction import HelpInteraction, add_help_interaction
 from maker_guide.repositories.helpers import transaction
 from maker_guide.repositories.learner import Learner, get_learner
+from maker_guide.repositories.session_objective_completion import list_completed_objective_ids
 
 
 def handle_chat_request(request: ChatRequest, dependencies: ChatDependencies) -> ChatResponse:
@@ -89,6 +91,7 @@ def handle_chat_request(request: ChatRequest, dependencies: ChatDependencies) ->
     )
     with transaction(dependencies.database_connection):
         _require_learner(dependencies.database_connection, learner_handle)
+        lab_report = current_lab_report(dependencies, learner_handle)
         response_draft = build_response_draft(
             request,
             dependencies,
@@ -96,6 +99,71 @@ def handle_chat_request(request: ChatRequest, dependencies: ChatDependencies) ->
             interaction_timestamp,
             prepared_answer_interpretation,
         )
+        completed_lab = (
+            dependencies.service_lab_result is not None
+            and lab_report is not None
+            and lab_report.healthy
+            and dependencies.service_lab_result.objective_id
+            in list_completed_objective_ids(
+                dependencies.database_connection,
+                learner_handle,
+                dependencies.service_lab_result.course_id,
+                dependencies.service_lab_result.session_id,
+            )
+        )
+        if not completed_lab:
+            return _record_chat_response(
+                request,
+                dependencies,
+                learner_handle,
+                interaction_timestamp,
+                response_draft,
+            )
+    if completed_lab:
+        # Commit the repair before asking the learner-side runner to break the next lab.
+        next_lab = prepare_service_lab(
+            replace(request, text="now"), dependencies, learner_handle, interaction_timestamp
+        )
+        congratulations, transition = secrets.choice(
+            (
+                (
+                    "You got it working again! Great detective work.",
+                    (
+                        "So, I tried to help with something else... and broke your website again. "
+                        "Sorry. Can you take another look?"
+                    ),
+                ),
+                (
+                    "That's it! Fixed and explained. Nicely done!",
+                    (
+                        "I should have left it there. Instead, I made one more change... "
+                        "and now your website needs rescuing again. My fault."
+                    ),
+                ),
+                (
+                    "The site is back! You nailed that repair.",
+                    (
+                        "That was my cue to stop touching things. I did not take the hint. "
+                        "Sorry... there's a new problem to investigate."
+                    ),
+                ),
+            )
+        )
+        response_draft = replace(
+            response_draft,
+            text=congratulations
+            + "\n\n"
+            + (
+                lab_status_text(
+                    replace(next_lab, launch_message=transition)
+                    if next_lab.launch_message is not None
+                    else next_lab
+                )
+                if next_lab is not None
+                else response_draft.text.partition("\n\n")[2]
+            ),
+        )
+    with transaction(dependencies.database_connection):
         return _record_chat_response(
             request,
             dependencies,

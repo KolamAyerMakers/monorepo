@@ -526,6 +526,7 @@ def _read_help_response(  # noqa: C901, PLR0911, PLR0912 - Keep frame guards and
     buffered = b""
     intent = chat_intent(message)
     action_used = False
+    continuation_run_id: str | None = None
     while True:
         if b"\n" not in buffered:
             received = client_socket.recv(4096)
@@ -546,14 +547,28 @@ def _read_help_response(  # noqa: C901, PLR0911, PLR0912 - Keep frame guards and
                 return _BAD_HELP_RESPONSE_TEXT
             response_object = cast("dict[object, object]", loaded)
             if "service_lab" in response_object:
+                action = parse_service_lab_action(response_object["service_lab"])
+                continuation = (
+                    continuation_run_id is not None
+                    and action.operation == "start"
+                    and action.run_id != continuation_run_id
+                )
+                continuation_run_id = None
                 if (
-                    action_used
+                    (action_used and not continuation)
                     or not separator
                     or len(response_line) + 1 > SERVICE_LAB_MAX_FRAME_BYTES
                 ):
                     return _BAD_HELP_RESPONSE_TEXT
                 action_used = True
-                client_socket.sendall(_service_lab_reply(response_object, message))
+                reply = _service_lab_reply(response_object, "now" if continuation else message)
+                if not continuation and intent == "answer" and action.operation == "inspect":
+                    report = parse_service_lab_report(
+                        cast("dict[str, object]", json.loads(reply))["report"], action
+                    )
+                    if report.started and report.healthy and report.error is None:
+                        continuation_run_id = action.run_id
+                client_socket.sendall(reply)
                 chunk_writer = None
                 continue
             if "site_check" in response_object:
