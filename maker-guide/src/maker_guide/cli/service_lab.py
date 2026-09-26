@@ -691,15 +691,50 @@ def _wrong_root(action: ServiceLabAction) -> Path:
     return Path(f"/tmp/guide-{os.getuid()}-{action.run_id}")  # noqa: S108 - private per-run root
 
 
-def _fault(source: bytes, action: ServiceLabAction, attempt_path: Path) -> tuple[bytes, str | None]:
+def _prepare_empty_site(home: Path, state: int) -> None:
+    """Publish a recorded lab inode without adopting or removing a learner directory."""
+    try:
+        identity = _read(state, "empty-site-owner")
+    except FileNotFoundError:
+        with _directory(home / _STATE / "empty-site", create=True, private=True) as staged:
+            metadata = os.fstat(staged)
+            identity = f"{metadata.st_dev}\n{metadata.st_ino}\n".encode("ascii")
+            _write(state, "empty-site-owner", identity, exclusive=True)
+    with _directory(home) as directory:
+        # The identity is durable before the rename, so interruption can safely resume.
+        try:
+            os.stat("empty-site", dir_fd=state, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            try:
+                _move_no_replace(state, "empty-site", directory, "empty-site")
+            except FileExistsError:
+                raise ServiceLabError("unit-changed") from None
+        with _directory(home / "empty-site", private=True) as empty_site:
+            metadata = os.fstat(empty_site)
+            if identity != f"{metadata.st_dev}\n{metadata.st_ino}\n".encode("ascii"):
+                raise ServiceLabError("unit-changed")
+
+
+def _fault(
+    source: bytes, action: ServiceLabAction, attempt_path: Path, persisted: bytes = b""
+) -> tuple[bytes, str | None]:
     """Return injected bytes and an exit status; None means an active HTTP fault."""
     settings = _settings(source)
     match action.scenario:
         case "missing-executable":
             name = "ExecStart"
             expected_status = "203"
+            # Retain the executable of persisted attempts for exact inspection and recovery.
             value = settings["[Service]ExecStart"].replace(
-                "/usr/bin/caddy", str(attempt_path / "missing-caddy"), 1
+                "/usr/bin/caddy",
+                str(attempt_path / "missing-caddy")
+                if persisted
+                and _settings(persisted)["[Service]ExecStart"].split()[:1]
+                == [str(attempt_path / "missing-caddy")]
+                else "/usr/bin/cadddyyy",
+                1,
             )
         case "invalid-argument":
             name = "ExecStart"
@@ -713,8 +748,15 @@ def _fault(source: bytes, action: ServiceLabAction, attempt_path: Path) -> tuple
             root = (
                 _wrong_root(action)
                 if action.scenario == "wrong-content"
-                else attempt_path / "empty-root"
+                else attempt_path.parents[len(Path(_STATE).parts)] / "empty-site"
             )
+            if (
+                action.scenario == "empty-root"
+                and persisted
+                and str(attempt_path / "empty-root")
+                in _settings(persisted)["[Service]ExecStart"].split()
+            ):
+                root = attempt_path / "empty-root"
             value = re.sub(
                 r"--root\s+\S+",
                 f"--root {root}",
@@ -769,7 +811,7 @@ def _rollback(  # noqa: C901, PLR0913 - rollback needs both pinned directories a
     injected = _read(attempt, "injected.service")
     if (
         not _baseline(original, home)
-        or injected != _fault(original, action, home / _STATE / action.run_id)[0]
+        or injected != _fault(original, action, home / _STATE / action.run_id, injected)[0]
     ):
         raise ServiceLabError("unsafe-unit")
     if action.scenario == "missing-published-site":
@@ -930,7 +972,9 @@ def run_service_lab(action: ServiceLabAction) -> ServiceLabReport:  # noqa: C901
             if attempt is not None and phase is not None:
                 original = _read(attempt, "original.service")
                 injected = _read(attempt, "injected.service")
-                expected_injected, expected_status = _fault(original, action, attempt_path)
+                expected_injected, expected_status = _fault(
+                    original, action, attempt_path, injected
+                )
                 if not _baseline(original, home) or injected != expected_injected:
                     raise ServiceLabError("attempt-mismatch")
                 started = phase == "active"
@@ -975,7 +1019,10 @@ def run_service_lab(action: ServiceLabAction) -> ServiceLabReport:  # noqa: C901
                     os.mkdir(action.run_id, mode=0o700, dir_fd=state)
                     os.fsync(state)
                     attempt = stack.enter_context(_directory(attempt_path, private=True))
-                injected, expected_status = _fault(source, action, attempt_path)
+                persisted = b""
+                with contextlib.suppress(FileNotFoundError):
+                    persisted = _read(attempt, "injected.service")
+                injected, expected_status = _fault(source, action, attempt_path, persisted)
                 for name, content, permissions in (
                     ("original.service", source, mode),
                     ("injected.service", injected, 0o600),
@@ -993,7 +1040,9 @@ def run_service_lab(action: ServiceLabAction) -> ServiceLabReport:  # noqa: C901
                             != permissions
                         ):
                             raise ServiceLabError("unit-changed")
-                if action.scenario == "empty-root":
+                if action.scenario == "empty-root" and str(attempt_path / "empty-root") in (
+                    _settings(injected)["[Service]ExecStart"].split()
+                ):
                     with contextlib.suppress(FileExistsError):
                         os.mkdir("empty-root", mode=0o700, dir_fd=attempt)
                     os.fsync(attempt)
@@ -1017,15 +1066,20 @@ def run_service_lab(action: ServiceLabAction) -> ServiceLabReport:  # noqa: C901
                 mode = stat.S_IMODE(os.stat("original.service", dir_fd=attempt).st_mode)
                 if not mode & stat.S_IWUSR:
                     raise ServiceLabError("unsafe-path")
-                try:
-                    os.stat("missing-caddy", dir_fd=attempt, follow_symlinks=False)
-                except FileNotFoundError:
-                    pass
-                else:
-                    raise ServiceLabError("unit-changed")
+                if action.scenario == "missing-executable":
+                    try:
+                        Path(_settings(injected)["[Service]ExecStart"].split()[0]).lstat()
+                    except FileNotFoundError:
+                        pass
+                    else:
+                        raise ServiceLabError("unit-changed")
                 if action.scenario == "empty-root":
+                    command = _settings(injected)["[Service]ExecStart"].split()
+                    root = Path(command[command.index("--root") + 1])
+                    if root == home / "empty-site":
+                        _prepare_empty_site(home, state)
                     with (
-                        _directory(attempt_path / "empty-root", private=True) as empty_root,
+                        _directory(root, private=True) as empty_root,
                         os.scandir(empty_root) as entries,
                     ):
                         if next(entries, None) is not None:

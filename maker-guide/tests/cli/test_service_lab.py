@@ -119,7 +119,11 @@ class _Machine:
             failure = next(
                 (
                     code
-                    for token, code in (("missing-caddy", "203"), ("--access-logs", "1"))
+                    for token, code in (
+                        ("/usr/bin/cadddyyy", "203"),
+                        ("missing-caddy", "203"),
+                        ("--access-logs", "1"),
+                    )
                     if token in self.state["loaded"]
                 ),
                 None,
@@ -296,6 +300,14 @@ def test_injection_repair_and_retry_are_exactly_once(  # noqa: PLR0915 - shared 
     )
     injected = machine.unit.read_bytes()
     assert (injected == machine.original) == (scenario == "missing-published-site")
+    if scenario == "empty-root":
+        assert f"--root {machine.home / 'empty-site'} --access-log" in " ".join(
+            runner._settings(report.unit.encode())["[Service]ExecStart"].split()
+        )
+        assert not list((machine.home / "empty-site").iterdir())
+    if scenario == "missing-executable":
+        assert b"ExecStart=/usr/bin/cadddyyy file-server" in injected
+        assert "ExecMainStatus=203" in report.status
     if scenario == "invalid-argument":
         assert b"ExecStart=/usr/bin/caddy file-server" in injected
         assert b"WorkingDirectory=%h\n" in injected
@@ -601,6 +613,119 @@ def test_partial_initialization_resumes_only_on_start_without_replacing_artifact
         (path.stat().st_ino, path.read_bytes() if path.is_file() else None) == snapshot
         for path, snapshot in preserved.items()
     )
+
+
+@pytest.mark.parametrize("scenario", ["missing-executable", "empty-root"])
+@pytest.mark.parametrize("phase", [None, "active", "prepared", "aborted"])
+def test_persisted_attempts_survive_fault_path_changes(
+    machine: _Machine, phase: str | None, scenario: ServiceLabScenario
+) -> None:
+    """Old durable injections remain inspectable, recoverable, and safe to retry."""
+    action = ServiceLabAction(run_id="a" * 32, scenario=scenario, operation="start")
+    attempt = machine.home / runner._STATE / action.run_id
+    attempt.mkdir(parents=True, mode=0o700)
+    attempt.parent.chmod(0o700)
+    injected = machine.original.replace(
+        b"/usr/bin/caddy", str(attempt / "missing-caddy").encode(), 1
+    )
+    if scenario == "empty-root":
+        injected = machine.original.replace(
+            b"%h/public_html", str(attempt / "empty-root").encode(), 1
+        )
+        (attempt / "empty-root").mkdir(mode=0o700)
+        (machine.home / "empty-site").write_bytes(b"unrelated learner file\n")
+    (attempt / "original.service").write_bytes(machine.original)
+    (attempt / "injected.service").write_bytes(injected)
+    if phase is not None:
+        (attempt / "attempt").write_text(f"{scenario}\n{phase}\n", encoding="ascii")
+    if phase in {"active", "prepared"}:
+        machine.unit.write_bytes(injected)
+        machine.state.update(loaded=injected.decode(), ActiveState="failed", SubState="failed")
+    if phase == "prepared":
+        assert runner.run_service_lab(replace(action, operation="inspect")).error == (
+            "interrupted-attempt"
+        )
+        assert machine.unit.read_bytes() == machine.original
+    report = runner.run_service_lab(action)
+    assert report.error is None
+    assert report.started
+    assert not report.healthy
+    assert machine.unit.read_bytes() == injected
+    assert (attempt / "injected.service").read_bytes() == injected
+    count = len(machine.commands)
+    machine.repair()
+    report = runner.run_service_lab(replace(action, operation="inspect"))
+    assert report.error is None
+    assert report.started
+    assert report.healthy
+    assert not any("restart" in command for command in machine.commands[count:])
+    if scenario == "empty-root":
+        assert (machine.home / "empty-site").read_bytes() == b"unrelated learner file\n"
+
+
+@pytest.mark.parametrize("collision", ["directory", "content", "file", "symlink", "dangling"])
+def test_empty_root_never_adopts_existing_learner_paths(machine: _Machine, collision: str) -> None:
+    """Existing learner paths must remain untouched across repeated attempts."""
+    root = machine.home / "empty-site"
+    if collision in {"directory", "content"}:
+        root.mkdir(mode=0o700)
+        if collision == "content":
+            (root / "index.html").write_bytes(b"learner page\n")
+    elif collision == "file":
+        root.write_bytes(b"learner file\n")
+    else:
+        root.symlink_to(machine.home / ("public_html" if collision == "symlink" else "missing"))
+    metadata = root.lstat()
+    action = ServiceLabAction(run_id="a" * 32, scenario="empty-root", operation="start")
+    for _attempt in range(2):
+        report = runner.run_service_lab(action)
+        assert report.error == "unit-changed"
+        assert not report.started
+        assert root.lstat() == metadata
+        assert machine.unit.read_bytes() == machine.original
+    if collision == "content":
+        assert (root / "index.html").read_bytes() == b"learner page\n"
+    elif collision == "file":
+        assert root.read_bytes() == b"learner file\n"
+    assert not any("restart" in command for command in machine.commands)
+
+
+@pytest.mark.parametrize("checkpoint", ["before-move", "after-move", "collision"])
+def test_empty_root_publication_recovers_without_clobbering(
+    machine: _Machine, monkeypatch: pytest.MonkeyPatch, checkpoint: str
+) -> None:
+    """Interrupted publication must recover without replacing a colliding learner path."""
+    action = ServiceLabAction(run_id="a" * 32, scenario="empty-root", operation="start")
+    move = runner._move_no_replace
+
+    def interrupt_move(
+        source_directory: int, source: str, destination_directory: int, destination: str
+    ) -> None:
+        if destination == "empty-site":
+            if checkpoint == "collision":
+                (machine.home / "empty-site").mkdir(mode=0o700)
+            elif checkpoint == "before-move":
+                raise KeyboardInterrupt
+        move(source_directory, source, destination_directory, destination)
+        if destination == "empty-site":
+            raise KeyboardInterrupt
+
+    with monkeypatch.context() as patch:
+        patch.setattr(runner, "_move_no_replace", interrupt_move)
+        if checkpoint == "collision":
+            assert runner.run_service_lab(action).error == "unit-changed"
+        else:
+            with pytest.raises(KeyboardInterrupt):
+                runner.run_service_lab(action)
+    assert machine.unit.read_bytes() == machine.original
+    report = runner.run_service_lab(action)
+    if checkpoint == "collision":
+        assert report.error == "unit-changed"
+        assert not report.started
+    else:
+        assert report.error is None
+        assert report.started
+        assert report.http_status == 404
 
 
 def test_initialization_does_not_replace_a_concurrent_artifact(
@@ -1038,6 +1163,7 @@ def test_missing_output_requires_the_original_running_process(
         ("missing-executable", "injected-backup"),
         ("empty-root", "empty-root-content"),
         ("empty-root", "empty-root-symlink"),
+        ("empty-root", "empty-root-replaced"),
         ("empty-root", "unit-edit"),
         ("empty-root", "unit-mode"),
         ("empty-root", "unhealthy"),
@@ -1071,15 +1197,26 @@ def test_preparation_retry_refuses_changed_units_and_fault_targets(  # noqa: C90
     attempt = machine.home / runner._STATE / action.run_id
     if change == "target-file":
         (attempt / "missing-caddy").write_bytes(b"learner-owned file\n")
+        lstat = Path.lstat
+
+        def occupied_executable(path: Path) -> os.stat_result:
+            return lstat(attempt / "missing-caddy" if path == Path("/usr/bin/cadddyyy") else path)
+
+        monkeypatch.setattr(Path, "lstat", occupied_executable)
     elif change in {"original-backup", "injected-backup"}:
         (attempt / f"{change.removesuffix('-backup')}.service").write_bytes(
             b"retained learner edit\n"
         )
     elif change == "empty-root-content":
-        (attempt / "empty-root/index.html").write_bytes(b"learner-owned page\n")
-    elif change == "empty-root-symlink":
-        (attempt / "empty-root").rename(attempt / "saved-empty-root")
-        (attempt / "empty-root").symlink_to(machine.home / "public_html", target_is_directory=True)
+        (machine.home / "empty-site/index.html").write_bytes(b"learner-owned page\n")
+    elif change in {"empty-root-symlink", "empty-root-replaced"}:
+        (machine.home / "empty-site").rename(machine.home / "saved-empty-site")
+        if change == "empty-root-replaced":
+            (machine.home / "empty-site").mkdir(mode=0o700)
+        else:
+            (machine.home / "empty-site").symlink_to(
+                machine.home / "public_html", target_is_directory=True
+            )
     elif change == "wrong-root-content":
         (runner._wrong_root(action) / "index.html").write_bytes(b"learner-owned page\n")
     elif change == "wrong-root-symlink":
