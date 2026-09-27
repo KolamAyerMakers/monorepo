@@ -15,14 +15,14 @@ Session: S9
 - `ExecStartPre` runs `maker-report.sh "System Report"` before `npm run build`. A nonzero report exit prevents the build.
 - The report script collects facts into `~/src/pages/maker-report.md`; the builder alone only renders existing source.
 - The supplied report resource stops on collection errors and publishes from a temporary file, preserving the last valid report on failure. Upgrade older direct-write copies before unattended use, preserving personal changes first.
-- The classroom timer starts after 30 seconds and repeats two minutes after completion. Replace that with the [hourly schedule](self-study.md#hourly-schedule) after observing it.
+- The classroom timer starts after about 30 seconds and repeats about two minutes after completion. Scheduling is approximate. Replace it with the [hourly schedule](self-study.md#hourly-schedule) after observing it.
 - Stop the timer and wait for any running build before editing source, running a standalone build, or preparing a commit. Reloading units alone does not restart a timer or a running web server.
 
 ## Evidence That Matters
 
 A timer listing is not proof of execution. Match the successful service journal entry with a new date in the generated and publicly fetched report. Keep the actual error if it fails.
 
-A README is tested when another person can use it. The peer reads; the owner operates their own account, restores service, and verifies responses. No credentials change hands.
+A README is tested when another person can use it. The peer reads; the owner operates their own account. The local request should fail during the agreed service stop, then return the intended page after recovery; verify the public service route too. No credentials change hands.
 
 A local Git log is not an off-machine handoff. Verify the README, source, two scripts, and three units in Forgejo after pushing.
 
@@ -36,6 +36,6 @@ Shared Caddy handles public HTTPS and forwards to personal Caddy over loopback H
 
 ## Before S10
 
-S10 is **2026-10-24: Show What You Can Do**. Choose evidence for a five-minute demonstration and prepare one real recovery explanation. Name unfinished work honestly rather than presenting expected results as observations.
+S10 is **2026-10-24: Show What You Can Do**. No preparation is required. Name unfinished work honestly rather than presenting expected results as observations.
 
 Use [S9 self-study](self-study.md) for runnable workshop instructions and optional tool pointers. Text tools, another editor, cron, and webring work are not prerequisites.
