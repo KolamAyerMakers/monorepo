@@ -11,6 +11,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+      - name: Reject private book production files
+        run: |
+          if git ls-files graduation/book | grep -Ev '^graduation/book/(foreword\.txt|fonts/OFL\.txt)$' | grep -Ei '\.(pdf|png|jpe?g|html?|zip|json|txt)$|transcript'; then
+            echo "Purchased books, transcripts and derived production files must not be tracked."
+            exit 1
+          fi
+      # Only lint/types and the foreword test; never assemble or upload purchased works.
+      - run: uv --directory graduation/book run ruff check
+      - run: uv --directory graduation/book run ruff format --check
+      - run: uv --directory graduation/book run basedpyright
+      - name: Install fonts for book layout regression tests
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends fonts-liberation
+      - run: uv --directory graduation/book run pytest test_assembly.py
       - uses: pnpm/action-setup@v4
         with:
           version: 10

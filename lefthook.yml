@@ -3,6 +3,10 @@ min_version: 2.1.0
 pre-commit:
   parallel: true
   commands:
+    graduation.book:
+      glob: "graduation/book/**/*.{py,toml,lock,svg,txt}"
+      run: uv --directory graduation/book run ruff check && uv --directory graduation/book run ruff format --check && uv --directory graduation/book run basedpyright && uv --directory graduation/book run pytest test_assembly.py
+
     maker-guide.ruff-check:
       glob: "maker-guide/**/*.{py,toml,lock}"
       run: uv --directory maker-guide run ruff check

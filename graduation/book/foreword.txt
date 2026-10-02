@@ -1,0 +1,7 @@
+I started this course because I wanted to volunteer and contribute something practical to our community. Hands-on skills take practice, and I hoped I could help make that first step easier. Thank you for your trust and the time you put into learning. I've loved this experience, and I hope you have too.
+
+One moment that will stay with me is our troubleshooting session. The AI tutor broke things in your environments; you investigated. You read logs, tried commands, interpreted error messages, and fixed problems. Seeing some of you discover the pleasure of figuring things out was a highlight for me. That curiosity is what helps you learn independently and become really good at what you do.
+
+I hope you'll make Linux and the command line part of your everyday toolkit. Today's AI tools have learned from vast amounts of open-source code and documentation. Linux and command-line tools are a natural fit for them. Knowing how to use these tools yourself gives you a strong foundation for directing AI agents and building things with them.
+
+This course has inspired me to create more opportunities for us to learn and build together. For me, this is a beginning. I hope it is for you too. And I hope we'll meet again soon.

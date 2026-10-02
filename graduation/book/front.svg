@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="0 0 210 148">
+  <rect width="210" height="148" fill="#f4f0e6"/>
+  <g fill="#111111" font-family="Liberation Sans">
+    <text x="16" y="16" font-size="3.5" letter-spacing="0.5">AN ILLUSTRATED COMPANION</text>
+    <g font-family="IBM Plex Mono" font-size="25.4" font-weight="700">
+      <text x="15" y="49">At the</text>
+      <text x="15" y="74">Prompt</text>
+    </g>
+    <text x="16" y="90" font-size="5.3">Linux, the command line, Bash &amp; Git</text>
+    <text x="16" y="113" font-size="4.9" font-weight="700">Zines by Julia Evans</text>
+    <text x="16" y="130" font-size="3.5">Linux Foundations &#183; 2026</text>
+    <text x="16" y="136" font-size="3.5">Kolam Ayer Community Club &#183; Singapore</text>
+  </g>
+  <text x="115" y="74" font-family="IBM Plex Mono" font-size="25.4" font-weight="700" fill="#245b43">$</text>
+  <rect x="134" y="55" width="12" height="19" fill="#245b43"/>
+</svg>
