@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">HTTP response: status, headers and body.</title><desc id="desc">A bounded curl GET requests example.com over HTTPS. An illustrative selected HTTP/1.1 response shows a status line, Content-Type: text/html, a blank line separating headers from body, and HTML page data. Actual protocol, headers and content may differ. GET asks for a resource; HEAD asks for its response headers without its body.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8.5px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">HTTP REQUESTS AND RESPONSES / 02</text><text x="12" y="28" class="title">HTTP RESPONSE: STATUS, HEADERS, BODY.</text>
+<text x="14" y="37" class="small">Requires <tspan class="code" style="font-size:inherit">curl</tspan>. Missing? See Package Management / 01–02.</text>
+<text x="14" y="42" class="code">curl -i --max-time 10 https://example.com/</text>
+<text x="14" y="52" class="small"><tspan class="code" style="font-size:inherit">GET</tspan> asks for a resource. <tspan class="code" style="font-size:inherit">-i</tspan> includes headers; <tspan class="code" style="font-size:inherit">--max-time 10</tspan> limits the transfer to 10 seconds.</text>
+<text x="14" y="63" class="small">Illustrative selected response; actual protocol, headers and page may differ:</text>
+<path fill="#def1e8" d="M16 68 H195 V83 H16 Z"/><path fill="#ece5f5" d="M16 83 H195 V98 H16 Z"/><path fill="#fff0c9" d="M16 107 H195 V121 H16 Z"/>
+<path class="ink" d="M16 68 H195 V121 H16 Z"/>
+<text x="22" y="78" class="code">HTTP/1.1 200 OK</text><text x="120" y="78" class="small">status: success</text>
+<text x="22" y="93" class="code">Content-Type: text/html</text><text x="120" y="93" class="small">header: body is HTML</text>
+<text x="120" y="104" class="small">blank line ends headers</text>
+<text x="22" y="116" class="code">&lt;html&gt;…&lt;/html&gt;</text><text x="120" y="116" class="small">body: page data</text>
+<text x="14" y="133" class="small"><tspan class="code" style="font-size:inherit">curl -I</tspan> uses <tspan class="code" style="font-size:inherit">HEAD</tspan>: asks for headers without the response body.</text>
+<text x="14" y="144" class="small">200 alone doesn't prove the page is right. Read the body. Keep certificate checks.</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">grep: select matching lines.</title>
+<desc id="desc">An existing note.txt in the current directory contains three lines: tea is warm, coffee is hot, and tea is ready. grep -nF 'tea' note.txt selects the first and third lines and prints their original one-based line numbers. Arrows connect those file lines to the output. The F option treats tea as literal text, n adds line numbers, and matching is case sensitive. The command reads without modifying the file.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/>
+<text x="12" y="14" class="small">STREAMS AND PIPES / 04</text>
+<text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">grep</tspan>: SELECT MATCHING LINES.</text>
+<text x="14" y="40"><tspan class="code" style="font-size:inherit">grep</tspan> selects lines containing the pattern you give it.</text>
+<text x="14" y="49" class="small">Requires GNU <tspan class="code" style="font-size:inherit">grep</tspan>, common on Linux. Here the pattern is plain text.</text>
+<text x="14" y="58" class="small">Starting file: <tspan class="code" style="font-size:inherit">note.txt</tspan> already exists in the current directory, with these three lines.</text>
+<path class="ink" d="M14 67 L89 66 L90 103 L14 104 Z"/>
+<text x="19" y="74" class="small">file contents</text>
+<path fill="#def1e8" d="M18 78 H85 V86 H18 Z M18 94 H85 V102 H18 Z"/>
+<text x="20" y="84" class="code">tea is warm</text>
+<text x="20" y="92" class="code">coffee is hot</text>
+<text x="20" y="100" class="code">tea is ready</text>
+<path fill="#def1e8" d="M120 78 H196 V103 H120 Z"/>
+<text x="123" y="74" class="small">output: selected lines</text>
+<text x="125" y="86" class="code">1:tea is warm</text>
+<text x="125" y="98" class="code">3:tea is ready</text>
+<path class="ink" d="M94 83 L116 84 M110 80 L116 84 L110 88 M94 99 L116 97 M110 93 L116 97 L110 101"/>
+<text x="14" y="114" class="small">command</text>
+<text x="43" y="114" class="code" style="font-size:5.2px">grep -nF 'tea' note.txt</text>
+<text x="14" y="125" class="small"><tspan class="code" style="font-size:inherit">-n</tspan> adds original line numbers, starting at 1. <tspan class="code" style="font-size:inherit">-F</tspan> treats the pattern as plain text.</text>
+<text x="14" y="134" class="small">Case matters: <tspan class="code" style="font-size:inherit">Tea</tspan> would not match <tspan class="code" style="font-size:inherit">tea</tspan>. The file is read, not changed.</text>
+</svg>

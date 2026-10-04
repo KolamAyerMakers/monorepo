@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Unstage a file, keep your edits.</title>
+<desc id="desc">Git 2.23 or newer, inside a repository with at least one commit. In this example note.txt held hello in the last commit. The working file was edited and saved with an added again line, then staged with git add note.txt. The staging area holds the file versions selected for the next commit. git restore --staged note.txt replaces only the staged version with the last committed version. A before and after diagram shows the last commit unchanged, staging returning to hello, and the working file retaining hello and again. git diff --cached -- note.txt inspects the staged difference before and after: the added line before, no difference afterward. These are illustrative file contents, not terminal output.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.8;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<text x="12" y="14" class="small">GIT HISTORY / 04</text>
+<text x="12" y="28" class="title">UNSTAGE A FILE, KEEP YOUR EDITS.</text>
+<text x="14" y="38" class="small">Staging holds file versions selected for the next commit (saved snapshot).</text>
+<text x="14" y="46" class="small">Requires Git 2.23+; inside a repository with at least one commit.</text>
+<text x="14" y="54" class="small">Independent example: committed <tspan class="code">note.txt</tspan> held <tspan class="code">hello</tspan>; its saved file now adds <tspan class="code">again</tspan>.</text>
+<text x="14" y="62" class="small">After <tspan class="code">git add note.txt</tspan>, unstage restores staging from the last commit; keep your edits.</text>
+<path fill="#def1e8" d="M12 67 H199 V80 H12 Z"/>
+<text x="18" y="76" class="code" style="font-size:5px">git restore --staged note.txt</text>
+<text x="14" y="88" class="small">Example <tspan class="code">note.txt</tspan> contents. Working file = saved file you edit.</text>
+<text x="16" y="97" class="small">Last commit (fixed)</text>
+<text x="82" y="97" class="small">Staging: before</text>
+<text x="150" y="97" class="small">Working file: saved</text>
+<path class="ink" d="M14 101 L67 100 L68 139 L14 140 Z"/>
+<path fill="#fff0c9" d="M79 101 H135 V116 H79 Z"/>
+<path class="ink" d="M79 101 L135 100 L136 116 L79 116 Z"/>
+<path class="ink" d="M147 101 L199 100 L200 139 L147 140 Z"/>
+<text x="20" y="111" class="code">hello</text>
+<text x="85" y="107" class="code">hello</text><text x="85" y="113" class="code">again</text>
+<text x="153" y="111" class="code">hello</text><text x="153" y="119" class="code">again</text>
+<text x="20" y="134" class="small">unchanged</text><text x="153" y="134" class="small">edits stay</text>
+<path class="ink" d="M107 117 V126 M104 122 L107 127 L110 122"/>
+<text x="117" y="124" class="small">after</text>
+<path fill="#def1e8" d="M79 129 H136 V140 H79 Z"/>
+<path class="ink" d="M79 129 L136 128 L136 140 L79 140 Z"/>
+<text x="85" y="136" class="code">hello</text>
+<text x="14" y="146" class="small">Inspect: <tspan class="code">git diff --cached -- note.txt</tspan> — added line before; no difference after.</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Discard edits in one working file.</title>
+<desc id="desc">Restoring a working file replaces its saved contents. Requires Git 2.23 or newer, inside a repository with an existing committed, tracked note.txt. HEAD means the last commit. In this example both HEAD and staging contain hello; an unstaged working edit adds again. First back up the file and inspect git diff -- note.txt. git restore --source=HEAD -- note.txt explicitly copies the last committed version into that working file, erasing its uncommitted working edits. Git cannot undo edits it never recorded. A diagram shows hello and again becoming only hello while staging and commits remain unchanged. Plain git restore without --staged instead copies from staging, which does not always match HEAD. Only the chosen tracked path is addressed, not untracked files or history rewriting. Contents are illustrative.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.8;stroke-linecap:round;stroke-linejoin:round}</style>
+<text x="12" y="14" class="small">GIT HISTORY / 05</text>
+<text x="12" y="28" class="title">DISCARD EDITS IN ONE WORKING FILE.</text>
+<text x="14" y="38" class="small"><tspan class="code">git restore</tspan> replaces a working file's contents with a selected saved version.</text>
+<text x="14" y="46" class="small">Git 2.23+; inside a repository with a committed, tracked <tspan class="code">note.txt</tspan>.</text>
+<text x="14" y="54" class="small"><tspan class="code">HEAD</tspan> = last commit. Staging (next commit's selected files) matches it here.</text>
+<text x="14" y="63" class="small">Back up first. Inspect the unstaged edit: <tspan class="code">git diff -- note.txt</tspan></text>
+<path fill="#fff0c9" d="M12 68 H201 V97 H12 Z"/>
+<text x="18" y="76" class="small">WARNING: erases this file's uncommitted working edits.</text>
+<text x="18" y="83" class="small">No Git undo for edits it never recorded. Restore only the chosen path:</text>
+<text x="18" y="93" class="code" style="font-size:4.8px">git restore --source=HEAD -- note.txt</text>
+<text x="14" y="105" class="small">Example <tspan class="code">note.txt</tspan> contents: only the working file you edit was changed.</text>
+<text x="15" y="114" class="small">Working: before</text><text x="91" y="114" class="small">after</text><text x="149" y="114" class="small">Staging + commit</text>
+<path class="ink" d="M14 117 L68 116 L69 132 L14 132 Z"/>
+<text x="20" y="123" class="code">hello</text><text x="20" y="129" class="code">again</text>
+<path class="ink" d="M73 125 H85 M81 122 L86 125 L81 128"/>
+<path fill="#def1e8" d="M90 117 H137 V132 H90 Z"/><path class="ink" d="M90 117 L136 116 L137 132 L90 132 Z"/>
+<text x="96" y="126" class="code">hello</text>
+<path class="ink" d="M147 117 L199 116 L200 132 L147 132 Z"/>
+<text x="153" y="123" class="code">hello</text><text x="153" y="130" class="small">unchanged</text>
+<text x="14" y="139" class="small">Plain <tspan class="code">git restore</tspan> without <tspan class="code">--staged</tspan> copies staging to the working file,</text>
+<text x="14" y="146" class="small">not always the last commit. Above, <tspan class="code">--source=HEAD</tspan> chooses that commit explicitly.</text>
+</svg>

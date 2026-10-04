@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">Filesystem paths: root and home.</title>
+  <desc id="desc">Slash is explicitly labelled as the filesystem root, the top of the directory tree. Under it are home, tmp and etc. The example account maya has home directory /home/maya; tilde means the current user's home. Full paths such as /etc start at the filesystem root.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.6px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="14" class="small">FILES AND PATHS / 01</text><text x="12" y="28" class="title">FILESYSTEM PATHS: ROOT AND HOME.</text>
+  <path fill="#ece5f5" d="M91 37 L115 38 L116 53 L90 54 Z"/>
+  <path fill="#fff0c9" d="M17 99 L63 98 L64 113 L17 114 Z"/>
+  <path fill="#def1e8" d="M83 71 L123 72 L123 87 L82 86 Z"/>
+  <!-- Tree connectors show containment, not movement. No competing arrows. -->
+  <path class="ink thin" d="M103 54 V64 M40 64 H170 M40 64 V71 M103 64 V71 M170 64 V71 M40 87 V98"/>
+  <path class="ink" d="M91 37 L115 38 L116 53 L90 54 Z M19 72 L60 71 L61 87 L19 86 Z M83 71 L123 72 L123 87 L82 86 Z M150 71 L190 72 L189 87 L149 86 Z M17 99 L63 98 L64 113 L17 114 Z"/>
+  <text x="14" y="40" class="small">Directories are folders.</text><text x="14" y="49" class="small">Only some branches are shown.</text>
+  <text x="99" y="49" class="code">/</text><text x="126" y="43" class="small">filesystem root</text><text x="126" y="52" class="small">the top of the tree</text>
+  <text x="24" y="82" class="code">home</text><text x="90" y="82" class="code">tmp</text><text x="156" y="82" class="code">etc</text><text x="22" y="109" class="code">maya</text>
+  <text x="80" y="98" class="small">temporary files</text><text x="148" y="98" class="small">system settings</text>
+  <text x="19" y="123" class="code">/home/maya</text>
+  <text x="80" y="112" class="small">Home holds your files and personal settings.</text>
+  <text x="80" y="121" class="small">Here, Maya's home is <tspan class="code" style="font-size:inherit">/home/maya</tspan>; <tspan class="code" style="font-size:inherit">~</tspan> means home.</text>
+  <path class="ink thin" d="M12 130 Q100 128 197 130"/>
+  <text x="14" y="140" class="small">A full path starts at <tspan class="code" style="font-size:inherit">/</tspan>: <tspan class="code" style="font-size:inherit">/etc</tspan> is the <tspan class="code" style="font-size:inherit">etc</tspan> directory directly below root.</text>
+</svg>

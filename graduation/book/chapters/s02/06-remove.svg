@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">rm removes a file, not to the trash.</title><desc id="desc">rm -i note.txt asks for confirmation. Before and after panels show note.txt present, then absent after confirmation. Adjacent warnings explain no desktop trash and no built-in undo. rmdir notes removes only an empty directory.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="14" class="small">FILES AND PATHS / 14</text><text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">rm</tspan> REMOVES A FILE.</text>
+  <path fill="#f8e0dc" d="M13 35 H54 V47 H13 Z"/>
+  <text x="14" y="44" class="code">rm -i note.txt</text><text x="65" y="44" class="small">asks before removing this existing file.</text>
+  <text x="14" y="55" class="small">Warning: after confirmation, no desktop trash and no built-in undo.</text>
+  <text x="23" y="73" class="small">before</text><text x="137" y="73" class="small">after confirming</text>
+  <path fill="#fff0c9" d="M24 80 H62 L72 90 V115 H24 Z"/><path class="ink" d="M24 80 H62 L72 90 V115 H24 Z M62 80 V90 H72 M84 98 H124 M118 94 L125 98 L118 102"/>
+  <text x="29" y="101" class="code">note.txt</text><text x="137" y="101" class="small"><tspan class="code" style="font-size:inherit">note.txt</tspan> is absent</text>
+  <text x="14" y="125" class="small">Check the filename first. <tspan class="code" style="font-size:inherit">-i</tspan> means ask for confirmation.</text>
+  <path class="ink thin" d="M12 131 Q100 129 197 131"/>
+  <text x="14" y="142" class="code">rmdir notes</text><text x="55" y="142" class="small">removes the notes directory only if it's empty.</text>
+</svg>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Backups: independent copies.</title>
+<desc id="desc">A backup is an independent copy used to recover lost data. An illustrative two-device diagram shows a computer holding note.txt with hello and a local hidden .git history directory, and an older saved copy on a separate backup device or location chosen by the reader. The working file later gains again. When the computer disk fails, both its file and local history are lost together; restoring the independent older copy yields hello, not the uncopied again line. Backups must keep older copies rather than merely mirror deletions, include needed untracked and ignored data, and include .git if local history is wanted. A remote Git copy protects only pushed commits, not every local file. Make regular independent copies and verify restoration into a spare directory without overwriting originals. Protect private backup data; secrets need not be committed.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.8;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<text x="12" y="14" class="small">GIT HISTORY / 08</text>
+<text x="12" y="28" class="title">BACKUPS: INDEPENDENT COPIES.</text>
+<text x="14" y="38" class="small">A backup is an independent copy for recovering lost data.</text>
+<text x="14" y="46" class="small">Files and history can be lost together. Another directory on the same disk is not enough.</text>
+<text x="16" y="56" class="small">Computer disk</text><text x="127" y="56" class="small">Separate device / location</text>
+<path class="ink" d="M14 60 L88 59 L89 84 L14 85 Z"/>
+<text x="20" y="67" class="code">note.txt: hello</text>
+<text x="20" y="75" class="small">local history: <tspan class="code">.git</tspan></text>
+<text x="20" y="82" class="small">hidden directory, same disk</text>
+<path class="ink" d="M92 69 H120 M115 65 L121 69 L115 73"/>
+<text x="95" y="80" class="small">copy</text>
+<path fill="#def1e8" d="M125 60 H200 V85 H125 Z"/>
+<path class="ink" d="M125 60 L200 59 L201 85 L125 85 Z"/>
+<text x="131" y="67" class="small">Older saved copy</text>
+<text x="131" y="75" class="code">note.txt: hello</text>
+<text x="131" y="82" class="small">choose your own destination</text>
+<text x="14" y="94" class="small">Later: add <tspan class="code">again</tspan>; disk fails.</text>
+<path class="ink" d="M15 98 L88 97 L89 111 L14 111 Z M17 99 L86 109 M17 109 L86 99"/>
+<text x="15" y="119" class="small">Files + local history lost</text>
+<path class="ink" d="M162 87 V98 M159 94 L162 99 L165 94"/>
+<text x="173" y="95" class="small">restore</text>
+<path fill="#fff0c9" d="M125 101 H201 V119 H125 Z"/>
+<text x="131" y="108" class="small">Recovered: <tspan class="code">hello</tspan></text>
+<text x="131" y="116" class="small">Uncopied <tspan class="code">again</tspan> is lost.</text>
+<text x="14" y="128" class="small">Example contents. Keep regular, older copies, not just a mirror of deletions.</text>
+<text x="14" y="135" class="small">Include needed files Git does not track or ignores; <tspan class="code">.git</tspan> keeps local history.</text>
+<text x="14" y="141" class="small">Git records committed files; a remote Git copy protects pushed commits only.</text>
+<text x="14" y="146" class="small">Verify restore into a spare directory. Protect private copies; don't commit secrets.</text>
+</svg>

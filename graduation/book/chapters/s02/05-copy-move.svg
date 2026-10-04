@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">Copy a file. Rename a file.</title><desc id="desc">Two alternative examples start with one.txt. cp one.txt copy.txt keeps the original and creates a copy. mv one.txt new.txt changes the name, with no copy left at the old name. Examples use destinations that do not yet exist; existing destinations can be overwritten.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="14" class="small">FILES AND PATHS / 11</text><text x="12" y="28" class="title">COPY A FILE. RENAME A FILE.</text>
+  <text x="14" y="38" class="small"><tspan class="code" style="font-size:inherit">cp</tspan> keeps the original; <tspan class="code" style="font-size:inherit">mv</tspan> renames. Each starts with only <tspan class="code" style="font-size:inherit">one.txt</tspan>.</text>
+  <text x="14" y="47" class="small">Warning: either command can overwrite an existing destination.</text>
+  <text x="14" y="58" class="code">cp one.txt copy.txt</text><text x="112" y="58" class="code">mv one.txt new.txt</text>
+  <text x="15" y="69" class="small">before copying</text><text x="113" y="69" class="small">before renaming</text>
+  <path class="ink thin" d="M20 74 H43 L48 79 V88 H20 Z M119 74 H142 L147 79 V88 H119 Z"/>
+  <text x="23" y="80" class="code" style="font-size:3.5px">one.txt</text><text x="122" y="80" class="code" style="font-size:3.5px">one.txt</text>
+  <text x="23" y="86" class="code" style="font-size:3.5px">hello</text><text x="122" y="86" class="code" style="font-size:3.5px">hello</text>
+  <path class="ink" d="M58 76 V98 M54 94 L58 99 L62 94 M157 76 V98 M153 94 L157 99 L161 94"/>
+  <path fill="#fff0c9" d="M18 102 H46 L51 107 V120 H18 Z"/><path fill="#def1e8" d="M62 102 H90 L95 107 V120 H62 Z"/><path fill="#ece5f5" d="M119 102 H147 L152 107 V120 H119 Z"/>
+  <path class="ink thin" d="M18 102 H46 L51 107 V120 H18 Z M62 102 H90 L95 107 V120 H62 Z M119 102 H147 L152 107 V120 H119 Z"/>
+  <text x="21" y="110" class="code" style="font-size:3.5px">one.txt</text><text x="65" y="110" class="code" style="font-size:3.5px">copy.txt</text><text x="122" y="110" class="code" style="font-size:3.5px">new.txt</text>
+  <text x="21" y="117" class="code" style="font-size:3.5px">hello</text><text x="65" y="117" class="code" style="font-size:3.5px">hello</text><text x="122" y="117" class="code" style="font-size:3.5px">hello</text>
+  <text x="18" y="130" class="small">after: original + copy</text><text x="116" y="130" class="small">after: old name absent</text>
+  <text x="14" y="142" class="small"><tspan class="code" style="font-size:inherit">mv one.txt notes/</tspan> instead moves the file into an existing <tspan class="code" style="font-size:inherit">notes</tspan> directory.</text>
+</svg>

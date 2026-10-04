@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">Commands: name, options and input.</title>
+  <desc id="desc">A terminal is a text window whose shell reads commands telling it what to run. Three cards show the name, options and input of ls -la /etc. The complete command is repeated with Enter to run it. The prompt is not typed. Root, the configuration directory and both options are explained visibly.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:6px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+   <text x="12" y="14" class="small">TERMINAL AND COMMANDS / 01</text><text x="12" y="28" class="title" style="font-size:8px">COMMANDS: NAME, OPTIONS, INPUT.</text>
+   <text x="14" y="37" class="small">A terminal is a text window. Its shell reads commands telling it what to run.</text>
+  <path fill="#fff0c9" d="M43 43 Q64 42 81 44 L80 67 L43 66 Z"/>
+  <path fill="#ece5f5" d="M92 44 L129 43 L130 67 L91 66 Z"/>
+  <path fill="#def1e8" d="M141 43 Q168 44 194 43 L193 67 L140 66 Z"/>
+  <path class="ink" d="M43 43 Q64 42 81 44 L80 67 L43 66 Z M92 44 L129 43 L130 67 L91 66 Z M141 43 Q168 44 194 43 L193 67 L140 66 Z"/>
+  <text x="54" y="59" class="code">ls</text><text x="100" y="59" class="code">-la</text><text x="151" y="59" class="code">/etc</text>
+  <text x="48" y="79" class="small">list names</text><text x="93" y="79" class="small">options: how</text><text x="144" y="79" class="small">directory: where</text>
+  <text x="15" y="59" class="code">$</text><text x="13" y="79" class="small">prompt</text>
+  <g class="ink" transform="translate(28 88)"><path d="M0 0 C-10 -3 -11 13 -1 16 C10 18 12 2 0 0 Z M-10 4 C-13 1 -9 -4 -6 -2 C-6 -7 0 -6 1 -3 C5 -6 10 -3 8 1 Q13 1 10 6 M-1 17 L-1 28 M-1 21 L13 16 M-1 22 L-11 27 M-1 28 L-10 36 M-1 28 L7 36"/></g>
+   <text x="52" y="95" class="code">ls -la /etc</text>
+   <text x="52" y="104" class="small">Type this, then press <tspan class="code" style="font-size:inherit">Enter</tspan> to run it.</text>
+   <text x="52" y="113" class="small"><tspan class="code" style="font-size:inherit">/</tspan> is filesystem root; <tspan class="code" style="font-size:inherit">/etc</tspan> holds system settings.</text>
+   <text x="52" y="122" class="small">Options change how a command works.</text>
+  <path class="ink thin" d="M12 128 Q100 126 197 128"/>
+  <text x="14" y="139" class="small"><tspan class="code" style="font-size:inherit">-l</tspan> = details · <tspan class="code" style="font-size:inherit">-a</tspan> = include hidden names · <tspan class="code" style="font-size:inherit">$</tspan> is the prompt; don't type it.</text>
+</svg>

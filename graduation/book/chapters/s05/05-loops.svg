@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">A Bash for loop visits each value.</title><desc id="desc">A full Bash loop prints tea then coffee into a labelled terminal output box. Iteration labels show drink holding tea first and coffee second. A second complete loop, for use inside a Bash script, prints every argument using quoted "$@" and "$item"; there are no executable-looking ellipses.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">BASH SCRIPTS / 05</text><text x="12" y="28" class="title">A LOOP DOES ONE THING PER VALUE.</text>
+<text x="14" y="40" class="small">In Bash, <tspan class="code" style="font-size:inherit">for</tspan> repeats commands once per value, in list order.</text>
+<text x="17" y="56" class="code">for drink in tea coffee; do</text><text x="17" y="68" class="code">  printf '%s\n' "$drink"</text><text x="17" y="80" class="code">done</text>
+<text x="135" y="48" class="small">terminal output</text><path fill="#def1e8" d="M133 53 H193 V83 H133 Z"/><path class="ink thin" d="M133 53 H193 V83 H133 Z"/>
+<text x="140" y="65" class="code">tea</text><text x="140" y="77" class="code">coffee</text><path class="ink" d="M103 67 H124 M118 63 L125 67 L118 71"/>
+<text x="14" y="93" class="small">Iteration 1: <tspan class="code" style="font-size:inherit">drink</tspan> holds <tspan class="code" style="font-size:inherit">tea</tspan>.</text><text x="110" y="93" class="small">Iteration 2: <tspan class="code" style="font-size:inherit">drink</tspan> holds <tspan class="code" style="font-size:inherit">coffee</tspan>.</text>
+<path class="ink thin" d="M12 100 Q100 98 197 100"/><text x="14" y="110" class="small">Inside a Bash script: print each argument (one passed value).</text>
+<text x="17" y="121" class="code">for item in "$@"; do</text><text x="17" y="131" class="code">  printf '%s\n' "$item"</text><text x="17" y="141" class="code">done</text>
+<text x="113" y="123" class="small"><tspan class="code" style="font-size:inherit">"$@"</tspan> keeps arguments separate.</text><text x="113" y="135" class="small"><tspan class="code" style="font-size:inherit">"$item"</tspan> keeps each value whole.</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">mkdir: create a directory.</title><desc id="desc">A directory, also called a folder, holds file and directory names. mkdir notes creates a directory named notes inside the current directory. An arrow leads from no notes directory to a new empty notes folder. mkdir -p notes/drafts creates missing parent directories too and accepts existing directories.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="14" class="small">FILES AND PATHS / 08</text><text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">mkdir</tspan>: CREATE A DIRECTORY.</text>
+  <text x="14" y="42">A directory (folder) holds file and directory names.</text>
+  <text x="14" y="52" class="small">This example creates <tspan class="code" style="font-size:inherit">notes</tspan> inside your current directory.</text>
+  <path class="ink thin" stroke-dasharray="1 2" d="M22 73 H42 L48 79 H67 V99 H22 Z"/>
+  <text x="23" y="110" class="small">no <tspan class="code" style="font-size:inherit">notes</tspan> directory yet</text>
+  <path fill="#fff0c9" d="M139 73 H159 L165 79 H184 V99 H139 Z"/>
+  <path class="ink" d="M139 73 H159 L165 79 H184 V99 H139 Z M75 89 H131 M125 85 L132 89 L125 93"/>
+  <text x="79" y="76" class="code">mkdir notes</text>
+  <text x="145" y="89" class="code">notes</text><text x="143" y="110" class="small">new, empty directory</text>
+  <path class="ink thin" d="M12 117 Q100 115 197 117"/>
+  <text x="14" y="128" class="code">mkdir -p notes/drafts</text><text x="78" y="128" class="small">also creates missing parents.</text>
+  <text x="14" y="141" class="small">Without <tspan class="code" style="font-size:inherit">-p</tspan>, an existing directory gives an error. With <tspan class="code" style="font-size:inherit">-p</tspan>, it's left in place.</text>
+</svg>

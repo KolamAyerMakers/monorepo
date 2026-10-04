@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Redirect normal output and errors.</title><desc id="desc">With /etc/os-release present and /no/such/file absent, ls lists the first path on stdout and reports the missing path on stderr. Separate arrows route these streams into results.txt and errors.txt. A complete alternative command combines both in combined.txt. Each example warns about replacing files. Redirections are applied left to right: 2 greater-than ampersand 1 sends stderr to stdout's current destination.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">STREAMS AND PIPES / 05</text><text x="12" y="28" class="title">REDIRECT NORMAL OUTPUT AND ERRORS.</text>
+<text x="14" y="39" class="small">Here, <tspan class="code" style="font-size:inherit">/etc/os-release</tspan> exists; <tspan class="code" style="font-size:inherit">/no/such/file</tspan> does not.</text>
+<text x="14" y="49" class="code">ls /etc/os-release /no/such/file &gt;results.txt 2&gt;errors.txt</text>
+<text x="14" y="59" class="small">WARNING: replaces both output files. Choose unused names.</text>
+<text x="34" y="71" class="code">stdout: &gt;</text><text x="132" y="71" class="code">stderr: 2&gt;</text>
+<path class="ink" d="M53 75 V84 M49 79 L53 85 L57 79 M151 75 V84 M147 79 L151 85 L155 79"/>
+<path fill="#def1e8" d="M20 89 H94 V109 H20 Z"/><path fill="#f8e0dc" d="M116 89 H193 V109 H116 Z"/><path class="ink" d="M20 89 H94 V109 H20 Z M116 89 H193 V109 H116 Z"/>
+<text x="24" y="98" class="code">results.txt</text><text x="24" y="106" class="code">/etc/os-release</text><text x="120" y="98" class="code">errors.txt</text><text x="120" y="106" class="small">missing-path error (summary)</text>
+<text x="14" y="121" class="small">Alternatively, combine both streams (WARNING: replaces <tspan class="code" style="font-size:inherit">combined.txt</tspan>):</text>
+<text x="14" y="131" class="code">ls /etc/os-release /no/such/file &gt;combined.txt 2&gt;&amp;1</text>
+<text x="14" y="141" class="small">Left to right: <tspan class="code" style="font-size:inherit">&gt;</tspan> sets <tspan class="code" style="font-size:inherit">stdout</tspan>'s file; <tspan class="code" style="font-size:inherit">2&gt;&amp;1</tspan> sends <tspan class="code" style="font-size:inherit">stderr</tspan> there too.</text>
+</svg>

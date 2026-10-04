@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Directory permissions.</title><desc id="desc">A notes directory contains note.txt before a rename and draft.txt afterward. Directory r lists names, x allows access through known names subject to file permissions, and w plus x permits adding, removing and renaming entries. The example changes a directory entry rather than file contents. Additional restrictions can apply.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">OWNERSHIP AND PERMISSIONS / 03</text><text x="12" y="28" class="title">DIRECTORY PERMISSIONS.</text>
+<text x="14" y="41" class="small"><tspan class="code" style="font-size:inherit">r</tspan>: list names. <tspan class="code" style="font-size:inherit">x</tspan>: access known names through this directory.</text>
+<text x="14" y="50" class="small">Access to the file's contents still needs the file's own permissions.</text>
+<text x="14" y="59" class="small"><tspan class="code" style="font-size:inherit">w + x</tspan>: add, remove or rename names inside the directory.</text>
+<text x="22" y="73" class="small">before: <tspan class="code" style="font-size:inherit">notes/</tspan></text><text x="133" y="73" class="small">after: <tspan class="code" style="font-size:inherit">notes/</tspan></text>
+<path fill="#fff0c9" d="M20 79 H43 L48 84 H77 V112 H20 Z"/><path fill="#def1e8" d="M132 79 H155 L160 84 H189 V112 H132 Z"/>
+<path class="ink" d="M20 79 H43 L48 84 H77 V112 H20 Z M132 79 H155 L160 84 H189 V112 H132 Z M84 98 H124 M118 94 L125 98 L118 102"/>
+<text x="28" y="100" class="code">note.txt</text><text x="139" y="100" class="code">draft.txt</text><text x="85" y="89" class="small">rename</text>
+<text x="14" y="125" class="small">Renaming changes a directory entry, not the file's contents.</text>
+<text x="14" y="135" class="small">Removing a name also changes its parent directory: a read-only file can</text>
+<text x="14" y="144" class="small">still be removed if directory rules allow it. Other restrictions can apply.</text>
+</svg>

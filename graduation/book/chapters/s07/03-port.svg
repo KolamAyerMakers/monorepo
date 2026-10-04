@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">IP addresses, ports and listeners.</title><desc id="desc">A TCP port selects a service at an IP address. A listener is a program waiting for connections. A local-client arrow reaches the Python server at 127.0.0.1:8000, serving index.html containing Hello. ss inspects this TCP listener; missing commands refer to Package Management. If using a replacement port, change the server, client URL and inspection filter consistently.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8.5px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">A LOCAL WEB SERVER / 02</text><text x="12" y="28" class="title">IP ADDRESSES AND PORTS.</text>
+<text x="14" y="40" class="small">A TCP port selects a service at an IP address. A listener waits for connections.</text>
+<text x="14" y="49" class="small">Second terminal, with the local demo running:</text>
+<text x="14" y="59" class="code">curl -i --max-time 5 http://127.0.0.1:8000/</text>
+<path fill="#fff0c9" d="M14 69 H58 V94 H14 Z"/><path fill="#def1e8" d="M119 68 H196 V95 H119 Z"/>
+<path class="ink" d="M14 69 Q36 68 58 69 V94 H14 Z M119 68 Q157 67 196 68 V95 H119 Z M63 83 H112 M106 79 L113 83 L106 87"/>
+<text x="20" y="79" class="small">local client</text><text x="20" y="89" class="code">curl</text>
+<text x="69" y="76" class="small">request</text><text x="125" y="78" class="code">127.0.0.1:8000</text><text x="125" y="89" class="small">Python listener</text>
+<text x="14" y="104" class="small">Address: this computer. Port: 8000. Serves <tspan class="code" style="font-size:inherit">index.html</tspan> containing Hello.</text>
+<text x="14" y="114" class="code">ss -ltnp 'sport = :8000'</text>
+<text x="14" y="122" class="small">Lists listening TCP sockets; process details may need permission.</text>
+<text x="14" y="132" class="small">Requires <tspan class="code" style="font-size:inherit">ss</tspan> and <tspan class="code" style="font-size:inherit">curl</tspan>. Missing? See Package Management / 01–02.</text>
+<text x="14" y="146" class="small">Port busy? Don't stop unknown processes. Change port in every server, URL and filter.</text>
+</svg>

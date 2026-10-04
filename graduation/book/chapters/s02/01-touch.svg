@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">touch: create an empty file or update its times.</title>
+  <desc id="desc">touch note.txt creates an empty file if note.txt does not exist. A labelled arrow leads from no file to a blank note.txt. On an existing file, touch updates access and modification timestamps without changing the contents. An editor is the tool to use for writing text.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="14" class="small">FILES AND PATHS / 09</text>
+  <text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">touch</tspan>: CREATE AN EMPTY FILE.</text>
+  <text x="14" y="44">When <tspan class="code" style="font-size:inherit">note.txt</tspan> doesn't exist, this creates it with no contents:</text>
+  <path class="ink thin" stroke-dasharray="1 2" d="M23 59 L59 58 L68 68 L67 94 L22 93 Z"/>
+  <text x="28" y="80" class="small">no file yet</text>
+  <path fill="#fff0c9" d="M139 59 L175 58 L184 68 L183 94 L138 93 Z"/>
+  <path class="ink" d="M139 59 L175 58 L184 68 L183 94 L138 93 Z M175 58 L174 69 L184 68 M75 81 H131 M125 77 L132 81 L125 85"/>
+  <text x="76" y="68" class="code">touch note.txt</text>
+  <text x="143" y="106" class="small">empty <tspan class="code" style="font-size:inherit">note.txt</tspan></text>
+  <path class="ink thin" d="M12 117 Q100 115 197 117"/>
+  <text x="14" y="128">Already exists? <tspan class="code" style="font-size:inherit">touch</tspan> leaves its contents unchanged.</text>
+  <text x="14" y="139" class="small">It updates recorded access and modification times. Use an editor to write text.</text>
+</svg>

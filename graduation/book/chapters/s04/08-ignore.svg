@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">.gitignore: skip untracked files.</title><desc id="desc">Save a lowercase .gitignore in the repository's top directory. Its filename is outside the file drawing; its only contents are the pattern *.tmp, which matches names ending in .tmp. A matching scratch.tmp remains untracked, meaning not yet staged or committed. Ignore rules normally omit these files from status and addition, but do not remove tracked files or erase old commits. Secrets must not be committed.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">GIT HISTORY / 06</text><text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">.gitignore</tspan>: SKIP UNTRACKED FILES.</text>
+<text x="14" y="41" class="small">This file lists patterns Git normally omits from status and file addition.</text>
+<text x="14" y="50" class="small">Save <tspan class="code" style="font-size:inherit">.gitignore</tspan> in your repository's top directory; keep its name lowercase.</text>
+<text x="28" y="65" class="code">.gitignore</text>
+<path fill="#ece5f5" d="M24 70 L78 69 L86 79 L85 103 L23 102 Z"/><path class="ink" d="M24 70 L78 69 L86 79 L85 103 L23 102 Z M78 69 V79 H86"/>
+<text x="34" y="90" class="code">*.tmp</text>
+<text x="108" y="75" class="small"><tspan class="code" style="font-size:inherit">*</tspan> matches any string here:</text>
+<text x="108" y="84" class="small">names ending in <tspan class="code" style="font-size:inherit">.tmp</tspan>, such as</text>
+<text x="108" y="94" class="code">scratch.tmp</text>
+<text x="14" y="115" class="small">Untracked = not yet staged or committed. Matching untracked files stay out.</text>
+<text x="14" y="124" class="small">Already tracked? An ignore rule does not remove the file from Git.</text>
+<path class="ink thin" d="M12 131 Q100 129 197 131"/>
+<text x="14" y="138" class="small">Check <tspan class="code" style="font-size:inherit">git status</tspan>. Don't commit passwords or keys.</text>
+<text x="14" y="145" class="small">Ignoring a file does not erase secrets from old commits.</text>
+</svg>

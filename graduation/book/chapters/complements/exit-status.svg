@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Exit status: did the command succeed?</title>
+<desc id="desc">In Bash, every command leaves an exit status. Zero means success; a nonzero result depends on the command, here a false test rather than a malfunction. test -f note.txt checks for a regular file, a file holding contents rather than a directory. status=$? immediately stores the result in a variable, with no spaces around the equals sign, and quoted expansion retrieves it for printf. Independent examples each run their own test and allow the command after double ampersand on zero or double pipe on nonzero. The false branch prints no when the path is absent or another type. Printed text is distinct from status.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}</style>
+<path fill="white" d="M0 0H210V148H0Z"/>
+<text x="12" y="14" class="small">SHELL EXECUTION AND ENVIRONMENT / 01</text>
+<text x="12" y="28" class="title">EXIT STATUS: DID IT SUCCEED?</text>
+<text x="14" y="39">Exit status = the result value a command reports to the shell.</text>
+<text x="14" y="48" class="small">0 means success. Nonzero depends on the command: a false test here, not a malfunction.</text>
+<text x="14" y="57" class="small">Requires Bash. <tspan class="code" style="font-size:inherit">test -f note.txt</tspan>: is this a regular file (contents, not a directory)?</text>
+<path fill="#ece5f5" d="M14 62 H196 V91 H14 Z"/>
+<text x="20" y="70" class="code">test -f note.txt</text>
+<text x="20" y="78" class="code">status=$?</text>
+<text x="20" y="86" class="code">printf 'status=%s\n' "$status"</text>
+<text x="117" y="70" class="small">commands, in this order</text>
+<text x="117" y="80" class="small">output if regular file exists:</text>
+<text x="169" y="87" class="code">status=0</text>
+<text x="14" y="98" class="small"><tspan class="code" style="font-size:inherit">status=$?</tspan> stores the previous result in a variable; no spaces around <tspan class="code" style="font-size:inherit">=</tspan>.</text>
+<text x="14" y="105" class="small"><tspan class="code" style="font-size:inherit">"$status"</tspan> inserts its value. Save <tspan class="code" style="font-size:inherit">$?</tspan> immediately: <tspan class="code" style="font-size:inherit">printf</tspan> sets a new status.</text>
+<text x="14" y="114" class="small">Independent examples: each runs a new test.</text>
+<path class="ink" d="M15 118 H63 V127 H15 Z M15 130 H63 V139 H15 Z M67 123 H87 M81 119 L87 123 L81 127 M67 135 H87 M81 131 L87 135 L81 139"/>
+<text x="20" y="124" class="small">0 allows <tspan class="code" style="font-size:inherit">&amp;&amp;</tspan></text>
+<text x="20" y="136" class="small">nonzero allows <tspan class="code" style="font-size:inherit">||</tspan></text>
+<text x="92" y="124" class="code">test -f note.txt &amp;&amp; printf 'found\n'</text>
+<text x="92" y="136" class="code">test -f note.txt || printf 'no\n'</text>
+<text x="14" y="146" class="small"><tspan class="code" style="font-size:inherit">&amp;&amp;</tspan> / <tspan class="code" style="font-size:inherit">||</tspan> allow the next command. <tspan class="code" style="font-size:inherit">no</tspan>: missing or another type. Status is not printed output.</text>
+</svg>

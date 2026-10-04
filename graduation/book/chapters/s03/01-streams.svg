@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Standard input, output and error streams.</title><desc id="desc">A program receives bytes on standard input, stdin, file descriptor 0. Results leave on standard output, stdout, descriptor 1. Diagnostics leave on standard error, stderr, descriptor 2. Separate labelled arrows explain the three routes. Streams carry bytes, often text; both output routes normally lead to the terminal.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8.5px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">STREAMS AND PIPES / 01</text><text x="12" y="28" class="title">STANDARD INPUT, OUTPUT AND ERROR.</text>
+<text x="14" y="41">A stream carries bytes, often text, into or out of a program.</text>
+<path fill="#fff0c9" d="M77 65 L119 64 L120 102 L76 101 Z"/><path class="ink" d="M77 65 L119 64 L120 102 L76 101 Z"/><text x="83" y="86">program</text>
+<text x="14" y="61" class="code">stdin (0)</text><text x="14" y="71" class="small">standard input</text>
+<path class="ink" d="M15 83 H69 M63 79 L70 83 L63 87 M126 72 H193 M187 68 L194 72 L187 76 M126 102 H193 M187 98 L194 102 L187 106"/>
+<text x="14" y="99" class="small">bytes coming in</text>
+<text x="130" y="57" class="code">stdout (1)</text><text x="130" y="66" class="small">standard output</text><text x="130" y="82" class="small">normal results</text>
+<text x="130" y="92" class="code">stderr (2)</text><text x="130" y="113" class="small">standard error</text><text x="130" y="121" class="small">errors + other messages</text>
+<path class="ink thin" d="M12 125 Q100 123 197 125"/>
+<text x="14" y="135" class="small"><tspan class="code" style="font-size:inherit">0</tspan>, <tspan class="code" style="font-size:inherit">1</tspan> and <tspan class="code" style="font-size:inherit">2</tspan> are stream numbers, called file descriptors.</text>
+<text x="14" y="145" class="small"><tspan class="code" style="font-size:inherit">stdout</tspan> and <tspan class="code" style="font-size:inherit">stderr</tspan> normally both appear in your terminal, but stay separate.</text>
+</svg>

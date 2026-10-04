@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">df and du: filesystem capacity versus directory usage.</title>
+<desc id="desc">df -h . reports the filesystem containing the current directory, while du -sh notes totals disk usage below an existing notes directory. Illustrative output gives 100G size, 40G used, 55G available, and 40M notes usage, not interchangeable measurements. A nested drawing distinguishes the directory from the filesystem. Human-readable units, reserved space and unreadable-file limitations are explained.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<text x="12" y="14" class="small">FILES AND PATHS / 15</text><text x="12" y="28" class="title">DISK SPACE: ROOM OR USAGE?</text>
+<text x="14" y="39"><tspan class="code" style="font-size:inherit">df</tspan>: filesystem capacity. <tspan class="code" style="font-size:inherit">du</tspan>: space used by files below a path.</text>
+<text x="14" y="47" class="small">A filesystem holds files and directories. Here, directory <tspan class="code" style="font-size:inherit">notes</tspan> exists below here.</text>
+<path class="ink" d="M15 54 Q105 52 197 54 L197 87 Q105 89 15 87 Z"/>
+<text x="21" y="64" class="small">Filesystem containing the current directory (<tspan class="code" style="font-size:inherit">.</tspan>)</text>
+<path fill="#def1e8" d="M24 70 H93 V82 H24 Z"/><path class="ink thin" d="M24 70 H93 V82 H24 Z"/>
+<text x="29" y="79" class="small">directory <tspan class="code" style="font-size:inherit">notes</tspan> + contents</text>
+<text x="110" y="79" class="small">other files + available space</text>
+<text x="14" y="97" class="small">Command: how much room is available?</text>
+<text x="122" y="97" class="small">Command: how much does this use?</text>
+<path fill="#fff0c9" d="M13 101 H105 V115 H13 Z M120 101 H197 V115 H120 Z"/>
+<text x="20" y="111" class="code" style="font-size:6px">df -h .</text><text x="127" y="111" class="code" style="font-size:6px">du -sh notes</text>
+<text x="14" y="124" class="small">Illustrative output: capacity columns only</text><text x="122" y="124" class="small">Illustrative output</text>
+<text x="14" y="132" class="code">Size  Used  Avail</text><text x="122" y="132" class="code">40M  notes</text>
+<text x="14" y="140" class="code">100G   40G    55G</text><text x="122" y="140" class="small"><tspan class="code" style="font-size:inherit">-s</tspan>: total, including subdirectories.</text>
+<text x="14" y="147" class="small"><tspan class="code" style="font-size:inherit">-h</tspan>: readable units (<tspan class="code" style="font-size:inherit">M</tspan>, <tspan class="code" style="font-size:inherit">G</tspan>). Reserved space reduces room. Unreadable files can make <tspan class="code" style="font-size:inherit">du</tspan> incomplete.</text>
+</svg>

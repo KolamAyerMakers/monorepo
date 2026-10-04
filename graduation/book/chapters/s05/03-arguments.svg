@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Pass an argument into a Bash script.</title><desc id="desc">An argument is one value passed to a command or script. With Bash installed and the labelled greet.sh file, bash greet.sh "Ada Lovelace" passes one argument. A labelled mapping shows $1 holding Ada Lovelace, the script's printf uses it, and the visible terminal output is Hello, Ada Lovelace. $# counts arguments and "$@" preserves them as separate values.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">BASH SCRIPTS / 03</text><text x="12" y="28" class="title">PASS A VALUE INTO YOUR SCRIPT.</text>
+<text x="14" y="40" class="small">An argument is one value passed to a command or script. Requires Bash.</text>
+<text x="14" y="52" class="code">bash greet.sh "Ada Lovelace"</text>
+<path class="ink" d="M82 57 V64 M78 60 L82 65 L86 60"/>
+<text x="14" y="73" class="small">Inside the script: <tspan class="code" style="font-size:inherit">$1</tspan> = <tspan class="code" style="font-size:inherit">Ada Lovelace</tspan> (first argument)</text>
+<text x="20" y="86" class="small">Contents of <tspan class="code" style="font-size:inherit">greet.sh</tspan>:</text><path fill="#def1e8" d="M20 91 H190 V105 H20 Z"/><path class="ink thin" d="M20 91 H190 V105 H20 Z"/>
+<text x="25" y="101" class="code">printf 'Hello, %s\n' "$1"</text>
+<text x="14" y="119" class="small">terminal output:</text><text x="67" y="119" class="code">Hello, Ada Lovelace</text>
+<text x="14" y="133" class="small">Quote the value when passing it, and <tspan class="code" style="font-size:inherit">"$1"</tspan> when using it.</text>
+<text x="14" y="143" class="small"><tspan class="code" style="font-size:inherit">$#</tspan> counts arguments; <tspan class="code" style="font-size:inherit">"$@"</tspan> preserves them as separate values.</text>
+</svg>

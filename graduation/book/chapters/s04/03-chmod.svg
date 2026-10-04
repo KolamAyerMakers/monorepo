@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">chmod: change file permissions.</title><desc id="desc">chmod changes permission bits. For an existing script hello.sh owned by the reader, chmod u+x hello.sh changes the illustrative mode -rw-r--r-- to -rwxr--r--. The highlighted owner permission triplet gains x; group and other permission bits are unchanged. Symbolic modes identify who and which permission to change. Inspect ls -l before changing access, rather than giving everyone access to hide an error.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:5px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">OWNERSHIP AND PERMISSIONS / 04</text><text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">chmod</tspan>: CHANGE PERMISSIONS.</text>
+<text x="14" y="41"><tspan class="code" style="font-size:inherit">chmod</tspan> changes who may read, write or run a file.</text>
+<text x="14" y="51" class="small">Here, <tspan class="code" style="font-size:inherit">hello.sh</tspan> is a script (a text file of commands) you own.</text>
+<path fill="#fff0c9" d="M15 57 H102 V72 H15 Z"/><text x="20" y="67" class="code">chmod u+x hello.sh</text>
+<text x="116" y="63" class="small"><tspan class="code" style="font-size:inherit">u</tspan> = owner</text><text x="116" y="72" class="small"><tspan class="code" style="font-size:inherit">+x</tspan> = add permission to run</text>
+<text x="20" y="86" class="small">before</text><text x="126" y="86" class="small">after</text>
+<path fill="#ece5f5" d="M22.88 90 H31.52 V101 H22.88 Z"/><path fill="#def1e8" d="M128.88 90 H137.52 V101 H128.88 Z"/>
+<text x="20" y="98" class="code" style="font-size:4.8px">-rw-r--r--</text><text x="126" y="98" class="code" style="font-size:4.8px">-rwxr--r--</text>
+<path class="ink" d="M76 95 H114 M108 91 L115 95 L108 99"/>
+<text x="20" y="111" class="small">owner: read + write</text><text x="126" y="111" class="small">owner: read + write + run</text>
+<text x="14" y="123" class="small">Group and others stay unchanged. Reverse with <tspan class="code" style="font-size:inherit">chmod u-x hello.sh</tspan>.</text>
+<path class="ink thin" d="M12 128 Q100 126 197 128"/>
+<text x="14" y="139" class="small">Permission denied? Inspect <tspan class="code" style="font-size:inherit">ls -l</tspan> and the path; don't give everyone access.</text>
+</svg>

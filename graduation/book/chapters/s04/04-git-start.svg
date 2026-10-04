@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">git: start a project history.</title><desc id="desc">A repository is a project directory with Git's local version history. Requires Git; missing tools refer to the Package Management chapter. Inside an existing project directory, git init creates the hidden .git directory storing history and settings. Two aligned blocks show initialization and repository-only identity settings. Names and emails are stored in commits and travel with shared commits; they are not login credentials.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">GIT HISTORY / 01</text><text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">git</tspan>: START A PROJECT HISTORY.</text>
+<text x="14" y="39">Git records versions of your project files locally.</text>
+<text x="14" y="48" class="small">A repository is a project directory with Git's history and settings.</text>
+<text x="14" y="57" class="small">Requires <tspan class="code" style="font-size:inherit">git</tspan>. Missing? See Package Management / 01–02.</text>
+<path fill="#def1e8" d="M14 73 H196 V98 H14 Z"/>
+<text x="20" y="82" class="small">1. Inside your existing project directory:</text>
+<text x="20" y="92" class="code">git init</text><text x="62" y="92" class="small">creates hidden <tspan class="code" style="font-size:inherit">.git</tspan> directory for history and settings.</text>
+<path fill="#ece5f5" d="M14 103 H196 V131 H14 Z"/>
+<text x="20" y="112" class="small">2. Label your commits. Replace these example values with yours:</text>
+<text x="20" y="120" class="code">git config user.name "Your Name"</text>
+<text x="20" y="128" class="code">git config user.email "you@example.com"</text>
+<text x="14" y="139" class="small">No upload. These settings apply only here: identity labels, not a login.</text>
+<text x="14" y="147" class="small">Privacy: this name and email are stored in commits and travel with shared commits.</text>
+</svg>

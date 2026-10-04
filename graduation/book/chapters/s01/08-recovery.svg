@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">Terminal keys and command help.</title>
+  <desc id="desc">Tab completes cat /etc/os-rel to cat /etc/os-release at a Bash prompt where that path exists and is the unique match. Hold Ctrl while pressing C to interrupt or L to redraw. q quits less or a manual paged through less. man ls opens installed manuals; ls --help supplies built-in help.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.6px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="14" class="small">TERMINAL AND COMMANDS / 03</text><text x="12" y="28" class="title">TERMINAL KEYS AND COMMAND HELP.</text>
+  <path fill="#fff0c9" d="M15 40 Q29 39 46 41 L45 58 L15 57 Z"/>
+  <path fill="#def1e8" d="M111 40 L141 39 L142 58 L111 57 Z"/>
+  <path fill="#f8e0dc" d="M15 71 L46 70 L46 89 L14 88 Z"/>
+  <path fill="#ece5f5" d="M111 70 L142 71 L141 90 L110 88 Z"/>
+  <path class="ink" d="M15 40 Q29 39 46 41 L45 58 L15 57 Z M111 40 L141 39 L142 58 L111 57 Z M15 71 L46 70 L46 89 L14 88 Z M111 70 L142 71 L141 90 L110 88 Z"/>
+  <text x="22" y="52" class="code">Tab</text><text x="52" y="52" class="small">complete a name</text>
+  <text x="124" y="52" class="code">q</text><text x="149" y="52" class="small">leave <tspan class="code" style="font-size:inherit">less / man</tspan></text>
+  <text x="17" y="82" class="code">Ctrl-C</text><text x="52" y="82" class="small">interrupt a command</text>
+  <text x="113" y="82" class="code">Ctrl-L</text><text x="149" y="82" class="small">redraw Bash screen</text>
+  <text x="14" y="99" class="small">Bash prompt, with this path as the only match: press <tspan class="code" style="font-size:inherit">Tab</tspan>.</text>
+  <text x="14" y="109" class="code" style="font-size:4px">cat /etc/os-rel</text><path class="ink thin" d="M54 107 H70 M66 104 L70 107 L66 110"/><text x="76" y="109" class="code" style="font-size:4px">cat /etc/os-release</text>
+  <text x="14" y="120" class="small"><tspan class="code" style="font-size:inherit">Ctrl-C</tspan>: hold <tspan class="code" style="font-size:inherit">Ctrl</tspan>, press <tspan class="code" style="font-size:inherit">C</tspan>. A program can ignore the interrupt.</text>
+  <text x="14" y="130" class="small"><tspan class="code" style="font-size:inherit">man ls</tspan>: installed manual. <tspan class="code" style="font-size:inherit">ls --help</tspan>: built-in help, no manual needed.</text>
+  <text x="14" y="140" class="small"><tspan class="code" style="font-size:inherit">man</tspan>/<tspan class="code" style="font-size:inherit">less</tspan> missing? See Package Management / 01–02. Command manuals must be installed too.</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Commands and their package names.</title>
+<desc id="desc">A command name is not necessarily its package name. A distro-labelled table maps commands used in this book to Debian/Ubuntu and Fedora packages. The highlighted nano row matches the installation example. Check spelling when a command is not found, choose the column for the reader's distribution and use Package Management page 01 for installation. Minimal systems may omit common commands. Package names may vary on other distributions.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.65;stroke-linecap:round;stroke-linejoin:round}</style>
+<text x="12" y="14" class="small">PACKAGE MANAGEMENT / 02</text>
+<text x="12" y="28" class="title">COMMANDS AND PACKAGE NAMES.</text>
+<text x="14" y="40" class="small">A package can supply several commands; its name may differ from a command's.</text>
+<text x="14" y="49" class="small">Command not found? Check spelling, then choose your distribution's package below.</text>
+<text x="14" y="58" class="small">command</text><text x="68" y="58" class="small">Debian / Ubuntu</text><text x="136" y="58" class="small">Fedora</text>
+<rect x="12" y="61" width="184" height="7" fill="#fff0c9"/>
+<text x="14" y="66" class="code">nano</text><text x="68" y="66" class="code">nano</text><text x="136" y="66" class="code">nano</text>
+<text x="14" y="71.5" class="code">git</text><text x="68" y="71.5" class="code">git</text><text x="136" y="71.5" class="code">git</text>
+<text x="14" y="77" class="code">ssh</text><text x="68" y="77" class="code">openssh-client</text><text x="136" y="77" class="code">openssh-clients</text>
+<text x="14" y="82.5" class="code">curl</text><text x="68" y="82.5" class="code">curl</text><text x="136" y="82.5" class="code">curl</text>
+<text x="14" y="88" class="code">ping</text><text x="68" y="88" class="code">iputils-ping</text><text x="136" y="88" class="code">iputils</text>
+<text x="14" y="93.5" class="code">ss</text><text x="68" y="93.5" class="code">iproute2</text><text x="136" y="93.5" class="code">iproute</text>
+<text x="14" y="99" class="code">ps</text><text x="68" y="99" class="code">procps</text><text x="136" y="99" class="code">procps-ng</text>
+<text x="14" y="104.5" class="code">python3</text><text x="68" y="104.5" class="code">python3</text><text x="136" y="104.5" class="code">python3</text>
+<text x="14" y="110" class="code">man</text><text x="68" y="110" class="code">man-db</text><text x="136" y="110" class="code">man-db</text>
+<text x="14" y="115.5" class="code">less</text><text x="68" y="115.5" class="code">less</text><text x="136" y="115.5" class="code">less</text>
+<text x="14" y="121" class="code">find</text><text x="68" y="121" class="code">findutils</text><text x="136" y="121" class="code">findutils</text>
+<text x="14" y="126.5" class="code">grep</text><text x="68" y="126.5" class="code">grep</text><text x="136" y="126.5" class="code">grep</text>
+<text x="14" y="132" class="code">bash</text><text x="68" y="132" class="code">bash</text><text x="136" y="132" class="code">bash</text>
+<text x="14" y="137.5" class="code">ls, cp, sleep</text><text x="68" y="137.5" class="code">coreutils</text><text x="136" y="137.5" class="code">coreutils</text>
+<text x="14" y="146" class="small">On page 01, replace <tspan class="code" style="font-size:inherit">nano</tspan> with the package name in your distribution's column.</text>
+</svg>

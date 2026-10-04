@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Spaces in filenames: quote one argument.</title>
+<desc id="desc">An existing file named my notes.txt contains Remember tea. Quoted cat reads it. A diagram contrasts the single filename argument with the two arguments produced without quotes. Harmless printf commands demonstrate one output line versus two, without changing files.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<text x="12" y="14" class="small">FILES AND PATHS / 04</text>
+<text x="12" y="28" class="title">SPACES IN FILENAMES.</text>
+<text x="14" y="39">Quotes keep a filename with spaces in one argument.</text>
+<text x="14" y="47" class="small">An argument is one value passed to a command. Here, use a Bash shell.</text>
+<path class="ink thin" d="M15 54 L76 54 L84 62 L84 83 L15 83 Z M76 54 V62 H84"/>
+<text x="20" y="64" class="code">my notes.txt</text>
+<text x="20" y="72" class="small">existing file; contents:</text>
+<text x="20" y="79" class="code">Remember tea.</text>
+<text x="99" y="57" class="small">Command: read that file</text>
+<path fill="#fff0c9" d="M96 61 H197 V75 H96 Z"/>
+<text x="101" y="70" class="code" style="font-size:5.2px">cat 'my notes.txt'</text>
+<text x="99" y="83" class="small">Output: <tspan class="code" style="font-size:inherit">Remember tea.</tspan></text>
+<text x="14" y="95" class="small">What the shell passes (the quote marks themselves are removed):</text>
+<text x="14" y="105" class="small">quoted: ONE filename</text>
+<text x="117" y="105" class="small">unquoted: TWO values</text>
+<path fill="#def1e8" d="M14 109 H94 V122 H14 Z"/>
+<path fill="#f8e0dc" d="M117 109 H143 V122 H117 Z M150 109 H195 V122 H150 Z"/>
+<path class="ink thin" d="M14 109 H94 V122 H14 Z M117 109 H143 V122 H117 Z M150 109 H195 V122 H150 Z"/>
+<text x="20" y="118" class="code">my notes.txt</text><text x="122" y="118" class="code">my</text><text x="155" y="118" class="code">notes.txt</text>
+<text x="14" y="131" class="small">Safe demonstration: <tspan class="code" style="font-size:inherit">printf</tspan> prints each value (<tspan class="code" style="font-size:inherit">%s</tspan>), then a new line (<tspan class="code" style="font-size:inherit">\n</tspan>).</text>
+<text x="14" y="139" class="code">printf '%s\n' 'my notes.txt'</text>
+<text x="14" y="147" class="small">Output: one line, <tspan class="code" style="font-size:inherit">my notes.txt</tspan>.</text>
+<text x="117" y="139" class="code">printf '%s\n' my notes.txt</text>
+<text x="117" y="147" class="small">Output: <tspan class="code" style="font-size:inherit">my</tspan>, then <tspan class="code" style="font-size:inherit">notes.txt</tspan>.</text>
+</svg>

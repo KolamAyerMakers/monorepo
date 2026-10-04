@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">A complete systemd user-service unit.</title><desc id="desc">The complete web-demo.service file configures a local Python HTTP server. Unit, Service and Install sections are visibly decoded as label, run rules and startup connection. WorkingDirectory chooses the directory served; percent h expands to the user's home. ExecStart runs the command without a shell. Binding to 127.0.0.1 limits access to this computer. Restart on failure retries after three seconds, not after a deliberate stop. Enabling connects the unit to the user manager's default target.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:3.8px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">SERVICES AND TROUBLESHOOTING / 03</text><text x="12" y="28" class="title">A USER-SERVICE UNIT: RUN RULES.</text>
+<text x="14" y="38" class="small">Needs user manager, <tspan class="code" style="font-size:inherit">/usr/bin/python3</tspan>, prepared <tspan class="code" style="font-size:inherit">~/web-demo</tspan>, free port <tspan class="code" style="font-size:inherit">8000</tspan>.</text>
+<text x="14" y="48" class="small">New file: <tspan class="code" style="font-size:inherit">~/.config/systemd/user/web-demo.service</tspan>. Local demo only.</text>
+<path fill="#def1e8" d="M14 54 H196 V116 H14 Z"/>
+<text x="20" y="62" class="code">[Unit]</text><text x="120" y="62" class="small">label for this unit</text>
+<text x="20" y="68" class="code">Description=Local demo website</text>
+<text x="20" y="74" class="code">[Service]</text><text x="120" y="74" class="small">rules for running the program</text>
+<text x="20" y="80" class="code">WorkingDirectory=%h/web-demo</text>
+<text x="20" y="86" class="code">ExecStart=/usr/bin/python3 -m http.server 8000 --bind 127.0.0.1</text>
+<text x="20" y="92" class="code">Restart=on-failure</text><text x="91" y="92" class="small">retry failures, not deliberate stops</text>
+<text x="20" y="98" class="code">RestartSec=3</text><text x="91" y="98" class="small">wait 3 seconds before retrying</text>
+<text x="20" y="104" class="code">[Install]</text><text x="120" y="104" class="small">startup connection</text>
+<text x="20" y="110" class="code">WantedBy=default.target</text>
+<text x="14" y="125" class="small"><tspan class="code" style="font-size:inherit">WorkingDirectory</tspan> selects the served directory; <tspan class="code" style="font-size:inherit">%h</tspan> means your home.</text>
+<text x="14" y="135" class="small"><tspan class="code" style="font-size:inherit">ExecStart</tspan>: command, no shell. <tspan class="code" style="font-size:inherit">127.0.0.1</tspan>: only this computer can connect.</text>
+<text x="14" y="145" class="small"><tspan class="code" style="font-size:inherit">WantedBy</tspan>: enabling links startup to <tspan class="code" style="font-size:inherit">default.target</tspan>, your manager's startup group.</text>
+</svg>

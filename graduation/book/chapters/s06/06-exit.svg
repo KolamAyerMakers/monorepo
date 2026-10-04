@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">curl exit status versus HTTP status.</title><desc id="desc">A hypothetical HTTP 404 response can accompany curl exit status zero: receiving the error page is a successful transfer. This is explicitly not predicted output from example.com. A separate bounded HTTPS command shows how to inspect actual headers and immediately print the curl exit status. HTTP errors can be made nonzero with --fail; transport failure may yield no HTTP response.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.1px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">HTTP REQUESTS AND RESPONSES / 05</text><text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">curl</tspan> EXIT STATUS VS HTTP STATUS.</text>
+<text x="14" y="41" class="small">Two numbers: transfer outcome from <tspan class="code" style="font-size:inherit">curl</tspan>; response outcome from the server.</text>
+<text x="14" y="51" class="small">Hypothetical missing resource, without <tspan class="code" style="font-size:inherit">--fail</tspan> (not the output predicted below):</text>
+<path fill="#def1e8" d="M15 57 H100 V86 H15 Z"/><path fill="#f8e0dc" d="M113 57 H195 V86 H113 Z"/>
+<text x="20" y="68" class="small"><tspan class="code" style="font-size:inherit">curl</tspan> exit status: 0</text><text x="20" y="79" class="small">received the error page</text><text x="119" y="68" class="small">HTTP status: 404</text><text x="119" y="79" class="small">resource not found</text>
+<text x="14" y="98" class="small">Inspect an actual request instead; its statuses may differ from that illustration:</text>
+<text x="14" y="109" class="code">curl -i --max-time 10 https://example.com/</text><text x="14" y="120" class="code">printf 'curl exit: %s\n' "$?"</text>
+<text x="14" y="132" class="small">Read <tspan class="code" style="font-size:inherit">$?</tspan> immediately. <tspan class="code" style="font-size:inherit">--fail</tspan> makes many HTTP errors produce a nonzero exit.</text>
+<text x="14" y="144" class="small">No HTTP response? No HTTP status. Read <tspan class="code" style="font-size:inherit">curl</tspan>'s error message on stderr.</text>
+</svg>

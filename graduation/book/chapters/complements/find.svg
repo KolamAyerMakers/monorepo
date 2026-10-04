@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">find: search a directory and its subdirectories.</title>
+<desc id="desc">GNU find searches an existing notes directory. The drawing shows notes/a.txt, notes/photo.jpg, and notes/drafts/b.txt. The command find notes -type f -name '*.txt' prints the two complete matching paths, in unspecified order, and changes nothing. Quotes keep the shell from expanding the pattern first.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<text x="12" y="14" class="small">FILES AND PATHS / 07</text><text x="12" y="28" class="title"><tspan class="code" style="font-size:inherit">find</tspan>: SEARCH BELOW A DIRECTORY.</text>
+<text x="14" y="39"><tspan class="code" style="font-size:inherit">find</tspan> looks inside a directory and its subdirectories.</text>
+<text x="14" y="47" class="small">Requires GNU <tspan class="code" style="font-size:inherit">find</tspan>. Missing? See Package Management / 01–02.</text>
+<text x="14" y="56" class="small">Command: run in the directory containing <tspan class="code" style="font-size:inherit">notes</tspan>.</text>
+<path fill="#fff0c9" d="M13 59 H197 V74 H13 Z"/>
+<text x="20" y="69" class="code" style="font-size:5.2px">find notes -type f -name '*.txt'</text>
+<text x="14" y="83" class="small">Before: existing directory and ordinary files</text>
+<path fill="#ece5f5" d="M16 87 H58 V99 H16 Z"/><path class="ink thin" d="M16 87 H58 V99 H16 Z M29 100 V121 M29 104 H43 M29 112 H43 M29 121 H43 M62 124 V129 H76"/>
+<text x="21" y="96" class="code">notes</text>
+<text x="48" y="107" class="code">a.txt</text><text x="48" y="115" class="code">photo.jpg</text>
+<text x="48" y="124" class="code">drafts/</text><text x="80" y="132" class="code">b.txt</text>
+<text x="117" y="96" class="small">Output (order may vary)</text>
+<text x="117" y="108" class="code">notes/a.txt</text><text x="117" y="119" class="code">notes/drafts/b.txt</text>
+<text x="117" y="130" class="small">All files stay untouched.</text>
+<text x="14" y="139" class="small"><tspan class="code" style="font-size:inherit">-type f</tspan>: ordinary files. <tspan class="code" style="font-size:inherit">-name '*.txt'</tspan>: names ending in <tspan class="code" style="font-size:inherit">.txt</tspan> (<tspan class="code" style="font-size:inherit">*</tspan> = any string).</text>
+<text x="14" y="147" class="small">Quote the pattern so <tspan class="code" style="font-size:inherit">find</tspan>, not the shell, matches it.</text>
+</svg>

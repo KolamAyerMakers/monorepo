@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">cp -r: copy a directory and its contents.</title>
+<desc id="desc">Starting with notes/a.txt and notes/drafts/b.txt, and no notes-copy destination, cp -r notes notes-copy creates a second directory tree while retaining the original. Both copies have the same file contents. A warning beside the command states that an existing destination changes the layout and can overwrite files. This example has ordinary files, not symbolic links.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<text x="12" y="14" class="small">FILES AND PATHS / 12</text><text x="12" y="28" class="title">COPY A WHOLE DIRECTORY.</text>
+<text x="14" y="39"><tspan class="code" style="font-size:inherit">cp -r</tspan> copies a directory and everything below it.</text>
+<text x="14" y="47" class="small"><tspan class="code" style="font-size:inherit">-r</tspan> means recursive: include subdirectories and their contents.</text>
+<text x="14" y="58" class="small">Before: beside existing <tspan class="code" style="font-size:inherit">notes</tspan>; <tspan class="code" style="font-size:inherit">notes-copy</tspan> does NOT exist.</text>
+<text x="14" y="66" class="small">This example contains ordinary files and directories, no symbolic links.</text>
+<text x="14" y="75" class="small">Command</text><path fill="#fff0c9" d="M13 78 H112 V94 H13 Z"/>
+<text x="19" y="89" class="code" style="font-size:5.2px">cp -r notes notes-copy</text>
+<text x="121" y="78" class="small">WARNING: an existing destination</text>
+<text x="121" y="86" class="small">changes the layout and can</text><text x="121" y="94" class="small">overwrite files. Use a new name.</text>
+<text x="14" y="104" class="small">Before / after: original retained</text><text x="121" y="104" class="small">New, separate copy</text>
+<path fill="#ece5f5" d="M15 108 H58 V119 H15 Z"/><path fill="#def1e8" d="M122 108 H188 V119 H122 Z"/>
+<path class="ink thin" d="M15 108 H58 V119 H15 Z M122 108 H188 V119 H122 Z M23 120 V130 H34 M23 122 H34 M130 120 V130 H141 M130 122 H141 M44 134 V137 H55 M151 134 V137 H162"/>
+<text x="20" y="116" class="code">notes</text><text x="127" y="116" class="code">notes-copy</text>
+<text x="38" y="125" class="code">a.txt</text><text x="38" y="133" class="code">drafts/</text><text x="59" y="140" class="code">b.txt</text>
+<text x="145" y="125" class="code">a.txt</text><text x="145" y="133" class="code">drafts/</text><text x="166" y="140" class="code">b.txt</text>
+<path class="ink" d="M86 114 H110 M104 110 L111 114 L104 118"/>
+<text x="14" y="147" class="small">Same file contents in both trees. Editing one copy won't change the other.</text>
+</svg>

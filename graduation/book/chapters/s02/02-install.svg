@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">Install software packages.</title><desc id="desc">A package manager installs software and its required dependencies from configured repositories. Debian and Ubuntu use apt; Fedora uses dnf. The example installs nano, a terminal text editor. cat /etc/os-release identifies the distribution. apt update refreshes the available package list, not installed software. Installation needs administrator permission and access to the repositories.</desc>
+  <style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="14" class="small">PACKAGE MANAGEMENT / 01</text><text x="12" y="28" class="title">INSTALL SOFTWARE PACKAGES.</text>
+  <text x="14" y="39" class="small">A package bundles software. Its manager installs it and required packages (dependencies).</text>
+  <text x="14" y="48" class="small">Repositories are software sources; the manager gets packages and dependencies from them.</text>
+  <text x="14" y="57" class="code">cat /etc/os-release</text><text x="77" y="57" class="small">identifies your distro; <tspan class="code" style="font-size:inherit">nano</tspan> is the example editor.</text>
+  <path fill="#fff0c9" d="M15 60 L101 59 L102 103 L14 102 Z"/><path fill="#def1e8" d="M113 60 L195 61 L194 103 L112 102 Z"/>
+  <path class="ink" d="M15 60 L101 59 L102 103 L14 102 Z M113 60 L195 61 L194 103 L112 102 Z"/>
+  <text x="20" y="70">Debian / Ubuntu</text><text x="118" y="70">Fedora</text>
+  <text x="20" y="84" class="code">sudo apt update</text><text x="20" y="95" class="code">sudo apt install nano</text><text x="118" y="86" class="code">sudo dnf install nano</text>
+  <rect x="14" y="106" width="45" height="11" fill="#ece5f5"/><rect x="77" y="106" width="51" height="11" fill="#fff0c9"/><rect x="150" y="106" width="46" height="11" fill="#def1e8"/>
+  <text x="20" y="114" class="small">repositories</text><text x="82" y="114" class="small">package manager</text><text x="154" y="114" class="small">installed <tspan class="code" style="font-size:inherit">nano</tspan></text>
+  <path class="ink thin" d="M62 112 H73 M69 109 L74 112 L69 115 M131 112 H146 M142 109 L147 112 L142 115"/>
+  <text x="14" y="126" class="small"><tspan class="code" style="font-size:inherit">apt update</tspan> refreshes the available package list; it doesn't upgrade software.</text>
+  <text x="14" y="135" class="small"><tspan class="code" style="font-size:inherit">sudo</tspan> uses administrator privileges; you need permission. Read the proposed changes.</text>
+  <text x="14" y="145" class="small">Network access is usually needed. Use your distro's trusted sources, not random install scripts.</text>
+</svg>

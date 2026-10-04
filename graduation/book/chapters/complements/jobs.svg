@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Shell jobs: background and foreground.</title>
+<desc id="desc">An interactive Bash with sleep available starts sleep 60 in the background. The prompt returns while sleep runs. jobs shows illustrative output [1]+ Running sleep 60 &amp;, where 1 is the shell job number, not a process ID. For this single running job, fg %1 brings it to the foreground; Ctrl-C interrupts it and the prompt returns. Run the commands before the sixty seconds finish and use the number from your own jobs output. Background programs may still write to the terminal, and backgrounding does not make a service or promise survival after logout.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}</style>
+<path fill="white" d="M0 0H210V148H0Z"/>
+<text x="12" y="14" class="small">PROCESSES AND SIGNALS / 02</text>
+<text x="12" y="28" class="title">SHELL JOBS: WHO HAS THE TERMINAL?</text>
+<text x="14" y="39">A job is a command or pipeline managed by your shell.</text>
+<text x="14" y="48" class="small">Foreground: the shell waits. Background: you get a prompt while the job runs.</text>
+<text x="14" y="57" class="small">Interactive Bash; <tspan class="code" style="font-size:inherit">sleep 60</tspan> waits 60 seconds. One job here; continue before it ends.</text>
+<path fill="#def1e8" d="M14 63 H99 V87 H14 Z"/>
+<text x="20" y="71" class="small">1. start in background</text>
+<text x="20" y="81" class="code" style="font-size:5.2px">sleep 60 &amp;</text>
+<path class="ink" d="M104 76 H120 M114 72 L120 76 L114 80"/>
+<text x="126" y="73" class="small">prompt returns</text>
+<text x="126" y="82" class="small">launch output: <tspan class="code" style="font-size:inherit">[1] 412</tspan></text>
+<text x="126" y="90" class="small">1 = job; 412 = PID (illustrative)</text>
+<text x="14" y="97" class="small">2. command: <tspan class="code" style="font-size:inherit">jobs</tspan></text>
+<text x="68" y="97" class="small">illustrative output:</text>
+<text x="112" y="97" class="code">[1]+ Running sleep 60 &amp;</text>
+<text x="14" y="106" class="small">1 = job number, not a process ID. <tspan class="code" style="font-size:inherit">+</tspan> marks the current job. Use your own job number.</text>
+<path fill="#ece5f5" d="M14 112 H73 V130 H14 Z"/>
+<text x="20" y="119" class="small">3. foreground</text>
+<text x="20" y="127" class="code">fg %1</text>
+<path class="ink" d="M78 121 H94 M88 117 L94 121 L88 125 M154 121 H170 M164 117 L170 121 L164 125"/>
+<text x="99" y="118" class="small">shell waits</text>
+<text x="99" y="127" class="small"><tspan class="code" style="font-size:inherit">Ctrl-C</tspan> interrupts</text>
+<text x="175" y="118" class="small">prompt</text>
+<text x="175" y="127" class="small">returns</text>
+<text x="14" y="138" class="small"><tspan class="code" style="font-size:inherit">%1</tspan> selects this shell's job 1, not PID 1. Use the job number from your own <tspan class="code" style="font-size:inherit">jobs</tspan> output.</text>
+<text x="14" y="146" class="small">Background jobs can still print here. Background does not mean service or logout survival.</text>
+</svg>

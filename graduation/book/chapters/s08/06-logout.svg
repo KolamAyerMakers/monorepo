@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Lingering: user-service policy after logout.</title><desc id="desc">Two illustrative Linger settings show the user manager may stop after last logout with Linger=no, whereas Linger=yes permits it to run without a logged-in session and start at boot. The read-only command reads this setting on a system using systemd-logind. id -un supplies the current account name through command substitution. Optional administrator-authorized enable and disable commands change this policy; unit enablement is separate. Sleep suspends availability and shutdown stops it.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:3.9px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">SERVICES AND TROUBLESHOOTING / 06</text><text x="12" y="28" class="title">LINGERING: SERVICES AFTER LOGOUT.</text>
+<text x="14" y="39" class="small">Lingering permits your user manager to run without a login and start at boot.</text>
+<text x="14" y="51" class="code">loginctl show-user "$(id -un)" -p Linger</text>
+<text x="14" y="61" class="small">Reads policy with <tspan class="code" style="font-size:inherit">systemd-logind</tspan>. <tspan class="code" style="font-size:inherit">$(id -un)</tspan> inserts your current account name.</text>
+<text x="14" y="73" class="small">Illustrative settings</text><text x="105" y="73" class="small">after your last logout</text>
+<path fill="#ece5f5" d="M14 78 H60 V92 H14 Z"/><path fill="#def1e8" d="M14 97 H60 V111 H14 Z"/>
+<text x="20" y="87" class="code">Linger=no</text><text x="20" y="106" class="code">Linger=yes</text>
+<path class="ink" d="M66 85 H95 M90 81 L96 85 L90 89 M66 104 H95 M90 100 L96 104 L90 108"/>
+<text x="105" y="87" class="small">manager may stop; services stop too</text><text x="105" y="106" class="small">manager can keep running services</text>
+<text x="14" y="117" class="small">OPTIONAL policy changes; <tspan class="code" style="font-size:inherit">sudo</tspan> needs administrator permission:</text>
+<text x="14" y="127" class="code">sudo loginctl enable-linger "$(id -un)"</text><text x="112" y="127" class="small">allow it</text>
+<text x="14" y="137" class="code">sudo loginctl disable-linger "$(id -un)"</text><text x="112" y="137" class="small">undo policy; not unit enabling</text>
+<text x="14" y="147" class="small">Sleep suspends availability; shutdown stops it. Unit <tspan class="code" style="font-size:inherit">enable</tspan> alone is not lingering.</text>
+</svg>

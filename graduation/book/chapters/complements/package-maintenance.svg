@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Update and remove installed packages.</title>
+<desc id="desc">Refreshing package information is different from upgrading installed packages. Debian/Ubuntu apt update then apt upgrade and Fedora dnf upgrade --refresh update installed software using configured repositories. A labelled before and after depicts an illustrative old package version becoming a newer version. Separate distro-labelled remove commands use nano as an example, with a nearby warning about proposed removals and dependencies. Removing an editor normally leaves personal text files but does not create a backup. Administrative permission and repository access are prerequisites.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:8.5px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.8;stroke-linecap:round;stroke-linejoin:round}</style>
+<text x="12" y="14" class="small">PACKAGE MANAGEMENT / 03</text>
+<text x="12" y="28" class="title">UPDATE AND REMOVE PACKAGES.</text>
+<text x="14" y="39" class="small">Refresh = read available versions. Upgrade = update software already installed.</text>
+<text x="14" y="48" class="small">Needs admin permission and repository access. Review proposed changes before confirming.</text>
+<rect x="14" y="55" width="87" height="32" fill="#fff0c9"/><rect x="111" y="55" width="85" height="32" fill="#def1e8"/>
+<text x="20" y="63" class="small">Debian / Ubuntu</text><text x="117" y="63" class="small">Fedora</text>
+<text x="20" y="73" class="code">sudo apt update</text><text x="20" y="82" class="code">sudo apt upgrade</text>
+<text x="117" y="77" class="code">sudo dnf upgrade --refresh</text>
+<text x="14" y="96" class="small">After confirmation: installed packages get available upgrades. Illustrative versions:</text>
+<path class="ink" d="M18 101 H70 V114 H18 Z M132 101 H190 V114 H132 Z M77 107 H121 M115 103 L122 107 L115 111"/>
+<text x="23" y="110" class="small">before: version 1</text><text x="137" y="110" class="small">after: version 2</text>
+<text x="14" y="123" class="small">Remove an installed package: <tspan class="code" style="font-size:inherit">nano</tspan> is the example editor.</text>
+<text x="14" y="132" class="code">sudo apt remove nano</text><text x="111" y="132" class="code">sudo dnf remove nano</text>
+<text x="14" y="140" class="small">WARNING: review upgrades and removals before confirming, including related packages.</text>
+<text x="14" y="147" class="small">Removing an editor normally keeps your text files. Package removal is not a backup.</text>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Prepare a new user-service unit file.</title><desc id="desc">A unit is an object managed by systemd. A service unit file configures a program's command and startup rules. The example needs a reachable user manager, nano, /usr/bin/python3, a dedicated web-demo directory and an unused local port 8000. The directory contains only public-to-local-users demo files, with no private files or links to them. The new file belongs in the user's systemd configuration directory; the adjacent warning prevents overwriting an existing service. Stop the foreground demo first.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">SERVICES AND TROUBLESHOOTING / 02</text><text x="12" y="28" class="title">PREPARE A USER-SERVICE UNIT FILE.</text>
+<text x="14" y="40" class="small">A unit is an object <tspan class="code" style="font-size:inherit">systemd</tspan> manages. A service unit describes a program's rules.</text>
+<text x="14" y="50" class="small">Needs: working user manager, <tspan class="code" style="font-size:inherit">nano</tspan>, <tspan class="code" style="font-size:inherit">/usr/bin/python3</tspan>, unused port <tspan class="code" style="font-size:inherit">8000</tspan>.</text>
+<text x="14" y="60" class="small">Prepared <tspan class="code" style="font-size:inherit">~/web-demo/index.html</tspan>: the local demo page. <tspan class="code" style="font-size:inherit">~</tspan> means your home.</text>
+<text x="14" y="70" class="small">Serve only that demo directory; no private files or links to them.</text>
+<text x="14" y="83" class="small">Stop the foreground demo with <tspan class="code" style="font-size:inherit">Ctrl-C</tspan> first: port <tspan class="code" style="font-size:inherit">8000</tspan> must be free.</text>
+<path fill="#fff0c9" d="M14 91 H196 V126 H14 Z"/>
+<text x="20" y="100" class="small">WARNING: use a new unit name; don't overwrite an existing service.</text>
+<text x="20" y="111" class="code">mkdir -p ~/.config/systemd/user</text><text x="20" y="121" class="code">nano ~/.config/systemd/user/web-demo.service</text>
+<text x="14" y="137" class="small">This directory holds your user units. Save the next page's configuration here.</text>
+<text x="14" y="146" class="small">Confirm <tspan class="code" style="font-size:inherit">/usr/bin/python3</tspan> exists; this example uses that exact program path.</text>
+</svg>

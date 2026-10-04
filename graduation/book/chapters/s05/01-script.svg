@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">Run a Bash script.</title><desc id="desc">Bash is an interpreter that reads and runs commands saved in a text file. The labelled contents of hello.sh print Hello and a newline. bash hello.sh leads to a visible Hello output. Bash must be installed; direct execution also requires /bin/bash and owner execute permission. The shebang names the interpreter, and ./ selects a file in the current directory.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">BASH SCRIPTS / 01</text><text x="12" y="28" class="title">RUN A BASH SCRIPT.</text>
+<text x="14" y="40">A script is commands saved in a text file.</text>
+<text x="14" y="49" class="small">Bash is an interpreter: a program that reads and runs those commands.</text>
+<text x="14" y="58" class="small">Requires Bash installed. File you own: <tspan class="code" style="font-size:inherit">hello.sh</tspan>. Contents:</text>
+<path fill="#fff0c9" d="M18 65 L190 64 L191 91 L17 90 Z"/><path class="ink" d="M18 65 L190 64 L191 91 L17 90 Z"/>
+<text x="24" y="76" class="code">#!/bin/bash</text><text x="24" y="86" class="code">printf 'Hello\n'</text>
+<text x="14" y="104" class="code">bash hello.sh</text><path class="ink" d="M65 103 H133 M127 99 L134 103 L127 107"/>
+<text x="145" y="97" class="small">terminal output</text><path fill="#def1e8" d="M143 100 H193 V111 H143 Z"/><text x="147" y="108" class="code">Hello</text>
+<text x="14" y="117" class="small"><tspan class="code" style="font-size:inherit">printf</tspan> prints the text; <tspan class="code" style="font-size:inherit">\n</tspan> adds a new line.</text>
+<text x="14" y="127" class="code">chmod u+x hello.sh</text><text x="66" y="127" class="small">adds owner permission to run.</text>
+<text x="14" y="137" class="small">Then <tspan class="code" style="font-size:inherit">./hello.sh</tspan> runs directly if <tspan class="code" style="font-size:inherit">/bin/bash</tspan> exists; <tspan class="code" style="font-size:inherit">#!</tspan> names that interpreter.</text>
+<text x="14" y="145" class="small"><tspan class="code" style="font-size:inherit">./</tspan> selects this directory's file. Read scripts before running them.</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+<title id="title">A remote shares commit history.</title><desc id="desc">A remote is another repository with a configured name and address. Labelled arrows and commit tokens show push sending commits and fetch downloading history, not copying current working files. Fetch does not change working files. The example requires an accessible configured origin remote and a branch destination configured for bare push, usually an upstream tracking branch. No hosting service or login is assumed.</desc>
+<style>text{font-family:Chilanka,'Liberation Sans',sans-serif;font-size:5.2px;fill:#161616}.title{font-size:9px}.small{font-size:4.2px}.code{font-family:'Liberation Mono',monospace;font-size:4.2px}.ink{fill:none;stroke:#161616;stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:.55}</style>
+<path fill="white" d="M0 0H210V148H0Z"/><text x="12" y="14" class="small">GIT HISTORY / 07</text><text x="12" y="28" class="title">A REMOTE IS ANOTHER REPOSITORY.</text>
+<text x="14" y="40" class="small">A remote is another repository, saved under a name and address.</text>
+<text x="14" y="50" class="code">git remote -v</text><text x="57" y="50" class="small">lists configured names and addresses</text>
+<text x="14" y="58" class="small"><tspan class="code" style="font-size:inherit">origin</tspan> is only a common remote name, not a special host.</text>
+<path fill="#fff0c9" d="M16 64 H65 V107 H16 Z"/><path fill="#def1e8" d="M151 64 H198 V107 H151 Z"/><path class="ink" d="M16 64 H65 V107 H16 Z M151 64 H198 V107 H151 Z M73 77 H143 M137 73 L144 77 L137 81 M144 101 H74 M80 97 L73 101 L80 105"/>
+<text x="23" y="82" class="small">your</text><text x="23" y="91" class="small">repository</text><text x="158" y="82" class="small">remote</text><text x="158" y="91" class="small">repository</text>
+<text x="77" y="67" class="code">git push</text><text x="112" y="67" class="small">commits</text>
+<rect x="102" y="72" width="10" height="10" rx="1" fill="white" stroke="#161616" stroke-width=".7"/><text x="104" y="79" class="small">C</text>
+<text x="77" y="91" class="code">git fetch origin</text>
+<rect x="102" y="96" width="10" height="10" rx="1" fill="white" stroke="#161616" stroke-width=".7"/><text x="104" y="103" class="small">C</text>
+<text x="14" y="115" class="small">C = a commit snapshot. Push shares commits, not unsaved file edits.</text>
+<text x="14" y="123" class="small">Fetch downloads history; it does NOT change your working files.</text>
+<text x="14" y="131" class="small">A branch is a named line of commits. Bare <tspan class="code" style="font-size:inherit">git push</tspan> needs a configured destination,</text>
+<text x="14" y="139" class="small">usually an upstream: the remote branch linked to your current branch.</text>
+<text x="14" y="147" class="small">Needs a configured remote and access; no host or destination is supplied here.</text>
+</svg>

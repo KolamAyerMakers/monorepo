@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="-8 -2 226 162" role="img" aria-labelledby="title desc">
+<rect x="-8" y="-2" width="226" height="162" fill="white"/>
+  <title id="title">cd: change directory.</title>
+  <desc id="desc">cd changes the shell's current directory. The prominent cd ../notes moves from existing pages to its existing sibling notes. Arrows explain relative path resolution via their parent, not separate commands. Inline .. and ../notes use monospace. pwd prints the full current path before or after the change.</desc>
+  <style>
+    text { font-family: Chilanka, 'Liberation Sans', sans-serif; font-size: 5.2px; fill: #161616; }
+    .title { font-size: 9px; }
+    .code { font-family: 'Liberation Mono', monospace; font-size: 4.4px; }
+    .small { font-size: 4.2px; }
+    .ink { fill: none; stroke: #161616; stroke-width: .85; stroke-linecap: round; stroke-linejoin: round; }
+    .thin { stroke-width: .55; }
+  </style>
+  <path fill="white" d="M0 0H210V148H0Z"/>
+  <text x="12" y="18" class="title"><tspan class="code" style="font-size:inherit">cd</tspan>: CHANGE DIRECTORY.</text>
+  <text x="14" y="31"><tspan class="code" style="font-size:inherit">cd</tspan> changes the shell's current directory: where commands work.</text>
+  <path fill="#fff0c9" d="M14 38 Q100 37 195 39 L195 54 L14 55 Z"/>
+  <text x="20" y="50" class="code" style="font-size:7px">cd ../notes</text>
+  <text x="91" y="49">from pages to notes</text>
+  <text x="14" y="63" class="small">Here, <tspan class="code" style="font-size:inherit">pages</tspan> and <tspan class="code" style="font-size:inherit">notes</tspan> exist inside the same parent (enclosing directory).</text>
+  <path fill="#ece5f5" d="M98 69 Q111 70 122 68 L124 83 Q109 85 98 83 Z"/>
+  <path fill="#fff0c9" d="M66 103 Q81 101 95 103 L96 117 Q79 116 65 118 Z"/>
+  <path fill="#def1e8" d="M144 102 Q162 100 180 103 L179 117 Q160 119 143 116 Z"/>
+  <!-- Arrows explain path resolution, not a pair of commands. -->
+  <path class="ink" d="M98 69 Q111 70 122 68 L124 83 Q109 85 98 83 Z"/>
+  <text x="104" y="79" class="code">..</text>
+  <text x="129" y="77" class="small">parent directory</text>
+  <path class="ink" d="M66 103 Q81 101 95 103 L96 117 Q79 116 65 118 Z M144 102 Q162 100 180 103 L179 117 Q160 119 143 116 Z"/>
+  <text x="69" y="112" class="code">pages</text><text x="148" y="112" class="code">notes</text>
+  <path class="ink" d="M80 98 Q83 91 94 87 M129 86 Q147 86 159 97"/>
+  <path fill="#161616" d="M95 86 L88 87 L91 92 Z M160 98 L152 95 L157 91 Z"/>
+  <text x="64" y="87" class="small">up: <tspan class="code" style="font-size:inherit">..</tspan></text>
+  <text x="164" y="96" class="small">into notes</text>
+  <!-- Smooth bob haircut; no pointed tufts. -->
+  <path class="ink" transform="translate(10 51) scale(.7)" d="M49 54 C40 52 39 67 48 69 C58 71 60 56 49 54 Z M40 64 Q37 51 48 51 Q62 51 61 67 L58 72 M40 64 L38 71 M48 70 Q48 82 46 90 M48 76 Q54 78 61 73 M48 78 L37 85 M46 90 L37 104 M46 90 L56 103"/>
+  <text x="66" y="126" class="small">start here</text>
+  <text x="145" y="126" class="small">end here</text>
+  <path class="ink thin" d="M12 131 Q100 129 197 131"/>
+  <text x="14" y="138" class="small"><tspan class="code" style="font-size:inherit">../notes</tspan>: a relative path from here, through the parent, into <tspan class="code" style="font-size:inherit">notes</tspan>.</text>
+  <text x="14" y="147" class="small"><tspan class="code" style="font-size:inherit">pwd</tspan> prints your current directory's full path, before or after <tspan class="code" style="font-size:inherit">cd</tspan>.</text>
+</svg>
