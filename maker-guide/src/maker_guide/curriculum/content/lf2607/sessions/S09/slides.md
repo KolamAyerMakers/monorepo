@@ -1,19 +1,21 @@
-# Automate It. Hand It Over.
+# Update Your Website Automatically
 
 Session: S9
 
 2026-10-10
 
-Your service runs when asked. Can it run on its own?
+Your web service keeps running, but your system report still needs fresh data.
+
+How can you collect new system facts and rebuild your website on a schedule?
 
 <!-- end_slide -->
 
-# Two Workshops
+# Two Workshops: Automatic Updates And Clear Instructions
 
-1. A timer refreshes the report and rebuilds the published site.
-2. A peer operates your README, and you preserve the source handoff.
+1. Schedule your report script and website build so new system facts appear on your website automatically.
+2. Write a README explaining how to update your website and restart your web service. A classmate reads the instructions; you run the commands.
 
-Keep the same site, scripts, and `site.service`. No new helper is needed.
+Save your README, website source, scripts, and service and timer files in Git and Forgejo.
 
 <!-- end_slide -->
 
