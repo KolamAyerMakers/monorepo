@@ -62,7 +62,7 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 
 ## S09 Reinforcement
 
-Automate It. Hand It Over. Refresh report facts before building, observe automatic publication, and peer-test a recoverable handoff of two scripts and three units. No `site.sh` dispatcher is required. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
+Automate It. Hand It Over. Refresh report facts before building, observe automatic publication, keep brief personal operating notes, and preserve two scripts and three units in a recoverable handoff. No `site.sh` dispatcher is required. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
 
 - [try-cron-and-remove-it](try-cron-and-remove-it.md)
 - [transform-heading-with-sed](transform-heading-with-sed.md)

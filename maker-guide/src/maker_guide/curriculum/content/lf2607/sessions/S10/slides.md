@@ -47,7 +47,7 @@ This evening is about what this group can now do.
 - A personal website, published and reachable.
 - A service that keeps that website available.
 - A report that refreshes itself on a schedule.
-- Instructions a peer could follow to operate it all.
+- Personal notes for operating and maintaining it.
 
 <!-- end_slide -->
 

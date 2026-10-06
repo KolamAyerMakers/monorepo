@@ -996,12 +996,14 @@ def _validate_git_tracked_path(
         "-C",
         str(resolution.target_path),
     )
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
     try:
         committed_path = subprocess.run(  # noqa: S603, catalog paths are validated and shell-free.
             (*command_prefix, "cat-file", "-e", f"HEAD:{validation.path}"),
             capture_output=True,
             check=False,
             timeout=5,
+            env=environment,
         )
         if committed_path.returncode != 0:
             return _git_tracked_path_result(validation, False, "git-path-not-committed")
@@ -1010,6 +1012,7 @@ def _validate_git_tracked_path(
             capture_output=True,
             check=False,
             timeout=5,
+            env=environment,
         )
     except (OSError, subprocess.TimeoutExpired):
         return _git_tracked_path_result(validation, False, "git-repository-error")

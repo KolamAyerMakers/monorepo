@@ -1820,7 +1820,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "Demonstrate a short timer, then leave a reasonable schedule.",
                 "Publish a readable README.",
                 "Preserve the working scripts and systemd units in the source repository.",
-                "Have a peer use the README and improve it from their feedback.",
             ),
             content=_session_content("S9", "Automate It. Hand It Over."),
             objectives=(
@@ -1871,8 +1870,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     prompt=(
                         "Write `~/src/README.md` with a heading that names your site "
                         "and explains how to generate the report, build, serve, inspect logs, "
-                        "and recover it. Have a peer follow the README and improve unclear steps. "
-                        "The guide checks the title and build/service instructions, not peer use."
+                        "and recover it. Keep the notes concise and useful to you. "
+                        "The guide checks the title and build/service instructions."
                     ),
                     validation=FileCheckValidation(
                         path="~/src/README.md",
@@ -3645,7 +3644,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     r"(?=.*systemctl --user).+"
                 ),
             ),
-            goal="Make your source repository understandable to another human.",
+            goal="Keep concise operating notes in your source repository.",
             evidence=(
                 "`~/src/README.md` needs a title, site description, and actual "
                 "build and `systemctl --user` commands."

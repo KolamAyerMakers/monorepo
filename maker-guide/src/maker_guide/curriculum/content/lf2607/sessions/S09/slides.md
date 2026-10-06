@@ -10,10 +10,10 @@ How can you collect new system facts and rebuild your website on a schedule?
 
 <!-- end_slide -->
 
-# Two Workshops: Automatic Updates And Clear Instructions
+# Automate Updates And Preserve Your Work
 
 1. Schedule your report script and website build so new system facts appear on your website automatically.
-2. Write a README explaining how to update your website and restart your web service. A classmate reads the instructions; you run the commands.
+2. Keep short personal notes on how to understand and operate your site.
 
 Save your README, website source, scripts, and service and timer files in Git and Forgejo.
 
@@ -202,24 +202,9 @@ Do not accumulate schedules. Reloading does not reset activation; enable --now d
 
 <!-- end_slide -->
 
-# Workshop 2: Can A Peer Operate It?
+# Leave Yourself Useful Notes
 
-Follow [Write your README](../../quests/write-readme.md): edit `~/src/README.md` and document what runs, where it lives, how to refresh, inspect, and recover.
-
-The peer reads and directs. You run the commands in your own account.
-
-No password sharing. When an instruction is unclear, improve it, then retry.
-
-<!-- end_slide -->
-
-# Test The Instructions
-
-- Find the public page and its source.
-- Refresh and build through the oneshot service.
-- Agree to a brief stop of your `site.service`, then recover it from the README. Expect the local request to fail during the stop; after recovery, confirm the intended page locally and publicly.
-- Pause and wait before copying source; resume the reviewed hourly timer after the handoff.
-
-Swap roles. Record one ambiguity you fixed and one recovery you observed.
+Add a heading and brief description, useful paths and links, and the commands you use to refresh, pause, resume, and inspect your service and logs. Keep useful existing notes.
 
 <!-- end_slide -->
 
@@ -238,7 +223,7 @@ Copy, do not move. Follow [Prepare a source handoff](../../quests/prepare-source
 
 Show a timer run you did not start, with changed report facts and a matching journal entry.
 
-Show the [peer-tested README](../../quests/write-readme.md) and the pushed scripts and units.
+Show your saved personal notes and the pushed scripts and units.
 
 Explain what collects the facts, what builds the site, and what happens when collection fails.
 

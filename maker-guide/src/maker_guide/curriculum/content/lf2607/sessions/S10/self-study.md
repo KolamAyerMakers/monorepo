@@ -103,7 +103,7 @@ Choose one claim from your work: a useful script, an automatic refresh, a reacha
 
 Use evidence you actually observed. Logs, page bodies, source changes, and peer feedback can all be useful; no fixed tour of every course artifact is required. Recorded evidence is acceptable if access is unavailable, provided you state when it was collected and what cannot be verified live.
 
-For recovery, explain the symptom, observation that narrowed the cause, repair, and confirming result. Do not stage a risky break during the demo. If you lack a recovered example, agree with the instructor on a safe preparation exercise, such as the [owner-operated README test](../../quests/write-readme.md#peer-operation-test), before the demo block. If still unresolved, show the blocker honestly and agree on a dated recovery action rather than fabricating a story.
+For recovery, explain the symptom, observation that narrowed the cause, repair, and confirming result. Do not stage a risky break during the demo. If you lack a recovered example, use the recovery guidance in [S8 self-study](../S08/self-study.md#8-restore-and-recover) before the demo block. If still unresolved, show the blocker honestly and agree on a dated recovery action rather than fabricating a story.
 
 ## Demo Script
 
@@ -176,7 +176,7 @@ ls -l ~/src/scripts ~/src/services
 journalctl --user -u site-build.service --no-pager -n 50
 ```
 
-Open Forgejo from your laptop and verify the actual README, site source, and [five handoff copies](../../quests/prepare-source-handoff.md#copy-working-files): two scripts and three units. A local log alone does not prove they were pushed. Show how a peer used the README and what you clarified.
+Open Forgejo from your laptop and verify the actual README, site source, and [five handoff copies](../../quests/prepare-source-handoff.md#copy-working-files): two scripts and three units. A local log alone does not prove they were pushed. Explain how your personal notes help you operate the site.
 
 For an automation claim, explain that the oneshot's pre-start regenerates report Markdown before npm builds. npm alone does not collect fresh facts. A failed report must prevent building and preserve the last valid result; [report preparation](../S09/self-study.md#report-safety-gate) explains safe replacement of older scripts. A schedule listing is not evidence of changed published facts.
 

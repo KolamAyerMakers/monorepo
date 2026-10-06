@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import shutil
 import sqlite3
 import subprocess
 from dataclasses import replace
@@ -418,26 +419,102 @@ def test_git_tracked_path_validation_checks_head_and_working_tree(
     migrated_database_path: Path,
     temporary_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    git_test_environment: dict[str, str],
 ) -> None:
     """A tracked script passes only when its working copy matches HEAD."""
-    # A commit hook may export an index belonging to the parent repository.
-    monkeypatch.delenv("GIT_INDEX_FILE", raising=False)
     repository_path = temporary_path / "src"
     script_path = repository_path / "scripts" / "maker-report.sh"
     script_path.parent.mkdir(parents=True)
     script_path.write_text("#!/bin/bash\n", encoding="utf-8")
+    git_executable = shutil.which("git")
+    assert git_executable is not None
+    sentinel_path = temporary_path / "sentinel"
+    sentinel_path.mkdir()
+    subprocess.run(
+        (git_executable, "init", str(sentinel_path)),
+        check=True,
+        capture_output=True,
+        env=git_test_environment,
+    )
+    subprocess.run(
+        (git_executable, "-C", str(sentinel_path), "config", "user.email", "sentinel@example.com"),
+        check=True,
+        capture_output=True,
+        env=git_test_environment,
+    )
+    subprocess.run(
+        (git_executable, "-C", str(sentinel_path), "config", "user.name", "Sentinel"),
+        check=True,
+        capture_output=True,
+        env=git_test_environment,
+    )
+    sentinel_file = sentinel_path / "sentinel.txt"
+    sentinel_file.write_text("untouched\n", encoding="utf-8")
+    subprocess.run(
+        (git_executable, "-C", str(sentinel_path), "add", "sentinel.txt"),
+        check=True,
+        capture_output=True,
+        env=git_test_environment,
+    )
+    subprocess.run(
+        (
+            git_executable,
+            "-C",
+            str(sentinel_path),
+            "-c",
+            "core.hooksPath=/dev/null",
+            "-c",
+            "commit.gpgSign=false",
+            "commit",
+            "-m",
+            "Sentinel",
+        ),
+        check=True,
+        capture_output=True,
+        env=git_test_environment,
+    )
     for command in (
-        ("git", "init", str(repository_path)),
-        ("git", "-C", str(repository_path), "config", "user.email", "test@example.com"),
-        ("git", "-C", str(repository_path), "config", "user.name", "Test User"),
-        ("git", "-C", str(repository_path), "add", "scripts/maker-report.sh"),
-        ("git", "-C", str(repository_path), "commit", "-m", "Add report"),
+        (git_executable, "init", str(repository_path)),
+        (git_executable, "-C", str(repository_path), "config", "user.email", "test@example.com"),
+        (git_executable, "-C", str(repository_path), "config", "user.name", "Test User"),
+        (git_executable, "-C", str(repository_path), "add", "scripts/maker-report.sh"),
     ):
-        subprocess.run(command, check=True, capture_output=True)
+        subprocess.run(command, check=True, capture_output=True, env=git_test_environment)
+    subprocess.run(
+        (
+            git_executable,
+            "-C",
+            str(repository_path),
+            "-c",
+            "core.hooksPath=/dev/null",
+            "-c",
+            "commit.gpgSign=false",
+            "commit",
+            "-m",
+            "Add report",
+        ),
+        check=True,
+        capture_output=True,
+        env=git_test_environment,
+    )
     validation = GitTrackedPathValidation(
         repository_path="~/src",
         path="scripts/maker-report.sh",
     )
+    monkeypatch.setenv("GIT_DIR", str(sentinel_path / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(sentinel_path))
+    monkeypatch.setenv("GIT_INDEX_FILE", str(sentinel_path / ".git" / "index"))
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.worktree")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", str(sentinel_path))
+    sentinel_head = subprocess.run(
+        (git_executable, "-C", str(sentinel_path), "rev-parse", "HEAD"),
+        check=True,
+        capture_output=True,
+        text=True,
+        env=git_test_environment,
+    ).stdout.strip()
+    sentinel_index = (sentinel_path / ".git" / "index").read_bytes()
     with connect_database(migrated_database_path) as database_connection:
         clean_result = validate_quest(
             _filesystem_validation_input(database_connection, validation, temporary_path)
@@ -449,6 +526,18 @@ def test_git_tracked_path_validation_checks_head_and_working_tree(
 
     assert clean_result.passed is True
     assert modified_result.failure_reason == "git-path-modified"
+    assert (
+        subprocess.run(
+            (git_executable, "-C", str(sentinel_path), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+            env=git_test_environment,
+        ).stdout.strip()
+        == sentinel_head
+    )
+    assert (sentinel_path / ".git" / "index").read_bytes() == sentinel_index
+    assert sentinel_file.read_text(encoding="utf-8") == "untouched\n"
 
 
 def test_command_history_validation_uses_assignment_window(

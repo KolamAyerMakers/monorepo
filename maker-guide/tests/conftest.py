@@ -22,6 +22,24 @@ def temporary_path(tmp_path: Path) -> Path:
     return tmp_path
 
 
+@pytest.fixture
+def git_test_environment(temporary_path: Path) -> dict[str, str]:
+    """Isolate test Git commands from repository selectors and user configuration."""
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    home = temporary_path / "git-home"
+    home.mkdir()
+    template = temporary_path / "git-template"
+    template.mkdir()
+    environment.update(
+        HOME=str(home),
+        XDG_CONFIG_HOME=str(home / ".config"),
+        GIT_CONFIG_NOSYSTEM="1",
+        GIT_CONFIG_GLOBAL="/dev/null",
+        GIT_TEMPLATE_DIR=str(template),
+    )
+    return environment
+
+
 @pytest.fixture(autouse=True)
 def skip_physical_fsync(monkeypatch: pytest.MonkeyPatch) -> None:
     """Keep durability tests semantic without forcing real disk flushes."""

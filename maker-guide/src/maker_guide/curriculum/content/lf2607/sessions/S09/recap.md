@@ -4,12 +4,10 @@ Session: S9
 
 2026-10-10
 
-## Two Workshops
+## Remember
 
 1. Schedule an automatic report refresh followed by a build. Observe the activation and changed published facts.
-2. Have a peer use your operations README, then preserve and push the source handoff.
-
-## Remember
+2. Keep useful personal operating notes, then preserve and push the source handoff.
 
 - `site-build.timer` activates `site-build.service`; `site.service` keeps serving the published site.
 - `ExecStartPre` runs `maker-report.sh "System Report"` before `npm run build`. A nonzero report exit prevents the build.
@@ -21,8 +19,6 @@ Session: S9
 ## Evidence That Matters
 
 A timer listing is not proof of execution. Match the successful service journal entry with a new date in the generated and publicly fetched report. Keep the actual error if it fails.
-
-A README is tested when another person can use it. The peer reads; the owner operates their own account. The local request should fail during the agreed service stop, then return the intended page after recovery; verify the public service route too. No credentials change hands.
 
 A local Git log is not an off-machine handoff. Verify the README, source, two scripts, and three units in Forgejo after pushing.
 
@@ -38,4 +34,4 @@ Shared Caddy handles public HTTPS and forwards to personal Caddy over loopback H
 
 S10 is **2026-10-24: Show What You Can Do**. No preparation is required. Name unfinished work honestly rather than presenting expected results as observations.
 
-Use [S9 self-study](self-study.md) for runnable workshop instructions and optional tool pointers. Text tools, another editor, cron, and webring work are not prerequisites.
+Use [S9 self-study](self-study.md) for runnable automation instructions and optional tool pointers. Text tools, another editor, cron, and webring work are not prerequisites.

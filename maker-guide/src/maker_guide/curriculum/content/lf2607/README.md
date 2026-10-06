@@ -114,7 +114,7 @@ Give your web server to a systemd user service. Test it while logged out, follow
 
 ### S09: Automate It. Hand It Over.
 
-Refresh report facts before building, prove an automatic publication, and peer-test an operations README. Preserve two scripts and three units in a recoverable source handoff; no `site.sh` dispatcher is required. Sed, awk, vim, cron, and the webring are optional.
+Refresh report facts before building and prove an automatic publication. Keep brief personal operating notes and preserve two scripts and three units in a recoverable source handoff; no `site.sh` dispatcher is required. Sed, awk, vim, cron, and the webring are optional.
 
 - [Slides](sessions/S09/slides.md)
 - [Self-study](sessions/S09/self-study.md)

@@ -4,12 +4,12 @@ Session: S9
 
 2026-10-10
 
-## Two Workshops
+## Goals
 
 1. Automatically refresh report facts, then build. Prove a real timer activation with logs and changed published content.
-2. Peer-test an operations README and push a recoverable source handoff.
+2. Keep brief personal operating notes and preserve a recoverable source handoff.
 
-Allow 15 minutes for preparation, 60 for automation, a 10-minute break, 75 for the handoff workshop, and 20 for verification. S10 is on **2026-10-24**.
+Allow 15 minutes for preparation, 60 for automation, a 10-minute break, and 20 for handoff and verification. S10 is on **2026-10-24**.
 
 ## Keep The Same Project
 
@@ -196,13 +196,9 @@ Stopping before editing and starting after reload re-arms the timer's activation
 
 This monotonic schedule runs after timer activation and service completion, not on wall-clock hour boundaries. It does not replay missed hourly runs after downtime. For logout operation, inspect `loginctl show-user "$USER" -p Linger`; ask the instructor if lingering is needed. Do not change shared system policy yourself.
 
-## Workshop 2: Peer-Test The README
+## Personal Notes And Source Handoff
 
-Follow [Write your README](../../quests/write-readme.md). Explain purpose, public links, source/output paths, dependencies, refresh/build commands, timer control, logs, restoration, and one real recovery. State the difference between fresh facts and freshly rendered HTML.
-
-The peer reads the README and directs the work; the owner reviews and types in their own account. Use the instructions to pause automation, refresh/build once, and inspect the result. Agree to a brief stop of the owner's `site.service`, observe the local failure, restart it, and verify local and public responses. Do not stop anyone else's processes or exchange passwords. Fix unclear instructions and swap roles.
-
-Then follow [Prepare a source handoff](../../quests/prepare-source-handoff.md) for the five copy paths, runnable restoration, and scoped Git workflow. Keep automation paused and builds finished while copying and reviewing source, because report generation modifies a tracked Markdown page. Preserve the two scripts and three units, not only a list of commits. Verify the pushed files in Forgejo and restart the hourly timer when finished.
+Keep a heading, short site description, useful paths and links, and your refresh, pause/resume, service, and log commands in `~/src/README.md`. Follow [Prepare a source handoff](../../quests/prepare-source-handoff.md) for the five copy paths, restoration reference, and scoped Git workflow. Keep automation paused and builds finished while copying and reviewing source, because report generation modifies a tracked Markdown page. Preserve the two scripts and three units, not only a list of commits. Verify the pushed files in Forgejo and restart the hourly timer when finished.
 
 ## Troubleshooting
 

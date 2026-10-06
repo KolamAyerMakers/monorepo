@@ -16,7 +16,7 @@ The three-hour session protected 75 minutes for twelve five-minute demos and tra
 
 A timer listing proves a schedule exists, not that new facts were published. An active service does not prove a public page is reachable. A local commit does not prove the source was pushed.
 
-Choose evidence that supports your actual claim: changed public content, successful body comparisons, request logs, a peer's successful use of the README, or the files visible in Forgejo. If a result failed, explain that result rather than substituting expected output.
+Choose evidence that supports your actual claim: changed public content, successful body comparisons, request logs, useful personal README notes, or the files visible in Forgejo. If a result failed, explain that result rather than substituting expected output.
 
 Explain recovery as symptom, observation, cause, repair, and confirming evidence. Do not invent a success story or break a live service merely to make the demonstration dramatic.
 

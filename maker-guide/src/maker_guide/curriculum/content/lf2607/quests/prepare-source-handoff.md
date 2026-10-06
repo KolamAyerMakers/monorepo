@@ -4,7 +4,7 @@ Quest: prepare-source-handoff
 
 ## Mission
 
-Preserve the existing site source, peer-tested operations README, two scripts, and three systemd units in `~/src`. Push and verify the actual files so the project can be restored, not merely described.
+Preserve the existing site source, personal README notes, two scripts, and three systemd units in `~/src`. Push and verify the actual files so the project can be restored, not merely described.
 
 ## Before You Start
 
@@ -46,13 +46,11 @@ diff -u ~/src/scripts/maker-report.sh ~/scripts/maker-report.sh
 
 No output means equal contents. Differences require a decision before repeating the copy and answering `y`. Repeat for every conflicting copy; never replace newer source blindly. Preserve executable permissions on scripts used directly. Do not include credentials, private keys, tokens, dependency directories, or generated HTML in the handoff.
 
-## Document And Peer-Test Recovery
+## Keep Personal Notes
 
-Complete [Write your README](write-readme.md). Include these paths, dependencies, both actual public links, the report/refresh/build distinction, timer control, service/log commands, and recovery instructions below. Keep the site's existing pages, package manifests, lockfile, app files, and configuration tracked too; five copied files alone are not the whole site.
+Use [Write your README](write-readme.md) for brief personal operating notes. Keep the site's existing pages, package manifests, lockfile, app files, and configuration tracked too; five copied files alone are not the whole site.
 
 The report generator must preserve the last valid report on failure and return nonzero. Follow [S9 report preparation](../sessions/S09/self-study.md#report-safety-gate) when updating an older copy. Preserve the working temporary-file version, not a stale direct-write copy.
-
-Test the README with a peer directing and the owner operating their own account. Verify a refresh/build and an agreed brief web-service stop/recovery. Swap roles, not passwords. Write down the ambiguity fixed and actual recovery evidence.
 
 ## Restore From Source
 
