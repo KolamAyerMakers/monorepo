@@ -4,7 +4,7 @@ Session: S9
 
 2026-10-10
 
-Your site works. What if it could greet visitors with a new daily pick, publish a daily puzzle, or refresh a dashboard while you sleep?
+Your website can update itself while you are away.
 
 <!-- end_slide -->
 
@@ -22,7 +22,7 @@ The task runs, finishes, and waits for its next scheduled start. No loop needs t
 - `site-build.service` builds the site once, then exits.
 - `site-build.timer` starts that build service on a schedule.
 
-The timer does not replace the web server or run JavaScript in a visitor's browser.
+The web server keeps serving the site while the build runs.
 
 <!-- end_slide -->
 
