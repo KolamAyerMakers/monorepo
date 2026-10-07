@@ -4,7 +4,7 @@ Quest: write-readme
 
 ## Mission
 
-Write short personal notes that help you understand and operate your existing site, then preserve them with the source handoff.
+Write short personal notes that help you understand and operate your existing site.
 
 ## Write For The Next Operator
 
@@ -12,16 +12,15 @@ Open `micro ~/src/README.md`, keeping useful existing content. Save with `Ctrl-S
 
 - A heading and short description of your site.
 - Useful source/output paths and actual public links.
-- The refresh and build command, how to pause/resume the timer, and commands to inspect your service and logs.
-- Keep useful existing notes; use the [source handoff guide](prepare-source-handoff.md) for copying and restoration details.
+- How to refresh and build, pause/resume the timer, and inspect your service and logs.
+- Keep useful existing notes.
 
 Use [S9 self-study](../sessions/S09/self-study.md) for runnable automation instructions. Explain commands in your own project's README rather than leaving only vague words such as "build" or "fix".
 
 ## Preserve The Result
 
-Follow [Prepare a source handoff](prepare-source-handoff.md#inspect-commit-push): pause and wait, inspect all intended files, stage explicit paths, commit, push, and verify the README and working-file copies in Forgejo. A readable local README alone is not a recoverable off-machine handoff.
+Keep your notes in your project README. No commit or publication is required.
 
 ## Related Reading
 
 - [README writing](../concepts/readme-writing.md)
-- [Forgejo publishing](../concepts/forgejo-publishing.md)

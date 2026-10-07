@@ -33,7 +33,7 @@ systemctl --user stop site-build.timer
 systemctl --user status site-build.service --no-pager
 ```
 
-If the service is `activating`, wait for it to finish and inspect again. Do not stop it mid-publication. Let any terminal build finish too, and leave the timer stopped through the build and Git review so report source cannot change underneath the commit. If these units were never created, name that unfinished work rather than making empty files.
+If the service is `activating`, wait for it to finish and inspect again. Do not stop it mid-publication. Let any terminal build finish too. If these units were never created, name that unfinished work rather than making empty files.
 
 Open `micro ~/src/pages/next.md` and keep useful existing content. Adapt the example to your plan; save with `Ctrl-S` and quit with `Ctrl-Q`. Add a link in the existing homepage source without replacing other content:
 
@@ -41,39 +41,27 @@ Open `micro ~/src/pages/next.md` and keep useful existing content. Adapt the exa
 [What I will try next](next.html)
 ```
 
-## Optional Publish Workflow
+## Optional Local Preview
 
-Inspect the new page in your editor too: Git diff does not show untracked contents. Run one command at a time and stop on a failed build or request:
+The interactive `build-website` alias builds the page locally; it does not generate your daily pick. Pause the timer to avoid racing the standalone build, then preview the page on your site if useful. No publication is required.
+
+Keep the timer stopped while you restore the daily 09:00 schedule:
 
 ```bash
-build-website
-curl --max-time 10 -fsS "https://lf2607.kolamayermakers.org/~$USER/next.html"
-cd ~/src
-git status
-git diff -- pages/next.md pages/index.md
-git diff --cached
-git add -- pages/next.md pages/index.md
-git diff --cached
-git status
-git commit -m "Record my next project step"
-git remote -v
-git push
-git log --oneline -3
-git status
+systemctl --user stop site-build.timer
+systemctl --user status site-build.service --no-pager
 ```
 
-Here the interactive `build-website` alias publishes the page; it does not collect new report facts. The timer is paused so it cannot race this standalone build. If unrelated files are already staged, stop before adding or committing and resolve the selection with their owner. Inspect and stage any other intended source change separately by its explicit path; do not use broad staging or commit secrets. Use the [S4 Git and Forgejo workflow](../sessions/S04/self-study.md#git-workflow) if the repository or remote is missing, not a second project. Do not force-push a rejected update.
-
-Open the homepage link and new page from your laptop and verify the actual content, then verify the commit and page source in Forgejo. A local commit alone is not off-machine publication.
-
-Restore the existing reviewed hourly timer after finishing, even if there was nothing new to commit:
+Open the complete unit with `micro ~/.config/systemd/user/site-build.timer`. Replace `OnActiveSec` with `OnCalendar=*-*-* 09:00:00`, save, and quit. Then:
 
 ```bash
+systemctl --user daemon-reload
+systemctl --user cat site-build.timer
 systemctl --user start site-build.timer
 systemctl --user list-timers --all site-build.timer
 ```
 
-If it still has the short classroom schedule, use [Hourly Schedule](../sessions/S09/self-study.md#hourly-schedule) to replace the old directives, reload while stopped, and start it. If report safety or another failure makes automation unsafe, leave it stopped and record the blocker with staff instead.
+If another failure makes automation unsafe, leave it stopped and ask staff for help.
 
 ## On The Chosen Date
 

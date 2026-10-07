@@ -65,4 +65,4 @@ If the PID or activation time changed, Caddy restarted. A working page while log
 
 ## Next Session
 
-S9: **2026-10-10**, Automate It. Hand It Over. Bring your working service, source copy, and questions. Use the [self-study guide](self-study.md) for procedures and troubleshooting.
+S9: **2026-10-10**, Give Your Website a Daily Update. Bring your working service and questions. Use the [self-study guide](self-study.md) for procedures and troubleshooting.

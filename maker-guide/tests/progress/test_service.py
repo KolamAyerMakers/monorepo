@@ -159,6 +159,18 @@ def test_current_quest_requires_session_placement(migrated_database_path: Path) 
             "break-and-read-error",
         ),
         (
+            "S9",
+            ("prepare-source-handoff",),
+            "prepare-source-handoff",
+            "schedule-site-rebuilds",
+        ),
+        (
+            "S9",
+            ("schedule-site-rebuilds", "write-readme"),
+            "prepare-source-handoff",
+            "publish-daily-pick",
+        ),
+        (
             "S8",
             tuple(objective.id for objective in CATALOG.session("S8").objectives),
             "break-and-read-error",
@@ -272,7 +284,11 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
                     evidence={"replacement": True},
                 )
             stale_quest_id = (
-                "fix-and-restart-service" if session_id == "S8" else "record-http-headers"
+                "fix-and-restart-service"
+                if session_id == "S8"
+                else "prepare-source-handoff"
+                if session_id == "S9"
+                else "record-http-headers"
             )
             assign_quest(
                 database_connection,
@@ -299,13 +315,17 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
             )
 
             expected_quest_id = (
-                "prove-shell-alive" if session_id == "S8" else "serve-local-check-page"
+                "prove-shell-alive"
+                if session_id == "S8"
+                else "serve-local-check-page"
+                if session_id == "S7"
+                else "try-cron-and-remove-it"
             )
             assert quest_result.quest == CATALOG.quest(expected_quest_id)
             assert quest_result.assigned_now is True
             snapshot = build_learner_snapshot(database_connection, CATALOG, HANDLE)
             assert snapshot.pending_quests == (
-                (expected_quest_id, stale_quest_id) if session_id != "S8" else (expected_quest_id,)
+                (expected_quest_id, stale_quest_id) if session_id == "S7" else (expected_quest_id,)
             )
             assert snapshot.completed_quests == (
                 (historical_quest_id,) if session_id != "S8" else ()

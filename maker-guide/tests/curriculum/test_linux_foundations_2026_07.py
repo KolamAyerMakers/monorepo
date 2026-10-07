@@ -321,7 +321,6 @@ def test_sessions_expose_independent_objective_validators() -> None:
         ),
         "S9": (
             AllOfValidation,
-            FileCheckValidation,
             AllOfValidation,
         ),
         "S10": (),
@@ -966,12 +965,7 @@ def test_catalog_exposes_ordered_quest_lookup() -> None:
         "personalize-homepage",
     )
     assert CATALOG.next_quest_after("personalize-homepage", "S2") is None
-    assert CATALOG.next_quest_after("write-next-path", "S9") == CATALOG.quest(
-        "prepare-source-handoff",
-    )
-    assert CATALOG.next_quest_after("prepare-source-handoff", "S9") == CATALOG.quest(
-        "use-terminal-irc",
-    )
+    assert CATALOG.next_quest_after("write-next-path", "S9") == CATALOG.quest("use-terminal-irc")
     assert CATALOG.next_quest_after("use-terminal-irc", "S9") is None
     assert CATALOG.next_assignable_quest("S1", frozenset()) == CATALOG.quest("prove-shell-alive")
     assert CATALOG.next_assignable_quest(
@@ -1281,7 +1275,12 @@ def test_open_concept_index_preserves_authored_skill_ownership() -> None:
 
     assert concept_index.index("(text-search.md)") < concept_index.index("### Go Deeper After S03")
     assert concept_index.index("### Go Deeper After S03") < concept_index.index("(signal.md)")
-    assert concept_index.index("## S09 ") < concept_index.index("(regular-expression.md)")
+    assert (
+        concept_index.index("## Automation")
+        < concept_index.index("(automation-timers.md)")
+        < concept_index.index("## S10 ")
+        < concept_index.index("(regular-expression.md)")
+    )
 
 
 def test_s3_cards_keep_later_syntax_out_of_completion_criteria() -> None:
@@ -1473,15 +1472,14 @@ def test_s9_optional_automation_quests_require_cleanup_and_output() -> None:
     )
 
 
-def test_s9_automation_requires_report_before_build_and_hourly_schedule() -> None:
-    """Automation cannot omit report generation or leave the short demonstration schedule."""
+def test_s9_calendar_build_and_daily_pick_requirements() -> None:
+    """The daily service, calendar, and generated content have distinct requirements."""
     for timer_validation in (
         next(
             objective.validation
             for objective in CATALOG.session("S9").objectives
             if objective.id == "schedule-site-rebuilds"
         ),
-        CATALOG.quest("schedule-site-rebuilds").validation,
     ):
         assert isinstance(timer_validation, AllOfValidation)
         for validation in timer_validation.validations:
@@ -1495,7 +1493,7 @@ def test_s9_automation_requires_report_before_build_and_hourly_schedule() -> Non
                     if (
                         "Type=oneshot" in unit_match["unit"]
                         if validation.path.endswith(".service")
-                        else "OnActiveSec=1h" in unit_match["unit"]
+                        else "OnCalendar=" in unit_match["unit"]
                     )
                 )
                 assert re.search(validation.required_regex, reference_unit)
@@ -1508,6 +1506,7 @@ def test_s9_automation_requires_report_before_build_and_hourly_schedule() -> Non
                         "OnUnitActiveSec=1h",
                         "OnBootSec=5min",
                         "OnCalendar=minutely",
+                        "OnCalendar=*-*-* 09:00:00",
                     ):
                         assert re.search(
                             validation.forbidden_regex,
@@ -1516,29 +1515,13 @@ def test_s9_automation_requires_report_before_build_and_hourly_schedule() -> Non
                 for required_line in reference_unit.splitlines():
                     if required_line.startswith(
                         (
-                            "OnActiveSec=",
-                            "OnUnitInactiveSec=",
                             "WorkingDirectory=",
-                            "ExecStartPre=",
                             "ExecStart=",
                         )
                     ):
                         assert not re.search(
                             validation.required_regex,
                             reference_unit.replace(required_line, ""),
-                        )
-                if validation.path.endswith(".service"):
-                    for invalid_pre_start in (
-                        'ExecStartPost=/bin/bash %h/scripts/maker-report.sh "System Report"',
-                        'ExecStartPre=-/bin/bash %h/scripts/maker-report.sh "System Report"',
-                        "ExecStartPre=/bin/bash %h/scripts/maker-report.sh",
-                    ):
-                        assert not re.search(
-                            validation.required_regex,
-                            reference_unit.replace(
-                                'ExecStartPre=/bin/bash %h/scripts/maker-report.sh "System Report"',
-                                invalid_pre_start,
-                            ),
                         )
         assert any(
             isinstance(validation, CommandHistoryValidation)
@@ -1548,66 +1531,152 @@ def test_s9_automation_requires_report_before_build_and_hourly_schedule() -> Non
 
     assert {objective.id for objective in CATALOG.session("S9").objectives} == {
         "schedule-site-rebuilds",
-        "write-readme",
-        "prepare-source-handoff",
+        "publish-daily-pick",
     }
+    assert CATALOG.quests_available_after("S8") == ()
+    assert CATALOG.quest("prepare-source-handoff").available_after_session == "S9"
+    assert CATALOG.quest("prepare-source-handoff") not in CATALOG.quests_available_through("S9")
+    assert (
+        CATALOG.quest("prepare-source-handoff")
+        .docs[0]
+        .path.endswith("/quests/prepare-source-handoff.md")
+    )
     assert {
         "transform-heading-with-sed",
         "extract-fields-with-awk",
         "survive-vim",
         "enable-webring",
     } <= {quest.id for quest in CATALOG.quests_available_after("S9")}
+    assert CATALOG.quest("write-readme") not in CATALOG.quests_available_after("S9")
+    assert CATALOG.quest("write-readme") not in CATALOG.quests_available_through("S9")
 
-
-def test_final_handoff_requires_committed_files_without_prescribing_next_page_wording() -> None:
-    """The handoff preserves core files; optional next-page checks accept learner wording."""
-    readme_text = (
-        "# My Homepage\n\nBuild: `build-website`.\n"
-        "Service: `systemctl --user start site.service`.\n"
+    pick_objective = next(
+        objective
+        for objective in CATALOG.session("S9").objectives
+        if objective.id == "publish-daily-pick"
     )
-    for readme_validation in (
-        next(
-            objective.validation
-            for objective in CATALOG.session("S9").objectives
-            if objective.id == "write-readme"
-        ),
-        CATALOG.quest("write-readme").validation,
+    assert isinstance(pick_objective.validation, AllOfValidation)
+    pick_service = next(
+        validation
+        for validation in pick_objective.validation.validations
+        if isinstance(validation, FileCheckValidation) and validation.path.endswith(".service")
+    )
+    assert re.search(
+        pick_service.required_regex,
+        """[Service]
+ExecStartPre=/bin/bash %h/scripts/todays-pick.sh
+ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
+    )
+    for bad_service in (
+        """[Service]
+ExecStart=/usr/local/bin/maker-guide-build-personal-website
+ExecStartPre=/bin/bash %h/scripts/todays-pick.sh""",
+        """[Service]
+ExecStartPre=-/bin/bash %h/scripts/todays-pick.sh
+ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
+        """[Service]
+ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
     ):
-        assert isinstance(readme_validation, FileCheckValidation)
-        assert re.search(readme_validation.required_regex, readme_text)
-        assert re.search(
-            readme_validation.required_regex,
-            readme_text.replace("build-website", "systemctl --user start site-build.service"),
-        )
-        for required_text in ("# My Homepage", "build-website", "systemctl --user"):
-            assert not re.search(
-                readme_validation.required_regex, readme_text.replace(required_text, "")
-            )
+        assert not re.search(pick_service.required_regex, bad_service)
 
-    for handoff_validation in (
-        next(
-            objective.validation
-            for objective in CATALOG.session("S9").objectives
-            if objective.id == "prepare-source-handoff"
+
+def test_s9_daily_pick_quest_checks_pick_source_and_published_inputs() -> None:
+    """The reinforcement quest cannot pass on timer setup alone."""
+    validation = CATALOG.quest("schedule-site-rebuilds").validation
+    assert isinstance(validation, AllOfValidation)
+    checks = {
+        check.path: check
+        for check in validation.validations
+        if isinstance(check, FileCheckValidation)
+    }
+    assert {
+        "~/.config/systemd/user/site-build.service",
+        "~/.config/systemd/user/site-build.timer",
+        "~/scripts/todays-pick.sh",
+        "~/src/pages/today.md",
+        "~/src/pages/index.md",
+    } <= checks.keys()
+    assert re.search(
+        checks["~/.config/systemd/user/site-build.service"].required_regex,
+        "{}{}".format(
+            "[Service]\nExecStartPre=/bin/bash %h/scripts/todays-pick.sh\n",
+            "ExecStart=/usr/local/bin/maker-guide-build-personal-website",
         ),
-        CATALOG.quest("prepare-source-handoff").validation,
-    ):
-        assert isinstance(handoff_validation, AllOfValidation)
-        assert {
-            (validation.repository_path, validation.path)
-            for validation in handoff_validation.validations
-            if isinstance(validation, GitTrackedPathValidation)
-        } == {
-            ("~/src", path)
-            for path in (
-                "README.md",
-                "scripts/maker-report.sh",
-                "scripts/site-check.sh",
-                "services/site.service",
-                "services/site-build.service",
-                "services/site-build.timer",
-            )
-        }
+    )
+
+
+def test_daily_pick_generator_writes_content_and_preserves_previous_output(tmp_path: Path) -> None:
+    """The scheduled page is generated atomically and failed replacement preserves it."""
+    self_study = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
+    script = (
+        self_study.split("Create `~/scripts/todays-pick.sh`:", 1)[1]
+        .split("```bash\n", 1)[1]
+        .split("\n```", 1)[0]
+    )
+    home = tmp_path / "home"
+    pages = home / "src" / "pages"
+    pages.mkdir(parents=True)
+    environment = {"HOME": str(home), "PATH": os.environ["PATH"]}
+    subprocess.run(
+        ["/bin/bash", "-c", script], check=True, capture_output=True, text=True, env=environment
+    )
+    output = (pages / "today.md").read_text(encoding="utf-8")
+    assert datetime.now().astimezone().date().isoformat() in output
+    assert "Today's Pick" in output
+    choices = (
+        "Draw a robot",
+        "Find a new song",
+        "Photograph a face",
+        "Name a planet",
+        "Recommend a five-minute game",
+        "Make a paper creature",
+        "Share a discovery",
+    )
+    assert choices[datetime.now().astimezone().isoweekday() - 1] in output
+
+    (pages / "today.md").write_text("previous pick\n", encoding="utf-8")
+    failing_bin = tmp_path / "bin"
+    failing_bin.mkdir()
+    failing_mv = failing_bin / "mv"
+    failing_mv.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    failing_mv.chmod(0o755)
+    failed = subprocess.run(
+        ["/bin/bash", "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={**environment, "PATH": f"{failing_bin}:{os.environ['PATH']}"},
+    )
+    assert failed.returncode != 0
+    assert (pages / "today.md").read_text(encoding="utf-8") == "previous pick\n"
+
+
+def test_daily_pick_objective_accepts_personal_choices() -> None:
+    """The generator checks implementation properties, not prescribed choice text."""
+    validation = next(
+        objective.validation
+        for objective in CATALOG.session("S9").objectives
+        if objective.id == "publish-daily-pick"
+    )
+    assert isinstance(validation, AllOfValidation)
+    script_validation = next(
+        item
+        for item in validation.validations
+        if isinstance(item, FileCheckValidation) and item.path.endswith("todays-pick.sh")
+    )
+    self_study = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
+    script = (
+        self_study.split("Create `~/scripts/todays-pick.sh`:", 1)[1]
+        .split("```bash\n", 1)[1]
+        .split("\n```", 1)[0]
+    )
+    assert re.search(script_validation.required_regex, script)
+    assert re.search(
+        script_validation.required_regex, script.replace("Draw a robot", "Write a tiny song")
+    )
+    assert not re.search(
+        script_validation.required_regex, script.replace("set -euo pipefail\n", "")
+    )
 
     next_validation = CATALOG.quest("write-next-path").validation
     assert isinstance(next_validation, InteractiveQuestionValidation)
@@ -1847,6 +1916,12 @@ def test_curriculum_content_keeps_quests_optional_and_internals_hidden() -> None
         markdown_resource.read_text(encoding="utf-8")
         for markdown_resource in _markdown_resources(_content_root(), frozenset({"mentors"}))
     )
+
+    build_helper = "/usr/local/bin/maker-guide-build-personal-website"
+    assert build_helper in all_content_text
+    all_content_text = all_content_text.replace(build_helper, "")
+    assert "maker-guide-build-personal-website" in all_content_text
+    all_content_text = all_content_text.replace("maker-guide-build-personal-website", "")
 
     for forbidden_phrase in (
         "Python catalog",

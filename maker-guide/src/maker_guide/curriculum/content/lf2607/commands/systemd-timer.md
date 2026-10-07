@@ -4,8 +4,7 @@
 
 ```ini
 [Timer]
-OnBootSec=5min
-OnUnitActiveSec=1h
+OnCalendar=*-*-* 09:00:00
 ```
 
 ## What It Does
@@ -28,8 +27,7 @@ ExecStart=/usr/bin/date
 
 ```ini
 [Timer]
-OnBootSec=5min
-OnUnitActiveSec=1h
+OnCalendar=*-*-* 09:00:00
 
 [Install]
 WantedBy=timers.target
@@ -55,7 +53,7 @@ systemctl --user disable --now clock-note.timer
 
 ## Schedule Meaning
 
-`OnBootSec=5min` schedules a run relative to boot; if that time has passed when the timer is activated, it can fire immediately. `OnUnitActiveSec=1h` schedules another run relative to the service's last activation. These are monotonic intervals, not wall-clock appointments. There is no catchup of missed calendar runs after downtime.
+`OnCalendar=*-*-* 09:00:00` means daily at 09:00 in the server's local time zone. Calendar events are approximate; ask systemd to explain the next occurrence with `systemd-analyze calendar '*-*-* 09:00:00'`. Interval schedules such as `OnBootSec=5min` and `OnUnitActiveSec=1h` instead count from boot or service activation, not a wall-clock time.
 
 ## Watch Out
 

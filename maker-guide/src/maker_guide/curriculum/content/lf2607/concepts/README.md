@@ -122,7 +122,7 @@ Optional extensions:
 - [terminal multiplexing](terminal-multiplexing.md)
 - [bash functions](bash-functions.md)
 
-## S09 Automation And Handoff
+## Automation
 
 - [automation timers](automation-timers.md)
 - [README writing](readme-writing.md)
@@ -131,7 +131,6 @@ Optional interests:
 
 - [IRC](irc.md)
 - [text transforms](text-transforms.md)
-- [regular expressions](regular-expression.md)
 - [vim survival](vim-survival.md)
 
 ## S10 Investigation
@@ -140,3 +139,4 @@ Optional interests:
 - [number bases](number-bases.md)
 - [file compression](file-compression.md)
 - [file encoding](file-encoding.md)
+- [regular expressions](regular-expression.md)

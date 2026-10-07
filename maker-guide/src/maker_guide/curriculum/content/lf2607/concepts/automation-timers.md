@@ -12,7 +12,18 @@ The service describes the work. The matching timer describes when to start it. K
 
 For example, rebuilding a site renders the source that already exists. It does not collect fresh report data unless the service explicitly runs that collection command too.
 
-## Monotonic Schedule
+## Calendar Schedule
+
+Use `OnCalendar` for wall-clock times such as every day at 09:00:
+
+```ini
+[Timer]
+OnCalendar=*-*-* 09:00:00
+```
+
+The time uses the server's local time zone. Calendar events are approximate, not real-time deadlines; `systemd-analyze calendar '*-*-* 09:00:00'` explains the next occurrence. An omitted time defaults to midnight.
+
+## Interval Schedule
 
 ```ini
 [Timer]

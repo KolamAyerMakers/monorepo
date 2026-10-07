@@ -242,4 +242,4 @@ Use this reference after reading the error, or ask the guide for a hint.
 
 ## Next Session
 
-S9: **2026-10-10**, Automate It. Hand It Over. Bring your working service, source copy, and questions.
+S9: **2026-10-10**, Give Your Website a Daily Update. Bring your working service and questions.

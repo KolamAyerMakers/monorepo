@@ -92,7 +92,7 @@ At the time limit, note the result and next safe test. Run `exit` in the Bandit 
 
 ## Plan Your Five Minutes
 
-Choose one claim from your work: a useful script, an automatic refresh, a reachable page, a repaired service, or a handoff another person could operate. Decide what evidence would convince someone of that claim.
+Choose one claim from your work: a useful script, an automatic refresh, a reachable page, or a repaired service. Decide what evidence would convince someone of that claim.
 
 | Time | Content |
 |---|---|
@@ -107,7 +107,7 @@ For recovery, explain the symptom, observation that narrowed the cause, repair, 
 
 ## Demo Script
 
-This is fallback evidence for a site/service claim, not a required presentation sequence. Run it in the classroom, using only the parts that support your chosen claim. For automatic-refresh evidence instead, use [Witness Automatic Publication](../S09/self-study.md#witness-automatic-publication); do not call a manually started build automatic.
+This is fallback evidence for a site/service claim, not a required presentation sequence. Run it in the classroom, using only the parts that support your chosen claim. For timer basics and the daily-pick challenge, see [S9 self-study](../S09/self-study.md).
 
 For stable body comparisons, pause automation and inspect the build state first:
 
@@ -154,31 +154,27 @@ Run one command at a time. Stop if creating, copying, or fetching fails; do not 
 
 Point to actual report requests in the web-service journal: `--access-log` records structured fields `request.method`, `request.uri`, `status`, and a timestamp or time (`ts` in JSON). Journal formatting can differ from the foreground terminal. From your laptop browser, open the [static report](https://lf2607.kolamayermakers.org/~your-handle/maker-report.html) and [service report](https://your-handle.lf2607.kolamayermakers.org/maker-report.html), replacing `your-handle` with your classroom username. Inspect the content, not just headers. Requests from the classroom machine can use local host mappings and are not a substitute for the outside view.
 
-When finished comparing or reviewing source, restart the existing reviewed hourly timer:
+When finished comparing or reviewing source, stop the timer and wait for any active build to finish:
 
 ```bash
+systemctl --user stop site-build.timer
+systemctl --user status site-build.service --no-pager
+```
+
+Open the complete unit with `micro ~/.config/systemd/user/site-build.timer`; replace the temporary `OnActiveSec` line with `OnCalendar=*-*-* 09:00:00`, save, and quit. Then reload and inspect the effective unit before starting it:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user cat site-build.timer
 systemctl --user start site-build.timer
 systemctl --user list-timers --all site-build.timer
 ```
 
-Do not leave a classroom-speed timer running; use the [hourly schedule](../S09/self-study.md#hourly-schedule). If a failure means it is unsafe to restart automation, leave it stopped, document why, and ask the instructor for help.
+Do not leave a classroom-speed timer running or layer schedules. If a failure means it is unsafe to restart automation, leave it stopped and ask the instructor for help.
 
-## Source And Automation Evidence
+## Automation Evidence
 
-For a handoff claim, inspect the existing README and source copies:
-
-```bash
-git -C ~/src remote -v
-git -C ~/src log --oneline -5
-git -C ~/src status
-cat ~/src/README.md
-ls -l ~/src/scripts ~/src/services
-journalctl --user -u site-build.service --no-pager -n 50
-```
-
-Open Forgejo from your laptop and verify the actual README, site source, and [five handoff copies](../../quests/prepare-source-handoff.md#copy-working-files): two scripts and three units. A local log alone does not prove they were pushed. Explain how your personal notes help you operate the site.
-
-For an automation claim, explain that the oneshot's pre-start regenerates report Markdown before npm builds. npm alone does not collect fresh facts. A failed report must prevent building and preserve the last valid result; [report preparation](../S09/self-study.md#report-safety-gate) explains safe replacement of older scripts. A schedule listing is not evidence of changed published facts.
+For an automation claim, explain what your oneshot generates before building and how you checked the resulting public page. A schedule listing is not evidence of successful publication. The daily pick quest's required evidence is the generated source, homepage link, configured pre-build generator, and timer setup; prove an actual timer-triggered public change manually with the [S9 short-timer procedure](../S09/self-study.md#build-once-each-morning).
 
 ## Recovery Pointers
 
@@ -187,10 +183,10 @@ For an automation claim, explain that the oneshot's pre-start regenerates report
 | Static report `404` | Inspect `~/src/pages/maker-report.md`, the build log, and `~/public_html/maker-report.html`. |
 | Personal URL `502` | Compare the local request, assigned numeric port, unit state, and web-service journal. |
 | Local response fresh, browser stale | Inspect actual bodies, browser refresh, and personal Caddy's explicit `--root`. |
-| Pre-start failure | Read the report error; do not bypass it to build partial facts. |
+| Pre-start failure | Rerun the failing command and inspect its service journal; fix the generator error before retrying. Do not bypass generation. |
 | Local works, public hostname fails | Collect hostname and request evidence for the instructor; do not change DNS, shared Caddy settings, or TLS verification. |
 
-Use the [S9 self-study](../S09/self-study.md), [S8 unit recovery](../S08/self-study.md#8-restore-and-recover), and [source restoration procedure](../../quests/prepare-source-handoff.md#restore-from-source) for repairs. Keep the serving unit aligned with the S8 Caddy example. Owners operate their own accounts even when peers help read instructions. Do not exchange passwords or stop other people's processes.
+Use the [S9 self-study](../S09/self-study.md) and [S8 unit recovery](../S08/self-study.md#8-restore-and-recover) for repairs. Keep the serving unit aligned with the S8 Caddy example. Owners operate their own accounts even when peers help read instructions. Do not exchange passwords or stop other people's processes.
 
 ## Next Path Template
 
@@ -201,14 +197,14 @@ For example:
 ```markdown
 # Keep My Site Useful
 
-On 2026-10-31, I will follow my README to refresh the report and inspect the public result.
+On 2026-10-31, I will update my daily pick and check the published page.
 
-I will record the changed report date and one instruction that needs improving.
+I will record what changed and one instruction that needs improving.
 
 Reference: [systemd service units](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html).
 ```
 
-Adapt the action and date to something you intend to do. A documentation link can help but is not a formatting gate. Follow [Write the next path](../../quests/write-next-path.md) if you choose to publish; it includes safe pause/build/Git instructions. Do not publish private plans merely to satisfy a page requirement.
+Adapt the action and date to something you intend to do. A documentation link can help but is not a formatting gate. Follow [Write the next path](../../quests/write-next-path.md) for optional page editing and local preview, including guidance on pausing and restoring the build timer. Do not publish private plans merely to satisfy a page requirement.
 
 ## Unfinished Work
 

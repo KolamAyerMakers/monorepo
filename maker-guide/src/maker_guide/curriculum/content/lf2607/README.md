@@ -112,15 +112,15 @@ Give your web server to a systemd user service. Test it while logged out, follow
 - [Reinforcement quests](quests/README.md#s08-reinforcement)
 - [Concept cards](concepts/README.md#s08-services)
 
-### S09: Automate It. Hand It Over.
+### S09: Give Your Website a Daily Update
 
-Refresh report facts before building and prove an automatic publication. Keep brief personal operating notes and preserve two scripts and three units in a recoverable source handoff; no `site.sh` dispatcher is required. Sed, awk, vim, cron, and the webring are optional.
+Learn how timers schedule finite tasks, build the site daily, and publish your own rotating daily pick. Sed, awk, vim, cron, and the webring are optional.
 
 - [Slides](sessions/S09/slides.md)
 - [Self-study](sessions/S09/self-study.md)
 - [Recap](sessions/S09/recap.md)
 - [Reinforcement quests](quests/README.md#s09-reinforcement)
-- [Concept cards](concepts/README.md#s09-automation-and-handoff)
+- [Concept cards](concepts/README.md#automation)
 
 ### S10: Show What You Can Do
 

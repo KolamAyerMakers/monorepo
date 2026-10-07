@@ -37,7 +37,7 @@ The [course map](src/maker_guide/curriculum/content/lf2607/README.md) follows se
 
 - [S7: Run Your Own Web Server](src/maker_guide/curriculum/content/lf2607/sessions/S07/self-study.md): foreground personal Caddy, visitor logs, own PID/listener correlation with `ps` and `ss`, and core raw HTTP. Recover an occupied own port, an empty public practice root, and a stopped backend, distinguishing HTTP `404`, local refusal, proxy `502`, and independent static delivery. Publishing, notes, and Git remain optional self-study.
 - [S8: Keep Your Server Running](src/maker_guide/curriculum/content/lf2607/sessions/S08/self-study.md): systemd supervision, safe repair, and logout evidence; tmux and helpers are optional.
-- [S9: Automate It. Hand It Over.](src/maker_guide/curriculum/content/lf2607/sessions/S09/self-study.md): report refresh before build, observed timer publication, and a peer-tested handoff of two scripts and three units. No `site.sh` is required.
+- [S9: Give Your Website a Daily Update](src/maker_guide/curriculum/content/lf2607/sessions/S09/self-study.md): systemd timers, a daily website build, and a personalized daily-pick challenge.
 - [S10: Show What You Can Do](src/maker_guide/curriculum/content/lf2607/sessions/S10/self-study.md): learner-led demonstration, investigation, and a concrete next step in the learner's own words.
 
 ### Hostnames And Validation

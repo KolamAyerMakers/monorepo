@@ -2,6 +2,8 @@
 
 Quest: prepare-source-handoff
 
+> **Historical guide:** this quest documents an earlier project version and is not the current S9 handoff route. Its report-refresh and Git steps are not requirements for the current daily-pick project. For current setup, follow [S9 daily-build instructions](../sessions/S09/self-study.md) and the [daily-pick quest](schedule-site-rebuilds.md). Restoring files from this guide does not restore the current daily-pick generator; use the current S9 instructions to set that up.
+
 ## Mission
 
 Preserve the existing site source, personal README notes, two scripts, and three systemd units in `~/src`. Push and verify the actual files so the project can be restored, not merely described.
@@ -17,7 +19,7 @@ systemctl --user stop site-build.timer
 systemctl --user status site-build.service --no-pager
 ```
 
-If the service is still `activating`, wait for completion and inspect again. Do not stop a build mid-publication. Let any terminal build finish too, and keep automation paused until the copies and commit are complete: report refreshes change tracked source. An inactive successful oneshot is normal; a failed one needs its journal inspected.
+If the service is still `activating`, wait for completion and inspect again. Do not stop a build mid-publication. Let any terminal build finish too. An inactive successful oneshot is normal; a failed one needs its journal inspected.
 
 ## Copy Working Files
 
@@ -50,7 +52,7 @@ No output means equal contents. Differences require a decision before repeating 
 
 Use [Write your README](write-readme.md) for brief personal operating notes. Keep the site's existing pages, package manifests, lockfile, app files, and configuration tracked too; five copied files alone are not the whole site.
 
-The report generator must preserve the last valid report on failure and return nonzero. Follow [S9 report preparation](../sessions/S09/self-study.md#report-safety-gate) when updating an older copy. Preserve the working temporary-file version, not a stale direct-write copy.
+If preserving an existing system-report page, use the current [provided report script](../sessions/S06/self-study.md#provided-report-script) and preserve any personal additions before replacing it.
 
 ## Restore From Source
 
@@ -89,7 +91,7 @@ The working directory is the stable home directory. `--root` resolves the curren
 
 This personal Caddy serves plain HTTP; shared Caddy is a separate process handling public HTTPS and proxying to `127.0.0.1` at the assigned port. Do not add `--domain`. No Caddy configuration file is needed. Use `systemctl --user` rather than `caddy stop` or `caddy reload`, which might target the shared process. `--access-log` supplies structured request fields (`request.method`, `request.uri`, `status`, and `ts` in JSON) to the journal. A missing index returns `404` with browsing disabled even if the unit is active.
 
-The restored `site-build.service` must have the [report pre-start and npm build](../sessions/S09/self-study.md#timer-files). Confirm its npm executable path matches the installed `/usr/local/bin/npm`; a command found on interactive `PATH` alone does not prove a unit's absolute path works. Leave its timer stopped while installing the trusted project's locked dependencies and building once:
+Historical version: the restored `site-build.service` used a report pre-start and npm build. That retired setup is not the current S9 configuration; consult the current S9 instructions linked above before configuring or starting today's build. For this earlier version, confirm its npm executable path matches the installed `/usr/local/bin/npm`; a command found on interactive `PATH` alone does not prove a unit's absolute path works. Leave its timer stopped while installing the trusted project's locked dependencies and building once:
 
 ```bash
 cd ~/src
@@ -114,7 +116,7 @@ bash ~/scripts/site-check.sh "" maker-report.html
 
 `restart` starts a stopped service too and applies changed configuration to one already running. `daemon-reload` alone does not restart it. If a previous failure hit a start limit, fix the cause, run `systemctl --user reset-failed site.service`, then retry the restart. Inspect the journal and actual response bodies, and open both public routes from your laptop. Do not bypass TLS or change shared routing to make an error disappear.
 
-Restore the [hourly timer](../sessions/S09/self-study.md#hourly-schedule), removing classroom timing directives, reloading while stopped, and enabling/starting it. Inspect its next deadline and `loginctl show-user "$USER" -p Linger`; staff owns lingering policy. After any restoration adaptations, copy the working versions back into `~/src` deliberately and preserve those changes in Git.
+For this earlier version, restore the daily 09:00 calendar timer and remove any temporary test interval before reloading and starting it. For today's project, follow the current S9 timer setup linked above. Inspect its next deadline and `loginctl show-user "$USER" -p Linger`; staff owns lingering policy.
 
 ## Inspect, Commit, Push
 
@@ -141,14 +143,16 @@ Inspect and stage any other intended site source changes by their explicit paths
 
 Open the repository in Forgejo from your laptop. Verify the newest commit, README, report/site source, both scripts, and all three units. A local commit or successful command alone is not verification of the remote file contents.
 
-When finished, restart the already-reviewed hourly timer:
+When finished with this earlier version, restore its daily 09:00 schedule, then restart its timer. For today's project, use the current S9 timer instructions linked above:
 
 ```bash
+systemctl --user stop site-build.timer
+systemctl --user daemon-reload
 systemctl --user start site-build.timer
 systemctl --user list-timers --all site-build.timer
 ```
 
-Report Markdown may become modified again after the next automatic refresh; that is not proof your push failed. Commit deliberate snapshots, not every timer run. Keep working copies and tracked copies synchronized after future script or unit edits.
+In the earlier version, report Markdown could change after an automatic refresh; that was not proof a push failed. Commit deliberate snapshots, not every timer run. Keep working copies and tracked copies synchronized after future script or unit edits.
 
 ## Related Reading
 

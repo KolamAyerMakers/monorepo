@@ -8,7 +8,7 @@ Give a five-minute demonstration of something you choose from your project. Supp
 
 ## Choose The Claim
 
-You might show an automatically refreshed report, a reachable page and its service route, your checker's diagnosis and repair, or a source handoff that a peer could operate. Choose evidence that fits, rather than running every command you know.
+You might show an automatically refreshed report, a reachable page and its service route, or your checker's diagnosis and repair. Choose evidence that fits, rather than running every command you know.
 
 Prepare in your own classroom account. If you chose an optional Bandit investigation, exit it back to your laptop, then switch to classroom SSH and confirm the account and hostname before project commands. Do not exchange passwords with a peer.
 
@@ -25,12 +25,11 @@ Rehearse once before the protected demo block. Open the pages or logs you will n
 
 ## Evidence You Can Use
 
-- Automation: a journal activation after the timer started, without a manual build, plus changed facts in the public report. The pre-start script refreshes facts before npm builds; npm alone does not regenerate the report.
+- Automation: a journal activation after the timer started, without a manual build, plus the changed daily pick on the published page. The pre-start generator runs before the installed site-build helper. Refresh a system report only if you choose to do so; it is not required evidence.
 - Serving: a successful local and public request with the expected page body, supported by request logs and an outside browser view. An active unit alone does not prove this.
-- Handoff: the README, site source, two scripts, and three units visible in Forgejo. A local commit listing alone is insufficient.
 - Recovery: the actual symptom, observation that narrowed the cause, repair, and response or content proving recovery. Do not replace observed errors with expected successes.
 
-Use the [S10 fallback demo commands](../sessions/S10/self-study.md#demo-script) only when useful for preparation or diagnosis. They include computing the port directly, pausing automation and waiting for a build before body comparisons, checking routes, and restoring the hourly timer. For live automation proof, use [S9's observation procedure](../sessions/S09/self-study.md#witness-automatic-publication) instead of manually starting a service and calling it automatic.
+Use the [S10 fallback demo commands](../sessions/S10/self-study.md#demo-script) only when useful for preparation or diagnosis. They include computing the port directly, pausing automation and waiting for a build before body comparisons, and checking routes. For timer basics and the daily-pick challenge, use [S9 self-study](../sessions/S09/self-study.md).
 
 ## If Something Fails
 
@@ -45,5 +44,4 @@ Keep one useful question or observation from the audience. Follow [Write the nex
 ## Related Reading
 
 - [README writing](../concepts/readme-writing.md)
-- [Source handoff](prepare-source-handoff.md)
 - [S10 self-study](../sessions/S10/self-study.md)

@@ -14,19 +14,17 @@ The three-hour session protected 75 minutes for twelve five-minute demos and tra
 
 ## Evidence Over Claims
 
-A timer listing proves a schedule exists, not that new facts were published. An active service does not prove a public page is reachable. A local commit does not prove the source was pushed.
+A timer listing proves a schedule exists, not that new facts were published. An active service does not prove a public page is reachable.
 
-Choose evidence that supports your actual claim: changed public content, successful body comparisons, request logs, useful personal README notes, or the files visible in Forgejo. If a result failed, explain that result rather than substituting expected output.
+Choose evidence that supports your actual claim: changed public content, successful body comparisons, or request logs. If a result failed, explain that result rather than substituting expected output.
 
 Explain recovery as symptom, observation, cause, repair, and confirming evidence. Do not invent a success story or break a live service merely to make the demonstration dramatic.
 
 ## Preserve Useful Work
 
-Keep site source and the operations README in `~/src`. Preserve `scripts/maker-report.sh`, `scripts/site-check.sh`, `services/site.service`, `services/site-build.service`, and `services/site-build.timer` in the pushed repository. Active scripts remain in `~/scripts`; active units remain in `~/.config/systemd/user`.
+Keep the serving unit aligned with the [S8 Caddy unit](../S08/self-study.md#2-create-the-user-unit). Personal Caddy uses `WorkingDirectory=%h`, an explicit `--root %h/public_html`, and `--access-log`; shared Caddy handles public HTTPS and forwards to the personal process over loopback HTTP. Same software, two processes. Use `systemctl --user` for your service, never `caddy stop` or `caddy reload`, which can target shared Caddy.
 
-Use the [source handoff and restoration instructions](../../quests/prepare-source-handoff.md), keeping the serving unit aligned with the [S8 Caddy unit](../S08/self-study.md#2-create-the-user-unit). Personal Caddy uses `WorkingDirectory=%h`, an explicit `--root %h/public_html`, and `--access-log`; shared Caddy handles public HTTPS and forwards to the personal process over loopback HTTP. Same software, two processes. Use `systemctl --user` for your service, never `caddy stop` or `caddy reload`, which can target shared Caddy.
-
-The timer's service refreshes report Markdown first, then builds; npm alone does not collect facts. Failed collection must preserve the last valid report and prevent the build.
+The daily-pick challenge generates its page before the scheduled build. A timer listing is not evidence the new page was successfully published.
 
 ## Carry Out The Next Action
 

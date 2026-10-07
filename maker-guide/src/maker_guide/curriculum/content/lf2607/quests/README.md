@@ -62,18 +62,16 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 
 ## S09 Reinforcement
 
-Automate It. Hand It Over. Refresh report facts before building, observe automatic publication, keep brief personal operating notes, and preserve two scripts and three units in a recoverable handoff. No `site.sh` dispatcher is required. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
+Give Your Website a Daily Update. Schedule a daily build and publish a rotating daily pick. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
 
 - [try-cron-and-remove-it](try-cron-and-remove-it.md)
 - [transform-heading-with-sed](transform-heading-with-sed.md)
 - [extract-fields-with-awk](extract-fields-with-awk.md)
 - [survive-vim](survive-vim.md)
-- [write-readme](write-readme.md)
 - [enable-webring](enable-webring.md)
 - [schedule-site-rebuilds](schedule-site-rebuilds.md)
 - [refresh-pipes-for-bandit](refresh-pipes-for-bandit.md)
 - [prepare-bandit-approach](prepare-bandit-approach.md)
 - [demo-site](demo-site.md)
 - [write-next-path](write-next-path.md)
-- [prepare-source-handoff](prepare-source-handoff.md)
 - [use-terminal-irc](use-terminal-irc.md)

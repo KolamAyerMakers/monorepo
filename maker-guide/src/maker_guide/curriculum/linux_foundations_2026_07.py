@@ -204,16 +204,27 @@ _SITE_SERVICE_PATTERN = (
 _SITE_BUILD_SERVICE_PATTERN = (
     r"(?ms)^\[Service\]$.*^Type=oneshot[ \t]*$"
     r".+^WorkingDirectory=%h/src[ \t]*$"
-    r'.+^ExecStartPre=/bin/bash %h/scripts/maker-report\.sh "System Report"[ \t]*$'
-    r".+^ExecStart=/usr/local/bin/npm run build[ \t]*$"
+    r".+^ExecStart=/usr/local/bin/maker-guide-build-personal-website[ \t]*$"
 )
 _SITE_BUILD_TIMER_PATTERN = (
-    r"(?ms)^\[Timer\]$.*^OnActiveSec=1h[ \t]*$.*^OnUnitInactiveSec=1h[ \t]*$"
+    r"(?ms)^\[Timer\]$.*^OnCalendar=\*-\*-\* 09:00:00[ \t]*$"
     r".*^\[Install\]$.*^WantedBy=timers\.target[ \t]*$"
 )
 _SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN = (
-    r"(?m)^[ \t]*On(?:BootSec|StartupSec|UnitActiveSec|Calendar)="
-    r"|^[ \t]*On(?:ActiveSec|UnitInactiveSec)=(?!1h[ \t]*$)\S"
+    r"(?m)^[ \t]*On(?:BootSec|StartupSec|UnitActiveSec|ActiveSec|UnitInactiveSec)="
+    r"|^[ \t]*OnCalendar=(?!\*-\*-\* 09:00:00[ \t]*$)"
+    r"|(?ms:^\[Timer\](?:(?!^\[Install\]).)*^OnCalendar=\*-\*-\* 09:00:00[ \t]*$"
+    r"(?:(?!^\[Install\]).)*^OnCalendar=)"
+)
+_DAILY_PICK_SERVICE_PATTERN = (
+    r"(?ms)^\[Service\]$.*^ExecStartPre=/bin/bash %h/scripts/todays-pick\.sh[ \t]*$"
+    r".*^ExecStart=/usr/local/bin/maker-guide-build-personal-website[ \t]*$"
+)
+_DAILY_PICK_SCRIPT_PATTERN = (
+    r"(?ms)^set -euo pipefail$.*^choices=\(.*$.*^weekday=\$\(date \+%u\)$"
+    r".*^today=\$\(date \+%F\)$.*^temporary=\$\(mktemp .*today.*\)$"
+    r".*^trap .* EXIT$.*^printf .* >\"\$temporary\"$"
+    r".*^mv \"\$temporary\" \"\$output\"$"
 )
 _SOURCE_HANDOFF_PATHS = (
     "README.md",
@@ -1794,7 +1805,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S9",
-            title="Automate It. Hand It Over.",
+            title="Give Your Website a Daily Update",
             date=date(2026, 10, 10),
             starts_at=datetime(2026, 10, 10, 9, tzinfo=UTC),
             introduced_commands=(
@@ -1816,24 +1827,21 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "irc",
             ),
             learning_objectives=(
-                "Generate a fresh report before each automated site build.",
-                "Demonstrate a short timer, then leave a reasonable schedule.",
-                "Publish a readable README.",
-                "Preserve the working scripts and systemd units in the source repository.",
+                "Explain how a timer schedules a finite service separately from a web server.",
+                "Build a website once daily with a systemd calendar timer.",
+                "Publish a personalized rotating daily pick as scheduled static content.",
             ),
-            content=_session_content("S9", "Automate It. Hand It Over."),
+            content=_session_content("S9", "Give Your Website a Daily Update"),
             objectives=(
                 SessionObjective(
                     id="schedule-site-rebuilds",
-                    title="Automate report generation and publishing",
+                    title="Schedule a daily website build",
                     prompt=(
-                        "Create `site-build.service` with report generation in ExecStartPre, then "
-                        "the npm build in ExecStart. Demonstrate a short `site-build.timer`, then "
-                        "set OnActiveSec=1h and OnUnitInactiveSec=1h, reload, and re-arm the "
-                        "timer. "
-                        "Start the build service and inspect its journal and published report. "
-                        "The guide checks unit files and completed commands, not timer firing "
-                        "or fresh report output."
+                        "Create a oneshot `site-build.service` that runs "
+                        "`/usr/local/bin/maker-guide-build-personal-website` from `%h/src`. "
+                        "Create a matching timer with `OnCalendar=*-*-* 09:00:00`; "
+                        "load the units, run the service once, enable the timer, and inspect "
+                        "its next deadline and service journal."
                     ),
                     validation=AllOfValidation(
                         validations=(
@@ -1865,38 +1873,35 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     ),
                 ),
                 SessionObjective(
-                    id="write-readme",
-                    title="Publish a readable README",
+                    id="publish-daily-pick",
+                    title="Publish a rotating daily pick",
                     prompt=(
-                        "Write `~/src/README.md` with a heading that names your site "
-                        "and explains how to generate the report, build, serve, inspect logs, "
-                        "and recover it. Keep the notes concise and useful to you. "
-                        "The guide checks the title and build/service instructions."
-                    ),
-                    validation=FileCheckValidation(
-                        path="~/src/README.md",
-                        required_regex=(
-                            r"(?ms)\A# \S[^\n]*\n"
-                            r"(?=.*(?:build-website|npm run build|"
-                            r"systemctl --user start site-build\.service))"
-                            r"(?=.*systemctl --user).+"
-                        ),
-                    ),
-                ),
-                SessionObjective(
-                    id="prepare-source-handoff",
-                    title="Preserve the working project",
-                    prompt=(
-                        "Copy the two working scripts into `~/src/scripts/` and the three "
-                        "systemd units into `~/src/services/`, keeping active originals in place. "
-                        "Commit those copies and `README.md`, then verify them in Forgejo. "
-                        "The guide checks committed, unchanged local files; "
-                        "verify the push yourself."
+                        "Create a seven-choice weekday rotation in `~/scripts/todays-pick.sh` "
+                        "that atomically writes `~/src/pages/today.md`; link it from the "
+                        "homepage and add `ExecStartPre=/bin/bash %h/scripts/todays-pick.sh` "
+                        "before the build command in `site-build.service`. Run the service "
+                        "and inspect the journal and generated page."
                     ),
                     validation=AllOfValidation(
-                        validations=tuple(
-                            GitTrackedPathValidation(repository_path="~/src", path=path)
-                            for path in _SOURCE_HANDOFF_PATHS
+                        validations=(
+                            FileCheckValidation(
+                                path="~/scripts/todays-pick.sh",
+                                required_regex=_DAILY_PICK_SCRIPT_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/.config/systemd/user/site-build.service",
+                                required_regex=_DAILY_PICK_SERVICE_PATTERN,
+                            ),
+                            FileCheckValidation(
+                                path="~/src/pages/today.md",
+                                required_regex=(
+                                    r"(?ms)\A# Today.s Pick\n\n\d{4}-\d{2}-\d{2}\n\n.+\Z"
+                                ),
+                            ),
+                            FileCheckValidation(
+                                path="~/src/pages/index.md",
+                                required_regex=r"(?is)\[Today.s pick\]\(today\.html\)",
+                            ),
                         ),
                     ),
                 ),
@@ -3629,12 +3634,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         _quest(
             quest_id="write-readme",
-            title="Write your README",
+            title="Write useful operating notes",
             sequence=90,
             available_after_session="S9",
-            prompt="Write a useful `~/src/README.md`, commit it, and push it.",
-            required_commands=("micro", "vim", "git add", "git commit", "git push"),
-            practiced_skills=("readme-writing", "forgejo-publishing"),
+            prompt="Write useful operating notes in `~/src/README.md`.",
+            required_commands=("micro", "vim"),
+            practiced_skills=("readme-writing",),
             validation=FileCheckValidation(
                 path="~/src/README.md",
                 required_regex=(
@@ -3679,8 +3684,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=92,
             available_after_session="S9",
             prompt=(
-                "Create a user timer whose build service generates the report in ExecStartPre "
-                "before the npm build. Demonstrate a short interval, then leave an hourly cadence."
+                "Create a oneshot site-build service using the installed website-build helper and "
+                "a matching daily 09:00 calendar timer. Generate a seven-choice daily pick before "
+                "the build, link it from the homepage, and inspect the service journal."
             ),
             required_commands=(
                 "mkdir",
@@ -3695,7 +3701,19 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 validations=(
                     FileCheckValidation(
                         path="~/.config/systemd/user/site-build.service",
-                        required_regex=_SITE_BUILD_SERVICE_PATTERN,
+                        required_regex=_DAILY_PICK_SERVICE_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/scripts/todays-pick.sh",
+                        required_regex=_DAILY_PICK_SCRIPT_PATTERN,
+                    ),
+                    FileCheckValidation(
+                        path="~/src/pages/today.md",
+                        required_regex=r"(?ms)\A# Today.s Pick\n\n\d{4}-\d{2}-\d{2}\n\n.+\Z",
+                    ),
+                    FileCheckValidation(
+                        path="~/src/pages/index.md",
+                        required_regex=r"(?is)\[Today.s pick\]\(today\.html\)",
                     ),
                     FileCheckValidation(
                         path="~/.config/systemd/user/site-build.timer",
@@ -3720,8 +3738,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Automate site rebuilds with a user timer you can inspect and debug.",
             evidence=(
-                "The guide checks the report-before-build unit, hourly timer, and completed "
-                "enable, start, list, and journal commands. Inspect actual timer runs yourself."
+                "The guide checks the daily timer, pre-build generator, generated pick, homepage "
+                "link, and timer commands. Inspect the journal and public page to prove an actual "
+                "timer-triggered update; command history alone does not prove publication."
             ),
         ),
         _quest(
@@ -3775,7 +3794,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "recovery explanation. Report what you showed and one useful audience observation; "
                 "a tour of every artifact is not required."
             ),
-            required_commands=("curl", "git log", "systemctl --user"),
+            required_commands=("curl", "systemctl --user"),
             practiced_skills=("multi-page-sites", "systemd-user-services", "readme-writing"),
             validation=InteractiveQuestionValidation(
                 question=(
@@ -3826,7 +3845,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "Keep the plan where you will use it; publishing a page is optional. "
                 "Give the guide a non-private summary in your own words."
             ),
-            required_commands=("micro", "build-website", "git add", "git commit", "git push"),
+            required_commands=("micro",),
             practiced_skills=("multi-page-sites", "readme-writing"),
             validation=InteractiveQuestionValidation(
                 question="What will you do next, when, and how will you check the result?",
