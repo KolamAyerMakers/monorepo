@@ -26,13 +26,12 @@ The web server keeps serving the site while the build runs.
 
 <!-- end_slide -->
 
-# What Could You Schedule?
+# More Than "Run Every Day"
 
-- A daily song, drawing prompt, joke, or tiny challenge.
-- A weekly events list or rotating recommendation.
-- A dashboard refreshed from data you already collect.
-
-The scheduled job changes files; the ordinary web server serves the new build.
+- Run every morning or every Monday.
+- Run five minutes after the timer is activated.
+- Wait ten minutes after the job finishes before running again.
+- With persistent calendar timers, catch up once when reactivated, not once for each missed run.
 
 <!-- end_slide -->
 
