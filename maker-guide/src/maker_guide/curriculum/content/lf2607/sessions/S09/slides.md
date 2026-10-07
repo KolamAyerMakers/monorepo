@@ -37,7 +37,7 @@ The web server keeps serving the site while the build runs.
 
 # First, Build The Site Once
 
-The `build-website` shortcut works in your interactive shell. systemd does not load that shell alias; give it the installed command. Save as `~/.config/systemd/user/site-build.service`:
+Save as `~/.config/systemd/user/site-build.service`:
 
 ```ini
 [Unit]
