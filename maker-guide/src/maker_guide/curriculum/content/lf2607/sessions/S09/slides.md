@@ -82,6 +82,15 @@ Calendar timers are approximate, not a real-time promise. Ask systemd to explain
 systemd-analyze calendar '*-*-* 09:00:00'
 ```
 
+Example: Saturday 10 October 2026, 13:00 UTC.
+
+Illustrative output excerpt, assuming the server uses UTC:
+
+```text
+Normalized form: *-*-* 09:00:00
+    Next elapse: Sun 2026-10-11 09:00:00 UTC
+```
+
 <!-- end_slide -->
 
 # Load, Run, Then Schedule
