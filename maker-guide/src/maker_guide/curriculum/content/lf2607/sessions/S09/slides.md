@@ -117,11 +117,21 @@ The timer listing shows the next scheduled time, not proof a build succeeded. Th
 
 # Make A Daily Pick
 
-The service currently builds unchanged source. To publish changing content, a generator must update source before each build: systemd runs `ExecStartPre` before `ExecStart`.
+First create `~/scripts/todays-pick.sh` using the [self-study example](self-study.md#challenge-a-rotating-daily-pick) to generate `~/src/pages/today.md`.
 
-Create `~/scripts/todays-pick.sh`: choose one short personal recommendation, joke, song, or challenge for today, write it to `~/src/pages/today.md`, and link it from your homepage. Add the generator as `ExecStartPre=/bin/bash %h/scripts/todays-pick.sh` in `[Service]` before the build command; the installed build helper builds the site afterward.
+Update `[Service]` in `~/.config/systemd/user/site-build.service`:
 
-Now each daily build can publish your pick. A scheduled update is static content generated on the server—not a page that magically changes in a visitor's browser.
+```ini
+[Service]
+Type=oneshot
+WorkingDirectory=%h/src
+ExecStartPre=/bin/bash %h/scripts/todays-pick.sh
+ExecStart=/usr/local/bin/maker-guide-build-personal-website
+```
+
+`ExecStartPre` generates the page; `ExecStart` builds the site.
+
+Link [Today's pick](today.html) from your homepage.
 
 <!-- end_slide -->
 
