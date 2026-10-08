@@ -1564,15 +1564,15 @@ def test_s9_calendar_build_and_daily_pick_requirements() -> None:
     assert re.search(
         pick_service.required_regex,
         """[Service]
-ExecStartPre=/bin/bash %h/scripts/todays-pick.sh
+ExecStartPre=/bin/bash %h/scripts/singapore-today.sh
 ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
     )
     for bad_service in (
         """[Service]
 ExecStart=/usr/local/bin/maker-guide-build-personal-website
-ExecStartPre=/bin/bash %h/scripts/todays-pick.sh""",
+ExecStartPre=/bin/bash %h/scripts/singapore-today.sh""",
         """[Service]
-ExecStartPre=-/bin/bash %h/scripts/todays-pick.sh
+ExecStartPre=-/bin/bash %h/scripts/singapore-today.sh
 ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
         """[Service]
 ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
@@ -1592,67 +1592,123 @@ def test_s9_daily_pick_quest_checks_pick_source_and_published_inputs() -> None:
     assert {
         "~/.config/systemd/user/site-build.service",
         "~/.config/systemd/user/site-build.timer",
-        "~/scripts/todays-pick.sh",
-        "~/src/pages/today.md",
+        "~/scripts/singapore-today.sh",
+        "~/src/pages/singapore-today.md",
         "~/src/pages/index.md",
     } <= checks.keys()
     assert re.search(
         checks["~/.config/systemd/user/site-build.service"].required_regex,
         "{}{}".format(
-            "[Service]\nExecStartPre=/bin/bash %h/scripts/todays-pick.sh\n",
+            "[Service]\nExecStartPre=/bin/bash %h/scripts/singapore-today.sh\n",
             "ExecStart=/usr/local/bin/maker-guide-build-personal-website",
         ),
     )
 
 
-def test_daily_pick_generator_writes_content_and_preserves_previous_output(tmp_path: Path) -> None:
-    """The scheduled page is generated atomically and failed replacement preserves it."""
+def test_singapore_generator_writes_content_and_preserves_previous_output(tmp_path: Path) -> None:
+    """The weather generator validates API data and preserves the last good page."""
     self_study = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
     script = (
-        self_study.split("Create `~/scripts/todays-pick.sh`:", 1)[1]
+        self_study.split("Create `~/scripts/singapore-today.sh`:", 1)[1]
         .split("```bash\n", 1)[1]
         .split("\n```", 1)[0]
     )
     home = tmp_path / "home"
     pages = home / "src" / "pages"
     pages.mkdir(parents=True)
-    environment = {"HOME": str(home), "PATH": os.environ["PATH"]}
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    weather_file = tmp_path / "weather.json"
+    air_file = tmp_path / "air.json"
+    valid_weather = (
+        '{"daily":{"time":["2026-10-10"],"temperature_2m_max":[31.5],'
+        '"precipitation_probability_max":[20],"sunrise":["2026-10-10T06:54"],'
+        '"sunset":["2026-10-10T18:58"]},"daily_units":{"temperature_2m_max":"°C",'
+        '"precipitation_probability_max":"%"}}'
+    )
+    valid_air = (
+        '{"current":{"time":"2026-10-10T09:00","pm2_5":4.2},"current_units":{"pm2_5":"μg/m³"}}'
+    )
+    weather_file.write_text(valid_weather, encoding="utf-8")
+    air_file.write_text(valid_air, encoding="utf-8")
+    fake_curl = fake_bin / "curl"
+    curl_stub = (
+        '#!/bin/sh\ncase "$4" in *api.open-meteo.com/v1/forecast*) cat "$WEATHER_FIXTURE" >"$6";; '
+        '*air-quality-api.open-meteo.com*) cat "$AIR_FIXTURE" >"$6";; *) exit 2;; esac\n'
+    )
+    fake_curl.write_text(curl_stub, encoding="utf-8")
+    fake_curl.chmod(0o755)
+    environment = {
+        **os.environ,
+        "HOME": str(home),
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "WEATHER_FIXTURE": str(weather_file),
+        "AIR_FIXTURE": str(air_file),
+    }
+    output_path = pages / "singapore-today.md"
     subprocess.run(
-        ["/bin/bash", "-c", script], check=True, capture_output=True, text=True, env=environment
+        ["/bin/bash", "-c", script],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=environment,
     )
-    output = (pages / "today.md").read_text(encoding="utf-8")
-    assert datetime.now().astimezone().date().isoformat() in output
-    assert "Today's Pick" in output
-    choices = (
-        "Draw a robot",
-        "Find a new song",
-        "Photograph a face",
-        "Name a planet",
-        "Recommend a five-minute game",
-        "Make a paper creature",
-        "Share a discovery",
-    )
-    assert choices[datetime.now().astimezone().isoweekday() - 1] in output
+    output = output_path.read_text(encoding="utf-8")
+    assert "Forecast date: 2026-10-10" in output
+    assert "Forecast maximum temperature: 31.5 °C" in output
+    assert "Modelled PM2.5: 4.2 μg/m³" in output
+    assert "CAMS via Open-Meteo" in output
+    assert "Retrieved:" in output
 
-    (pages / "today.md").write_text("previous pick\n", encoding="utf-8")
-    failing_bin = tmp_path / "bin"
-    failing_bin.mkdir()
-    failing_mv = failing_bin / "mv"
-    failing_mv.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
-    failing_mv.chmod(0o755)
+    output_path.write_text("last good page\n", encoding="utf-8")
+    fake_curl.write_text("#!/bin/sh\nexit 22\n", encoding="utf-8")
     failed = subprocess.run(
         ["/bin/bash", "-c", script],
         check=False,
         capture_output=True,
         text=True,
-        env={**environment, "PATH": f"{failing_bin}:{os.environ['PATH']}"},
+        env=environment,
     )
     assert failed.returncode != 0
-    assert (pages / "today.md").read_text(encoding="utf-8") == "previous pick\n"
+    assert output_path.read_text(encoding="utf-8") == "last good page\n"
+
+    fake_curl.write_text(curl_stub, encoding="utf-8")
+    fake_curl.chmod(0o755)
+    for bad_air in (
+        '{"current":{"time":"2026-10-10T09:00","pm2_5":null},"current_units":{"pm2_5":"μg/m³"}}',
+        '{"current":{"time":"2026-10-10T09:00"},"current_units":{"pm2_5":"μg/m³"}}',
+        '{"current":{"time":"2026-10-10T09:00","pm2_5":"4.2"},"current_units":{"pm2_5":"μg/m³"}}',
+    ):
+        air_file.write_text(bad_air, encoding="utf-8")
+        failed = subprocess.run(
+            ["/bin/bash", "-c", script],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        assert failed.returncode != 0
+        assert output_path.read_text(encoding="utf-8") == "last good page\n"
+
+    for bad_weather, bad_air in (
+        (valid_weather.replace("2026-10-10", "2026-99-99", 1), valid_air),
+        (valid_weather, valid_air.replace("09:00", "99:99")),
+    ):
+        weather_file.write_text(bad_weather, encoding="utf-8")
+        air_file.write_text(bad_air, encoding="utf-8")
+        failed = subprocess.run(
+            ["/bin/bash", "-c", script],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        assert failed.returncode != 0
+        assert output_path.read_text(encoding="utf-8") == "last good page\n"
 
 
-def test_daily_pick_objective_accepts_personal_choices() -> None:
-    """The generator checks implementation properties, not prescribed choice text."""
+def test_singapore_objective_matches_the_complete_starter() -> None:
+    """The curriculum validator tracks the supplied weather generator."""
     validation = next(
         objective.validation
         for objective in CATALOG.session("S9").objectives
@@ -1662,21 +1718,21 @@ def test_daily_pick_objective_accepts_personal_choices() -> None:
     script_validation = next(
         item
         for item in validation.validations
-        if isinstance(item, FileCheckValidation) and item.path.endswith("todays-pick.sh")
+        if isinstance(item, FileCheckValidation) and item.path.endswith("singapore-today.sh")
     )
     self_study = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
     script = (
-        self_study.split("Create `~/scripts/todays-pick.sh`:", 1)[1]
+        self_study.split("Create `~/scripts/singapore-today.sh`:", 1)[1]
         .split("```bash\n", 1)[1]
         .split("\n```", 1)[0]
     )
     assert re.search(script_validation.required_regex, script)
-    assert re.search(
-        script_validation.required_regex, script.replace("Draw a robot", "Write a tiny song")
+    without_air_validation = re.sub(
+        r'(?ms)^jq -e \'\n.*?^\' "\$air" >/dev/null\n',
+        "",
+        script,
     )
-    assert not re.search(
-        script_validation.required_regex, script.replace("set -euo pipefail\n", "")
-    )
+    assert not re.search(script_validation.required_regex, without_air_validation)
 
     next_validation = CATALOG.quest("write-next-path").validation
     assert isinstance(next_validation, InteractiveQuestionValidation)

@@ -115,28 +115,73 @@ The timer listing shows the next scheduled time, not proof a build succeeded. Th
 
 <!-- end_slide -->
 
-# Make A Daily Pick
+# Fetch Forecast JSON
 
-First create `~/scripts/todays-pick.sh` using the [self-study example](self-study.md#challenge-a-rotating-daily-pick) to generate `~/src/pages/today.md`.
+Open-Meteo returns JSON for Singapore. Fetch and inspect the response:
 
-Update `[Service]` in `~/.config/systemd/user/site-build.service`:
-
-```ini
-[Service]
-Type=oneshot
-WorkingDirectory=%h/src
-ExecStartPre=/bin/bash %h/scripts/todays-pick.sh
-ExecStart=/usr/local/bin/maker-guide-build-personal-website
+```bash
+weather_url='https://api.open-meteo.com/v1/forecast?latitude=1.3521&longitude=103.8198'
+weather_url+='&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset'
+weather_url+='&timezone=Asia%2FSingapore&forecast_days=1'
+curl --max-time 15 -fsS "$weather_url" -o /tmp/weather.json
+jq . /tmp/weather.json
 ```
-
-`ExecStartPre` generates the page; `ExecStart` builds the site.
-
-Link [Today's pick](today.html) from your homepage.
 
 <!-- end_slide -->
 
-# Your Challenge: A Week Of Picks
+# Extract One Forecast Value
 
-Make a seven-choice weekday rotation that fits your site. Add the generator before the build in the service, then verify that the newly generated pick appears on your published `/today.html` page after a run. For the timer proof, follow [the self-study challenge instructions](self-study.md#challenge-a-rotating-daily-pick). Restore the daily schedule afterward.
+Illustrative response fragment (not live forecast data):
 
-Make it yours: a mini drawing prompt, five-minute game, local discovery, or something only your site would recommend. Restore the 09:00 daily schedule when finished.
+```json
+{"daily":{"temperature_2m_max":[31.5,30.8]}}
+```
+
+The field is an array of forecast days; `[0]` selects the first day's forecast maximum, not the current temperature.
+
+```bash
+jq -r '.daily.temperature_2m_max[0]' /tmp/weather.json
+```
+
+Here `-r` prints the number unchanged; for strings it removes JSON quotation marks.
+
+<!-- end_slide -->
+
+# Fetch Modelled Air Quality
+
+`current.pm2_5` is a separate CAMS model estimate, not official PSI or a local-station reading:
+
+```bash
+air_url='https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.3521&longitude=103.8198'
+air_url+='&current=pm2_5&timezone=Asia%2FSingapore&domains=cams_global'
+curl --max-time 15 -fsS "$air_url" -o /tmp/air.json
+jq -r '.current.pm2_5' /tmp/air.json
+```
+
+<!-- end_slide -->
+
+# Generate, Then Build
+
+Create the script by pasting the complete [self-study starter](self-study.md#challenge-publish-singapore-conditions):
+
+```bash
+mkdir -p ~/scripts
+micro ~/scripts/singapore-today.sh
+```
+
+Insert `ExecStartPre` before the existing `ExecStart` in `site-build.service`:
+
+```ini
+ExecStartPre=/bin/bash %h/scripts/singapore-today.sh
+ExecStart=/usr/local/bin/maker-guide-build-personal-website
+```
+
+`ExecStartPre` generates the page before the build. Link `[Singapore today](singapore-today.html)` from your homepage. The script preserves the last good page if fetching or validation fails.
+
+<!-- end_slide -->
+
+# Your Challenge: Singapore Today
+
+Use the provided complete script, connect it as `ExecStartPre`, and publish a page with a personalized presentation. Prove a short-timer activation changes that presentation and retrieval timestamp on the published page. Follow [self-study](self-study.md#challenge-publish-singapore-conditions), then restore the daily schedule.
+
+Make the page presentation your own without changing fetched measurements. Leave the 09:00 daily schedule active when finished.

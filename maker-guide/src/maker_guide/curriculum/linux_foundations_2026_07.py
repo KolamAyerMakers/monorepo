@@ -217,13 +217,31 @@ _SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN = (
     r"(?:(?!^\[Install\]).)*^OnCalendar=)"
 )
 _DAILY_PICK_SERVICE_PATTERN = (
-    r"(?ms)^\[Service\]$.*^ExecStartPre=/bin/bash %h/scripts/todays-pick\.sh[ \t]*$"
+    r"(?ms)^\[Service\]$.*^ExecStartPre=/bin/bash %h/scripts/singapore-today\.sh[ \t]*$"
     r".*^ExecStart=/usr/local/bin/maker-guide-build-personal-website[ \t]*$"
 )
 _DAILY_PICK_SCRIPT_PATTERN = (
-    r"(?ms)^set -euo pipefail$.*^choices=\(.*$.*^weekday=\$\(date \+%u\)$"
-    r".*^today=\$\(date \+%F\)$.*^temporary=\$\(mktemp .*today.*\)$"
-    r".*^trap .* EXIT$.*^printf .* >\"\$temporary\"$"
+    r"(?ms)^set -euo pipefail$.*^temporary=\$\(mktemp .*singapore-today.*\)$"
+    r".*^trap .* EXIT$"
+    r".*^curl --max-time 15 -fsS '"
+    r"https://api\.open-meteo\.com/v1/forecast\?[^']+' -o \"\$weather\"$"
+    r".*^curl --max-time 15 -fsS '"
+    r"https://air-quality-api\.open-meteo\.com/v1/air-quality\?[^']+' -o \"\$air\"$"
+    r".*^jq -e '$.*?^  \(\.daily\.temperature_2m_max\[0\] \| numbers\) as \$temperature \|$"
+    r".*?^  \(\.daily\.precipitation_probability_max\[0\] \| numbers\) as \$rain \|$"
+    r".*?^  \(\$temperature >= -100 and \$temperature <= 70\) and "
+    r"\(\$rain >= 0 and \$rain <= 100\) and$"
+    r".*?^  \.daily_units\.temperature_2m_max == \"°C\" and$"
+    r".*?^  \.daily_units\.precipitation_probability_max == \"%\"$.*?^' \"\$weather\" >/dev/null$"
+    r".*^jq -e '$.*?^  \(\.current\.pm2_5 \| numbers\) as \$pm \|$"
+    r".*?^  \(\$pm >= 0 and \$pm <= 1000\) and \.current_units\.pm2_5 == \"μg/m³\"$"
+    r".*?^' \"\$air\" >/dev/null$"
+    r".*^  parsed_date=\$\(TZ=Asia/Singapore date -d \""
+    r"\$calendar_value\" \+%F 2>/dev/null\) \|\| exit 1$"
+    r".*^  \[\[ \"\$parsed_date\" == \"\$calendar_value\" \]\] \|\| exit 1$"
+    r".*^  parsed_clock=\$\(TZ=Asia/Singapore date -d \"\$clock_value\" "
+    r"'\+%Y-%m-%dT%H:%M' 2>/dev/null\) \|\| exit 1$"
+    r".*^  \[\[ \"\$parsed_clock\" == \"\$clock_value\" \]\] \|\| exit 1$"
     r".*^mv \"\$temporary\" \"\$output\"$"
 )
 _SOURCE_HANDOFF_PATHS = (
@@ -1829,7 +1847,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             learning_objectives=(
                 "Explain how a timer schedules a finite service separately from a web server.",
                 "Build a website once daily with a systemd calendar timer.",
-                "Publish a personalized rotating daily pick as scheduled static content.",
+                (
+                    "Publish validated Singapore weather and "
+                    "modelled air quality as scheduled static content."
+                ),
             ),
             content=_session_content("S9", "Give Your Website a Daily Update"),
             objectives=(
@@ -1874,18 +1895,19 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 ),
                 SessionObjective(
                     id="publish-daily-pick",
-                    title="Publish a rotating daily pick",
+                    title="Publish Singapore conditions",
                     prompt=(
-                        "Create a seven-choice weekday rotation in `~/scripts/todays-pick.sh` "
-                        "that atomically writes `~/src/pages/today.md`; link it from the "
-                        "homepage and add `ExecStartPre=/bin/bash %h/scripts/todays-pick.sh` "
-                        "before the build command in `site-build.service`. Run the service "
-                        "and inspect the journal and generated page."
+                        "Install the provided `~/scripts/singapore-today.sh` generator for the "
+                        "Open-Meteo forecast and CAMS PM2.5. Validate both responses and "
+                        "atomically write `~/src/pages/singapore-today.md`; link the page from "
+                        "the homepage and add `ExecStartPre=/bin/bash "
+                        "%h/scripts/singapore-today.sh` before the build command. Run the "
+                        "service and inspect the journal and generated page."
                     ),
                     validation=AllOfValidation(
                         validations=(
                             FileCheckValidation(
-                                path="~/scripts/todays-pick.sh",
+                                path="~/scripts/singapore-today.sh",
                                 required_regex=_DAILY_PICK_SCRIPT_PATTERN,
                             ),
                             FileCheckValidation(
@@ -1893,14 +1915,15 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                                 required_regex=_DAILY_PICK_SERVICE_PATTERN,
                             ),
                             FileCheckValidation(
-                                path="~/src/pages/today.md",
+                                path="~/src/pages/singapore-today.md",
                                 required_regex=(
-                                    r"(?ms)\A# Today.s Pick\n\n\d{4}-\d{2}-\d{2}\n\n.+\Z"
+                                    r"(?is)(?=.*forecast date: \d{4}-\d{2}-\d{2})"
+                                    r"(?=.*PM2\.5)(?=.*retrieved:).+"
                                 ),
                             ),
                             FileCheckValidation(
                                 path="~/src/pages/index.md",
-                                required_regex=r"(?is)\[Today.s pick\]\(today\.html\)",
+                                required_regex=r"(?is)\[Singapore today\]\(singapore-today\.html\)",
                             ),
                         ),
                     ),
@@ -3684,9 +3707,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=92,
             available_after_session="S9",
             prompt=(
-                "Create a oneshot site-build service using the installed website-build helper and "
-                "a matching daily 09:00 calendar timer. Generate a seven-choice daily pick before "
-                "the build, link it from the homepage, and inspect the service journal."
+                "Create a oneshot site-build service and matching daily 09:00 timer. Fetch and "
+                "validate Singapore weather and CAMS PM2.5 in singapore-today.sh before the "
+                "build, publish its linked page, and inspect the service journal."
             ),
             required_commands=(
                 "mkdir",
@@ -3704,16 +3727,19 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         required_regex=_DAILY_PICK_SERVICE_PATTERN,
                     ),
                     FileCheckValidation(
-                        path="~/scripts/todays-pick.sh",
+                        path="~/scripts/singapore-today.sh",
                         required_regex=_DAILY_PICK_SCRIPT_PATTERN,
                     ),
                     FileCheckValidation(
-                        path="~/src/pages/today.md",
-                        required_regex=r"(?ms)\A# Today.s Pick\n\n\d{4}-\d{2}-\d{2}\n\n.+\Z",
+                        path="~/src/pages/singapore-today.md",
+                        required_regex=(
+                            r"(?is)(?=.*forecast date: \d{4}-\d{2}-\d{2})"
+                            r"(?=.*PM2\.5)(?=.*retrieved:).+"
+                        ),
                     ),
                     FileCheckValidation(
                         path="~/src/pages/index.md",
-                        required_regex=r"(?is)\[Today.s pick\]\(today\.html\)",
+                        required_regex=r"(?is)\[Singapore today\]\(singapore-today\.html\)",
                     ),
                     FileCheckValidation(
                         path="~/.config/systemd/user/site-build.timer",
@@ -3738,7 +3764,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Automate site rebuilds with a user timer you can inspect and debug.",
             evidence=(
-                "The guide checks the daily timer, pre-build generator, generated pick, homepage "
+                "The guide checks the daily timer, pre-build generator, "
+                "generated conditions, homepage "
                 "link, and timer commands. Inspect the journal and public page to prove an actual "
                 "timer-triggered update; command history alone does not prove publication."
             ),

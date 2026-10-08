@@ -56,36 +56,104 @@ systemctl --user list-timers --all site-build.timer
 
 The timer listing is not proof of a successful build; inspect the service journal. User timers need the user manager running. See [lingering](../../concepts/lingering.md) for logout behavior.
 
-## Challenge: a rotating daily pick
+## Challenge: publish Singapore conditions
 
-Make your site recommend one thing a day: a song, tiny drawing prompt, joke, five-minute game, or local discovery. Create `~/scripts/todays-pick.sh`:
+Fetch a one-day forecast and current air-quality estimate for Singapore with the free Open-Meteo APIs. The forecast's maximum temperature is a forecast, not the current temperature. The air value is CAMS model data, not Singapore's official PSI or a local-station reading; this page gives no health advice.
+
+Inspect the weather JSON before extracting a field. `daily.temperature_2m_max` is an array because the response can contain several forecast days; `[0]` selects the first day. For this number, `jq -r '.daily.temperature_2m_max[0]'` prints the same value as normal `jq`; `-r` removes JSON quotation marks from strings. Then inspect the air response and select `current.pm2_5`.
+
+The complete starter below retrieves both documents, checks required values and units, and only then replaces `~/src/pages/singapore-today.md`. It publishes only checked numeric values and dates, not arbitrary response text. Both temporary files and the output temporary file are removed on failure; the prior page remains in place.
+
+Create the file first:
+
+```bash
+mkdir -p ~/scripts
+micro ~/scripts/singapore-today.sh
+```
+
+Create `~/scripts/singapore-today.sh`:
+
+Paste the complete script below into the editor, then save the file:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-choices=("Draw a robot" "Find a new song" "Photograph a face" "Name a planet" "Recommend a five-minute game" "Make a paper creature" "Share a discovery")
-weekday=$(date +%u)
-today=$(date +%F)
-output="$HOME/src/pages/today.md"
-temporary=$(mktemp "$HOME/src/pages/.today.XXXXXX")
-trap 'rm -f "$temporary"' EXIT
+output="$HOME/src/pages/singapore-today.md"
+weather=$(mktemp)
+air=$(mktemp)
+temporary=$(mktemp "$HOME/src/pages/.singapore-today.XXXXXX")
+trap 'rm -f "$weather" "$air" "$temporary"' EXIT
 
-printf '# Today\x27s Pick\n\n%s\n\n%s\n' "$today" "${choices[weekday - 1]}" >"$temporary"
+curl --max-time 15 -fsS 'https://api.open-meteo.com/v1/forecast?latitude=1.3521&longitude=103.8198&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset&timezone=Asia%2FSingapore&forecast_days=1' -o "$weather"
+curl --max-time 15 -fsS 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.3521&longitude=103.8198&current=pm2_5&timezone=Asia%2FSingapore&domains=cams_global' -o "$air"
+
+jq -e '
+  .daily.time[0] | strings | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+' "$weather" >/dev/null
+jq -e '
+  (.daily.temperature_2m_max[0] | numbers) as $temperature |
+  (.daily.precipitation_probability_max[0] | numbers) as $rain |
+  (.daily.sunrise[0] | strings | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$")) and
+  (.daily.sunset[0] | strings | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$")) and
+  ($temperature >= -100 and $temperature <= 70) and ($rain >= 0 and $rain <= 100) and
+  .daily_units.temperature_2m_max == "°C" and
+  .daily_units.precipitation_probability_max == "%"
+' "$weather" >/dev/null
+jq -e '
+  (.current.pm2_5 | numbers) as $pm |
+  (.current.time | strings | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$")) and
+  ($pm >= 0 and $pm <= 1000) and .current_units.pm2_5 == "μg/m³"
+' "$air" >/dev/null
+
+forecast_date=$(jq -r '.daily.time[0]' "$weather")
+temperature=$(jq -r '.daily.temperature_2m_max[0]' "$weather")
+rain=$(jq -r '.daily.precipitation_probability_max[0]' "$weather")
+sunrise=$(jq -r '.daily.sunrise[0]' "$weather")
+sunset=$(jq -r '.daily.sunset[0]' "$weather")
+air_time=$(jq -r '.current.time' "$air")
+pm25=$(jq -r '.current.pm2_5' "$air")
+
+for calendar_value in "$forecast_date" "${sunrise%T*}" "${sunset%T*}"; do
+  parsed_date=$(TZ=Asia/Singapore date -d "$calendar_value" +%F 2>/dev/null) || exit 1
+  [[ "$parsed_date" == "$calendar_value" ]] || exit 1
+done
+for clock_value in "$sunrise" "$sunset" "$air_time"; do
+  parsed_clock=$(TZ=Asia/Singapore date -d "$clock_value" '+%Y-%m-%dT%H:%M' 2>/dev/null) || exit 1
+  [[ "$parsed_clock" == "$clock_value" ]] || exit 1
+done
+retrieved=$(TZ=Asia/Singapore date --iso-8601=seconds)
+
+cat >"$temporary" <<EOF
+# Singapore Today
+
+Forecast date: $forecast_date (Asia/Singapore)
+
+- Forecast maximum temperature: $temperature °C
+- Maximum precipitation probability: $rain %
+- Sunrise: $sunrise (Asia/Singapore)
+- Sunset: $sunset (Asia/Singapore)
+- Modelled PM2.5: $pm25 μg/m³ (CAMS; model timestamp $air_time Asia/Singapore)
+
+Retrieved: $retrieved
+
+Weather forecast: [Open-Meteo](https://open-meteo.com/)
+Air-quality model: [CAMS via Open-Meteo](https://open-meteo.com/en/docs/air-quality-api)
+EOF
 mv "$temporary" "$output"
 ```
 
-The seven choices repeat weekly; replace them with your own. Run the script once and inspect `~/src/pages/today.md`. Add `[Today's pick](today.html)` to the homepage. The generator owns `today.md`; edit the choices in the script, not its generated output.
+Make it executable with `chmod +x ~/scripts/singapore-today.sh`, run it, and inspect `~/src/pages/singapore-today.md`. Add `[Singapore today](singapore-today.html)` to `~/src/pages/index.md`. The generated page is overwritten on each successful run.
 
 Add this line to `[Service]` before `ExecStart`:
 
 ```ini
-ExecStartPre=/bin/bash %h/scripts/todays-pick.sh
+ExecStartPre=/bin/bash %h/scripts/singapore-today.sh
 ```
 
-Each successful build now generates the pick first. If generation fails, systemd will not proceed to the build. Reload the units, run the service, inspect its journal, and check the published `/today.html` page. This is scheduled static content: the server builds a new page; visitors' browsers do not generate it. The generator and homepage link are the daily-pick challenge; refreshing a system report is not required.
+The pre-start generator runs before each build. If either API request or validation fails, it exits without replacing the last good source page, and systemd does not proceed to the build. Reload the units, run the service, inspect its journal, and check `/singapore-today.html`. This is scheduled static content: the server builds a new page; visitors' browsers do not generate it.
 
-To prove the timer publishes a change, first run the configured service and confirm `/today.html` shows today's pick. Edit that weekday's choice in `todays-pick.sh`; leave generated `today.md` alone. Stop the timer and wait for any build to finish. In `micro ~/.config/systemd/user/site-build.timer`, temporarily replace `OnCalendar` with `OnActiveSec=30s`, then save and quit. Reload the units, inspect the effective timer with `systemctl --user cat site-build.timer`, and start it. Wait for a new journal activation and verify the changed pick at `/today.html` without manually running the generator or build. Stop the timer; edit the complete unit to restore `OnCalendar=*-*-* 09:00:00`; reload, inspect the unit, then start it and check the next deadline.
+Prove the automatic path without waiting for tomorrow: first run the daily service and confirm `/singapore-today.html` is published. Personalize its page heading in the script's Markdown template; do not edit the generated page. Stop the timer and wait for any build to finish. Temporarily replace `OnCalendar` with `OnActiveSec=30s`, reload, inspect the effective unit with `systemctl --user cat site-build.timer`, and start it. Wait for a new journal activation and verify your heading and a new retrieval timestamp at `/singapore-today.html`; do not manually run the generator or build during this proof. Stop the timer, restore `OnCalendar=*-*-* 09:00:00`, reload, inspect, restart the timer, and check its next deadline.
 
 Make the page feel like yours, and leave the normal daily 09:00 schedule active when done.
 

@@ -107,7 +107,7 @@ For recovery, explain the symptom, observation that narrowed the cause, repair, 
 
 ## Demo Script
 
-This is fallback evidence for a site/service claim, not a required presentation sequence. Run it in the classroom, using only the parts that support your chosen claim. For timer basics and the daily-pick challenge, see [S9 self-study](../S09/self-study.md).
+This is fallback evidence for a site/service claim, not a required presentation sequence. Run it in the classroom, using only the parts that support your chosen claim. For timer basics and the Singapore conditions challenge, see [S9 self-study](../S09/self-study.md).
 
 For stable body comparisons, pause automation and inspect the build state first:
 
@@ -174,7 +174,7 @@ Do not leave a classroom-speed timer running or layer schedules. If a failure me
 
 ## Automation Evidence
 
-For an automation claim, explain what your oneshot generates before building and how you checked the resulting public page. A schedule listing is not evidence of successful publication. The daily pick quest's required evidence is the generated source, homepage link, configured pre-build generator, and timer setup; prove an actual timer-triggered public change manually with the [S9 short-timer procedure](../S09/self-study.md#build-once-each-morning).
+For an automation claim, explain what your oneshot generates before building and how you checked the resulting public page. A schedule listing is not evidence of successful publication. The Singapore conditions quest requires the generated source, homepage link, configured pre-build generator, and timer setup; prove an actual timer-triggered public change manually with the [S9 short-timer procedure](../S09/self-study.md#challenge-publish-singapore-conditions).
 
 ## Recovery Pointers
 
@@ -197,7 +197,7 @@ For example:
 ```markdown
 # Keep My Site Useful
 
-On 2026-10-31, I will update my daily pick and check the published page.
+On 2026-10-31, I will check the published Singapore forecast and air-quality page.
 
 I will record what changed and one instruction that needs improving.
 

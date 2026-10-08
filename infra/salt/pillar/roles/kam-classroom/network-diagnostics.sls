@@ -2,6 +2,7 @@ kam_classroom:
   network_diagnostics:
     packages:
       - curl
+      - jq
       - ca-certificates
       - bind9-host
       - iputils-ping

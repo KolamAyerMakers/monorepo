@@ -25,7 +25,7 @@ Rehearse once before the protected demo block. Open the pages or logs you will n
 
 ## Evidence You Can Use
 
-- Automation: a journal activation after the timer started, without a manual build, plus the changed daily pick on the published page. The pre-start generator runs before the installed site-build helper. Refresh a system report only if you choose to do so; it is not required evidence.
+- Automation: a journal activation after the timer started, without a manual build, plus a changed presentation and retrieval timestamp on the published Singapore conditions page. The pre-start generator runs before the installed site-build helper. Refresh a system report only if you choose to do so; it is not required evidence.
 - Serving: a successful local and public request with the expected page body, supported by request logs and an outside browser view. An active unit alone does not prove this.
 - Recovery: the actual symptom, observation that narrowed the cause, repair, and response or content proving recovery. Do not replace observed errors with expected successes.
 

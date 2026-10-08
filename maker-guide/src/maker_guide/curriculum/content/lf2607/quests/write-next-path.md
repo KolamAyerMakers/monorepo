@@ -43,7 +43,7 @@ Open `micro ~/src/pages/next.md` and keep useful existing content. Adapt the exa
 
 ## Optional Local Preview
 
-The interactive `build-website` alias builds the page locally; it does not generate your daily pick. Pause the timer to avoid racing the standalone build, then preview the page on your site if useful. No publication is required.
+The interactive `build-website` alias builds the page locally; it does not fetch fresh forecast data. Pause the timer to avoid racing the standalone build, then preview the page on your site if useful. No publication is required.
 
 Keep the timer stopped while you restore the daily 09:00 schedule:
 

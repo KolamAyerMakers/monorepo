@@ -24,7 +24,7 @@ Explain recovery as symptom, observation, cause, repair, and confirming evidence
 
 Keep the serving unit aligned with the [S8 Caddy unit](../S08/self-study.md#2-create-the-user-unit). Personal Caddy uses `WorkingDirectory=%h`, an explicit `--root %h/public_html`, and `--access-log`; shared Caddy handles public HTTPS and forwards to the personal process over loopback HTTP. Same software, two processes. Use `systemctl --user` for your service, never `caddy stop` or `caddy reload`, which can target shared Caddy.
 
-The daily-pick challenge generates its page before the scheduled build. A timer listing is not evidence the new page was successfully published.
+The S9 Singapore conditions generator validates both API responses before generating its page ahead of the scheduled build. A timer listing is not evidence the new page was successfully published.
 
 ## Carry Out The Next Action
 
