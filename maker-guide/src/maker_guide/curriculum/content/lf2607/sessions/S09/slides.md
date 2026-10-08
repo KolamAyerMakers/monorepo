@@ -51,6 +51,14 @@ ExecStart=/usr/local/bin/maker-guide-build-personal-website
 
 `Type=oneshot` means systemd waits for this finite task to finish.
 
+```bash
+systemctl --user daemon-reload
+systemctl --user start site-build.service
+journalctl --user -u site-build.service
+```
+
+Check the journal for a successful build. A completed oneshot normally shows inactive; that is expected.
+
 <!-- end_slide -->
 
 # Now Say When: Every Morning
@@ -93,18 +101,6 @@ Normalized form: *-*-* 09:00:00
        (in UTC): Sun 2026-10-11 01:00:00 UTC
        From now: 20h left
 ```
-
-<!-- end_slide -->
-
-# Load, Run, Then Schedule
-
-```bash
-systemctl --user daemon-reload
-systemctl --user start site-build.service
-journalctl --user -u site-build.service --no-pager -n 20
-```
-
-Check the journal for a successful build. A completed oneshot normally shows inactive; that is expected.
 
 <!-- end_slide -->
 
