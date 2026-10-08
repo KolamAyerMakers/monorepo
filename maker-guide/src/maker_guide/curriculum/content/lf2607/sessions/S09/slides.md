@@ -115,14 +115,23 @@ The timer listing shows the next scheduled time, not proof a build succeeded. Th
 
 <!-- end_slide -->
 
+# Singapore Today
+
+Publish a page with Singapore's daily forecast and modelled air quality. Each day, fetch JSON with `curl`, extract values with `jq`, generate Markdown with a script, then build the site with a systemd service and daily timer.
+
+<!-- end_slide -->
+
 # Fetch Forecast JSON
 
 Open-Meteo returns JSON for Singapore. Fetch and inspect the response:
 
 ```bash
-weather_url='https://api.open-meteo.com/v1/forecast?latitude=1.3521&longitude=103.8198'
+weather_url='https://api.open-meteo.com/v1/forecast?'
+weather_url+='latitude=1.3521'
+weather_url+='&longitude=103.8198'
 weather_url+='&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset'
-weather_url+='&timezone=Asia%2FSingapore&forecast_days=1'
+weather_url+='&timezone=Asia%2FSingapore'
+weather_url+='&forecast_days=1'
 curl --max-time 15 -fsS "$weather_url" -o /tmp/weather.json
 jq . /tmp/weather.json
 ```
