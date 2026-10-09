@@ -288,18 +288,10 @@ systemctl --user daemon-reload
 systemctl --user start site-build.service
 ```
 
-Change the page heading in your script. Temporarily add `OnActiveSec=1min` under `[Timer]` in `site-build.timer`; keep `OnCalendar=*-*-* 09:00:00`.
+Check the published page’s fields and retrieval time, then enable the daily timer and check its next scheduled run.
 
 ```bash
-systemctl --user daemon-reload
-systemctl --user restart site-build.timer
-```
-
-After one minute, verify the new heading and retrieval time on the published page. Remove `OnActiveSec`, then reload and restart the timer to restore the daily schedule:
-
-```bash
-systemctl --user daemon-reload
-systemctl --user restart site-build.timer
+systemctl --user enable --now site-build.timer
 systemctl --user list-timers --all site-build.timer
 ```
 
