@@ -7,7 +7,7 @@
 - [ ] Repair S09 incident: retain approved curriculum edits, keep rogue `scripts/maker-report.sh` absent, and validate Git subprocess isolation before the authorized commit gate; prior trusted parent is `e1a37f9`.
 - [x] Update Salt's root SSH pillar to YubiKey `cardno:34_996_983`, retaining the Salt key. New-key root login already verified on `lf2607` and `lf-dev`; no Salt application performed. Old-key revocation and Pulumi provisioning configuration remain unchanged.
 
-- Book production and editorial tasks: [graduation/book/TODO.md](graduation/book/TODO.md).
+- Julia Evans anthology production tasks: [graduation/book/TODO.md](graduation/book/TODO.md).
 
 - [x] Add natural S8 transitions: accepted repairs receive paired congratulations and a connected next-incident transition, and automatically launch one next lab. Only successful new launches get the incident transition; failures retain their diagnostics. User validated the live flow; 1610 tests passed (2 deselected), with lint and typing issues corrected after the initial commit gate.
 - [x] Complete the empty-root service-lab change: new attempts use `~/empty-site`, with durable inode ownership, no-clobber creation, collision/content refusal, and no deletion. Persisted per-attempt roots retain inspection, rollback, and retry support. Commit-gate tests: 1609 passed, 2 deselected; typing passed. Reported Ruff formatting and test-docstring failures fixed; full hook success remains pending retry.

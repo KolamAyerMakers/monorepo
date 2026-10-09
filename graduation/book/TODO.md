@@ -1,33 +1,20 @@
-# Book TODO
+# At the Prompt: production TODO
 
-## Original illustrated reference
+- [ ] Obtain printer specifications: punching clearance, bleed, colour workflow,
+  PDF requirements, stock, binding, quantity and deadline.
+- [ ] Confirm actual-size reading comfort for the A5 landscape proof.
+- [ ] Adapt provisional exports to the approved printer specifications.
+- [ ] Obtain printer technical preflight and a digital proof. If a separate bound
+  trial copy cannot meet the deadline, request first-copy inspection and document
+  the accepted colour, readability and punching risks.
 
-- [ ] Obtain actual-size reading approval and printer specifications for the
-  70-page reference. Current proof:
-  `local/at-the-prompt-original-knowledge-A5.pdf`. It is an editorial proof,
-  not a printer-approved file.
-- [x] Complete five independent editorial reviews and apply their findings.
-- [x] Add and review all eleven complementary topics across fourteen pages.
-- [x] Audit code indentation throughout the book and inspect rendered Bash
-  bodies, continuations and tabular output.
-- [x] Consolidate package management into three pages and replace repeated
-  installation commands with prerequisites and references.
+Approved order: Terminal, Command Line, Linux, Bash, Git. Retain the approved
+foreword and Build. Break. Repeat. signature, IBM Plex Mono Bold cover,
+course/Community Club lines, and 134 interior / 138 review pages with blank
+inside cover faces. Philippe marked compilation permission resolved.
 
-The current edition has 70 pages and fourteen chapters/bookmarks, with a minimum
-extracted text margin of 10.47 mm. Review history and findings live in
-[chapters/REVIEW.md](chapters/REVIEW.md); reading order lives in
-[chapters/contents.toml](chapters/contents.toml).
-
-## Separate purchased anthology
-
-- [ ] Finalize printer specifications and actual-size reading approval. If a
-  physical trial copy cannot meet the deadline, seek a digital printer proof and
-  first-copy inspection, documenting the accepted risk.
-
-Approved order: Terminal, Command Line, Linux, Bash, Git. Production sources retain
-the approved foreword and Build. Break. Repeat. signature, IBM Plex Mono Bold
-cover, course/Community Club lines, and 134 interior / 138 review pages with
-blank inside cover faces. Philippe marked compilation permission resolved.
+The original illustrated book project was abandoned at Philippe's request.
+Only the purchased anthology and its production materials remain here.
 
 Only editable sources, licensed fonts, assembly/preflight, documentation and the
 source-free layout test are versioned. Purchased works, derived proofs and

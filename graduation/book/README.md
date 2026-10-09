@@ -1,8 +1,8 @@
 # At the Prompt: production sources
 
 See the [audit](AUDIT.md) and [production specification](PRODUCTION.md).
-The [original illustrated reference](chapters/README.md) is separate from the
-purchased anthology. Pending work for both is tracked in [TODO.md](TODO.md).
+This directory contains only the purchased Julia Evans anthology and its
+production sources. Pending work is tracked in [TODO.md](TODO.md).
 Purchased PDFs and derived proofs stay in the Git-ignored `local/` directory.
 They must not be distributed to learners or uploaded as CI artifacts.
 
