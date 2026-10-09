@@ -254,15 +254,25 @@ jq -r '.current.pm2_5' /tmp/air.json
 
 <!-- end_slide -->
 
-# Generate, Then Build
+# Complete The Generator
 
-Copy the released, intentionally incomplete starter once; finish its extraction and formatting exercises in your own copy:
+Copy the starter, then complete its field extraction and Markdown composition:
 
 ```bash
 mkdir -p ~/scripts
 cp /docs/sessions/S09/resources/singapore-today.sh ~/scripts/singapore-today.sh
 micro ~/scripts/singapore-today.sh
 ```
+
+Once complete, run it and inspect `~/src/pages/singapore-today.md`:
+
+```bash
+bash ~/scripts/singapore-today.sh
+```
+
+<!-- end_slide -->
+
+# Schedule And Verify
 
 Insert `ExecStartPre` before the existing `ExecStart` in `site-build.service`:
 
@@ -271,12 +281,33 @@ ExecStartPre=/bin/bash %h/scripts/singapore-today.sh
 ExecStart=/usr/local/bin/maker-guide-build-personal-website
 ```
 
-`ExecStartPre` generates the page before the build. Link `[Singapore today](singapore-today.html)` from your homepage. The script preserves the last good page if fetching or validation fails.
+Link the page from your homepage, then reload and manually test the service:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user start site-build.service
+```
+
+Change the page heading in your script. Temporarily add `OnActiveSec=1min` under `[Timer]` in `site-build.timer`; keep `OnCalendar=*-*-* 09:00:00`.
+
+```bash
+systemctl --user daemon-reload
+systemctl --user restart site-build.timer
+```
+
+After one minute, verify the new heading and retrieval time on the published page. Remove `OnActiveSec`, then reload and restart the timer to restore the daily schedule:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user restart site-build.timer
+systemctl --user list-timers --all site-build.timer
+```
 
 <!-- end_slide -->
 
-# Your Challenge: Singapore Today
+# See You On 24 October
 
-Complete the starter’s field extraction and Markdown composition, connect it as `ExecStartPre`, and publish a page with a personalized presentation. Prove a short-timer activation changes that presentation and retrieval timestamp on the published page. Restore the daily schedule afterward.
+S10 is our final session — 24 October 2026.
 
-Make the page presentation your own without changing fetched measurements. Leave the 09:00 daily schedule active when finished.
+- We will discuss how to keep learning after Linux Foundations.
+- Then we will celebrate at the graduation ceremony, with certificates and a small gift.
