@@ -24,9 +24,14 @@ Poppler utilities for supplementary inspections. Python dependencies are locked
 in `uv.lock`. Run from `graduation/book`:
 
 ```bash
-uv run assemble.py "/path/to/private/purchased/zines"
-uv run preflight.py "/path/to/private/purchased/zines"
+make
+# Override the default ~/Books/Julia Evans Wizard Zines source directory:
+make SOURCE="/path/to/private/purchased/zines"
 ```
+
+`make` assembles the PDFs and runs local preflight. Outputs default to
+`local/proofs`; keep any `OUTPUT` override inside Git-ignored `local/`.
+`make preflight` checks existing exports without rebuilding them.
 
 - `assemble.py`: approved reading sources/order, foreword, contents, mirrored
   binding margins, bookmarks, four cover faces and actual-size samples.
@@ -56,10 +61,7 @@ prototype, not a certified final PDF/X or printer-imposed file.
 ## Check the scripts without the purchased books
 
 ```bash
-uv run ruff check
-uv run ruff format --check
-uv run basedpyright
-uv run pytest
+make check
 ```
 
 The test creates a blank page in memory and verifies that the entire approved
