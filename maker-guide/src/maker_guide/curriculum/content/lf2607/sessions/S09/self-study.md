@@ -59,7 +59,7 @@ The timer listing is not proof of a successful build; inspect the service journa
 
 ## Challenge: publish Singapore conditions
 
-The session resource starter at [/docs/sessions/S09/resources/singapore-today.sh](/docs/sessions/S09/resources/singapore-today.sh) fetches bounded Open-Meteo weather and air-quality responses, validates schema, units and dates, then stops before extraction and publication. It intentionally exits `EXERCISE_INCOMPLETE`; removing that diagnostic alone cannot publish placeholders or an empty report. Copy it once and keep your own edits:
+The session resource starter at [/docs/sessions/S09/resources/singapore-today.sh](/docs/sessions/S09/resources/singapore-today.sh) fetches bounded Open-Meteo weather and air-quality responses and validates schema, units and dates. Copy it once and keep your own edits:
 
 ```bash
 mkdir -p ~/scripts
@@ -68,13 +68,15 @@ cp /docs/sessions/S09/resources/singapore-today.sh \
 micro ~/scripts/singapore-today.sh
 ```
 
-The daily maximum is a forecast, not current temperature. The air value is CAMS model data, not Singapore's official PSI or a local-station reading; give no health advice. Inspect the temporary JSON and complete both TODO sections. Example extraction and redirection:
+The daily maximum is a forecast, not current temperature. The air value is CAMS model data, not Singapore's official PSI or a local-station reading; give no health advice. Inspect the temporary JSON and complete both TODO sections. Put both assignments in TODO 1 and the `printf` line in TODO 2:
 
 ```bash
-jq -r '.daily.temperature_2m_max[0]' "$temporary_directory/weather.json" > "$temporary_directory/example.txt"
+weather="$temporary_directory/weather.json"
+temperature=$(jq -r '.daily.temperature_2m_max[0]' "$weather")
+printf '# Singapore Today\n\nMaximum: %s °C\n' "$temperature" > "$report"
 ```
 
-Use command substitution to fill each required variable; compose Markdown with `printf` redirected into the temporary report. Keep the source forecast date and air-model timestamp distinct from retrieval time. Attribute Open-Meteo and CAMS; do not mislabel model PM2.5 as PSI.
+`$()` captures command output, `%s` inserts the value, `\n` adds line breaks, and `>` writes the report. Use command substitution for the other required variables and complete the full Markdown report with `printf`. Only after both TODOs are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1` at the top of the TODO section; the later required-fields check still guards incomplete output. Keep the source forecast date and air-model timestamp distinct from retrieval time. Attribute Open-Meteo and CAMS; do not mislabel model PM2.5 as PSI.
 
 | Report field | JSON field | Meaning / unit |
 |---|---|---|

@@ -8,21 +8,19 @@ Your website can update itself while you are away.
 
 <!-- end_slide -->
 
-# A Timer Is A When, Not A What
+# Services And Timers
 
 A systemd **service** describes a task. A **timer** tells systemd when to start that service.
 
-The task runs, finishes, and waits for its next scheduled start. No loop needs to stay running.
+The service runs the task; the timer schedules it. A oneshot service finishes when its task is done.
 
 <!-- end_slide -->
 
-# Finite Work Beside An Always-On Server
+# Three Units, Three Jobs
 
-- `site.service` keeps serving the current website.
-- `site-build.service` builds the site once, then exits.
-- `site-build.timer` starts that build service on a schedule.
-
-The web server keeps serving the site while the build runs.
+- `site.service` serves the published pages.
+- `site-build.service` builds the source once, then exits.
+- `site-build.timer` starts that build hourly, with up to 55 minutes' random delay.
 
 <!-- end_slide -->
 
@@ -83,17 +81,17 @@ The matching name makes this timer start `site-build.service`. The random delay 
 
 # Read The Calendar
 
-`OnCalendar=hourly` sets a calendar event at each clock hour. `RandomizedDelaySec=55min` adds up to 55 minutes before the build.
-
-Calendar timers are approximate, not a real-time promise. Ask systemd to explain the next occurrence:
+`OnCalendar=hourly` sets an event at each clock hour. `RandomizedDelaySec=55min` adds up to 55 minutes before the build. Ask systemd to explain the next calendar occurrence:
 
 ```bash
 systemd-analyze calendar hourly
 ```
 
-Example: Saturday 10 October 2026, 13:00 (+08).
+<!-- end_slide -->
 
-Illustrative output at that time:
+# Read The Next Run
+
+Example: Saturday 10 October 2026, 13:00 (+08).
 
 ```text
 $ date
@@ -106,7 +104,7 @@ Normalized form: *-*-* *:00:00
        From now: 1h left
 ```
 
-This explains only the calendar occurrence; with the random delay, the actual start is approximately 14:00–14:55, subject to systemd timer accuracy.
+The next calendar event is 14:00 UTC+08 (06:00 UTC), in one hour. The random delay makes the actual start approximately 14:00–14:55, subject to timer accuracy.
 
 <!-- end_slide -->
 
@@ -256,9 +254,23 @@ jq -r '.current.pm2_5' /tmp/air.json
 
 <!-- end_slide -->
 
+# From JSON To Markdown
+
+The starter already defines the temporary JSON and report paths. Put both assignments in TODO 1 and the `printf` line in TODO 2:
+
+```bash
+weather="$temporary_directory/weather.json"
+temperature=$(jq -r '.daily.temperature_2m_max[0]' "$weather")
+printf '# Singapore Today\n\nMaximum: %s °C\n' "$temperature" > "$report"
+```
+
+`$()` captures command output; `%s` inserts it, `\n` adds newlines, and `>` writes the report.
+
+<!-- end_slide -->
+
 # Complete The Generator
 
-Copy the starter, then complete its field extraction and Markdown composition:
+Copy the starter and edit it:
 
 ```bash
 mkdir -p ~/scripts
@@ -267,7 +279,9 @@ cp /docs/sessions/S09/resources/singapore-today.sh \
 micro ~/scripts/singapore-today.sh
 ```
 
-Once complete, run it and inspect `~/src/pages/singapore-today.md`:
+Use the example to complete both TODOs: assign the other fields in TODO 1 and write the full attributed report in TODO 2. Only when both are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1`.
+
+Then run it and inspect `~/src/pages/singapore-today.md`:
 
 ```bash
 bash ~/scripts/singapore-today.sh
