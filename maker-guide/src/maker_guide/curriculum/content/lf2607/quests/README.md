@@ -62,7 +62,7 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 
 ## S09 Reinforcement
 
-Give Your Website a Daily Update. Schedule a daily build and publish validated Singapore weather and modelled air quality. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
+Keep Your Website Up To Date. Schedule an hourly build with a randomized start delay and publish validated Singapore weather and modelled air quality. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
 
 - [try-cron-and-remove-it](try-cron-and-remove-it.md)
 - [transform-heading-with-sed](transform-heading-with-sed.md)

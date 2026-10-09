@@ -1,4 +1,4 @@
-# S9 Recap: Give Your Website a Daily Update
+# S9 Recap: Keep Your Website Up To Date
 
 Session: S9
 
@@ -8,7 +8,7 @@ Session: S9
 
 - A service says **what** work to do; a timer says **when** to start it.
 - `site-build.service` is a finite oneshot build. `site.service` remains the always-running web server.
-- `OnCalendar=*-*-* 09:00:00` schedules a daily build in the server's local time zone. Calendar timers are approximate.
+- `OnCalendar=hourly` with `RandomizedDelaySec=55min` schedules hourly builds with a randomized start window, not strict concurrency spacing or real-time timing.
 - `systemctl --user list-timers` shows a deadline; the service journal shows whether the work succeeded.
 - A build renders existing source. `ExecStartPre` runs the weather-and-air generator before the build.
 
@@ -16,7 +16,7 @@ Session: S9
 
 The released starter validates Open-Meteo forecast data and CAMS modelled PM2.5, then leaves jq extraction and Markdown composition for you to complete before atomic replacement. Forecast maximum temperature is not current temperature; CAMS is neither official PSI nor a local station. Its page distinguishes forecast date, air-model timestamp, retrieval time, units, and sources. A failed update preserves the previous page and prevents the build.
 
-Use [S9 self-study](self-study.md) for the incomplete starter and exercise, service, timer, and short-timer proof. Restore the daily 09:00 schedule afterward.
+Use [S9 self-study](self-study.md) for the incomplete starter and exercise, service, timer, and short-timer proof. Restore both hourly settings afterward.
 
 ## Before S10
 

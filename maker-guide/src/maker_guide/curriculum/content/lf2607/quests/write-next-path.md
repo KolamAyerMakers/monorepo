@@ -45,14 +45,14 @@ Open `micro ~/src/pages/next.md` and keep useful existing content. Adapt the exa
 
 The interactive `build-website` alias builds the page locally; it does not fetch fresh forecast data. Pause the timer to avoid racing the standalone build, then preview the page on your site if useful. No publication is required.
 
-Keep the timer stopped while you restore the daily 09:00 schedule:
+Keep the timer stopped while you restore the hourly schedule and randomized delay:
 
 ```bash
 systemctl --user stop site-build.timer
 systemctl --user status site-build.service --no-pager
 ```
 
-Open the complete unit with `micro ~/.config/systemd/user/site-build.timer`. Replace `OnActiveSec` with `OnCalendar=*-*-* 09:00:00`, save, and quit. Then:
+Open the complete unit with `micro ~/.config/systemd/user/site-build.timer`. Remove the temporary interval/calendar directives, restore `OnCalendar=hourly` and `RandomizedDelaySec=55min` in `[Timer]`, save, and quit. Then:
 
 ```bash
 systemctl --user daemon-reload

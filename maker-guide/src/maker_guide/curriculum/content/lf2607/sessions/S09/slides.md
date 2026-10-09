@@ -1,4 +1,4 @@
-# Give Your Website a Daily Update
+# Keep Your Website Up To Date
 
 Session: S9
 
@@ -61,33 +61,34 @@ Check the journal for a successful build. A completed oneshot normally shows ina
 
 <!-- end_slide -->
 
-# Now Say When: Every Morning
+# Now Say When: Every Hour
 
 Save as `~/.config/systemd/user/site-build.timer`:
 
 ```ini
 [Unit]
-Description=Build my website every morning
+Description=Build my website every hour
 
 [Timer]
-OnCalendar=*-*-* 09:00:00
+OnCalendar=hourly
+RandomizedDelaySec=55min
 
 [Install]
 WantedBy=timers.target
 ```
 
-The matching name makes this timer start `site-build.service`.
+The matching name makes this timer start `site-build.service`. The random delay spreads builds across the hour.
 
 <!-- end_slide -->
 
 # Read The Calendar
 
-`OnCalendar=*-*-* 09:00:00` means every day at 09:00 in the server's local time zone. Without a time, a calendar event defaults to midnight.
+`OnCalendar=hourly` sets a calendar event at each clock hour. `RandomizedDelaySec=55min` adds up to 55 minutes before the build.
 
 Calendar timers are approximate, not a real-time promise. Ask systemd to explain the next occurrence:
 
 ```bash
-systemd-analyze calendar '*-*-* 09:00:00'
+systemd-analyze calendar hourly
 ```
 
 Example: Saturday 10 October 2026, 13:00 (+08).
@@ -98,16 +99,18 @@ Illustrative output at that time:
 $ date
 Sat Oct 10 13:00:00 +08 2026
 
-$ systemd-analyze calendar '*-*-* 09:00:00'
-Normalized form: *-*-* 09:00:00
-    Next elapse: Sun 2026-10-11 09:00:00 +08
-       (in UTC): Sun 2026-10-11 01:00:00 UTC
-       From now: 20h left
+$ systemd-analyze calendar hourly
+Normalized form: *-*-* *:00:00
+    Next elapse: Sat 2026-10-10 14:00:00 +08
+       (in UTC): Sat 2026-10-10 06:00:00 UTC
+       From now: 1h left
 ```
+
+This explains only the calendar occurrence; with the random delay, the actual start is approximately 14:00–14:55, subject to systemd timer accuracy.
 
 <!-- end_slide -->
 
-# Make The Daily Schedule Active
+# Make The Hourly Schedule Active
 
 ```bash
 systemctl --user enable --now site-build.timer
@@ -118,7 +121,7 @@ The timer listing shows the next scheduled time, not proof a build succeeded. Th
 
 <!-- end_slide -->
 
-# Daily Website Build — Recap
+# Hourly Website Build — Recap
 
 Create `~/.config/systemd/user/site-build.service`:
 
@@ -133,13 +136,14 @@ Create `~/.config/systemd/user/site-build.timer`:
 
 ```ini
 [Timer]
-OnCalendar=*-*-* 09:00:00
+OnCalendar=hourly
+RandomizedDelaySec=55min
 
 [Install]
 WantedBy=timers.target
 ```
 
-Activate and verify the daily build:
+Activate and verify the hourly build:
 
 ```bash
 mkdir -p ~/.config/systemd/user
@@ -161,7 +165,7 @@ Build a **Singapore Today** page on your website showing:
 - Modelled PM2.5
 - Data sources and retrieval time
 
-Update it automatically every day at 09:00 server time.
+Update it automatically every hour, with a randomized start delay of up to 55 minutes.
 
 <!-- end_slide -->
 
@@ -288,9 +292,10 @@ systemctl --user daemon-reload
 systemctl --user start site-build.service
 ```
 
-Check the published page’s fields and retrieval time, then enable the daily timer and check its next scheduled run.
+Check the published page’s fields and retrieval time, then enable the hourly timer and check its next scheduled run.
 
 ```bash
+systemctl --user daemon-reload
 systemctl --user enable --now site-build.timer
 systemctl --user list-timers --all site-build.timer
 ```

@@ -2,7 +2,7 @@
 
 - [ ] Before S9 delivery, package and deploy the Singapore Today starter and verify both `/docs` synchronization and public-site build; rehearse learner completion and failure preservation. The distributed exercise is intentionally incomplete.
 
-- [ ] S09: verify jq is present in the deployed classroom package set, render the revised deck, and rehearse the Open-Meteo failure-preserving update and timer proof in class before delivery. Commit-gate checks and classroom validation remain pending.
+- [ ] S09: verify classroom capacity for the hourly timer and jq availability in the deployed package set; render the revised deck and rehearse the Open-Meteo failure-preserving update and timer proof before delivery. Visual/layout review, commit-gate checks, and classroom validation remain pending.
 - [ ] Repair S09 incident: retain approved curriculum edits, keep rogue `scripts/maker-report.sh` absent, and validate Git subprocess isolation before the authorized commit gate; prior trusted parent is `e1a37f9`.
 - [x] Update Salt's root SSH pillar to YubiKey `cardno:34_996_983`, retaining the Salt key. New-key root login already verified on `lf2607` and `lf-dev`; no Salt application performed. Old-key revocation and Pulumi provisioning configuration remain unchanged.
 - [x] Add natural S8 transitions: accepted repairs receive paired congratulations and a connected next-incident transition, and automatically launch one next lab. Only successful new launches get the incident transition; failures retain their diagnostics. User validated the live flow; 1610 tests passed (2 deselected), with lint and typing issues corrected after the initial commit gate.

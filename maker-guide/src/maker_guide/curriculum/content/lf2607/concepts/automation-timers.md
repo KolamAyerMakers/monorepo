@@ -23,6 +23,8 @@ OnCalendar=*-*-* 09:00:00
 
 The time uses the server's local time zone. Calendar events are approximate, not real-time deadlines; `systemd-analyze calendar '*-*-* 09:00:00'` explains the next occurrence. An omitted time defaults to midnight.
 
+`RandomizedDelaySec=55min` adds a random delay of up to 55 minutes after each calendar event. It can spread timer starts but does not guarantee strict concurrency spacing or a real-time start.
+
 ## Interval Schedule
 
 ```ini

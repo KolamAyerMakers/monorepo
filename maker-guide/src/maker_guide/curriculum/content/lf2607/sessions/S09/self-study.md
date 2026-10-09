@@ -1,4 +1,4 @@
-# S9 Self-Study: Give Your Website a Daily Update
+# S9 Self-Study: Keep Your Website Up To Date
 
 Session: S9
 
@@ -8,9 +8,9 @@ Session: S9
 
 A systemd timer is the **when**; its matching service is the **what**. A oneshot service runs a finite task and exits. It is separate from the always-running web server. Timers are useful for daily site builds, rotating recommendations, scheduled reminders, and refreshing dashboards.
 
-`OnCalendar=*-*-* 09:00:00` means daily at 09:00 in the server's local time zone. A missing calendar time defaults to midnight. Runs are scheduled with accuracy tolerance, not guaranteed real-time. Check the calendar interpretation with `systemd-analyze calendar '*-*-* 09:00:00'`.
+`OnCalendar=hourly` means at each clock hour. `RandomizedDelaySec=55min` spreads starts over a window of up to 55 minutes; it is neither strict concurrency spacing nor a real-time start guarantee. Check the calendar occurrence with `systemd-analyze calendar hourly`.
 
-## Build once each morning
+## Build each hour
 
 Create `~/.config/systemd/user/site-build.service`:
 
@@ -28,10 +28,11 @@ Create `~/.config/systemd/user/site-build.timer`:
 
 ```ini
 [Unit]
-Description=Build my website every morning
+Description=Build my website every hour
 
 [Timer]
-OnCalendar=*-*-* 09:00:00
+OnCalendar=hourly
+RandomizedDelaySec=55min
 
 [Install]
 WantedBy=timers.target
@@ -86,7 +87,7 @@ Use command substitution to fill each required variable; compose Markdown with `
 
 After completing both exercises, run with an output under `~/src/pages/` and inspect the report. Fetch or validation failures preserve an existing report. Add `[Singapore today](singapore-today.html)` to `~/src/pages/index.md`.
 
-Add `ExecStartPre=/bin/bash %h/scripts/singapore-today.sh` before `ExecStart` in the service. Failure prevents the build and leaves the previous report. Inspect the journal and `/singapore-today.html`; this is scheduled static content, not browser-generated data. Prove the automatic path with the classroom timer, then restore and leave the normal daily schedule active. Personalize the script's Markdown heading and verify a new retrieval time after a timer activation; do not manually run the generator or build during the proof.
+Add `ExecStartPre=/bin/bash %h/scripts/singapore-today.sh` before `ExecStart` in the service. Failure prevents the build and leaves the previous report. Inspect the journal and `/singapore-today.html`; this is scheduled static content, not browser-generated data. For a simple timer proof, temporarily use a near-term calendar occurrence and `RandomizedDelaySec=0`; restore both `OnCalendar=hourly` and `RandomizedDelaySec=55min` afterward. Personalize the script's Markdown heading and verify a new retrieval time after a timer activation; do not manually run the generator or build during the proof.
 
 ## If It Does Not Work
 

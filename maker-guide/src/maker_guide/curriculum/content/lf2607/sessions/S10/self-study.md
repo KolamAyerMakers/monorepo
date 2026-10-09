@@ -161,7 +161,7 @@ systemctl --user stop site-build.timer
 systemctl --user status site-build.service --no-pager
 ```
 
-Open the complete unit with `micro ~/.config/systemd/user/site-build.timer`; replace the temporary `OnActiveSec` line with `OnCalendar=*-*-* 09:00:00`, save, and quit. Then reload and inspect the effective unit before starting it:
+Open the complete unit with `micro ~/.config/systemd/user/site-build.timer`; remove temporary interval/calendar directives, restore `OnCalendar=hourly` and `RandomizedDelaySec=55min` in `[Timer]`, save, and quit. Then reload and inspect the effective unit before starting it:
 
 ```bash
 systemctl --user daemon-reload

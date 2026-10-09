@@ -207,14 +207,21 @@ _SITE_BUILD_SERVICE_PATTERN = (
     r".+^ExecStart=/usr/local/bin/maker-guide-build-personal-website[ \t]*$"
 )
 _SITE_BUILD_TIMER_PATTERN = (
-    r"(?ms)^\[Timer\]$.*^OnCalendar=\*-\*-\* 09:00:00[ \t]*$"
-    r".*^\[Install\]$.*^WantedBy=timers\.target[ \t]*$"
+    r"(?m)^\[Timer\]$"
+    r"(?=(?:(?!^\[)[^\n]*\n)*^[ \t]*OnCalendar=hourly[ \t]*$)"
+    r"(?=(?:(?!^\[)[^\n]*\n)*^[ \t]*RandomizedDelaySec=55min[ \t]*$)"
+    r"(?:(?!^\[)[^\n]*\n)*^\[Install\]$"
+    r"(?:(?!^\[)[^\n]*\n)*^WantedBy=timers\.target[ \t]*$"
 )
 _SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN = (
-    r"(?m)^[ \t]*On(?:BootSec|StartupSec|UnitActiveSec|ActiveSec|UnitInactiveSec)="
-    r"|^[ \t]*OnCalendar=(?!\*-\*-\* 09:00:00[ \t]*$)"
-    r"|(?ms:^\[Timer\](?:(?!^\[Install\]).)*^OnCalendar=\*-\*-\* 09:00:00[ \t]*$"
-    r"(?:(?!^\[Install\]).)*^OnCalendar=)"
+    r"(?m:^[ \t]*On(?:BootSec|StartupSec|UnitActiveSec|ActiveSec|UnitInactiveSec)=)"
+    r"|(?ms:^\[(?!Timer\])[^\]]*\](?:(?!^\[).)*^[ \t]*(?:OnCalendar|RandomizedDelaySec)=)"
+    r"|(?m:^[ \t]*OnCalendar=(?!hourly[ \t]*$))"
+    r"|(?m:^[ \t]*RandomizedDelaySec=(?!55min[ \t]*$))"
+    r"|(?ms:^\[Timer\](?:(?!^\[).)*^[ \t]*OnCalendar=hourly[ \t]*$"
+    r"(?:(?!^\[).)*^[ \t]*OnCalendar=)"
+    r"|(?ms:^\[Timer\](?:(?!^\[).)*^[ \t]*RandomizedDelaySec=55min[ \t]*$"
+    r"(?:(?!^\[).)*^[ \t]*RandomizedDelaySec=)"
 )
 _DAILY_PICK_SERVICE_PATTERN = (
     r"(?ms)^\[Service\]$.*^ExecStartPre=/bin/bash %h/scripts/singapore-today\.sh[ \t]*$"
@@ -1818,7 +1825,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S9",
-            title="Give Your Website a Daily Update",
+            title="Keep Your Website Up To Date",
             date=date(2026, 10, 10),
             starts_at=datetime(2026, 10, 10, 9, tzinfo=UTC),
             introduced_commands=(
@@ -1841,21 +1848,22 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             learning_objectives=(
                 "Explain how a timer schedules a finite service separately from a web server.",
-                "Build a website once daily with a systemd calendar timer.",
+                "Build a website hourly with a systemd calendar timer and randomized delay.",
                 (
                     "Publish validated Singapore weather and "
                     "modelled air quality as scheduled static content."
                 ),
             ),
-            content=_session_content("S9", "Give Your Website a Daily Update"),
+            content=_session_content("S9", "Keep Your Website Up To Date"),
             objectives=(
                 SessionObjective(
                     id="schedule-site-rebuilds",
-                    title="Schedule a daily website build",
+                    title="Schedule an hourly website build",
                     prompt=(
                         "Create a oneshot `site-build.service` that runs "
                         "`/usr/local/bin/maker-guide-build-personal-website` from `%h/src`. "
-                        "Create a matching timer with `OnCalendar=*-*-* 09:00:00`; "
+                        "Create a matching timer with `OnCalendar=hourly` and "
+                        "`RandomizedDelaySec=55min` in its `[Timer]` section; "
                         "load the units, run the service once, enable the timer, and inspect "
                         "its next deadline and service journal."
                     ),
@@ -3698,11 +3706,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         _quest(
             quest_id="schedule-site-rebuilds",
-            title="Schedule site rebuilds",
+            title="Schedule hourly site rebuilds",
             sequence=92,
             available_after_session="S9",
             prompt=(
-                "Create a oneshot site-build service and matching daily 09:00 timer. Fetch and "
+                "Create a oneshot site-build service and matching hourly timer with a 55-minute "
+                "randomized delay. Fetch and "
                 "complete the Singapore starter's field extraction and Markdown composition, "
                 "validate weather and CAMS PM2.5, and publish from singapore-today.sh before the "
                 "build, publish its linked page, and inspect the service journal."
@@ -3760,7 +3769,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Automate site rebuilds with a user timer you can inspect and debug.",
             evidence=(
-                "The guide checks the daily timer, pre-build generator, "
+                "The guide checks the hourly timer, pre-build generator, "
                 "generated conditions, homepage "
                 "link, and timer commands. Inspect the journal and public page to prove an actual "
                 "timer-triggered update; command history alone does not prove publication."

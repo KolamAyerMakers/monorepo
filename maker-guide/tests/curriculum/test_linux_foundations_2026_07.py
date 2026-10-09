@@ -1473,7 +1473,7 @@ def test_s9_optional_automation_quests_require_cleanup_and_output() -> None:
 
 
 def test_s9_calendar_build_and_daily_pick_requirements() -> None:
-    """The daily service, calendar, and generated content have distinct requirements."""
+    """The hourly timer, service, and generated content have distinct requirements."""
     for timer_validation in (
         next(
             objective.validation
@@ -1497,21 +1497,6 @@ def test_s9_calendar_build_and_daily_pick_requirements() -> None:
                     )
                 )
                 assert re.search(validation.required_regex, reference_unit)
-                if validation.path.endswith(".timer"):
-                    assert validation.forbidden_regex is not None
-                    assert not re.search(validation.forbidden_regex, reference_unit)
-                    for extra_schedule in (
-                        "OnActiveSec=30s",
-                        "OnUnitInactiveSec=2min",
-                        "OnUnitActiveSec=1h",
-                        "OnBootSec=5min",
-                        "OnCalendar=minutely",
-                        "OnCalendar=*-*-* 09:00:00",
-                    ):
-                        assert re.search(
-                            validation.forbidden_regex,
-                            reference_unit.replace("[Timer]", f"[Timer]\n{extra_schedule}"),
-                        )
                 for required_line in reference_unit.splitlines():
                     if required_line.startswith(
                         (
@@ -1603,6 +1588,74 @@ def test_s9_daily_pick_quest_checks_pick_source_and_published_inputs() -> None:
             "ExecStart=/usr/local/bin/maker-guide-build-personal-website",
         ),
     )
+
+
+def test_s9_hourly_timer_objective_and_quest_require_one_schedule() -> None:
+    """Both S9 entry points enforce the same timer schedule and placement."""
+    objective = next(
+        objective
+        for objective in CATALOG.session("S9").objectives
+        if objective.id == "schedule-site-rebuilds"
+    )
+    validations: list[FileCheckValidation] = []
+    for assessment in (objective.validation, CATALOG.quest("schedule-site-rebuilds").validation):
+        assert isinstance(assessment, AllOfValidation)
+        validations.append(
+            next(
+                check
+                for check in assessment.validations
+                if isinstance(check, FileCheckValidation) and check.path.endswith(".timer")
+            )
+        )
+    reference_timer = next(
+        match["unit"]
+        for match in re.finditer(
+            r"(?ms)^```ini\n(?P<unit>.*?)^```$",
+            _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md"),
+        )
+        if "OnCalendar=" in match["unit"]
+    )
+
+    valid_timers = (
+        """[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=55min
+[Install]
+WantedBy=timers.target""",
+        """[Timer]
+RandomizedDelaySec=55min
+OnCalendar=hourly
+[Install]
+WantedBy=timers.target""",
+    )
+    invalid_timers = (
+        valid_timers[0].replace("RandomizedDelaySec=55min\n", ""),
+        valid_timers[0].replace("OnCalendar=hourly", "OnCalendar=daily"),
+        valid_timers[0].replace("[Timer]", "[Unit]\nOnCalendar=hourly\n[Timer]"),
+        valid_timers[0].replace("[Install]", "[Install]\nRandomizedDelaySec=55min"),
+        valid_timers[0].replace("[Install]", "OnCalendar=hourly\n[Install]"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nOnCalendar=hourly"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nRandomizedDelaySec=55min"),
+        valid_timers[0].replace("RandomizedDelaySec=55min", "RandomizedDelaySec=0"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nOnActiveSec=30s"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nOnBootSec=5min"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nOnStartupSec=5min"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nOnUnitActiveSec=1h"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nOnUnitInactiveSec=2min"),
+        valid_timers[0].replace("[Timer]", "[Timer]\nOnCalendar=minutely"),
+    )
+    for timer_check in validations:
+        assert timer_check.forbidden_regex is not None
+        assert re.search(timer_check.required_regex, reference_timer) is not None
+        assert re.search(timer_check.forbidden_regex, reference_timer) is None
+        for unit in valid_timers:
+            assert re.search(timer_check.required_regex, unit) is not None
+            assert re.search(timer_check.forbidden_regex, unit) is None
+        for unit in invalid_timers:
+            valid = bool(re.search(timer_check.required_regex, unit)) and not bool(
+                re.search(timer_check.forbidden_regex, unit)
+            )
+            assert not valid
 
 
 _SINGAPORE_EXERCISE_GUARD = chr(10).join(
