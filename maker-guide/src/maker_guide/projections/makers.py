@@ -293,6 +293,21 @@ def _write_content_files(
             released_quest_index_text(catalog, released_through),
             write_context.expected_files,
         )
+        released_sessions = catalog.course.sessions[
+            : next(
+                session_index + 1
+                for session_index, session in enumerate(catalog.course.sessions)
+                if session.id == released_through
+            )
+        ]
+        for session in released_sessions:
+            session_directory = Path(
+                session.content[0].path.removeprefix(f"content/{catalog.course.id}/"),
+            ).parent
+            session_path = session_directory
+            resource_path = content_resource.joinpath(*session_path.parts, "resources")
+            if resource_path.is_dir():
+                _write_content_resource(write_context, resource_path, session_path / "resources")
     _remove_stale_paths(
         documents_root,
         write_context.expected_directories,

@@ -221,28 +221,23 @@ _DAILY_PICK_SERVICE_PATTERN = (
     r".*^ExecStart=/usr/local/bin/maker-guide-build-personal-website[ \t]*$"
 )
 _DAILY_PICK_SCRIPT_PATTERN = (
-    r"(?ms)^set -euo pipefail$.*^temporary=\$\(mktemp .*singapore-today.*\)$"
-    r".*^trap .* EXIT$"
-    r".*^curl --max-time 15 -fsS '"
-    r"https://api\.open-meteo\.com/v1/forecast\?[^']+' -o \"\$weather\"$"
-    r".*^curl --max-time 15 -fsS '"
-    r"https://air-quality-api\.open-meteo\.com/v1/air-quality\?[^']+' -o \"\$air\"$"
-    r".*^jq -e '$.*?^  \(\.daily\.temperature_2m_max\[0\] \| numbers\) as \$temperature \|$"
-    r".*?^  \(\.daily\.precipitation_probability_max\[0\] \| numbers\) as \$rain \|$"
-    r".*?^  \(\$temperature >= -100 and \$temperature <= 70\) and "
-    r"\(\$rain >= 0 and \$rain <= 100\) and$"
-    r".*?^  \.daily_units\.temperature_2m_max == \"°C\" and$"
-    r".*?^  \.daily_units\.precipitation_probability_max == \"%\"$.*?^' \"\$weather\" >/dev/null$"
-    r".*^jq -e '$.*?^  \(\.current\.pm2_5 \| numbers\) as \$pm \|$"
-    r".*?^  \(\$pm >= 0 and \$pm <= 1000\) and \.current_units\.pm2_5 == \"μg/m³\"$"
-    r".*?^' \"\$air\" >/dev/null$"
-    r".*^  parsed_date=\$\(TZ=Asia/Singapore date -d \""
-    r"\$calendar_value\" \+%F 2>/dev/null\) \|\| exit 1$"
-    r".*^  \[\[ \"\$parsed_date\" == \"\$calendar_value\" \]\] \|\| exit 1$"
-    r".*^  parsed_clock=\$\(TZ=Asia/Singapore date -d \"\$clock_value\" "
-    r"'\+%Y-%m-%dT%H:%M' 2>/dev/null\) \|\| exit 1$"
-    r".*^  \[\[ \"\$parsed_clock\" == \"\$clock_value\" \]\] \|\| exit 1$"
-    r".*^mv \"\$temporary\" \"\$output\"$"
+    r"(?ms)^(?!.*EXERCISE_INCOMPLETE)(?=.*^set -euo pipefail$)"
+    r"(?=.*^[ \t]*if ! curl --max-time 15 -fsS \"\$url\" "
+    r"-o \"\$temporary_directory/\$name.json\"; then$)"
+    r"(?=.*^jq -e '$.*?\.daily\.temperature_2m_max\[0\]"
+    r".*?^' \"\$temporary_directory/weather.json\" >/dev/null$)"
+    r"(?=.*\.daily_units\.temperature_2m_max == \"°C\")"
+    r"(?=.*\.daily_units\.precipitation_probability_max == \"%\")"
+    r"(?=.*\.current_units\.pm2_5 == \"μg/m³\")"
+    r"(?=.*strptime\(\"%Y-%m-%d\"\))(?=.*^[ \t]*parsed_date=)"
+    r"(?=.*^[ \t]*\[\[ \$parsed_date == \"\$calendar_value\" \]\] \|\| exit 1$)"
+    r"(?=.*^[ \t]*parsed_clock=)"
+    r"(?=.*^[ \t]*\[\[ \$parsed_clock == \"\$clock_value\" \]\] \|\| exit 1$)"
+    r"(?=.*^[ \t]*forecast_date=\$\(jq -r )(?=.*^[ \t]*temperature=\$\(jq -r )"
+    r"(?=.*^[ \t]*rain=\$\(jq -r )(?=.*^[ \t]*sunrise=\$\(jq -r )"
+    r"(?=.*^[ \t]*sunset=\$\(jq -r )(?=.*^[ \t]*air_time=\$\(jq -r )"
+    r"(?=.*^[ \t]*pm25=\$\(jq -r )(?=.*-s \"\$\{report:-\}\")"
+    r"(?=.*^[ \t]*mv -- \"\$report\" \"\$output\"$).*$"
 )
 _SOURCE_HANDOFF_PATHS = (
     "README.md",
@@ -1897,11 +1892,11 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="publish-daily-pick",
                     title="Publish Singapore conditions",
                     prompt=(
-                        "Install the provided `~/scripts/singapore-today.sh` generator for the "
-                        "Open-Meteo forecast and CAMS PM2.5. Validate both responses and "
-                        "atomically write `~/src/pages/singapore-today.md`; link the page from "
-                        "the homepage and add `ExecStartPre=/bin/bash "
-                        "%h/scripts/singapore-today.sh` before the build command. Run the "
+                        "Copy the released incomplete starter once to "
+                        "`~/scripts/singapore-today.sh`. "
+                        "Complete its jq field extraction and Markdown composition using the "
+                        "provided validation, variable checks, and atomic publication guard. "
+                        "Link the result from the homepage, add its ExecStartPre, then run the "
                         "service and inspect the journal and generated page."
                     ),
                     validation=AllOfValidation(
@@ -3708,7 +3703,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             available_after_session="S9",
             prompt=(
                 "Create a oneshot site-build service and matching daily 09:00 timer. Fetch and "
-                "validate Singapore weather and CAMS PM2.5 in singapore-today.sh before the "
+                "complete the Singapore starter's field extraction and Markdown composition, "
+                "validate weather and CAMS PM2.5, and publish from singapore-today.sh before the "
                 "build, publish its linked page, and inspect the service journal."
             ),
             required_commands=(

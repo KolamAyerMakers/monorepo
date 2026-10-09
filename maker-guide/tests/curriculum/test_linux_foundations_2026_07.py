@@ -1605,14 +1605,48 @@ def test_s9_daily_pick_quest_checks_pick_source_and_published_inputs() -> None:
     )
 
 
-def test_singapore_generator_writes_content_and_preserves_previous_output(tmp_path: Path) -> None:
-    """The weather generator validates API data and preserves the last good page."""
-    self_study = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
+_SINGAPORE_EXERCISE_GUARD = chr(10).join(
+    (
+        "# EXERCISE_INCOMPLETE: finish the field extraction and Markdown composition exercises.",
+        'echo "EXERCISE_INCOMPLETE: complete both TODO sections before publication." >&2',
+        "exit 1",
+    ),
+)
+
+
+def _singapore_script(*, completed: bool = False) -> str:
     script = (
-        self_study.split("Create `~/scripts/singapore-today.sh`:", 1)[1]
-        .split("```bash\n", 1)[1]
-        .split("\n```", 1)[0]
+        files("maker_guide.curriculum")
+        .joinpath("content/lf2607/sessions/S09/resources/singapore-today.sh")
+        .read_text(encoding="utf-8")
     )
+    if not completed:
+        return script
+    exercise = """forecast_date=$(jq -r '.daily.time[0]' "$temporary_directory/weather.json")
+temperature=$(jq -r '.daily.temperature_2m_max[0]' "$temporary_directory/weather.json")
+rain=$(jq -r '.daily.precipitation_probability_max[0]' "$temporary_directory/weather.json")
+sunrise=$(jq -r '.daily.sunrise[0]' "$temporary_directory/weather.json")
+sunset=$(jq -r '.daily.sunset[0]' "$temporary_directory/weather.json")
+air_time=$(jq -r '.current.time' "$temporary_directory/air.json")
+pm25=$(jq -r '.current.pm2_5' "$temporary_directory/air.json")
+{
+    printf '%s\n' '# Singapore Today'
+    printf '%s\n' "Forecast date: $forecast_date"
+    printf '%s\n' "Forecast maximum temperature: $temperature °C"
+    printf '%s\n' "Modelled PM2.5: $pm25 μg/m³ (CAMS via Open-Meteo)"
+    printf '%s\n' "Air model timestamp: $air_time"
+    printf '%s\n' "Retrieved: $retrieved"
+} > "$report"
+"""
+    return script.replace(_SINGAPORE_EXERCISE_GUARD, exercise.rstrip())
+
+
+def test_singapore_generator_writes_content_and_preserves_previous_output(  # noqa: PLR0915 - One offline API-safety flow.
+    tmp_path: Path,
+) -> None:
+    """The weather generator validates API data and preserves the last good page."""
+    starter = _singapore_script()
+    script = _singapore_script(completed=True)
     home = tmp_path / "home"
     pages = home / "src" / "pages"
     pages.mkdir(parents=True)
@@ -1646,6 +1680,27 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(tmp_pa
         "AIR_FIXTURE": str(air_file),
     }
     output_path = pages / "singapore-today.md"
+    output_path.write_text("last good page\n", encoding="utf-8")
+    unfinished = subprocess.run(
+        ["/bin/bash", "-c", starter],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert unfinished.returncode != 0
+    assert "EXERCISE_INCOMPLETE" in unfinished.stderr
+    assert output_path.read_text(encoding="utf-8") == "last good page\n"
+    unguarded = starter.replace(_SINGAPORE_EXERCISE_GUARD, "")
+    unguarded_result = subprocess.run(
+        ["/bin/bash", "-c", unguarded],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert unguarded_result.returncode != 0
+    assert output_path.read_text(encoding="utf-8") == "last good page\n"
     subprocess.run(
         ["/bin/bash", "-c", script],
         check=True,
@@ -1720,15 +1775,11 @@ def test_singapore_objective_matches_the_complete_starter() -> None:
         for item in validation.validations
         if isinstance(item, FileCheckValidation) and item.path.endswith("singapore-today.sh")
     )
-    self_study = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
-    script = (
-        self_study.split("Create `~/scripts/singapore-today.sh`:", 1)[1]
-        .split("```bash\n", 1)[1]
-        .split("\n```", 1)[0]
-    )
+    script = _singapore_script(completed=True)
     assert re.search(script_validation.required_regex, script)
+    assert not re.search(script_validation.required_regex, _singapore_script())
     without_air_validation = re.sub(
-        r'(?ms)^jq -e \'\n.*?^\' "\$air" >/dev/null\n',
+        r'(?ms)^jq -e \'\n.*?^\' "\$temporary_directory/air.json" >/dev/null\n',
         "",
         script,
     )

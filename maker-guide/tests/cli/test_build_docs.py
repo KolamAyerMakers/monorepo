@@ -269,6 +269,7 @@ def test_build_docs_publishes_open_reference_routes_and_gates_coursework(
         Path("docs/quests/measure-ping.md/index.html"),
     ):
         assert not (output / relative_route).exists()
+    assert not (output / "docs/sessions/S09/resources/singapore-today.sh").exists()
 
     command_readme_page = (output / "docs" / "commands" / "README.md" / "index.html").read_text(
         encoding="utf-8"
@@ -299,3 +300,31 @@ def test_build_docs_publishes_open_reference_routes_and_gates_coursework(
                 )
                 linked_route = output / link_target.removeprefix("/").rstrip("/") / "index.html"
                 assert linked_route.is_file(), f"{reference_page} links to missing {link_target}"
+
+
+@pytest.mark.integration
+def test_build_docs_publishes_released_session_resource_as_raw_file(
+    temporary_path: Path,
+) -> None:
+    """A released downloadable resource reaches the public static route byte-for-byte."""
+    output = temporary_path / "site"
+    assert (
+        build_docs.main(
+            [
+                "--makers-root",
+                str(temporary_path / "makers"),
+                "--output",
+                str(output),
+                "--released-through",
+                "S9",
+            ],
+        )
+        == 0
+    )
+    public_resource = output / "docs/sessions/S09/resources/singapore-today.sh"
+    packaged_resource = (
+        Path(__file__).parents[2]
+        / "src/maker_guide/curriculum/content/lf2607/sessions/S09/resources/singapore-today.sh"
+    )
+    assert public_resource.read_bytes() == packaged_resource.read_bytes()
+    assert not (output / "docs/sessions/S10").exists()

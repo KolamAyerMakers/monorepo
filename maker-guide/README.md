@@ -21,7 +21,7 @@ IRC SASL authentication is mandatory. The implemented client supports SASL `PLAI
 
 ## Cohort Releases
 
-Mentors can run `maker-guide-progress release S03` during the in-person session. It releases that session to the whole cohort, triggers `maker-guide-build-docs.service`, and leaves earlier unfinished quests available. The service reads the release from SQLite and atomically publishes release-gated session materials and quests alongside an open reference library. Command cards, concept cards, and general learner guides are available from the start so curious learners can read ahead. Every local document linked from available material must also be available.
+Mentors can run `maker-guide-progress release S03` during the in-person session. It releases that session to the whole cohort, triggers `maker-guide-build-docs.service`, and leaves earlier unfinished quests available. The service reads the release from SQLite and publishes release-gated session materials, their resources, and quests alongside an open reference library. Run both `maker-guide-sync-derived-data` (for `/docs`) and `maker-guide-build-docs` (for the public site) after packaging curriculum changes; neither path publishes the other output. Command cards, concept cards, and general learner guides are available from the start so curious learners can read ahead. Every local document linked from available material must also be available.
 
 ## Development Classroom
 

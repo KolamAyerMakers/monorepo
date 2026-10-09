@@ -14,9 +14,9 @@ Session: S9
 
 ## Singapore Conditions
 
-The generator validates Open-Meteo forecast data and CAMS modelled PM2.5 before atomically replacing the linked `singapore-today.md`. Forecast maximum temperature is not current temperature; CAMS is neither official PSI nor a local station. Its page distinguishes forecast date, air-model timestamp, retrieval time, units, and sources. A failed update preserves the previous page and prevents the build.
+The released starter validates Open-Meteo forecast data and CAMS modelled PM2.5, then leaves jq extraction and Markdown composition for you to complete before atomic replacement. Forecast maximum temperature is not current temperature; CAMS is neither official PSI nor a local station. Its page distinguishes forecast date, air-model timestamp, retrieval time, units, and sources. A failed update preserves the previous page and prevents the build.
 
-Use [S9 self-study](self-study.md) for the complete starter, service, timer, and short-timer proof. Restore the daily 09:00 schedule afterward.
+Use [S9 self-study](self-study.md) for the incomplete starter and exercise, service, timer, and short-timer proof. Restore the daily 09:00 schedule afterward.
 
 ## Before S10
 

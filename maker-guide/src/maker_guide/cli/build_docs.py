@@ -69,6 +69,7 @@ def _build(makers_root: Path, output: Path, released_through: str | None) -> Non
         site_directory = temporary_directory / "site"
         _copy_site(site_directory)
         _copy_curriculum(site_directory / "app" / "content", released_through)
+        _copy_session_resources(site_directory / "public" / "docs", released_through)
         _write_students(site_directory / "app" / "students.json", makers_root)
         _write_rankings(site_directory / "app" / "rankings.json", makers_root)
         _write_site_data(site_directory / "app" / "site-data.json", released_through)
@@ -120,6 +121,29 @@ def _copy_curriculum(destination: Path, released_through: str | None) -> None:
         )
     _write_course_index(destination / DEFAULT_COURSE_ID / "README.md", released_through)
     _rewrite_markdown_links(destination / "lf2607")
+
+
+def _copy_session_resources(destination: Path, released_through: str | None) -> None:
+    if released_through is None:
+        return
+    released_sessions = DEFAULT_COURSE.sessions[
+        : next(
+            session_index + 1
+            for session_index, session in enumerate(DEFAULT_COURSE.sessions)
+            if session.id == released_through
+        )
+    ]
+    curriculum = resources.files("maker_guide.curriculum").joinpath("content", DEFAULT_COURSE_ID)
+    with resources.as_file(curriculum) as course_root:
+        for session in released_sessions:
+            session_directory = Path(
+                session.content[0].path.removeprefix(f"content/{DEFAULT_COURSE_ID}/"),
+            ).parent
+            resource_path = course_root / session_directory / "resources"
+            if resource_path.is_dir():
+                target_path = destination / session_directory / "resources"
+                target_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+                shutil.copytree(resource_path, target_path)
 
 
 def _released_content_paths(course_root: Path, released_through: str) -> tuple[Path, ...]:

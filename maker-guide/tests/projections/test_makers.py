@@ -459,6 +459,55 @@ def test_makers_projection_publishes_open_references_and_gates_coursework(
     assert not (documents_root / "quests" / "build-playground.md").exists()
 
 
+def test_makers_projection_publishes_session_resources_only_after_release(
+    migrated_database_path: Path,
+    temporary_path: Path,
+) -> None:
+    """Released resources are projected and removed again after release rollback."""
+    makers_root = temporary_path / "makers"
+    documents_root = temporary_path / "docs"
+    relative_path = Path("sessions/S09/resources/singapore-today.sh")
+    source = files("maker_guide.curriculum").joinpath(
+        "content/lf2607/sessions/S09/resources/singapore-today.sh"
+    )
+    with connect_database(migrated_database_path) as database_connection:
+        _write_member(database_connection, "alice", "2026-07-18T09:00:00Z")
+        sync_makers_projection(
+            database_connection,
+            CATALOG,
+            MakersProjectionOptions(makers_root=makers_root, projected_at=PROJECTED_AT),
+        )
+        assert not (documents_root / relative_path).exists()
+        upsert_course_release(
+            database_connection,
+            CourseRelease(
+                course_id=CATALOG.course.id,
+                session_reached="S9",
+                released_at=PROJECTED_AT,
+            ),
+        )
+        sync_makers_projection(
+            database_connection,
+            CATALOG,
+            MakersProjectionOptions(makers_root=makers_root, projected_at=PROJECTED_AT),
+        )
+        assert (documents_root / relative_path).read_bytes() == source.read_bytes()
+        upsert_course_release(
+            database_connection,
+            CourseRelease(
+                course_id=CATALOG.course.id,
+                session_reached="S8",
+                released_at=PROJECTED_AT,
+            ),
+        )
+        sync_makers_projection(
+            database_connection,
+            CATALOG,
+            MakersProjectionOptions(makers_root=makers_root, projected_at=PROJECTED_AT),
+        )
+        assert not (documents_root / relative_path).exists()
+
+
 def test_makers_projection_keeps_non_students_without_rank(
     migrated_database_path: Path,
     temporary_path: Path,

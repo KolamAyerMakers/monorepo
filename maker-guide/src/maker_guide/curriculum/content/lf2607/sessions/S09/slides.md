@@ -256,10 +256,11 @@ jq -r '.current.pm2_5' /tmp/air.json
 
 # Generate, Then Build
 
-Create the script by pasting the complete [self-study starter](self-study.md#challenge-publish-singapore-conditions):
+Copy the released, intentionally incomplete [starter](self-study.md#challenge-publish-singapore-conditions) once; finish its extraction and formatting exercises in your own copy:
 
 ```bash
 mkdir -p ~/scripts
+cp -n /docs/sessions/S09/resources/singapore-today.sh ~/scripts/singapore-today.sh
 micro ~/scripts/singapore-today.sh
 ```
 
@@ -276,6 +277,6 @@ ExecStart=/usr/local/bin/maker-guide-build-personal-website
 
 # Your Challenge: Singapore Today
 
-Use the provided complete script, connect it as `ExecStartPre`, and publish a page with a personalized presentation. Prove a short-timer activation changes that presentation and retrieval timestamp on the published page. Follow [self-study](self-study.md#challenge-publish-singapore-conditions), then restore the daily schedule.
+Complete the starter’s field extraction and Markdown composition, connect it as `ExecStartPre`, and publish a page with a personalized presentation. Prove a short-timer activation changes that presentation and retrieval timestamp on the published page. Follow [self-study](self-study.md#challenge-publish-singapore-conditions), then restore the daily schedule.
 
 Make the page presentation your own without changing fetched measurements. Leave the 09:00 daily schedule active when finished.
