@@ -23,7 +23,7 @@ Your website can update itself while you are away.
 - Run every morning or every Monday.
 - Run five minutes after the timer is activated.
 - Wait ten minutes after the job finishes before running again.
-- With persistent calendar timers, catch up once when reactivated, not once for each missed run.
+- With `Persistent=true`, if the computer was off for three scheduled runs, schedule one catch-up run when the timer starts again.
 
 <!-- end_slide -->
 
