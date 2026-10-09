@@ -18,6 +18,15 @@ Your website can update itself while you are away.
 
 <!-- end_slide -->
 
+# More Than "Run Every Day"
+
+- Run every morning or every Monday.
+- Run five minutes after the timer is activated.
+- Wait ten minutes after the job finishes before running again.
+- With persistent calendar timers, catch up once when reactivated, not once for each missed run.
+
+<!-- end_slide -->
+
 # First, Build The Site Once
 
 Save as `~/.config/systemd/user/site-build.service`:
