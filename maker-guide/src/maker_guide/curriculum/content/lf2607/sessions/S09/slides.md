@@ -138,7 +138,6 @@ Create `~/.config/systemd/user/site-build.timer`:
 [Timer]
 OnCalendar=hourly
 RandomizedDelaySec=55min
-
 [Install]
 WantedBy=timers.target
 ```
@@ -146,7 +145,6 @@ WantedBy=timers.target
 Activate and verify the hourly build:
 
 ```bash
-mkdir -p ~/.config/systemd/user
 systemctl --user daemon-reload
 systemctl --user start site-build.service
 journalctl --user -u site-build.service
@@ -264,7 +262,8 @@ Copy the starter, then complete its field extraction and Markdown composition:
 
 ```bash
 mkdir -p ~/scripts
-cp /docs/sessions/S09/resources/singapore-today.sh ~/scripts/singapore-today.sh
+cp /docs/sessions/S09/resources/singapore-today.sh \
+    ~/scripts/singapore-today.sh
 micro ~/scripts/singapore-today.sh
 ```
 

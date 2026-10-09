@@ -63,7 +63,8 @@ The session resource starter at [/docs/sessions/S09/resources/singapore-today.sh
 
 ```bash
 mkdir -p ~/scripts
-cp /docs/sessions/S09/resources/singapore-today.sh ~/scripts/singapore-today.sh
+cp /docs/sessions/S09/resources/singapore-today.sh \
+    ~/scripts/singapore-today.sh
 micro ~/scripts/singapore-today.sh
 ```
 
