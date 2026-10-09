@@ -23,13 +23,13 @@ from maker_guide.curriculum.linux_foundations_2026_07 import (
 )
 from maker_guide.curriculum.models import (
     AllOfValidation,
+    ArtifactCheckValidation,
     CommandHistoryValidation,
     FileCheckValidation,
     FileMatchesPathValidation,
     GitTrackedPathValidation,
     InteractiveQuestionValidation,
     IrcChannelJoinObservedValidation,
-    IrcCtcpVersionValidation,
     OwnedPathValidation,
     PathExistsValidation,
     ServiceLabValidation,
@@ -37,6 +37,7 @@ from maker_guide.curriculum.models import (
     SshPublicKeyObservedValidation,
     validate_courses,
 )
+from maker_guide.progress.validation import artifact_contents_match
 
 MARKDOWN_LINK_PATTERN = re.compile(
     r"(?<!!)\[(?P<label>[^\[\]\n]+)\]\((?P<target>[^)]+)\)",
@@ -320,8 +321,13 @@ def test_sessions_expose_independent_objective_validators() -> None:
             ServiceLabValidation,
         ),
         "S9": (
+            ArtifactCheckValidation,
+            ArtifactCheckValidation,
+            ArtifactCheckValidation,
+            ArtifactCheckValidation,
             AllOfValidation,
-            AllOfValidation,
+            ArtifactCheckValidation,
+            ArtifactCheckValidation,
         ),
         "S10": (),
     }
@@ -890,7 +896,7 @@ def test_catalog_exposes_taught_commands_and_skills_by_session() -> None:
     assert "pipes" in CATALOG.skills_available_through("S3")
     assert "text-search" in CATALOG.skills_available_through("S3")
     assert "regular-expression" not in CATALOG.skills_available_through("S8")
-    assert "regular-expression" in CATALOG.skills_available_through("S9")
+    assert "regular-expression" not in CATALOG.skills_available_through("S9")
     assert "devices" not in CATALOG.all_skills_available_through("S10")
     assert "tmux" not in CATALOG.commands_available_through("S7")
     assert "tmux" not in CATALOG.commands_available_through("S8")
@@ -965,8 +971,7 @@ def test_catalog_exposes_ordered_quest_lookup() -> None:
         "personalize-homepage",
     )
     assert CATALOG.next_quest_after("personalize-homepage", "S2") is None
-    assert CATALOG.next_quest_after("write-next-path", "S9") == CATALOG.quest("use-terminal-irc")
-    assert CATALOG.next_quest_after("use-terminal-irc", "S9") is None
+    assert CATALOG.next_quest_after("write-next-path", "S10") is None
     assert CATALOG.next_assignable_quest("S1", frozenset()) == CATALOG.quest("prove-shell-alive")
     assert CATALOG.next_assignable_quest(
         "S1",
@@ -1435,227 +1440,132 @@ def test_s8_lab_cases_are_distinct_and_keep_faults_out_of_public_prompts() -> No
         assert objective.validation.scenario not in public_text
 
 
-def test_s9_optional_automation_quests_require_cleanup_and_output() -> None:
-    """Optional cron and webring quests retain their cleanup and generated-output checks."""
-    cron_validation = CATALOG.quest("try-cron-and-remove-it").validation
-    webring_validation = CATALOG.quest("enable-webring").validation
-
-    assert isinstance(cron_validation, AllOfValidation)
-    cleanup_validation = next(
-        validation
-        for validation in cron_validation.validations
-        if isinstance(validation, FileCheckValidation) and validation.path == "~/crontab.after"
+def test_s9_has_seven_ordered_artifact_objectives_and_reinforcement_quests() -> None:
+    """Each S9 objective checks the corresponding retained learner artifact."""
+    expected_ids = (
+        "inspect-weather-json",
+        "extract-daily-temperature",
+        "compare-air-snapshot",
+        "format-forecast",
+        "complete-singapore-bulletin",
+        "link-published-bulletin",
+        "configure-site-build-timer",
     )
-    assert cleanup_validation.forbidden_regex is not None
-    cron_demo = (
-        _content_text(f"content/{COURSE_ID}/quests/try-cron-and-remove-it.md")
-        .split("```text\n", 1)[1]
-        .split("\n```", 1)[0]
-    )
-    unrelated_job = "0 3 * * * /home/learner/bin/backup >> /home/learner/cron.log 2>&1\n"
-    for remaining_crontab in ("", unrelated_job, f"{unrelated_job}  # {cron_demo}\n"):
-        assert re.search(cleanup_validation.required_regex, remaining_crontab)
-        assert not re.search(cleanup_validation.forbidden_regex, remaining_crontab)
-    for active_demo in (cron_demo, f"  {cron_demo}", cron_demo.replace("cron.log", "demo.log")):
-        assert re.search(cleanup_validation.forbidden_regex, f"{unrelated_job}{active_demo}\n")
-    assert any(
-        isinstance(validation, CommandHistoryValidation)
-        and r"^crontab -l > ~/crontab\.after 2>/dev/null \|\| true$" in validation.required_patterns
-        for validation in cron_validation.validations
-    )
-    assert isinstance(webring_validation, AllOfValidation)
-    assert any(
-        isinstance(validation, FileCheckValidation)
-        and "(?=.*\\bprevious\\b)" in validation.required_regex
-        and "(?=.*\\bnext\\b)" in validation.required_regex
-        for validation in webring_validation.validations
-    )
-
-
-def test_s9_calendar_build_and_daily_pick_requirements() -> None:
-    """The hourly timer, service, and generated content have distinct requirements."""
-    for timer_validation in (
-        next(
-            objective.validation
-            for objective in CATALOG.session("S9").objectives
-            if objective.id == "schedule-site-rebuilds"
-        ),
-    ):
-        assert isinstance(timer_validation, AllOfValidation)
-        for validation in timer_validation.validations:
-            if isinstance(validation, FileCheckValidation):
-                reference_unit = next(
-                    unit_match["unit"]
-                    for unit_match in re.finditer(
-                        r"(?ms)^```ini\n(?P<unit>.*?)^```$",
-                        _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md"),
-                    )
-                    if (
-                        "Type=oneshot" in unit_match["unit"]
-                        if validation.path.endswith(".service")
-                        else "OnCalendar=" in unit_match["unit"]
-                    )
-                )
-                assert re.search(validation.required_regex, reference_unit)
-                for required_line in reference_unit.splitlines():
-                    if required_line.startswith(
-                        (
-                            "WorkingDirectory=",
-                            "ExecStart=",
-                        )
-                    ):
-                        assert not re.search(
-                            validation.required_regex,
-                            reference_unit.replace(required_line, ""),
-                        )
-        assert any(
-            isinstance(validation, CommandHistoryValidation)
-            and r"^systemctl --user enable --now site-build\.timer$" in validation.required_patterns
-            for validation in timer_validation.validations
-        )
-
-    assert {objective.id for objective in CATALOG.session("S9").objectives} == {
+    objectives = CATALOG.session("S9").objectives
+    assert tuple(objective.id for objective in objectives) == expected_ids
+    expected_quests = (
+        "inspect-weather-json",
+        "extract-daily-temperature",
+        "compare-air-snapshot",
+        "format-forecast",
+        "complete-singapore-bulletin",
+        "link-published-bulletin",
         "schedule-site-rebuilds",
-        "publish-daily-pick",
-    }
-    assert CATALOG.quests_available_after("S8") == ()
-    assert CATALOG.quest("prepare-source-handoff").available_after_session == "S9"
-    assert CATALOG.quest("prepare-source-handoff") not in CATALOG.quests_available_through("S9")
-    assert (
-        CATALOG.quest("prepare-source-handoff")
-        .docs[0]
-        .path.endswith("/quests/prepare-source-handoff.md")
     )
-    assert {
+    quests = tuple(CATALOG.quest(quest_id) for quest_id in expected_quests)
+    assert tuple(quest.sequence for quest in quests) == tuple(range(86, 93))
+    assert all(quest.available_after_session == "S9" for quest in quests)
+    assert all(
+        objective.validation is quest.validation
+        for objective, quest in zip(objectives, quests, strict=True)
+    )
+    assert all(
+        not isinstance(quest.validation, CommandHistoryValidation)
+        and (
+            not isinstance(quest.validation, AllOfValidation)
+            or all(
+                not isinstance(child, CommandHistoryValidation)
+                for child in quest.validation.validations
+            )
+        )
+        for quest in quests
+    )
+    retired = {
+        "try-cron-and-remove-it",
         "transform-heading-with-sed",
         "extract-fields-with-awk",
         "survive-vim",
         "enable-webring",
-    } <= {quest.id for quest in CATALOG.quests_available_after("S9")}
-    assert CATALOG.quest("write-readme") not in CATALOG.quests_available_after("S9")
-    assert CATALOG.quest("write-readme") not in CATALOG.quests_available_through("S9")
-
-    pick_objective = next(
-        objective
-        for objective in CATALOG.session("S9").objectives
-        if objective.id == "publish-daily-pick"
-    )
-    assert isinstance(pick_objective.validation, AllOfValidation)
-    pick_service = next(
-        validation
-        for validation in pick_objective.validation.validations
-        if isinstance(validation, FileCheckValidation) and validation.path.endswith(".service")
-    )
-    assert re.search(
-        pick_service.required_regex,
-        """[Service]
-ExecStartPre=/bin/bash %h/scripts/singapore-today.sh
-ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
-    )
-    for bad_service in (
-        """[Service]
-ExecStart=/usr/local/bin/maker-guide-build-personal-website
-ExecStartPre=/bin/bash %h/scripts/singapore-today.sh""",
-        """[Service]
-ExecStartPre=-/bin/bash %h/scripts/singapore-today.sh
-ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
-        """[Service]
-ExecStart=/usr/local/bin/maker-guide-build-personal-website""",
-    ):
-        assert not re.search(pick_service.required_regex, bad_service)
-
-
-def test_s9_daily_pick_quest_checks_pick_source_and_published_inputs() -> None:
-    """The reinforcement quest cannot pass on timer setup alone."""
-    validation = CATALOG.quest("schedule-site-rebuilds").validation
-    assert isinstance(validation, AllOfValidation)
-    checks = {
-        check.path: check
-        for check in validation.validations
-        if isinstance(check, FileCheckValidation)
+        "refresh-pipes-for-bandit",
+        "prepare-bandit-approach",
+        "use-terminal-irc",
     }
-    assert {
-        "~/.config/systemd/user/site-build.service",
-        "~/.config/systemd/user/site-build.timer",
-        "~/scripts/singapore-today.sh",
-        "~/src/pages/singapore-today.md",
-        "~/src/pages/index.md",
-    } <= checks.keys()
-    assert re.search(
-        checks["~/.config/systemd/user/site-build.service"].required_regex,
-        "{}{}".format(
-            "[Service]\nExecStartPre=/bin/bash %h/scripts/singapore-today.sh\n",
-            "ExecStart=/usr/local/bin/maker-guide-build-personal-website",
-        ),
-    )
+    assert retired.isdisjoint(quest.id for quest in LINUX_FOUNDATIONS_2026_07.quests)
+    assert CATALOG.quest("demo-site").available_after_session == "S10"
+    assert CATALOG.quest("write-next-path").available_after_session == "S10"
 
 
-def test_s9_hourly_timer_objective_and_quest_require_one_schedule() -> None:
-    """Both S9 entry points enforce the same timer schedule and placement."""
-    objective = next(
-        objective
-        for objective in CATALOG.session("S9").objectives
-        if objective.id == "schedule-site-rebuilds"
+def test_s9_artifact_validation_compares_json_values_and_rendered_content() -> None:
+    """Artifact checks reject plausible-looking values that do not match the snapshot."""
+    weather = (
+        '{"daily":{"time":["2026-10-10"],"temperature_2m_max":[31.5],'
+        '"precipitation_probability_max":[20],"sunrise":["2026-10-10T06:54"],'
+        '"sunset":["2026-10-10T18:58"]},"daily_units":{"temperature_2m_max":"°C",'
+        '"precipitation_probability_max":"%"}}'
     )
-    validations: list[FileCheckValidation] = []
-    for assessment in (objective.validation, CATALOG.quest("schedule-site-rebuilds").validation):
-        assert isinstance(assessment, AllOfValidation)
-        validations.append(
-            next(
-                check
-                for check in assessment.validations
-                if isinstance(check, FileCheckValidation) and check.path.endswith(".timer")
-            )
-        )
-    reference_timer = next(
-        match["unit"]
-        for match in re.finditer(
-            r"(?ms)^```ini\n(?P<unit>.*?)^```$",
-            _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md"),
-        )
-        if "OnCalendar=" in match["unit"]
+    air = '{"current":{"time":"2026-10-10T09:00","pm2_5":4.2},"current_units":{"pm2_5":"μg/m³"}}'
+    assert artifact_contents_match("weather", [weather])
+    assert artifact_contents_match("temperature", ["31.500", weather])
+    assert not artifact_contents_match("temperature", ["32", weather])
+    assert artifact_contents_match("air", [air, "PM2.5 4.2 μg/m³\nModel time: 2026-10-10T09:00\n"])
+    assert artifact_contents_match("air", [air, "PM2.5: 4.2 µg/m³\nModel time: 2026-10-10T09:00\n"])
+    assert not artifact_contents_match(
+        "air", [air, "PM2.5: 999 μg/m³\nModel time: 2026-10-10T09:00\n"]
     )
-
-    valid_timers = (
-        """[Timer]
-OnCalendar=hourly
-RandomizedDelaySec=55min
-[Install]
-WantedBy=timers.target""",
-        """[Timer]
-RandomizedDelaySec=55min
-OnCalendar=hourly
-[Install]
-WantedBy=timers.target""",
+    assert not artifact_contents_match(
+        "air",
+        [air, "PM2.5: 999 μg/m³ (expected 4.2 μg/m³)\nModel time: 2026-10-10T09:00\n"],
     )
-    invalid_timers = (
-        valid_timers[0].replace("RandomizedDelaySec=55min\n", ""),
-        valid_timers[0].replace("OnCalendar=hourly", "OnCalendar=daily"),
-        valid_timers[0].replace("[Timer]", "[Unit]\nOnCalendar=hourly\n[Timer]"),
-        valid_timers[0].replace("[Install]", "[Install]\nRandomizedDelaySec=55min"),
-        valid_timers[0].replace("[Install]", "OnCalendar=hourly\n[Install]"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nOnCalendar=hourly"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nRandomizedDelaySec=55min"),
-        valid_timers[0].replace("RandomizedDelaySec=55min", "RandomizedDelaySec=0"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nOnActiveSec=30s"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nOnBootSec=5min"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nOnStartupSec=5min"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nOnUnitActiveSec=1h"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nOnUnitInactiveSec=2min"),
-        valid_timers[0].replace("[Timer]", "[Timer]\nOnCalendar=minutely"),
+    assert artifact_contents_match(
+        "air",
+        [air, "PM2.5: 4.2 μg/m³ (previous reading 999 μg/m³)\nModel time: 2026-10-10T09:00\n"],
     )
-    for timer_check in validations:
-        assert timer_check.forbidden_regex is not None
-        assert re.search(timer_check.required_regex, reference_timer) is not None
-        assert re.search(timer_check.forbidden_regex, reference_timer) is None
-        for unit in valid_timers:
-            assert re.search(timer_check.required_regex, unit) is not None
-            assert re.search(timer_check.forbidden_regex, unit) is None
-        for unit in invalid_timers:
-            valid = bool(re.search(timer_check.required_regex, unit)) and not bool(
-                re.search(timer_check.forbidden_regex, unit)
-            )
-            assert not valid
+    assert not artifact_contents_match(
+        "air", [air, "PM2.5 4.2 μg/m³\nModel time: 2026-10-09T09:00"]
+    )
+    forecast = "# Singapore forecast\nMaximum: 31.5 °C\n"
+    assert artifact_contents_match("forecast", [weather, forecast])
+    assert not artifact_contents_match("forecast", [weather, "# Forecast\nMaximum: 32 °C"])
+    bulletin = (
+        "Forecast date: 2026-10-10\nMaximum: 31.5 °C\nRain: 20%\n"
+        "Sunrise: 2026-10-10T06:54\nSunset: 2026-10-10T18:58\n"
+        "PM2.5: 4.2 μg/m³\nAir model timestamp: 2026-10-10T09:00\n"
+        "Retrieved: 2026-10-10T09:01:00+08:00\nOpen-Meteo forecast; CAMS model estimate."
+    )
+    assert artifact_contents_match("bulletin", [bulletin])
+    assert not artifact_contents_match("bulletin", [bulletin.replace("20%", "101%")])
+    assert not artifact_contents_match("bulletin", [bulletin.replace("4.2 μg/m³", "1001 μg/m³")])
+    assert artifact_contents_match("bulletin", [bulletin.replace("4.2 μg/m³", "4.2e0 μg/m³")])
+    assert not artifact_contents_match(
+        "bulletin", [bulletin.replace("Air model timestamp: 2026-10-10T09:00\n", "")]
+    )
+    markdown_list = (
+        "# Singapore today\n"
+        "- Forecast date: 2026-10-10\n- Daily maximum: 31.5 °C\n"
+        "- Chance of rain: 20%\n- Sunrise: 2026-10-10T06:54\n"
+        "- Sunset: 2026-10-10T18:58\n- Modelled PM2.5: 4.2 μg/m³\n"
+        "- Model time: 2026-10-10T09:00\n- Retrieval time: 2026-10-10T09:01:00+08:00\n"
+        "Open-Meteo forecast and CAMS model estimate."
+    )
+    assert artifact_contents_match("bulletin", [markdown_list])
+    assert artifact_contents_match(
+        "published",
+        ["[My Singapore](singapore-today.html)", f"<h1>My report</h1><p>{bulletin}</p>"],
+    )
+    service = (
+        "[Service]\n"
+        "Type=oneshot\n"
+        "WorkingDirectory=%h/src\n"
+        "ExecStartPre=/bin/bash %h/scripts/singapore-today.sh\n"
+        "ExecStart=/usr/local/bin/maker-guide-build-personal-website\n"
+    )
+    timer = (
+        "[Timer]\nOnCalendar=hourly\nRandomizedDelaySec=55min\n[Install]\nWantedBy=timers.target\n"
+    )
+    assert artifact_contents_match("timer", [service, timer])
+    assert not artifact_contents_match(
+        "timer", [service, timer.replace("OnCalendar=hourly", "OnCalendar=daily")]
+    )
 
 
 _SINGAPORE_EXERCISE_GUARD = chr(10).join(
@@ -1683,12 +1593,15 @@ sunset=$(jq -r '.daily.sunset[0]' "$temporary_directory/weather.json")
 air_time=$(jq -r '.current.time' "$temporary_directory/air.json")
 pm25=$(jq -r '.current.pm2_5' "$temporary_directory/air.json")
 {
-    printf '%s\n' '# Singapore Today'
-    printf '%s\n' "Forecast date: $forecast_date"
-    printf '%s\n' "Forecast maximum temperature: $temperature °C"
-    printf '%s\n' "Modelled PM2.5: $pm25 μg/m³ (CAMS via Open-Meteo)"
-    printf '%s\n' "Air model timestamp: $air_time"
-    printf '%s\n' "Retrieved: $retrieved"
+    printf '%s\n' '# My Singapore Conditions'
+    printf '%s\n' "- Forecast date: $forecast_date"
+    printf '%s\n' "- Forecast maximum temperature: $temperature °C"
+    printf '%s\n' "- Rain probability: $rain%"
+    printf '%s\n' "- Sunrise: $sunrise"
+    printf '%s\n' "- Sunset: $sunset"
+    printf '%s\n' "- Modelled PM2.5: $pm25 μg/m³ (CAMS via Open-Meteo)"
+    printf '%s\n' "- Air model timestamp: $air_time"
+    printf '%s\n' "- Retrieved: $retrieved"
 } > "$report"
 """
     return script.replace(_SINGAPORE_EXERCISE_GUARD, exercise.rstrip())
@@ -1764,9 +1677,21 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     output = output_path.read_text(encoding="utf-8")
     assert "Forecast date: 2026-10-10" in output
     assert "Forecast maximum temperature: 31.5 °C" in output
+    assert "Rain probability: 20%" in output
+    assert "Sunrise: 2026-10-10T06:54" in output
+    assert "Sunset: 2026-10-10T18:58" in output
     assert "Modelled PM2.5: 4.2 μg/m³" in output
     assert "CAMS via Open-Meteo" in output
     assert "Retrieved:" in output
+    assert artifact_contents_match("bulletin", [output])
+    rendered_items = "".join(
+        f"<li>{line[2:]}</li>" for line in output.splitlines() if line.startswith("- ")
+    )
+    rendered_html = f"<h1>My local bulletin</h1><ul>{rendered_items}</ul>"
+    assert artifact_contents_match(
+        "published",
+        ["[My conditions](singapore-today.html)", rendered_html],
+    )
 
     output_path.write_text("last good page\n", encoding="utf-8")
     fake_curl.write_text("#!/bin/sh\nexit 22\n", encoding="utf-8")
@@ -1783,6 +1708,7 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     fake_curl.write_text(curl_stub, encoding="utf-8")
     fake_curl.chmod(0o755)
     for bad_air in (
+        "{malformed",
         '{"current":{"time":"2026-10-10T09:00","pm2_5":null},"current_units":{"pm2_5":"μg/m³"}}',
         '{"current":{"time":"2026-10-10T09:00"},"current_units":{"pm2_5":"μg/m³"}}',
         '{"current":{"time":"2026-10-10T09:00","pm2_5":"4.2"},"current_units":{"pm2_5":"μg/m³"}}',
@@ -1799,6 +1725,7 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
         assert output_path.read_text(encoding="utf-8") == "last good page\n"
 
     for bad_weather, bad_air in (
+        ("{malformed", valid_air),
         (valid_weather.replace("2026-10-10", "2026-99-99", 1), valid_air),
         (valid_weather, valid_air.replace("09:00", "99:99")),
     ):
@@ -1820,7 +1747,7 @@ def test_singapore_objective_matches_the_complete_starter() -> None:
     validation = next(
         objective.validation
         for objective in CATALOG.session("S9").objectives
-        if objective.id == "publish-daily-pick"
+        if objective.id == "complete-singapore-bulletin"
     )
     assert isinstance(validation, AllOfValidation)
     script_validation = next(
@@ -1854,16 +1781,6 @@ def test_singapore_objective_matches_the_complete_starter() -> None:
             for concept in next_validation.required_concepts
         )
     assert CATALOG.session("S10").objectives == ()
-
-
-def test_s10_terminal_irc_quest_uses_ctcp_version_validation() -> None:
-    """The terminal IRC challenge accepts only terminal IRC clients."""
-    quest = CATALOG.quest("use-terminal-irc")
-    validation = CATALOG.quest("use-terminal-irc").validation
-
-    assert quest.required_commands == ("weechat",)
-    assert isinstance(validation, IrcCtcpVersionValidation)
-    assert validation.accepted_clients == ("WeeChat", "irssi", "BitchX")
 
 
 def test_demo_accepts_learner_selected_evidence_without_an_artifact_tour() -> None:

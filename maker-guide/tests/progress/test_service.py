@@ -142,6 +142,12 @@ def test_current_quest_requires_session_placement(migrated_database_path: Path) 
         ("S7", ("create-setup-page",), "serve-local-check-page", "inspect-first-url-headers"),
         ("S8", ("keep-tmux-workbench",), "serve-local-check-page", "break-and-read-error"),
         (
+            "S9",
+            ("schedule-site-rebuilds", "publish-daily-pick"),
+            "schedule-site-rebuilds",
+            "inspect-weather-json",
+        ),
+        (
             "S8",
             (
                 "enable-site-service",
@@ -159,24 +165,11 @@ def test_current_quest_requires_session_placement(migrated_database_path: Path) 
             "break-and-read-error",
         ),
         (
-            "S9",
-            ("prepare-source-handoff",),
-            "prepare-source-handoff",
-            "schedule-site-rebuilds",
-        ),
-        (
-            "S9",
-            ("schedule-site-rebuilds", "write-readme"),
-            "prepare-source-handoff",
-            "publish-daily-pick",
-        ),
-        (
             "S8",
             tuple(objective.id for objective in CATALOG.session("S8").objectives),
             "break-and-read-error",
             None,
         ),
-        ("S9", ("transform-heading-with-sed",), "serve-local-check-page", "schedule-site-rebuilds"),
         (
             "S7",
             ("inspect-first-url-headers", "diagnose-second-url"),
@@ -284,11 +277,7 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
                     evidence={"replacement": True},
                 )
             stale_quest_id = (
-                "fix-and-restart-service"
-                if session_id == "S8"
-                else "prepare-source-handoff"
-                if session_id == "S9"
-                else "record-http-headers"
+                "fix-and-restart-service" if session_id == "S8" else "record-http-headers"
             )
             assign_quest(
                 database_connection,
@@ -315,11 +304,7 @@ def test_redesigned_sessions_preserve_historical_completions_and_scores(
             )
 
             expected_quest_id = (
-                "prove-shell-alive"
-                if session_id == "S8"
-                else "serve-local-check-page"
-                if session_id == "S7"
-                else "try-cron-and-remove-it"
+                "prove-shell-alive" if session_id == "S8" else "serve-local-check-page"
             )
             assert quest_result.quest == CATALOG.quest(expected_quest_id)
             assert quest_result.assigned_now is True

@@ -114,7 +114,7 @@ Give your web server to a systemd user service. Test it while logged out, follow
 
 ### S09: Keep Your Website Up To Date
 
-Learn how timers schedule finite tasks, build the site hourly, and publish validated Singapore weather and modelled air quality. Sed, awk, vim, cron, and the webring are optional.
+Learn to inspect JSON weather data, produce a validated Singapore bulletin, and schedule its static-site build with a user timer.
 
 - [Slides](sessions/S09/slides.md)
 - [Self-study](sessions/S09/self-study.md)

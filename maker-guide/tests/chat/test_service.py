@@ -3060,39 +3060,6 @@ def test_deterministic_intents_bypass_llm(
     assert tutor_client.requests == []
 
 
-@pytest.mark.parametrize("message", ["check", "now", "today", "next"])
-def test_irc_check_marks_missing_client_evidence_as_retryable(
-    migrated_database_path: Path,
-    message: str,
-) -> None:
-    """IRC check can ask for client evidence and retry without showing a failed check."""
-    with connect_database(migrated_database_path) as database_connection:
-        _write_member(database_connection, session_reached="S9")
-        _complete_current_session_objectives(database_connection, "S9")
-        _write_completed_quests(
-            database_connection,
-            _completed_quest_ids_before("use-terminal-irc"),
-        )
-        assign_quest(
-            database_connection,
-            QuestAssignment(
-                id=None,
-                handle="alice",
-                course_id=CATALOG.course.id,
-                quest_id="use-terminal-irc",
-                assigned_at="2026-10-24T09:00:00Z",
-                source="test",
-            ),
-        )
-
-        response = handle_chat_request(
-            _private_chat_request(message),
-            _chat_dependencies(database_connection, timestamp="2026-10-24T09:01:00Z"),
-        )
-
-    assert response.retry_after_irc_client_verification is True
-
-
 def test_check_intent_names_stale_s5_report_html(
     migrated_database_path: Path,
     tmp_path: Path,

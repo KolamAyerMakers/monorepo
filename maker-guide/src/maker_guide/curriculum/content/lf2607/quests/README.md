@@ -62,16 +62,17 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 
 ## S09 Reinforcement
 
-Keep Your Website Up To Date. Schedule an hourly build with a randomized start delay and publish validated Singapore weather and modelled air quality. Cron, sed, awk, vim, and the webring remain optional interests. Demo, investigation, and next-step quests are available here to prepare for S10, Show What You Can Do; their IDs stay unchanged.
+Keep Your Website Up To Date. These seven artifact-based quests practise inspecting JSON, extracting and formatting forecast values, publishing the Singapore bulletin, and configuring its hourly build. Existing artifacts can satisfy the related objective and quest checks; command history from objectives is not required again.
 
-- [try-cron-and-remove-it](try-cron-and-remove-it.md)
-- [transform-heading-with-sed](transform-heading-with-sed.md)
-- [extract-fields-with-awk](extract-fields-with-awk.md)
-- [survive-vim](survive-vim.md)
-- [enable-webring](enable-webring.md)
+- [inspect-weather-json](inspect-weather-json.md)
+- [extract-daily-temperature](extract-daily-temperature.md)
+- [compare-air-snapshot](compare-air-snapshot.md)
+- [format-forecast](format-forecast.md)
+- [complete-singapore-bulletin](complete-singapore-bulletin.md)
+- [link-published-bulletin](link-published-bulletin.md)
 - [schedule-site-rebuilds](schedule-site-rebuilds.md)
-- [refresh-pipes-for-bandit](refresh-pipes-for-bandit.md)
-- [prepare-bandit-approach](prepare-bandit-approach.md)
+
+## S10 Reinforcement
+
 - [demo-site](demo-site.md)
 - [write-next-path](write-next-path.md)
-- [use-terminal-irc](use-terminal-irc.md)

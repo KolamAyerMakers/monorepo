@@ -29,7 +29,7 @@ Rehearse once before the protected demo block. Open the pages or logs you will n
 - Serving: a successful local and public request with the expected page body, supported by request logs and an outside browser view. An active unit alone does not prove this.
 - Recovery: the actual symptom, observation that narrowed the cause, repair, and response or content proving recovery. Do not replace observed errors with expected successes.
 
-Use the [S10 fallback demo commands](../sessions/S10/self-study.md#demo-script) only when useful for preparation or diagnosis. They include computing the port directly, pausing automation and waiting for a build before body comparisons, and checking routes. For timer basics and the daily-pick challenge, use [S9 self-study](../sessions/S09/self-study.md).
+Use the [S10 fallback demo commands](../sessions/S10/self-study.md#demo-script) only when useful for preparation or diagnosis. They include computing the port directly, pausing automation and waiting for a build before body comparisons, and checking routes. For timer basics and the Singapore bulletin, use [S9 self-study](../sessions/S09/self-study.md).
 
 ## If Something Fails
 

@@ -232,6 +232,22 @@ class FileCheckValidation:
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
+class ArtifactCheckValidation:
+    """Validate related Singapore weather artifacts using their real source values."""
+
+    kind: Literal[
+        "weather",
+        "temperature",
+        "air",
+        "forecast",
+        "bulletin",
+        "published",
+        "timer",
+    ]
+    paths: tuple[str, ...]
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
 class SiteCheckValidation:
     """Validate simulated outcomes of the fixed ~/scripts/site-check.sh script."""
 
@@ -325,6 +341,7 @@ type QuestValidationLeaf = (
     CommandHistoryValidation
     | InteractiveQuestionValidation
     | FileCheckValidation
+    | ArtifactCheckValidation
     | SiteCheckValidation
     | FileMatchesPathValidation
     | GitTrackedPathValidation
@@ -666,6 +683,9 @@ def _validate_quest_validation(validation: object) -> None:
 def _validate_quest_validation_leaf(validation: object) -> None:
     if _validate_command_or_question_validation(validation):
         return
+    if isinstance(validation, ArtifactCheckValidation):
+        _validate_artifact_check(validation)
+        return
     if _validate_file_based_validation(validation):
         return
     if _validate_path_based_validation(validation):
@@ -754,6 +774,22 @@ def _validate_file_based_validation(validation: object) -> bool:
         )
         return True
     return isinstance(validation, SiteCheckValidation)
+
+
+def _validate_artifact_check(validation: ArtifactCheckValidation) -> None:
+    path_count = {
+        "weather": 1,
+        "temperature": 2,
+        "air": 2,
+        "forecast": 2,
+        "bulletin": 1,
+        "published": 2,
+        "timer": 2,
+    }[validation.kind]
+    if len(validation.paths) != path_count:
+        raise ValueError("artifact check has the wrong number of paths")
+    for path in validation.paths:
+        _require_validation_path("artifact check path", path)
 
 
 def _validate_path_based_validation(validation: object) -> bool:

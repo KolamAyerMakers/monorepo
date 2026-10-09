@@ -1,15 +1,15 @@
-# Publish Singapore Conditions
+# Schedule Hourly Site Rebuilds
 
 Quest: schedule-site-rebuilds
 
 ## Mission
 
-Complete the released Singapore Today shell starter's field extraction and Markdown composition, then publish validated forecast and modelled PM2.5 data as scheduled static content.
+Run the Singapore generator before the site build and schedule the user service hourly with a randomized delay.
 
 ## Make It Yours
 
-Follow [S9 self-study](../sessions/S09/self-study.md#challenge-publish-singapore-conditions) to copy the intentionally incomplete `singapore-today.sh` starter once, link `singapore-today.html` from the homepage, run it before the build, and schedule the build with `OnCalendar=hourly` and `RandomizedDelaySec=55min` in `[Timer]`. Personalize the presentation and keep source attribution, units, forecast date, air timestamp, and retrieval timestamp clear. PM2.5 is CAMS model data, not official PSI or a local-station reading.
+Follow [S9 self-study](../sessions/S09/self-study.md) for the completed report and site-link steps. Configure `ExecStartPre` before the installed build helper, keep the service working directory, and use `OnCalendar=hourly` with `RandomizedDelaySec=55min`. The timer configuration and next deadline do not prove that a service ran or published a page. Do not claim actual publication without inspecting the generated output and service journal.
 
 ## Check The Result
 
-Run the service and inspect its journal. Confirm `/singapore-today.html` is linked and published. Use the provided validation and nonempty-output checks; prove a short timer activation publishes your personalized heading and a fresh retrieval timestamp. A timer listing is a planned deadline, not proof of a successful update. Restore both hourly settings after testing.
+Inspect the unit files and timer listing. Treat these as configuration evidence only; an actual run and publication require separate observation.

@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import html
+import json
+import math
 import os
 import re
 import sqlite3
@@ -10,6 +13,8 @@ import stat
 import subprocess
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import cast
 
@@ -17,6 +22,7 @@ from maker_guide.curriculum.models import (
     AllOfValidation,
     AnswerConcept,
     AnswerConceptAssessment,
+    ArtifactCheckValidation,
     CommandHistoryValidation,
     CourseCatalog,
     ExecutablePathValidation,
@@ -136,6 +142,9 @@ _VALIDATION_FAILURE_REASONS_BY_ID = {
     "file_check": _PATH_RESOLUTION_FAILURE_REASONS
     | _FILE_READ_FAILURE_REASONS
     | frozenset({"file-content-mismatch", "forbidden-content-present", "invalid-regex"}),
+    "artifact_check": _PATH_RESOLUTION_FAILURE_REASONS
+    | _FILE_READ_FAILURE_REASONS
+    | frozenset({"file-content-mismatch"}),
     "file_matches_path": _PATH_RESOLUTION_FAILURE_REASONS
     | _FILE_READ_FAILURE_REASONS
     | frozenset({"file-content-mismatch"}),
@@ -161,6 +170,7 @@ _SUPPORTED_VALIDATION_TYPE_IDS = frozenset(
         "executable_path",
         "owned_path",
         "file_check",
+        "artifact_check",
         "file_matches_path",
         "git_tracked_path",
         "user_port_file",
@@ -429,6 +439,8 @@ def _validate_rule(  # noqa: C901, PLR0912 - exhaustive validation dispatch
             result = _validate_owned_path(validation_input, validation)
         case FileCheckValidation():
             result = _validate_file_check(validation_input, validation)
+        case ArtifactCheckValidation():
+            result = _validate_artifact_check(validation_input, validation)
         case SiteCheckValidation():
             result = _validate_site_check(validation_input)
         case FileMatchesPathValidation():
@@ -850,6 +862,363 @@ def _validate_file_check(
             forbidden_regex=validation.forbidden_regex,
         ),
     )
+
+
+def _validate_artifact_check(
+    validation_input: QuestValidationInput,
+    validation: ArtifactCheckValidation,
+) -> QuestValidationResult:
+    contents: list[str] = []
+    for catalog_path in validation.paths:
+        opened_file = open_validation_file(
+            validation_input.handle,
+            catalog_path,
+            account_lookup=validation_input.account_lookup,
+        )
+        if opened_file.failure_reason is not None or opened_file.file_descriptor is None:
+            return _file_validation_result(
+                "artifact_check",
+                catalog_path,
+                False,
+                opened_file.failure_reason or "read-error",
+                artifact=validation.kind,
+            )
+        try:
+            file_read = _read_validation_file(opened_file.file_descriptor)
+        finally:
+            os.close(opened_file.file_descriptor)
+        if file_read.failure_reason is not None or file_read.file_contents is None:
+            return _file_validation_result(
+                "artifact_check",
+                catalog_path,
+                False,
+                file_read.failure_reason or "read-error",
+                artifact=validation.kind,
+            )
+        contents.append(file_read.file_contents)
+
+    artifact_issue = "The artifact fields, units, or snapshot values do not match the exercise."
+    try:
+        passed = artifact_contents_match(validation.kind, contents)
+        failure_reason = None if passed else "file-content-mismatch"
+    except json.JSONDecodeError:
+        passed = False
+        failure_reason = "file-content-mismatch"
+        artifact_issue = "The JSON artifact is malformed; inspect its saved response."
+    except (ValueError, TypeError, KeyError, IndexError, OverflowError):
+        passed = False
+        failure_reason = "file-content-mismatch"
+        artifact_issue = (
+            "The JSON artifact is missing a required field or has an invalid field type."
+        )
+    else:
+        if passed:
+            artifact_issue = ""
+    return _file_validation_result(
+        "artifact_check",
+        validation.paths[0],
+        passed,
+        failure_reason,
+        artifact=validation.kind,
+        checked_paths=list(validation.paths),
+        artifact_issue=artifact_issue or None,
+    )
+
+
+def artifact_contents_match(kind: str, contents: list[str]) -> bool:
+    """Check learner artifacts against required JSON values and domain fields."""
+    passed = False
+    if kind == "weather":
+        weather = _json_mapping(cast("object", json.loads(contents[0])))
+        daily = _json_mapping(weather["daily"])
+        forecast_date = _json_string(_json_first(daily["time"]))
+        temperature = _json_number(_json_first(daily["temperature_2m_max"]))
+        rain = _json_number(_json_first(daily["precipitation_probability_max"]))
+        sunrise = _json_string(_json_first(daily["sunrise"]))
+        sunset = _json_string(_json_first(daily["sunset"]))
+        units = _json_mapping(weather["daily_units"])
+        passed = (
+            _valid_api_date(forecast_date)
+            and _is_finite_number(temperature)
+            and -100 <= temperature <= 70
+            and _is_finite_number(rain)
+            and 0 <= rain <= 100
+            and all(_valid_api_timestamp(value) for value in (sunrise, sunset))
+            and units["temperature_2m_max"] == "°C"
+            and units["precipitation_probability_max"] == "%"
+        )
+    if kind == "temperature":
+        weather = _json_mapping(cast("object", json.loads(contents[1])))
+        number_text = contents[0].strip()
+        daily = _json_mapping(weather["daily"])
+        units = _json_mapping(weather["daily_units"])
+        expected = _json_number(_json_first(daily["temperature_2m_max"]))
+        passed = (
+            _is_finite_number(expected)
+            and units["temperature_2m_max"] == "°C"
+            and re.fullmatch(r"-?\d+(?:\.\d+)?", number_text) is not None
+            and Decimal(number_text) == Decimal(str(expected))
+        )
+    if kind == "air":
+        air = _json_mapping(cast("object", json.loads(contents[0])))
+        current = _json_mapping(air["current"])
+        units = _json_mapping(air["current_units"])
+        value = _json_number(current["pm2_5"])
+        timestamp = _json_string(current["time"])
+        passed = (
+            _is_finite_number(value)
+            and 0 <= value <= 1000
+            and units["pm2_5"] == "μg/m³"
+            and _valid_api_timestamp(timestamp)
+            and _label_has_number(contents[1], r"PM2\.5", value, "μg/m³")
+            and _label_has_text(
+                contents[1], r"(?:air\s+)?model\s+timestamp|model\s+time|air\s+time", timestamp
+            )
+        )
+    if kind == "forecast":
+        weather = _json_mapping(cast("object", json.loads(contents[0])))
+        daily = _json_mapping(weather["daily"])
+        units = _json_mapping(weather["daily_units"])
+        temperature = _json_number(_json_first(daily["temperature_2m_max"]))
+        passed = (
+            _is_finite_number(temperature)
+            and units["temperature_2m_max"] == "°C"
+            and re.search(r"(?m)^#\s+\S", contents[1]) is not None
+            and _label_has_number(contents[1], r"maximum(?:\s+temperature)?", temperature, "°C")
+        )
+    if kind == "bulletin":
+        passed = _report_has_complete_bulletin(contents[0])
+    elif kind == "published":
+        index, rendered_report = contents
+        passed = bool(
+            re.search(r"\[[^\]]+\]\(singapore-today\.html\)", index, re.IGNORECASE)
+        ) and _report_has_complete_bulletin(rendered_report)
+    elif kind == "timer":
+        service, timer = contents
+        service_section = re.search(r"(?ms)^\[Service\]\n(?P<body>.*?)(?=^\[|\Z)", service)
+        if service_section is not None:
+            service_body = service_section["body"]
+            prestart = re.search(
+                r"(?m)^ExecStartPre=/bin/bash %h/scripts/singapore-today\.sh\s*$",
+                service_body,
+            )
+            start = re.search(
+                r"(?m)^ExecStart=/usr/local/bin/maker-guide-build-personal-website\s*$",
+                service_body,
+            )
+            passed = (
+                re.search(r"(?m)^Type=oneshot\s*$", service_body) is not None
+                and re.search(r"(?m)^WorkingDirectory=%h/src\s*$", service_body) is not None
+                and len(re.findall(r"(?m)^ExecStartPre=", service_body)) == 1
+                and len(re.findall(r"(?m)^ExecStart=", service_body)) == 1
+                and prestart is not None
+                and start is not None
+                and prestart.start() < start.start()
+                and _valid_hourly_timer(timer)
+            )
+    return passed
+
+
+def _json_mapping(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise ValueError("expected a JSON object")
+    mapping = cast("dict[object, object]", value)
+    if not all(isinstance(key, str) for key in mapping):
+        raise ValueError("JSON object keys must be strings")
+    return cast("dict[str, object]", mapping)
+
+
+def _json_first(value: object) -> object:
+    if isinstance(value, list) and value:
+        return cast("list[object]", value)[0]
+    raise ValueError("expected a nonempty JSON array")
+
+
+def _json_number(value: object) -> int | float:
+    if _is_finite_number(value):
+        return cast("int | float", value)
+    raise ValueError("expected a finite JSON number")
+
+
+def _json_string(value: object) -> str:
+    if isinstance(value, str):
+        return value
+    raise ValueError("expected a JSON string")
+
+
+def _is_finite_number(value: object) -> bool:
+    return (isinstance(value, int) and not isinstance(value, bool)) or (
+        isinstance(value, float) and math.isfinite(value)
+    )
+
+
+def _label_has_number(text: str, label: str, value: object, unit: str) -> bool:
+    if not _is_finite_number(value):
+        return False
+    expected = Decimal(str(value))
+    number_pattern = r"(?<![\w.,])(?P<number>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+    unit_pattern = _unit_pattern(unit)
+    for line in text.splitlines():
+        label_match = re.search(rf"(?i)\b(?:{label})\b", line)
+        if label_match is None:
+            continue
+        match = re.search(rf"{number_pattern}\s*{unit_pattern}(?!\w)", line[label_match.end() :])
+        if match is not None:
+            return Decimal(match["number"]) == expected
+    return False
+
+
+def _label_has_text(text: str, label: str, value: str) -> bool:
+    return re.search(rf"(?im)^.*\b(?:{label})\b[^\n]*{re.escape(value)}", text) is not None
+
+
+def _valid_hourly_timer(timer: str) -> bool:
+    timer_section = re.search(r"(?ms)^\[Timer\]\n(?P<body>.*?)(?=^\[|\Z)", timer)
+    if timer_section is None:
+        return False
+    body = timer_section["body"]
+    outside_timer = timer[: timer_section.start()] + timer[timer_section.end() :]
+    install_section = re.search(r"(?ms)^\[Install\]\n(?P<body>.*?)(?=^\[|\Z)", timer)
+    return (
+        install_section is not None
+        and re.search(r"(?m)^WantedBy=timers\.target\s*$", install_section["body"]) is not None
+        and len(re.findall(r"(?m)^OnCalendar=", timer)) == 1
+        and len(re.findall(r"(?m)^OnCalendar=hourly\s*$", body)) == 1
+        and len(re.findall(r"(?m)^RandomizedDelaySec=", timer)) == 1
+        and len(re.findall(r"(?m)^RandomizedDelaySec=55min\s*$", body)) == 1
+        and re.search(r"(?m)^RandomizedDelaySec=", outside_timer) is None
+        and re.search(
+            r"(?m)^On(?:BootSec|StartupSec|UnitActiveSec|ActiveSec|UnitInactiveSec)=", body
+        )
+        is None
+        and re.search(
+            r"(?m)^On(?:BootSec|StartupSec|UnitActiveSec|ActiveSec|UnitInactiveSec)=",
+            outside_timer,
+        )
+        is None
+    )
+
+
+def _report_has_complete_bulletin(report: str) -> bool:
+    plain_report = html.unescape(
+        re.sub(
+            r"</(?:p|li|h[1-6]|tr|dt|dd|div)>|<br\s*/?>",
+            "\n",
+            report,
+            flags=re.IGNORECASE,
+        )
+    )
+    plain_report = re.sub(r"<[^>]*>|[*_`]", " ", plain_report)
+    field_labels = r"""
+        forecast\s+date|date|forecast\s+maximum(?:\s+temperature)?|
+        daily\s+maximum(?:\s+temperature)?|maximum(?:\s+temperature)?|
+        high(?:\s+temperature)?|rain(?:fall)?(?:\s+(?:probability|chance))?|
+        precipitation(?:\s+probability)?|chance\s+of\s+rain|sunrise|sunset|
+        (?:(?:modelled|modeled)\s+)?PM2\.5|(?:air\s+)?model\s+(?:timestamp|time)|
+        (?:air\s+)?timestamp|retrieved|retrieval\s+time|generated(?:\s+at)?
+    """
+    plain_report = re.sub(
+        rf"\s+(?=(?:{field_labels})\s*:)",
+        "\n",
+        plain_report,
+        flags=re.IGNORECASE | re.VERBOSE,
+    )
+    forecast_date = _labeled_field(plain_report, r"(?:forecast\s+)?date")
+    temperature = _labeled_number(
+        plain_report,
+        r"(?:forecast\s+)?(?:maximum|daily\s+maximum)(?:\s+temperature)?|high(?:\s+temperature)?",
+        "°C",
+    )
+    rain = _labeled_number(
+        plain_report,
+        r"rain(?:fall)?(?:\s+(?:probability|chance))?|precipitation(?:\s+probability)?|chance\s+of\s+rain",
+        "%",
+    )
+    sunrise = _labeled_field(plain_report, r"sunrise")
+    sunset = _labeled_field(plain_report, r"sunset")
+    pm25 = _labeled_number(plain_report, r"(?:(?:modelled|modeled)\s+)?PM2\.5", "μg/m³")
+    model_time = _labeled_field(
+        plain_report,
+        r"(?:air\s+)?model\s+(?:timestamp|time)|(?:air\s+)?timestamp",
+    )
+    retrieved = _labeled_field(plain_report, r"retrieved|retrieval\s+time|generated(?:\s+at)?")
+    if None in (forecast_date, temperature, rain, sunrise, sunset, pm25, model_time, retrieved):
+        return False
+    forecast_date = cast("str", forecast_date)
+    temperature = cast("str", temperature)
+    rain = cast("str", rain)
+    sunrise = cast("str", sunrise)
+    sunset = cast("str", sunset)
+    pm25 = cast("str", pm25)
+    model_time = cast("str", model_time)
+    retrieved = cast("str", retrieved)
+    return (
+        _valid_api_date(forecast_date)
+        and Decimal(temperature) >= -100
+        and Decimal(temperature) <= 70
+        and Decimal(rain) >= 0
+        and Decimal(rain) <= 100
+        and _valid_api_timestamp(sunrise)
+        and _valid_api_timestamp(sunset)
+        and Decimal(pm25) >= 0
+        and Decimal(pm25) <= 1000
+        and _valid_api_timestamp(model_time)
+        and _valid_retrieval_timestamp(retrieved)
+        and "open-meteo" in plain_report.casefold()
+        and "cams" in plain_report.casefold()
+    )
+
+
+def _labeled_field(text: str, label: str) -> str | None:
+    for raw_line in text.splitlines():
+        line = re.sub(r"^\s*(?:[-*+]\s+|\d+[.)]\s+|#+\s*)", "", raw_line)
+        match = re.fullmatch(rf"\s*(?:{label})\s*:?\s*(\S(?:.*?\S)?)\s*", line, re.IGNORECASE)
+        if match is not None:
+            return match[1].strip()
+    return None
+
+
+def _labeled_number(text: str, label: str, unit: str) -> str | None:
+    value = _labeled_field(text, label)
+    if value is None:
+        return None
+    match = re.search(
+        rf"(?<![\w.,])([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*{_unit_pattern(unit)}",
+        value,
+    )
+    return match[1] if match is not None else None
+
+
+def _unit_pattern(unit: str) -> str:
+    return re.escape(unit).replace("μ", "[μµ]")
+
+
+def _valid_retrieval_timestamp(value: str) -> bool:
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:[+-]\d{2}:\d{2})?", value) is None:
+        return False
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def _valid_api_timestamp(value: str) -> bool:
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}", value) is not None
+
+
+def _valid_api_date(value: str) -> bool:
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) is None:
+        return False
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
 
 
 def _validate_site_check(validation_input: QuestValidationInput) -> QuestValidationResult:

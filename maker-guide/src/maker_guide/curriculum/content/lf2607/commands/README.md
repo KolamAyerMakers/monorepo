@@ -47,6 +47,7 @@ Use command cards when you need a command's shape, purpose, or common failure mo
 
 ## Streams, Search, And Processes
 
+- [jq](jq.md)
 - [grep](grep.md)
 - [wc](wc.md)
 - [sort](sort.md)

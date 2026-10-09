@@ -18,12 +18,14 @@ from maker_guide.curriculum.models import (
     AllOfValidation,
     AnswerConcept,
     AnswerConceptAssessment,
+    ArtifactCheckValidation,
     CommandHistoryValidation,
     ExecutablePathValidation,
     FileCheckValidation,
     GitTrackedPathValidation,
     InteractiveQuestionValidation,
     IrcChannelJoinObservedValidation,
+    IrcCtcpVersionValidation,
     LearnerHandleQuestionValidation,
     PathExistsValidation,
     QuestValidation,
@@ -668,8 +670,9 @@ def test_audit_backed_validations_exclude_events_after_check(
             == "missing-irc-channel-join"
         )
         assert (
-            validate_quest(
-                replace(validation_input, quest=CATALOG.quest("use-terminal-irc")),
+            validate_session_objective(
+                validation_input,
+                IrcCtcpVersionValidation(accepted_clients=("WeeChat", "irssi", "BitchX")),
             ).failure_reason
             == "missing-irc-ctcp-version"
         )
@@ -1041,7 +1044,7 @@ def test_validation_support_reports_file_matches_path_as_supported() -> None:
 
 def test_validation_support_reports_irc_ctcp_version_as_supported() -> None:
     """Support introspection reports IRC CTCP VERSION checks as supported."""
-    support = validation_support(CATALOG.quest("use-terminal-irc").validation)
+    support = validation_support(IrcCtcpVersionValidation(accepted_clients=("WeeChat",)))
 
     assert support.supported is True
     assert support.unsupported_validation_types == ()
@@ -1141,13 +1144,14 @@ def test_irc_ctcp_version_validation_accepts_terminal_clients(
             ),
         )
 
-        result = validate_quest(
+        result = validate_session_objective(
             _validation_input(
                 database_connection,
-                "use-terminal-irc",
+                "prove-shell-alive",
                 assigned_at="2026-10-24T09:00:00Z",
                 checked_at="2026-10-24T09:02:00Z",
             ),
+            IrcCtcpVersionValidation(accepted_clients=("WeeChat", "irssi", "BitchX")),
         )
 
     assert result.passed is True
@@ -1179,13 +1183,14 @@ def test_irc_ctcp_version_validation_rejects_browser_clients(
             ),
         )
 
-        result = validate_quest(
+        result = validate_session_objective(
             _validation_input(
                 database_connection,
-                "use-terminal-irc",
+                "prove-shell-alive",
                 assigned_at="2026-10-24T09:00:00Z",
                 checked_at="2026-10-24T09:02:00Z",
             ),
+            IrcCtcpVersionValidation(accepted_clients=("WeeChat", "irssi", "BitchX")),
         )
 
     assert result.passed is False
@@ -1210,13 +1215,14 @@ def test_irc_ctcp_version_validation_requires_recent_evidence(
             ),
         )
 
-        result = validate_quest(
+        result = validate_session_objective(
             _validation_input(
                 database_connection,
-                "use-terminal-irc",
+                "prove-shell-alive",
                 assigned_at="2026-10-24T09:00:00Z",
                 checked_at="2026-10-24T09:02:00Z",
             ),
+            IrcCtcpVersionValidation(accepted_clients=("WeeChat", "irssi", "BitchX")),
         )
 
     assert result.passed is False
@@ -1935,6 +1941,95 @@ def test_file_check_validation_reads_bounded_text_files(
         "required_matched": False,
         "validation_type": "file_check",
     }
+
+
+@pytest.mark.parametrize(
+    ("weather_json", "expected_issue"),
+    [
+        ("{broken", "The JSON artifact is malformed; inspect its saved response."),
+        ("{}", "The JSON artifact is missing a required field or has an invalid field type."),
+        (
+            '{"daily":{"time":["2026-10-10"],"temperature_2m_max":[true]}}',
+            "The JSON artifact is missing a required field or has an invalid field type.",
+        ),
+        (
+            """{"daily":{"time":["2026-10-10"],"temperature_2m_max":[31.5],
+            "precipitation_probability_max":[20],"sunrise":["2026-10-10T06:54"],
+            "sunset":["2026-10-10T18:58"]},"daily_units":{"temperature_2m_max":"°F",
+            "precipitation_probability_max":"%"}}""",
+            "The artifact fields, units, or snapshot values do not match the exercise.",
+        ),
+    ],
+)
+def test_weather_artifact_check_rejects_invalid_saved_json(
+    migrated_database_path: Path,
+    tmp_path: Path,
+    weather_json: str,
+    expected_issue: str,
+) -> None:
+    """Weather JSON is parsed and checked for required types and units, not regex keywords."""
+    learner_home = tmp_path / "alice"
+    learner_home.mkdir()
+    (learner_home / "weather.json").write_text(weather_json, encoding="utf-8")
+
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_quest(
+            _filesystem_validation_input(
+                database_connection,
+                ArtifactCheckValidation(kind="weather", paths=("weather.json",)),
+                learner_home,
+            ),
+        )
+
+    assert result.passed is False
+    assert result.failure_reason == "file-content-mismatch"
+    assert result.evidence["artifact_issue"] == expected_issue
+    assert result.evidence["artifact"] == "weather"
+    assert result.evidence["checked_paths"] == ["weather.json"]
+    assert "file_contents" not in result.evidence
+
+
+def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
+    migrated_database_path: Path,
+    tmp_path: Path,
+) -> None:
+    """Report checks accept labelled Markdown and its personalized static rendering."""
+    learner_home = tmp_path / "alice"
+    learner_home.mkdir()
+    report = (
+        "- Date: 2026-10-10\n- High: 31.5 °C\n- Chance of rain: 20%\n"
+        "- Sunrise: 2026-10-10T06:54\n- Sunset: 2026-10-10T18:58\n"
+        "- PM2.5: 4.2 μg/m³\n- Model time: 2026-10-10T09:00\n"
+        "- Retrieval time: 2026-10-10T09:01:00+08:00\n"
+        "Open-Meteo forecast; CAMS model estimate."
+    )
+    (learner_home / "report.md").write_text(report, encoding="utf-8")
+    (learner_home / "index.md").write_text(
+        "[Today's Singapore conditions](singapore-today.html)\n", encoding="utf-8"
+    )
+    rendered = "<h1>My local conditions</h1>" + "".join(
+        f"<li>{line.removeprefix('- ')}</li>" for line in report.splitlines()
+    )
+    (learner_home / "report.html").write_text(rendered, encoding="utf-8")
+
+    with connect_database(migrated_database_path) as database_connection:
+        source_result = validate_quest(
+            _filesystem_validation_input(
+                database_connection,
+                ArtifactCheckValidation(kind="bulletin", paths=("report.md",)),
+                learner_home,
+            ),
+        )
+        published_result = validate_quest(
+            _filesystem_validation_input(
+                database_connection,
+                ArtifactCheckValidation(kind="published", paths=("index.md", "report.html")),
+                learner_home,
+            ),
+        )
+
+    assert source_result.passed is True
+    assert published_result.passed is True
 
 
 def test_file_check_validation_reports_missing_path(

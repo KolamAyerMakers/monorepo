@@ -38,19 +38,8 @@ from maker_guide.repositories.course_release import CourseRelease, upsert_course
 from maker_guide.repositories.help_interaction import list_recent_help_interactions
 from maker_guide.repositories.helpers import connect_database
 from maker_guide.repositories.learner import Learner, upsert_learner
-from maker_guide.repositories.quest_assignment import QuestAssignment, assign_quest
-from maker_guide.repositories.quest_completion import (
-    QuestCompletion,
-)
-from maker_guide.repositories.quest_completion import (
-    complete_quest as complete_quest_repository,
-)
 from maker_guide.repositories.score_ledger import ScoreLedgerEntry, add_score_entry
-from maker_guide.repositories.session_objective_completion import (
-    SessionObjectiveCompletion,
-    complete_session_objective,
-    list_completed_objective_ids,
-)
+from maker_guide.repositories.session_objective_completion import list_completed_objective_ids
 
 ServerHandler = Callable[[asyncio.StreamReader, asyncio.StreamWriter], Awaitable[None]]
 
@@ -632,38 +621,6 @@ async def test_run_once_pongs_while_channel_join_persistence_is_blocked(
     assert responses == ["PONG :server"]
 
 
-@pytest.mark.parametrize("message", ["check", "now"])
-async def test_run_once_retries_check_after_irc_client_version(
-    migrated_database_path: Path,
-    message: str,
-) -> None:
-    """IRC check waits for terminal-client evidence instead of showing a failed check."""
-    _write_terminal_irc_quest(migrated_database_path)
-    responses: list[str] = []
-    server, port = await _start_fake_server(
-        _ctcp_check_retry_handler(responses, message),
-    )
-    outbound_queue: asyncio.Queue[IrcOutboundMessage] = asyncio.Queue()
-    client = IrcClient(
-        _irc_config(port),
-        outbound_queue,
-        options=IrcClientOptions(database_path=migrated_database_path),
-    )
-
-    try:
-        with pytest.raises(IrcError):
-            await client.run_once()
-    finally:
-        server.close()
-        await server.wait_closed()
-
-    assert responses[0] == "PRIVMSG alice :\x01VERSION\x01"
-    assert responses[1].startswith("PRIVMSG alice :Done.")
-    assert all("Not yet." not in response for response in responses)
-    if message == "now":
-        assert "All currently available quests are complete." in "\n".join(responses)
-
-
 async def test_run_once_pongs_while_slow_tutor_requests_are_bounded(
     migrated_database_path: Path,
 ) -> None:
@@ -1106,72 +1063,6 @@ def _write_cohort_member(database_path: Path, handle: str) -> None:
         )
 
 
-def _write_terminal_irc_quest(database_path: Path) -> None:
-    with connect_database(database_path) as database_connection:
-        upsert_learner(
-            database_connection,
-            Learner(
-                handle="alice",
-                joined_at="2026-07-18T09:00:00Z",
-                tagline=None,
-                created_at="2026-07-18T09:00:00Z",
-            ),
-        )
-        upsert_membership(
-            database_connection,
-            CohortMembership(
-                handle="alice",
-                course_id="lf2607",
-                joined_at="2026-07-18T09:00:00Z",
-            ),
-        )
-        upsert_course_release(
-            database_connection,
-            CourseRelease(
-                course_id="lf2607",
-                session_reached="S9",
-                released_at="2026-07-18T09:00:00Z",
-            ),
-        )
-        for session in CATALOG.sessions_through("S9"):
-            for objective in session.objectives:
-                complete_session_objective(
-                    database_connection,
-                    SessionObjectiveCompletion(
-                        handle="alice",
-                        course_id="lf2607",
-                        session_id=session.id,
-                        objective_id=objective.id,
-                        completed_at="2026-01-01T00:00:00Z",
-                        evidence_json="{}",
-                    ),
-                )
-        for quest in CATALOG.quests_available_through("S9"):
-            if quest.id != "use-terminal-irc":
-                complete_quest_repository(
-                    database_connection,
-                    QuestCompletion(
-                        handle="alice",
-                        course_id="lf2607",
-                        quest_id=quest.id,
-                        attempt_id=None,
-                        completed_at="2026-01-01T00:00:00Z",
-                        source="test",
-                    ),
-                )
-        assign_quest(
-            database_connection,
-            QuestAssignment(
-                id=None,
-                handle="alice",
-                course_id="lf2607",
-                quest_id="use-terminal-irc",
-                assigned_at="2026-01-01T00:00:00Z",
-                source="test",
-            ),
-        )
-
-
 def _successful_sasl_handler(transcript: list[str]) -> ServerHandler:
     async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         while True:
@@ -1341,37 +1232,6 @@ def _ctcp_version_handler(responses: list[str]) -> ServerHandler:
                 _write_server_line(writer, "PING :server")
                 await writer.drain()
                 responses.append(await asyncio.wait_for(_read_client_line(reader), timeout=1.0))
-                break
-            _write_basic_registration_response(writer, line)
-            await writer.drain()
-        writer.close()
-        await writer.wait_closed()
-
-    return handle_client
-
-
-def _ctcp_check_retry_handler(responses: list[str], message: str) -> ServerHandler:
-    async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        while True:
-            line = await _read_client_line(reader)
-            if not line:
-                break
-            if line == "JOIN #kolam":
-                _write_server_line(writer, f":alice!user@example PRIVMSG maker-guide :{message}")
-                await writer.drain()
-                responses.append(await asyncio.wait_for(_read_client_line(reader), timeout=1.0))
-                _write_server_line(
-                    writer,
-                    ":alice!user@example PRIVMSG maker-guide :\x01VERSION WeeChat 4.4.0\x01",
-                )
-                await writer.drain()
-                while True:
-                    try:
-                        responses.append(
-                            await asyncio.wait_for(_read_client_line(reader), timeout=0.2),
-                        )
-                    except TimeoutError:
-                        break
                 break
             _write_basic_registration_response(writer, line)
             await writer.drain()

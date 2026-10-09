@@ -68,7 +68,9 @@ cp /docs/sessions/S09/resources/singapore-today.sh \
 micro ~/scripts/singapore-today.sh
 ```
 
-The daily maximum is a forecast, not current temperature. The air value is CAMS model data, not Singapore's official PSI or a local-station reading; give no health advice. For an unrelated JSON-to-Markdown example, run these standalone terminal commands (do not paste the book data into the weather starter):
+The daily maximum is a forecast in °C. CAMS PM2.5 is modelled μg/m³, not Singapore's official PSI or a local-station reading; do not provide health advice.
+
+For an unrelated JSON-to-Markdown example, these standalone commands turn a book title into a short file. Keep this example separate from the weather artifacts:
 
 ```bash
 title=$(echo '{"title":"Dune"}' | jq -r '.title')
@@ -76,21 +78,17 @@ printf '# Reading\n\nBook: %s\n' "$title" > /tmp/reading.md
 cat /tmp/reading.md
 ```
 
-`$()` captures output, `-r` removes JSON string quotes, `%s` inserts the value, `\n` adds a line break, and `>` writes the file. Apply the technique to the starter's actual weather data: inspect the temporary JSON, extract all required fields in TODO 1, and compose the full attributed report with `printf` in TODO 2. Only after both TODOs are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1` at the top of the TODO section; the later required-fields check still guards incomplete output. Keep the source forecast date and air-model timestamp distinct from retrieval time. Attribute Open-Meteo and CAMS; do not mislabel model PM2.5 as PSI.
+Complete these steps in order, keeping these artifacts for inspection:
 
-| Report field | JSON field | Meaning / unit |
-|---|---|---|
-| Forecast date | `.daily.time[0]` | date in Asia/Singapore |
-| Maximum temperature | `.daily.temperature_2m_max[0]` | forecast °C |
-| Rain probability | `.daily.precipitation_probability_max[0]` | % |
-| Sunrise and sunset | `.daily.sunrise[0]`, `.daily.sunset[0]` | local timestamps |
-| Modelled PM2.5 | `.current.pm2_5` | μg/m³, CAMS estimate |
-| Model timestamp | `.current.time` | API timestamp |
-| Retrieved | generated with `date` | script retrieval time |
+1. Fetch weather JSON to `~/playground/singapore/weather.json` and inspect its daily fields and units with `jq`.
+2. Extract the daily maximum into `~/playground/singapore/temperature.txt`; it must be numeric and match the saved JSON snapshot.
+3. Save and inspect `~/playground/singapore/air.json` and `~/playground/singapore/air.txt`. Use labelled lines `PM2.5: <value> μg/m³` and `Model time: <timestamp>`; both values must match the JSON.
+4. Use a shell variable and `printf` to create `~/playground/singapore/forecast.md` with a heading and a line `Maximum: <value> °C`, matching the snapshot.
+5. Finish the copied script to generate `~/src/pages/singapore-today.md`. Include labelled forecast date, maximum temperature, rain probability, sunrise, sunset, PM2.5, model timestamp, and retrieval time, with units and Open-Meteo/CAMS attribution. Keep API dates and times in ISO format; include the retrieval timezone or UTC offset in its timestamp. Keep validation, nonempty-field checks, and atomic replacement; remove the starter's incomplete-exercise stop only when finished.
+6. Link `[Singapore today](singapore-today.html)` from `~/src/pages/index.md`; after a build inspect `~/public_html/singapore-today.html` for the complete bulletin. The browser displays static content, not live API data.
+7. Add `ExecStartPre=/bin/bash %h/scripts/singapore-today.sh` before the build helper in the user service. Preserve its working directory, helper, hourly timer, and 55-minute randomized delay. The next-timer listing proves configuration only, not execution or publication.
 
-After completing both exercises, run with an output under `~/src/pages/` and inspect the report. Fetch or validation failures preserve an existing report. Add `[Singapore today](singapore-today.html)` to `~/src/pages/index.md`.
-
-Add `ExecStartPre=/bin/bash %h/scripts/singapore-today.sh` before `ExecStart` in the service. Failure prevents the build and leaves the previous report. Inspect the journal and `/singapore-today.html`; this is scheduled static content, not browser-generated data. For a simple timer proof, temporarily use a near-term calendar occurrence and `RandomizedDelaySec=0`; restore both `OnCalendar=hourly` and `RandomizedDelaySec=55min` afterward. Personalize the script's Markdown heading and verify a new retrieval time after a timer activation; do not manually run the generator or build during the proof.
+Do not claim live freshness unless you actually run the generator and service and inspect the published page.
 
 ## If It Does Not Work
 

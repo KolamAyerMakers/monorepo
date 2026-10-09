@@ -10,6 +10,7 @@ from types import MappingProxyType
 from maker_guide.curriculum.models import (
     AllOfValidation,
     AnswerConcept,
+    ArtifactCheckValidation,
     CommandHistoryValidation,
     ContentReference,
     Course,
@@ -229,12 +230,19 @@ _DAILY_PICK_SERVICE_PATTERN = (
 )
 _DAILY_PICK_SCRIPT_PATTERN = (
     r"(?ms)^(?!.*EXERCISE_INCOMPLETE)(?=.*^set -euo pipefail$)"
+    r"(?=.*^report=\$\(mktemp \"\$output_directory/\.singapore-today\.XXXXXX\"\)$)"
+    r"(?=.*^temporary_directory=\$\(mktemp -d\)$)"
+    r"(?=.*^trap 'rm -rf \"\$temporary_directory\"; rm -f \"\$report\"' EXIT$)"
     r"(?=.*^[ \t]*if ! curl --max-time 15 -fsS \"\$url\" "
     r"-o \"\$temporary_directory/\$name.json\"; then$)"
     r"(?=.*^jq -e '$.*?\.daily\.temperature_2m_max\[0\]"
     r".*?^' \"\$temporary_directory/weather.json\" >/dev/null$)"
     r"(?=.*\.daily_units\.temperature_2m_max == \"°C\")"
     r"(?=.*\.daily_units\.precipitation_probability_max == \"%\")"
+    r"(?=.*\.daily\.precipitation_probability_max\[0\] \| numbers \| \. >= 0 and \. <= 100)"
+    r"(?=.*\.daily\.sunrise\[0\] \| strings)(?=.*\.daily\.sunset\[0\] \| strings)"
+    r"(?=.*\.current\.pm2_5 \| numbers \| \. >= 0 and \. <= 1000)"
+    r"(?=.*\.current\.time \| strings)"
     r"(?=.*\.current_units\.pm2_5 == \"μg/m³\")"
     r"(?=.*strptime\(\"%Y-%m-%d\"\))(?=.*^[ \t]*parsed_date=)"
     r"(?=.*^[ \t]*\[\[ \$parsed_date == \"\$calendar_value\" \]\] \|\| exit 1$)"
@@ -245,6 +253,44 @@ _DAILY_PICK_SCRIPT_PATTERN = (
     r"(?=.*^[ \t]*sunset=\$\(jq -r )(?=.*^[ \t]*air_time=\$\(jq -r )"
     r"(?=.*^[ \t]*pm25=\$\(jq -r )(?=.*-s \"\$\{report:-\}\")"
     r"(?=.*^[ \t]*mv -- \"\$report\" \"\$output\"$).*$"
+)
+_S9_STEP_VALIDATIONS = (
+    ArtifactCheckValidation(kind="weather", paths=("~/playground/singapore/weather.json",)),
+    ArtifactCheckValidation(
+        kind="temperature",
+        paths=("~/playground/singapore/temperature.txt", "~/playground/singapore/weather.json"),
+    ),
+    ArtifactCheckValidation(
+        kind="air",
+        paths=("~/playground/singapore/air.json", "~/playground/singapore/air.txt"),
+    ),
+    ArtifactCheckValidation(
+        kind="forecast",
+        paths=("~/playground/singapore/weather.json", "~/playground/singapore/forecast.md"),
+    ),
+    AllOfValidation(
+        validations=(
+            FileCheckValidation(
+                path="~/scripts/singapore-today.sh",
+                required_regex=_DAILY_PICK_SCRIPT_PATTERN,
+            ),
+            ArtifactCheckValidation(
+                kind="bulletin",
+                paths=("~/src/pages/singapore-today.md",),
+            ),
+        ),
+    ),
+    ArtifactCheckValidation(
+        kind="published",
+        paths=("~/src/pages/index.md", "~/public_html/singapore-today.html"),
+    ),
+    ArtifactCheckValidation(
+        kind="timer",
+        paths=(
+            "~/.config/systemd/user/site-build.service",
+            "~/.config/systemd/user/site-build.timer",
+        ),
+    ),
 )
 _SOURCE_HANDOFF_PATHS = (
     "README.md",
@@ -509,6 +555,7 @@ _REPORTED_PROCESS_PAIR_CONCEPT = AnswerConcept(
 _QUEST_SPECIFIC_FAILURE_REASONS_BY_VALIDATION_TYPE = MappingProxyType(
     {
         CommandHistoryValidation: ("missing-command",),
+        ArtifactCheckValidation: ("missing-path", "file-content-mismatch"),
         IrcCtcpVersionValidation: (
             "missing-irc-ctcp-version",
             "unsupported-irc-client",
@@ -1828,108 +1875,81 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             title="Keep Your Website Up To Date",
             date=date(2026, 10, 10),
             starts_at=datetime(2026, 10, 10, 9, tzinfo=UTC),
-            introduced_commands=(
-                "systemd timer",
-                "systemctl --user list-timers",
-                "cron",
-                "crontab",
-                "sed",
-                "awk",
-                "vim",
-                "weechat",
-            ),
-            introduced_skills=(
-                "automation-timers",
-                "text-transforms",
-                "regular-expression",
-                "vim-survival",
-                "readme-writing",
-                "irc",
-            ),
+            introduced_commands=("systemd timer", "systemctl --user list-timers", "jq"),
+            introduced_skills=("automation-timers", "text-transforms"),
+            enrichment_skills=("readme-writing",),
             learning_objectives=(
-                "Explain how a timer schedules a finite service separately from a web server.",
-                "Build a website hourly with a systemd calendar timer and randomized delay.",
-                (
-                    "Publish validated Singapore weather and "
-                    "modelled air quality as scheduled static content."
-                ),
+                "Inspect a saved weather JSON snapshot and extract its daily maximum.",
+                "Compare air-quality data with its JSON source and render a complete bulletin.",
+                "Publish the static bulletin with a generator-before-build hourly timer.",
             ),
             content=_session_content("S9", "Keep Your Website Up To Date"),
             objectives=(
                 SessionObjective(
-                    id="schedule-site-rebuilds",
-                    title="Schedule an hourly website build",
+                    id="inspect-weather-json",
+                    title="Inspect the weather snapshot",
                     prompt=(
-                        "Create a oneshot `site-build.service` that runs "
-                        "`/usr/local/bin/maker-guide-build-personal-website` from `%h/src`. "
-                        "Create a matching timer with `OnCalendar=hourly` and "
-                        "`RandomizedDelaySec=55min` in its `[Timer]` section; "
-                        "load the units, run the service once, enable the timer, and inspect "
-                        "its next deadline and service journal."
+                        "Fetch weather JSON to ~/playground/singapore/weather.json and inspect "
+                        "its daily fields and units with jq."
                     ),
-                    validation=AllOfValidation(
-                        validations=(
-                            FileCheckValidation(
-                                path="~/.config/systemd/user/site-build.service",
-                                required_regex=_SITE_BUILD_SERVICE_PATTERN,
-                            ),
-                            FileCheckValidation(
-                                path="~/.config/systemd/user/site-build.timer",
-                                required_regex=_SITE_BUILD_TIMER_PATTERN,
-                                forbidden_regex=_SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN,
-                            ),
-                            CommandHistoryValidation(
-                                required_patterns=(
-                                    r"^systemctl --user daemon-reload$",
-                                    r"^systemctl --user enable --now site-build\.timer$",
-                                    r"^systemctl --user list-timers(?: --all site-build\.timer)?$",
-                                    r"^systemctl --user start site-build\.service$",
-                                    r"^journalctl --user -u site-build\.service",
-                                ),
-                                observed_commands=(
-                                    "systemctl --user",
-                                    "systemctl --user enable --now",
-                                    "systemctl --user list-timers",
-                                    "journalctl --user",
-                                ),
-                            ),
-                        ),
-                    ),
+                    validation=_S9_STEP_VALIDATIONS[0],
                 ),
                 SessionObjective(
-                    id="publish-daily-pick",
-                    title="Publish Singapore conditions",
+                    id="extract-daily-temperature",
+                    title="Extract the daily maximum",
                     prompt=(
-                        "Copy the released incomplete starter once to "
-                        "`~/scripts/singapore-today.sh`. "
-                        "Complete its jq field extraction and Markdown composition using the "
-                        "provided validation, variable checks, and atomic publication guard. "
-                        "Link the result from the homepage, add its ExecStartPre, then run the "
-                        "service and inspect the journal and generated page."
+                        "Use jq to save the numeric forecast maximum in temperature.txt and "
+                        "check it against weather.json."
                     ),
-                    validation=AllOfValidation(
-                        validations=(
-                            FileCheckValidation(
-                                path="~/scripts/singapore-today.sh",
-                                required_regex=_DAILY_PICK_SCRIPT_PATTERN,
-                            ),
-                            FileCheckValidation(
-                                path="~/.config/systemd/user/site-build.service",
-                                required_regex=_DAILY_PICK_SERVICE_PATTERN,
-                            ),
-                            FileCheckValidation(
-                                path="~/src/pages/singapore-today.md",
-                                required_regex=(
-                                    r"(?is)(?=.*forecast date: \d{4}-\d{2}-\d{2})"
-                                    r"(?=.*PM2\.5)(?=.*retrieved:).+"
-                                ),
-                            ),
-                            FileCheckValidation(
-                                path="~/src/pages/index.md",
-                                required_regex=r"(?is)\[Singapore today\]\(singapore-today\.html\)",
-                            ),
-                        ),
+                    validation=_S9_STEP_VALIDATIONS[1],
+                ),
+                SessionObjective(
+                    id="compare-air-snapshot",
+                    title="Compare the air-quality snapshot",
+                    prompt=(
+                        "Save ~/playground/singapore/air.json and "
+                        "~/playground/singapore/air.txt. Use labelled lines "
+                        "`PM2.5: <value> μg/m³` and `Model time: <timestamp>`; match both "
+                        "values to the JSON."
                     ),
+                    validation=_S9_STEP_VALIDATIONS[2],
+                ),
+                SessionObjective(
+                    id="format-forecast",
+                    title="Format a Markdown forecast",
+                    prompt=(
+                        "Use a shell variable and printf to write "
+                        "~/playground/singapore/forecast.md "
+                        "with a heading and `Maximum: <value> °C`, matching the snapshot."
+                    ),
+                    validation=_S9_STEP_VALIDATIONS[3],
+                ),
+                SessionObjective(
+                    id="complete-singapore-bulletin",
+                    title="Complete the Singapore bulletin",
+                    prompt=(
+                        "Complete the copied starter and generate the full attributed bulletin "
+                        "while retaining its validation and atomic-write guards."
+                    ),
+                    validation=_S9_STEP_VALIDATIONS[4],
+                ),
+                SessionObjective(
+                    id="link-published-bulletin",
+                    title="Link and inspect the bulletin",
+                    prompt=(
+                        "Link the report from your homepage, build the site, and inspect the "
+                        "rendered static bulletin."
+                    ),
+                    validation=_S9_STEP_VALIDATIONS[5],
+                ),
+                SessionObjective(
+                    id="configure-site-build-timer",
+                    title="Configure the hourly build",
+                    prompt=(
+                        "Run the generator before the build and keep the hourly timer with its "
+                        "55-minute randomized delay; inspect the configured next deadline."
+                    ),
+                    validation=_S9_STEP_VALIDATIONS[6],
                 ),
             ),
         ),
@@ -3554,155 +3574,90 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             evidence="The guide needs to see header checks and service status.",
         ),
         _quest(
-            quest_id="try-cron-and-remove-it",
-            title="Try cron and remove it",
+            quest_id="inspect-weather-json",
+            title="Inspect a weather snapshot",
             sequence=86,
             available_after_session="S9",
-            prompt=(
-                "Create a temporary cron job that appends `date` to `~/cron.log`, then remove it."
-            ),
-            required_commands=("cron", "crontab", "date", ">>", ">", "2>", "cat"),
-            practiced_skills=("automation-timers",),
-            validation=AllOfValidation(
-                validations=(
-                    FileCheckValidation(path="~/cron.log", required_regex=r"(?s).+"),
-                    FileCheckValidation(
-                        path="~/crontab.after",
-                        required_regex=r"(?s)^.*$",
-                        forbidden_regex=r"(?m)^[ \t]*[^#\s][^\n]*#[ \t]*cron-demo\b",
-                    ),
-                    CommandHistoryValidation(
-                        required_patterns=(
-                            r"^crontab -l > ~/crontab\.after 2>/dev/null \|\| true$",
-                        ),
-                        observed_commands=("crontab",),
-                    ),
-                ),
-            ),
-            goal="Recognize cron and remove a scheduled job safely.",
-            evidence="`~/cron.log` needs date output and `~/crontab.after` must omit the job.",
+            prompt="Fetch and inspect a weather JSON snapshot with jq.",
+            required_commands=("curl", "jq"),
+            practiced_skills=("text-transforms",),
+            validation=_S9_STEP_VALIDATIONS[0],
+            goal="Read the forecast fields and units from a real JSON response.",
+            evidence="Inspect the saved JSON fields and their units.",
         ),
         _quest(
-            quest_id="transform-heading-with-sed",
-            title="Transform a heading with sed",
+            quest_id="extract-daily-temperature",
+            title="Extract the daily maximum",
             sequence=87,
             available_after_session="S9",
-            prompt="Use one `sed` command to turn `# heading` into `<h1>heading</h1>`.",
-            required_commands=("sed",),
-            practiced_skills=("text-transforms", "regular-expression"),
-            validation=InteractiveQuestionValidation(
-                question="Paste the `sed` command that converts `# heading` to `<h1>heading</h1>`.",
-                required_concepts=(
-                    AnswerConcept(
-                        id="sed-command",
-                        aliases=(r"\bsed\b",),
-                        rubric=(
-                            "The answer must provide a sed substitution command that transforms "
-                            "the supplied Markdown heading."
-                        ),
-                    ),
-                    AnswerConcept(
-                        id="h1-output",
-                        aliases=(r"<h1>", r"\bh1\b"),
-                        rubric=(
-                            "The command must produce an h1 element containing heading, including "
-                            "both opening and closing tags."
-                        ),
-                    ),
-                ),
+            prompt=(
+                "Extract the forecast maximum into a text artifact and compare it with "
+                "the saved JSON."
             ),
-            goal="Reshape text with a simple substitution rule.",
-            evidence="Answer with a `sed` substitution that emits an `h1` tag.",
+            required_commands=("jq", "printf", ">"),
+            practiced_skills=("text-transforms",),
+            validation=_S9_STEP_VALIDATIONS[1],
+            goal="Extract a numeric value and verify it against its source.",
+            evidence="The saved number must equal the JSON snapshot value.",
         ),
         _quest(
-            quest_id="extract-fields-with-awk",
-            title="Extract fields with awk",
+            quest_id="compare-air-snapshot",
+            title="Compare air-quality data",
             sequence=88,
             available_after_session="S9",
-            prompt="Use `awk` to print the first field from each `/etc/passwd` line.",
-            required_commands=("awk", "cat"),
-            practiced_skills=("text-transforms",),
-            validation=InteractiveQuestionValidation(
-                question="Which command printed the first `/etc/passwd` field?",
-                required_concepts=(
-                    AnswerConcept(
-                        id="awk-command",
-                        aliases=(r"\bawk\b",),
-                        rubric="The answer must provide the awk command used on /etc/passwd.",
-                    ),
-                    AnswerConcept(
-                        id="print-action",
-                        aliases=(r"\bprint\b", r"\$1"),
-                        rubric=(
-                            "The awk program must print the first field, represented by $1, from "
-                            "each input line."
-                        ),
-                    ),
-                ),
+            prompt=(
+                "Save the air-quality JSON and a text record of the model PM2.5 value "
+                "and timestamp."
             ),
-            goal="Extract fields from structured text.",
-            evidence="Answer with the `awk` command you used.",
+            required_commands=("curl", "jq", "printf"),
+            practiced_skills=("text-transforms",),
+            validation=_S9_STEP_VALIDATIONS[2],
+            goal="Distinguish a model value and its observation time from retrieval time.",
+            evidence="Both the PM2.5 number and model timestamp must match the JSON.",
         ),
         _quest(
-            quest_id="survive-vim",
-            title="Survive vim",
+            quest_id="format-forecast",
+            title="Format a forecast note",
             sequence=89,
             available_after_session="S9",
-            prompt="Use vim to create `~/playground/vim-note.txt`, then save and quit with `:wq`.",
-            required_commands=("vim", "cat"),
-            practiced_skills=("vim-survival",),
-            validation=FileCheckValidation(
-                path="~/playground/vim-note.txt",
-                required_regex=r"(?s).+",
+            prompt=(
+                "Use a variable and printf to write a short Markdown forecast from the saved "
+                "temperature snapshot."
             ),
-            goal="Enter text, save, and quit vim without panic.",
-            evidence="`~/playground/vim-note.txt` must contain text saved from vim.",
+            required_commands=("jq", "printf", ">"),
+            practiced_skills=("text-transforms",),
+            validation=_S9_STEP_VALIDATIONS[3],
+            goal="Turn extracted JSON data into a small Markdown artifact.",
+            evidence="The note must contain the matching snapshot value and °C.",
         ),
         _quest(
-            quest_id="write-readme",
-            title="Write useful operating notes",
+            quest_id="complete-singapore-bulletin",
+            title="Complete the Singapore bulletin",
             sequence=90,
             available_after_session="S9",
-            prompt="Write useful operating notes in `~/src/README.md`.",
-            required_commands=("micro", "vim"),
-            practiced_skills=("readme-writing",),
-            validation=FileCheckValidation(
-                path="~/src/README.md",
-                required_regex=(
-                    r"(?ms)\A# \S[^\n]*\n"
-                    r"(?=.*(?:build-website|npm run build|"
-                    r"systemctl --user start site-build\.service))"
-                    r"(?=.*systemctl --user).+"
-                ),
+            prompt=(
+                "Complete the copied starter and generate the attributed forecast and "
+                "air-quality bulletin."
             ),
-            goal="Keep concise operating notes in your source repository.",
+            required_commands=("jq", "printf", "date", "mv"),
+            practiced_skills=("text-transforms",),
+            validation=_S9_STEP_VALIDATIONS[4],
+            goal="Generate a complete report while retaining its safety checks.",
             evidence=(
-                "`~/src/README.md` needs a title, site description, and actual "
-                "build and `systemctl --user` commands."
+                "Include all forecast, model, and retrieval fields with units and attribution."
             ),
         ),
         _quest(
-            quest_id="enable-webring",
-            title="Enable the webring",
+            quest_id="link-published-bulletin",
+            title="Link the published bulletin",
             sequence=91,
             available_after_session="S9",
-            prompt="Set `webring = true` in `~/src/site.toml` and verify generated output.",
-            required_commands=("micro", "build-website", "grep", "curl"),
-            practiced_skills=("site-source-ownership", "text-search"),
-            validation=AllOfValidation(
-                validations=(
-                    FileCheckValidation(
-                        path="~/src/site.toml",
-                        required_regex=r"(?m)^webring *= *true$",
-                    ),
-                    FileCheckValidation(
-                        path="~/public_html/index.html",
-                        required_regex=r"(?is)(?=.*\bwebring\b)(?=.*\bprevious\b)(?=.*\bnext\b).+",
-                    ),
-                ),
-            ),
-            goal="Join the cohort site ring through source configuration, not output edits.",
-            evidence="`~/src/site.toml` must set `webring = true` and output needs ring links.",
+            prompt="Link the generated bulletin from the homepage and inspect its rendered page.",
+            required_commands=("build-website", "grep"),
+            practiced_skills=("multi-page-sites",),
+            validation=_S9_STEP_VALIDATIONS[5],
+            goal="Publish a complete static report and connect it from the homepage.",
+            evidence="Inspect the rendered page and its homepage link; it is static content.",
         ),
         _quest(
             quest_id="schedule-site-rebuilds",
@@ -3710,117 +3665,35 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             sequence=92,
             available_after_session="S9",
             prompt=(
-                "Create a oneshot site-build service and matching hourly timer with a 55-minute "
-                "randomized delay. Fetch and "
-                "complete the Singapore starter's field extraction and Markdown composition, "
-                "validate weather and CAMS PM2.5, and publish from singapore-today.sh before the "
-                "build, publish its linked page, and inspect the service journal."
+                "Run the generator before the site build and retain the hourly timer with a "
+                "55-minute randomized delay."
             ),
-            required_commands=(
-                "mkdir",
-                "micro",
-                "systemd timer",
-                "systemctl --user",
-                "systemctl --user list-timers",
-                "journalctl --user",
-            ),
-            practiced_skills=("automation-timers", "systemd-user-services", "service-logs"),
-            validation=AllOfValidation(
-                validations=(
-                    FileCheckValidation(
-                        path="~/.config/systemd/user/site-build.service",
-                        required_regex=_DAILY_PICK_SERVICE_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/scripts/singapore-today.sh",
-                        required_regex=_DAILY_PICK_SCRIPT_PATTERN,
-                    ),
-                    FileCheckValidation(
-                        path="~/src/pages/singapore-today.md",
-                        required_regex=(
-                            r"(?is)(?=.*forecast date: \d{4}-\d{2}-\d{2})"
-                            r"(?=.*PM2\.5)(?=.*retrieved:).+"
-                        ),
-                    ),
-                    FileCheckValidation(
-                        path="~/src/pages/index.md",
-                        required_regex=r"(?is)\[Singapore today\]\(singapore-today\.html\)",
-                    ),
-                    FileCheckValidation(
-                        path="~/.config/systemd/user/site-build.timer",
-                        required_regex=_SITE_BUILD_TIMER_PATTERN,
-                        forbidden_regex=_SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN,
-                    ),
-                    CommandHistoryValidation(
-                        required_patterns=(
-                            r"^systemctl --user daemon-reload$",
-                            r"^systemctl --user enable --now site-build\.timer$",
-                            r"^systemctl --user list-timers(?: --all site-build\.timer)?$",
-                            r"^systemctl --user start site-build\.service$",
-                            r"^journalctl --user -u site-build\.service",
-                        ),
-                        observed_commands=(
-                            "systemctl --user",
-                            "systemctl --user list-timers",
-                            "journalctl --user",
-                        ),
-                    ),
-                ),
-            ),
-            goal="Automate site rebuilds with a user timer you can inspect and debug.",
-            evidence=(
-                "The guide checks the hourly timer, pre-build generator, "
-                "generated conditions, homepage "
-                "link, and timer commands. Inspect the journal and public page to prove an actual "
-                "timer-triggered update; command history alone does not prove publication."
-            ),
+            required_commands=("systemctl --user", "systemctl --user list-timers"),
+            practiced_skills=("automation-timers", "systemd-user-services"),
+            validation=_S9_STEP_VALIDATIONS[6],
+            goal="Configure a user timer to update the static bulletin before building.",
+            evidence="The unit files prove configuration, not that a timer actually ran.",
         ),
         _quest(
-            quest_id="refresh-pipes-for-bandit",
-            title="Refresh pipes for Bandit",
+            quest_id="write-readme",
+            title="Write useful operating notes",
             sequence=93,
             available_after_session="S9",
-            prompt="Run one pipeline using `grep`, `sort`, and `uniq`, then redirect errors away.",
-            required_commands=("grep", "sort", "uniq", "2>"),
-            practiced_skills=("pipes", "stream-redirection", "dev-null"),
-            validation=CommandHistoryValidation(
-                required_patterns=(r"grep .+\s*\|\s*sort\s*\|\s*uniq", r"2> ?/dev/null"),
-                observed_commands=("grep", "sort", "uniq", "2>"),
+            prompt="Write useful operating notes in ~/src/README.md.",
+            required_commands=("micro", "systemctl --user"),
+            practiced_skills=("readme-writing",),
+            validation=FileCheckValidation(
+                path="~/src/README.md",
+                required_regex=(r"(?ms)\A# \S[^\n]*\n(?=.*systemctl --user).+"),
             ),
-            goal="Refresh the shell mechanics Bandit will punish you for forgetting.",
-            evidence="The guide needs to see a grep-sort-uniq pipeline and stderr redirection.",
-        ),
-        _quest(
-            quest_id="prepare-bandit-approach",
-            title="Prepare a Bandit approach",
-            sequence=94,
-            available_after_session="S9",
-            prompt="Write a short Bandit checklist using commands you already know.",
-            required_commands=("ssh", "cat", "ls", "find", "grep"),
-            practiced_skills=("text-search", "filesystem-navigation"),
-            validation=InteractiveQuestionValidation(
-                question="Which commands will you try first when a Bandit level looks unfamiliar?",
-                required_concepts=(
-                    AnswerConcept(
-                        id="ssh-command",
-                        aliases=(r"\bssh\b",),
-                        rubric="The checklist must include ssh for connecting to the Bandit host.",
-                    ),
-                    AnswerConcept(
-                        id="grep-command",
-                        aliases=(r"\bgrep\b",),
-                        rubric="The checklist must include grep for searching unfamiliar evidence.",
-                    ),
-                ),
-            ),
-            goal="Enter the boss fight with a method, not random commands.",
-            evidence="Answer with at least `ssh` and `grep` in your plan.",
+            goal="Keep concise operating notes in your source repository.",
+            evidence="Include a title and useful site build or service commands.",
         ),
         _quest(
             quest_id="demo-site",
             title="Demo your site",
             sequence=95,
-            available_after_session="S9",
+            available_after_session="S10",
             prompt=(
                 "Choose one part of your project to demonstrate with evidence and a real "
                 "recovery explanation. Report what you showed and one useful audience observation; "
@@ -3871,7 +3744,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             quest_id="write-next-path",
             title="Write the next path",
             sequence=96,
-            available_after_session="S9",
+            available_after_session="S10",
             prompt=(
                 "Choose a concrete next action, when to do it, and how you will check the result. "
                 "Keep the plan where you will use it; publishing a page is optional. "
@@ -3937,20 +3810,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "The two scripts, three units, and README must be committed and unchanged. "
                 "Verify the remote copies in Forgejo yourself."
             ),
-        ),
-        _quest(
-            quest_id="use-terminal-irc",
-            title="Use IRC from the terminal",
-            sequence=98,
-            available_after_session="S9",
-            prompt="Connect with WeeChat and message the guide from IRC.",
-            required_commands=("weechat",),
-            practiced_skills=("irc",),
-            validation=IrcCtcpVersionValidation(
-                accepted_clients=("WeeChat", "irssi", "BitchX"),
-            ),
-            goal="Prove you can use WeeChat from a terminal, not only the web frontend.",
-            evidence="The guide needs to see that you are using a terminal IRC client.",
         ),
     ),
     tiers=(

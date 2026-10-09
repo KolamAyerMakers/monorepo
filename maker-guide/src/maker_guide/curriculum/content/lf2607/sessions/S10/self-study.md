@@ -174,7 +174,7 @@ Do not leave a classroom-speed timer running or layer schedules. If a failure me
 
 ## Automation Evidence
 
-For an automation claim, explain what your oneshot generates before building and how you checked the resulting public page. A schedule listing is not evidence of successful publication. The Singapore conditions quest requires the generated source, homepage link, configured pre-build generator, and timer setup; prove an actual timer-triggered public change manually with the [S9 short-timer procedure](../S09/self-study.md#challenge-publish-singapore-conditions).
+For an automation claim, explain what your oneshot generates before building and how you checked the resulting public page. A schedule listing is not evidence of successful publication. For the Singapore bulletin, distinguish the configured service and next deadline from an actual run; inspect the service journal and rendered page before claiming publication. See [S9 self-study](../S09/self-study.md#challenge-publish-singapore-conditions) for the manual service, page, and deadline checks.
 
 ## Recovery Pointers
 

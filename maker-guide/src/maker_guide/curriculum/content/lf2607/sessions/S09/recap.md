@@ -14,9 +14,9 @@ Session: S9
 
 ## Singapore Conditions
 
-The released starter validates Open-Meteo forecast data and CAMS modelled PM2.5, then leaves jq extraction and Markdown composition for you to complete before atomic replacement. Forecast maximum temperature is not current temperature; CAMS is neither official PSI nor a local station. Its page distinguishes forecast date, air-model timestamp, retrieval time, units, and sources. A failed update preserves the previous page and prevents the build.
+The starter validates bounded Open-Meteo forecast and CAMS modelled PM2.5 data, then leaves field extraction and Markdown composition for you to complete. Keep the saved JSON snapshots, compare extracted values with their source, and distinguish forecast date, air-model timestamp, and retrieval time. The report includes units and source attribution; a failed update preserves the previous page and prevents the build.
 
-Use [S9 self-study](self-study.md) for the incomplete starter and exercise, service, timer, and short-timer proof. Restore both hourly settings afterward.
+Use [S9 self-study](self-study.md) for the seven artifact steps, starter, service, and hourly timer. A timer listing is configuration evidence, not proof of execution or publication.
 
 ## Before S10
 
