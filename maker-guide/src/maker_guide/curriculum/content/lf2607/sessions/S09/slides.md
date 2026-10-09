@@ -154,7 +154,49 @@ systemctl --user list-timers --all site-build.timer
 
 # Singapore Today
 
-Publish a page with Singapore's daily forecast and modelled air quality. Each day, fetch JSON with `curl`, extract values with `jq`, generate Markdown with a script, then build the site with a systemd service and daily timer.
+Build a **Singapore Today** page on your website showing:
+
+- Today's forecast maximum temperature and rain probability
+- Sunrise and sunset
+- Modelled PM2.5
+- Data sources and retrieval time
+
+Update it automatically every day at 09:00 server time.
+
+<!-- end_slide -->
+
+# JSON Data Has Structure
+
+JSON stores data as keys and values. This illustrative forecast fragment is not live data:
+
+```json
+{
+  "daily": {
+    "time": ["2026-10-10"],
+    "temperature_2m_max": [31.5]
+  }
+}
+```
+
+- `{}` is an object containing named keys and values.
+- `[]` is an ordered array; here it contains one forecast day.
+- Dates are quoted strings; `31.5` is a number.
+
+<!-- end_slide -->
+
+# Read JSON From The Command Line
+
+`jq` formats JSON and can extract a value. This filter selects the `temperature` field:
+
+```bash
+echo '{"temperature":31.5}' | jq '.temperature'
+```
+
+The pipe feeds JSON to `jq`; the filter prints the selected JSON value:
+
+```text
+31.5
+```
 
 <!-- end_slide -->
 
@@ -166,7 +208,9 @@ Open-Meteo returns JSON for Singapore. Fetch and inspect the response:
 weather_url='https://api.open-meteo.com/v1/forecast?'
 weather_url+='latitude=1.3521'
 weather_url+='&longitude=103.8198'
-weather_url+='&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset'
+weather_url+='&daily=temperature_2m_max'
+weather_url+=',precipitation_probability_max'
+weather_url+=',sunrise,sunset'
 weather_url+='&timezone=Asia%2FSingapore'
 weather_url+='&forecast_days=1'
 curl --max-time 15 -fsS "$weather_url" -o /tmp/weather.json
@@ -198,8 +242,12 @@ Here `-r` prints the number unchanged; for strings it removes JSON quotation mar
 `current.pm2_5` is a separate CAMS model estimate, not official PSI or a local-station reading:
 
 ```bash
-air_url='https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.3521&longitude=103.8198'
-air_url+='&current=pm2_5&timezone=Asia%2FSingapore&domains=cams_global'
+air_url='https://air-quality-api.open-meteo.com/v1/air-quality'
+air_url+='?latitude=1.3521'
+air_url+='&longitude=103.8198'
+air_url+='&current=pm2_5'
+air_url+='&timezone=Asia%2FSingapore'
+air_url+='&domains=cams_global'
 curl --max-time 15 -fsS "$air_url" -o /tmp/air.json
 jq -r '.current.pm2_5' /tmp/air.json
 ```
