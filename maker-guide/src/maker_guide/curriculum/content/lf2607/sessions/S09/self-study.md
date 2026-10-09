@@ -68,15 +68,15 @@ cp /docs/sessions/S09/resources/singapore-today.sh \
 micro ~/scripts/singapore-today.sh
 ```
 
-The daily maximum is a forecast, not current temperature. The air value is CAMS model data, not Singapore's official PSI or a local-station reading; give no health advice. Inspect the temporary JSON and complete both TODO sections. Put both assignments in TODO 1 and the `printf` line in TODO 2:
+The daily maximum is a forecast, not current temperature. The air value is CAMS model data, not Singapore's official PSI or a local-station reading; give no health advice. For an unrelated JSON-to-Markdown example, run these standalone terminal commands (do not paste the book data into the weather starter):
 
 ```bash
-weather="$temporary_directory/weather.json"
-temperature=$(jq -r '.daily.temperature_2m_max[0]' "$weather")
-printf '# Singapore Today\n\nMaximum: %s °C\n' "$temperature" > "$report"
+title=$(echo '{"title":"Dune"}' | jq -r '.title')
+printf '# Reading\n\nBook: %s\n' "$title" > /tmp/reading.md
+cat /tmp/reading.md
 ```
 
-`$()` captures command output, `%s` inserts the value, `\n` adds line breaks, and `>` writes the report. Use command substitution for the other required variables and complete the full Markdown report with `printf`. Only after both TODOs are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1` at the top of the TODO section; the later required-fields check still guards incomplete output. Keep the source forecast date and air-model timestamp distinct from retrieval time. Attribute Open-Meteo and CAMS; do not mislabel model PM2.5 as PSI.
+`$()` captures output, `-r` removes JSON string quotes, `%s` inserts the value, `\n` adds a line break, and `>` writes the file. Apply the technique to the starter's actual weather data: inspect the temporary JSON, extract all required fields in TODO 1, and compose the full attributed report with `printf` in TODO 2. Only after both TODOs are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1` at the top of the TODO section; the later required-fields check still guards incomplete output. Keep the source forecast date and air-model timestamp distinct from retrieval time. Attribute Open-Meteo and CAMS; do not mislabel model PM2.5 as PSI.
 
 | Report field | JSON field | Meaning / unit |
 |---|---|---|

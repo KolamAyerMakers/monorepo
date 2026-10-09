@@ -250,15 +250,15 @@ jq -r '.current.pm2_5' /tmp/air.json
 
 # From JSON To Markdown
 
-The starter already defines the temporary JSON and report paths. Put both assignments in TODO 1 and the `printf` line in TODO 2:
+This standalone terminal example reads a JSON title and writes a Markdown file:
 
 ```bash
-weather="$temporary_directory/weather.json"
-temperature=$(jq -r '.daily.temperature_2m_max[0]' "$weather")
-printf '# Singapore Today\n\nMaximum: %s °C\n' "$temperature" > "$report"
+title=$(echo '{"title":"Dune"}' | jq -r '.title')
+printf '# Reading\n\nBook: %s\n' "$title" > /tmp/reading.md
+cat /tmp/reading.md
 ```
 
-`$()` captures command output; `%s` inserts it, `\n` adds newlines, and `>` writes the report.
+`$()` captures output, `-r` removes JSON string quotes, `%s` inserts the value, `\n` adds a line break, and `>` writes the file.
 
 <!-- end_slide -->
 
@@ -273,7 +273,7 @@ cp /docs/sessions/S09/resources/singapore-today.sh \
 micro ~/scripts/singapore-today.sh
 ```
 
-Use the example to complete both TODOs: assign the other fields in TODO 1 and write the full attributed report in TODO 2. Only when both are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1`.
+Adapt the technique to extract every required field in TODO 1 and write the full attributed report in TODO 2. Only when both are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1`.
 
 Then run it and inspect `~/src/pages/singapore-today.md`:
 
