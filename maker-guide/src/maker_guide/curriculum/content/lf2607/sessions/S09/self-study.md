@@ -85,8 +85,8 @@ air=$(mktemp)
 temporary=$(mktemp "$HOME/src/pages/.singapore-today.XXXXXX")
 trap 'rm -f "$weather" "$air" "$temporary"' EXIT
 
-curl --max-time 15 -fsS 'https://api.open-meteo.com/v1/forecast?latitude=1.3521&longitude=103.8198&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset&timezone=Asia%2FSingapore&forecast_days=1' -o "$weather"
-curl --max-time 15 -fsS 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.3521&longitude=103.8198&current=pm2_5&timezone=Asia%2FSingapore&domains=cams_global' -o "$air"
+curl --max-time 15 -fsS 'https://api.open-meteo.com/v1/forecast?latitude=1.32411&longitude=103.8698&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset&timezone=Asia%2FSingapore&forecast_days=1' -o "$weather"
+curl --max-time 15 -fsS 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.32411&longitude=103.8698&current=pm2_5&timezone=Asia%2FSingapore&domains=cams_global' -o "$air"
 
 jq -e '
   .daily.time[0] | strings | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")

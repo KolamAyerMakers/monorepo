@@ -206,8 +206,8 @@ Open-Meteo returns JSON for Singapore. Fetch and inspect the response:
 
 ```bash
 weather_url='https://api.open-meteo.com/v1/forecast?'
-weather_url+='latitude=1.3521'
-weather_url+='&longitude=103.8198'
+weather_url+='latitude=1.32411'
+weather_url+='&longitude=103.8698'
 weather_url+='&daily=temperature_2m_max'
 weather_url+=',precipitation_probability_max'
 weather_url+=',sunrise,sunset'
@@ -243,8 +243,8 @@ Here `-r` prints the number unchanged; for strings it removes JSON quotation mar
 
 ```bash
 air_url='https://air-quality-api.open-meteo.com/v1/air-quality'
-air_url+='?latitude=1.3521'
-air_url+='&longitude=103.8198'
+air_url+='?latitude=1.32411'
+air_url+='&longitude=103.8698'
 air_url+='&current=pm2_5'
 air_url+='&timezone=Asia%2FSingapore'
 air_url+='&domains=cams_global'
