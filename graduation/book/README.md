@@ -33,6 +33,14 @@ make SOURCE="/path/to/private/purchased/zines"
 `local/proofs`; keep any `OUTPUT` override inside Git-ignored `local/`.
 `make preflight` checks existing exports without rebuilding them.
 
+`make print` exports the existing proofs to private `local/print/` with the
+printer-requested 3 mm bleed: 216 × 154 mm MediaBox/BleedBox and a 210 × 148 mm
+TrimBox. Artwork is shifted, not scaled; the outer covers' ivory background
+extends through bleed. Interior bleed and inside covers stay white. No crop
+marks or unrequested colour conversion are added. These exports still require
+printer approval; the complete PDF contains 138 faces, including two blank
+inside cover faces. Separate interior and cover exports are also available.
+
 - `assemble.py`: approved reading sources/order, foreword, contents, mirrored
   binding margins, bookmarks, four cover faces and actual-size samples.
 - `preflight.py`: page counts, preserved text/vector/image resources, embedded

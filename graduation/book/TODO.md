@@ -1,9 +1,14 @@
 # At the Prompt: production TODO
 
-- [ ] Obtain printer specifications: punching clearance, bleed, colour workflow,
+- [x] Prepare private 3 mm bleed exports as requested by the printer, preserving
+  the approved layout and vector artwork. Reproduce with `make print`.
+- [ ] Obtain remaining printer specifications: punching clearance, colour workflow,
   PDF requirements, stock, binding, quantity and deadline.
 - [ ] Confirm actual-size reading comfort for the A5 landscape proof.
 - [ ] Adapt provisional exports to the approved printer specifications.
+- [ ] Obtain a firm commitment that all 13 books will be delivered before the
+  graduation ceremony on 24 October 2026. Printer quoted 3–5 working days for
+  the sample after full payment, then up to another five working days for 12 books.
 - [ ] Obtain printer technical preflight and a digital proof. If a separate bound
   trial copy cannot meet the deadline, request first-copy inspection and document
   the accepted colour, readability and punching risks.

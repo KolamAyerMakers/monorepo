@@ -8,23 +8,23 @@
 | Original works | 132 pages, including original covers and credits |
 | Course additions | Two pages: approved foreword and contents with reading notes |
 | Cover faces | Front, blank second cover, blank third cover, back |
-| Target interior paper | Approximately 100 g/m²; stock and opacity to confirm |
-| Target cover stock | 250–300 g/m², matte lamination to confirm |
+| Quoted interior paper | 100 g/m² woodfree white paper |
+| Quoted cover stock | 256 g/m² matte art card, single-side matte lamination |
 | Target binding | Wire-O on the 148 mm edge; punching specifications pending |
 | Prototype binding margin | 12 mm, mirrored; printer approval required |
 | Other prototype margins | At least 5 mm; complete proportional page placement |
-| Quantity | Approximately 12–13 copies, to confirm |
+| Quoted quantity / price | 13 books, $320 including delivery |
 | Colour | Source RGB/ICC colours retained; custom covers use RGB |
 | Transparency | Retained; printer workflow compatibility to confirm |
 | Added fonts | Liberation Sans/Mono and IBM Plex Mono, embedded |
 | Title and prompt symbol | IBM Plex Mono Bold |
-| Bleed | None in this proof; requirements pending |
+| Bleed | Printer requested 3 mm; separate bleed exports prepared in `local/print/` |
 | Profile / OutputIntent | No printer-specific profile imposed |
 | PDF standard | PDF 1.7, not certified PDF/X |
 | Crop marks | Absent; confirm printer requirements |
 | Spine | No invented width; no spine for Wire-O |
 | Local checks | Full interior render, resource/margin preflight, layout tests |
-| Physical proof | Not yet approved; separate trial copy may be impractical within the deadline |
+| Physical proof | Printer offers one sample first, then 12 books; sample approval still pending |
 | Compilation permission | Marked resolved by Philippe Muller; no independent correspondence obtained |
 | Status | PROVISIONAL: do not release for printing |
 
@@ -43,8 +43,37 @@ There is no group identity or personal credit on the back cover. The `$` sits
 on the Prompt baseline, with a closer cursor proportioned to the title.
 
 The second and third cover faces are blank as requested. They are the inside
-faces of two separate cover boards, not additional sheets. The printer has not
-yet responded; specifications remain pending.
+faces of two separate cover boards, not additional sheets. The printer requested
+a PDF with 3 mm bleed. Binding clearance, RGB acceptance and file organisation
+have not been explicitly confirmed.
+
+## Printer-requested bleed exports
+
+Run `make print` after rebuilding the approved-layout proofs if necessary.
+`local/print/at-the-prompt-review-3mm-bleed-PROVISIONAL.pdf` contains all 138
+faces. Separate 134-page interior, four-face cover and individual outer-cover
+PDFs are available in the same directory.
+
+MediaBox and BleedBox are 216 × 154 mm; TrimBox is 210 × 148 mm with 3 mm bleed
+on each side. Existing artwork is translated by 3 mm, not enlarged or cropped.
+The ivory background extends through the outer-cover bleed. Interior bleed is
+white and inside covers remain blank. Source colours/transparency are retained;
+no CMYK conversion, PDF/X certification or crop marks have been added.
+
+The complete, interior and cover bleed PDFs were checked against the existing
+proofs for page boxes, text and text geometry, vector counts, image streams,
+font streams, bookmarks and blank faces. Outer-cover previews were inspected;
+the complete PDF passes `qpdf --check`. Printer acceptance remains required.
+
+## Deadline and sample approval
+
+All 13 books are needed for the graduation ceremony on **24 October 2026**.
+The printer clarified 3–5 working days after full payment for the sample, then
+up to another five working days for the remaining 12 books. This does not yet
+constitute a commitment to the ceremony deadline. Request delivery by 23 October
+if possible, and a firm schedule covering sample delivery, approval and final
+delivery before proceeding. No payment, file transmission or print approval
+has been made by the assistant.
 
 ## Questions for the printer, to send only with permission
 
