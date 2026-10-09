@@ -10,26 +10,11 @@ Your website can update itself while you are away.
 
 # Services And Timers
 
-A systemd **service** describes a task. A **timer** tells systemd when to start that service.
+- `site.service` serves your published website.
+- `site-build.service` builds it once.
+- `site-build.timer` schedules that build.
 
-The service runs the task; the timer schedules it. A oneshot service finishes when its task is done.
-
-<!-- end_slide -->
-
-# Three Units, Three Jobs
-
-- `site.service` serves the published pages.
-- `site-build.service` builds the source once, then exits.
-- `site-build.timer` starts that build hourly, with up to 55 minutes' random delay.
-
-<!-- end_slide -->
-
-# More Than "Run Every Day"
-
-- Run every morning or every Monday.
-- Run five minutes after the timer is activated.
-- Wait ten minutes after the job finishes before running again.
-- With persistent calendar timers, catch up once when reactivated, not once for each missed run.
+**A service defines the task. A timer defines when it runs.**
 
 <!-- end_slide -->
 
