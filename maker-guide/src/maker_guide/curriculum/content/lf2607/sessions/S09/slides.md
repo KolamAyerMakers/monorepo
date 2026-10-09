@@ -95,6 +95,9 @@ Example: Saturday 10 October 2026, 13:00 (+08).
 Illustrative output at that time:
 
 ```text
+$ date
+Sat Oct 10 13:00:00 +08 2026
+
 $ systemd-analyze calendar '*-*-* 09:00:00'
 Normalized form: *-*-* 09:00:00
     Next elapse: Sun 2026-10-11 09:00:00 +08
@@ -112,6 +115,40 @@ systemctl --user list-timers --all site-build.timer
 ```
 
 The timer listing shows the next scheduled time, not proof a build succeeded. The journal shows what happened. A user timer also depends on the user manager being available.
+
+<!-- end_slide -->
+
+# Daily Website Build — Recap
+
+Create `~/.config/systemd/user/site-build.service`:
+
+```ini
+[Service]
+Type=oneshot
+WorkingDirectory=%h/src
+ExecStart=/usr/local/bin/maker-guide-build-personal-website
+```
+
+Create `~/.config/systemd/user/site-build.timer`:
+
+```ini
+[Timer]
+OnCalendar=*-*-* 09:00:00
+
+[Install]
+WantedBy=timers.target
+```
+
+Activate and verify the daily build:
+
+```bash
+mkdir -p ~/.config/systemd/user
+systemctl --user daemon-reload
+systemctl --user start site-build.service
+journalctl --user -u site-build.service
+systemctl --user enable --now site-build.timer
+systemctl --user list-timers --all site-build.timer
+```
 
 <!-- end_slide -->
 
