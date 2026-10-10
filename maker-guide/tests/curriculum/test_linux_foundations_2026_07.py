@@ -1313,11 +1313,10 @@ def test_s9_self_study_guides_all_seven_artifact_objectives() -> None:
     document = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
     objectives = CATALOG.session("S9").objectives
     assert len(objectives) == 7
-    for number, objective in enumerate(objectives, 1):
+    for number in range(1, len(objectives) + 1):
         section = re.search(rf"(?ms)^### {number}\. .*?(?=^### |^## |\Z)", document)
         assert section is not None
         assert all(f"**{label}:**" in section[0] for label in ("Goal", "Do", "Check", "Fix"))
-        assert f"{number}." in objective.prompt
 
     assert all(
         name in document for name in ("weather.json", "air.json", "temperature.txt", "forecast.md")

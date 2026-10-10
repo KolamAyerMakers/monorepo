@@ -1825,9 +1825,14 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="inspect-weather-json",
                     title="Inspect the weather snapshot",
                     prompt=(
-                        "1. In the S09 self-study, create ~/playground/singapore, fetch the "
-                        "one-day Open-Meteo forecast with the documented curl command, then "
-                        "inspect its daily fields and units with jq."
+                        "Download this forecast to ~/playground/singapore/weather.json "
+                        "(create the directory first):\n\n"
+                        "https://api.open-meteo.com/v1/forecast?latitude=1.32411"
+                        "&longitude=103.8698&daily=temperature_2m_max,"
+                        "precipitation_probability_max,sunrise,sunset"
+                        "&timezone=Asia%2FSingapore&forecast_days=1\n\n"
+                        "Inspect daily and daily_units with jq: date, maximum temperature, "
+                        "rain probability, sunrise, and sunset. Then run guide check."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="weather",
@@ -1838,9 +1843,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="extract-daily-temperature",
                     title="Extract the daily maximum",
                     prompt=(
-                        "2. Run the self-study jq extraction to save the first daily maximum "
-                        "to ~/playground/singapore/temperature.txt; compare it with the same "
-                        "selector in weather.json."
+                        "From ~/playground/singapore/weather.json, extract the first daily "
+                        "maximum temperature with jq. Save only the number to "
+                        "~/playground/singapore/temperature.txt. Then run guide check."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="temperature",
@@ -1854,11 +1859,15 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="compare-air-snapshot",
                     title="Compare the air-quality snapshot",
                     prompt=(
-                        "3. Run the documented CAMS Global curl request and save "
-                        "~/playground/singapore/air.json and ~/playground/singapore/air.txt. "
-                        "Use labelled lines "
-                        "`PM2.5: <value> μg/m³` and `Model time: <timestamp>`; match both "
-                        "values to the JSON."
+                        "Download this CAMS model snapshot to "
+                        "~/playground/singapore/air.json:\n\n"
+                        "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.32411"
+                        "&longitude=103.8698&current=pm2_5&timezone=Asia%2FSingapore"
+                        "&domains=cams_global\n\n"
+                        "Extract PM2.5 and time from current. Write two lines to "
+                        "~/playground/singapore/air.txt: `PM2.5: <value> μg/m³` and "
+                        "`Model time: <timestamp>`, keeping the original timestamp. "
+                        "Then run guide check."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="air",
@@ -1872,9 +1881,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="format-forecast",
                     title="Format a Markdown forecast",
                     prompt=(
-                        "4. Use the documented shell variable and printf commands to write "
-                        "~/playground/singapore/forecast.md "
-                        "with a heading and `Maximum: <value> °C`, matching the snapshot."
+                        "Read ~/playground/singapore/temperature.txt into a shell variable. "
+                        "Use printf to write ~/playground/singapore/forecast.md with a "
+                        "Markdown heading and `Maximum: <value> °C`. Then run guide check."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="forecast",
@@ -1888,10 +1897,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="complete-singapore-bulletin",
                     title="Complete the Singapore bulletin",
                     prompt=(
-                        "5. Copy and edit the supplied starter as directed in the self-study. "
-                        "Use its named variables and selectors to finish both TODOs, generate "
-                        "the full attributed bulletin, and retain every validation and "
-                        "atomic-write guard."
+                        "Copy /docs/sessions/S09/resources/today.sh to ~/scripts/today.sh "
+                        "(create ~/scripts if needed). Complete its JSON-extraction and "
+                        "Markdown TODOs. Include the forecast and air values, retrieval time, "
+                        "coordinates, timezone, units, and Open-Meteo/CAMS sources. "
+                        "Keep the existing guards; remove only the EXERCISE_INCOMPLETE stop "
+                        "block. Run the script, inspect ~/src/pages/today.md, then guide check."
                     ),
                     validation=AllOfValidation(
                         validations=(
@@ -1916,9 +1927,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="link-published-bulletin",
                     title="Link and inspect the bulletin",
                     prompt=(
-                        "6. Add [Singapore today](today.html) to ~/src/pages/index.md, run "
-                        "/usr/local/bin/maker-guide-build-personal-website, and inspect both "
-                        "~/public_html/index.html and ~/public_html/today.html."
+                        "Add a Markdown link to today.html in ~/src/pages/index.md. "
+                        "Rebuild with build-website. Open your published homepage and follow "
+                        "the link to check the bulletin. Then run guide check."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="published",
@@ -1933,10 +1944,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="configure-site-build-timer",
                     title="Configure the hourly build",
                     prompt=(
-                        "7. Add ExecStartPre=/bin/bash %h/scripts/today.sh before the existing "
-                        "build ExecStart, manually start and inspect site-build.service, enable "
-                        "site-build.timer, and check its hourly 55-minute-delay configuration "
-                        "and active/enabled status."
+                        "In ~/.config/systemd/user/, configure site-build.service to run "
+                        "today.sh before the website builder: oneshot, working directory "
+                        "~/src, and ExecStartPre. Set site-build.timer to hourly with up to "
+                        "55 minutes of randomized delay. Reload, run the service manually, "
+                        "and inspect the page. Enable and start the timer; check its next "
+                        "deadline. Then run guide check from your SSH shell."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="timer",
