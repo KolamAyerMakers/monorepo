@@ -1708,8 +1708,8 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
         assert output_path.read_text(encoding="utf-8") == "last good page\n"
 
 
-def test_singapore_objective_rejects_only_an_unfinished_starter_marker() -> None:
-    """The source check rejects the marker, not a particular implementation."""
+def test_singapore_objective_requires_its_three_pipeline_commands() -> None:
+    """The source check requires curl, jq, and printf without requiring mv."""
     validation = next(
         objective.validation
         for objective in CATALOG.session("S9").objectives
@@ -1721,7 +1721,12 @@ def test_singapore_objective_rejects_only_an_unfinished_starter_marker() -> None
         for item in validation.validations
         if isinstance(item, FileCheckValidation) and item.path.endswith("today.sh")
     )
-    assert script_validation.required_regex == r"(?m)^[ \t]*printf\b"
+    assert script_validation.required_regex == (
+        r"(?ms)"
+        r"(?=.*^[^#\n]*\bcurl\b)"
+        r"(?=.*^[^#\n]*\bjq\b)"
+        r"(?=.*^[^#\n]*\bprintf\b)"
+    )
     assert script_validation.forbidden_regex == r"EXERCISE_INCOMPLETE"
     for unfinished in (
         _singapore_script(),
@@ -1736,12 +1741,24 @@ def test_singapore_objective_rejects_only_an_unfinished_starter_marker() -> None
             assert re.search(script_validation.forbidden_regex, unfinished)
 
     for complete in (
-        "#!/bin/bash\nprintf 'Singapore bulletin\\n'\n",
-        "  printf 'Singapore bulletin\\n'\n",
-        ' # indented printf is a legitimate command\nprintf "%s\\n" "$forecast_date"\n',
+        "#!/bin/bash\ncurl url\njq . file\nmv a b\nprintf 'Singapore bulletin\\n'\n",
+        "  curl url\n  jq . file\n  mv a b\n  printf 'Singapore bulletin\\n'\n",
+        (
+            " # indented printf is a legitimate command\ncurl url\njq . file\nmv a b\n"
+            'printf "%s\\n" "$forecast_date"\n'
+        ),
+        "#!/bin/bash\nprintf x\nmv a b\nif ! curl url; then\n jq . file\nfi\n",
+        '#!/bin/bash\ncurl "$(jq . file)"\nmv a b\nprintf x\n',
     ):
         assert re.search(script_validation.required_regex, complete)
         assert not re.search(script_validation.forbidden_regex, complete)
+    for missing_command in ("curl", "jq", "printf"):
+        incomplete = "curl jq mv printf\n# curl jq mv printf\n"
+        incomplete = incomplete.replace(missing_command, "missing", 1)
+        assert not re.search(script_validation.required_regex, incomplete)
+    assert re.search(script_validation.required_regex, "curl jq printf\n")
+    for comment_only in ("# curl jq mv printf\n", "curl jq mv # printf\n"):
+        assert not re.search(script_validation.required_regex, comment_only)
     without_air_validation = re.sub(
         r'(?ms)^jq -e \'\n.*?^\' "\$temporary_directory/air.json" >/dev/null\n',
         "",
