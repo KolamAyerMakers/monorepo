@@ -1516,7 +1516,7 @@ def test_s9_artifact_validation_compares_json_values_and_rendered_content() -> N
     assert artifact_contents_match("bulletin", [markdown_list])
     assert artifact_contents_match(
         "published",
-        ["[My Singapore](singapore-today.html)", f"<h1>My report</h1><p>{bulletin}</p>"],
+        ["[My Singapore](today.html)", f"<h1>My report</h1><p>{bulletin}</p>"],
     )
     service = (
         "[Service]\n"
@@ -1611,7 +1611,7 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
         "WEATHER_FIXTURE": str(weather_file),
         "AIR_FIXTURE": str(air_file),
     }
-    output_path = pages / "singapore-today.md"
+    output_path = pages / "today.md"
     output_path.write_text("last good page\n", encoding="utf-8")
     unfinished = subprocess.run(
         ["/bin/bash", "-c", starter],
@@ -1656,7 +1656,7 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     rendered_html = f"<h1>My local bulletin</h1><ul>{rendered_items}</ul>"
     assert artifact_contents_match(
         "published",
-        ["[My conditions](singapore-today.html)", rendered_html],
+        ["[My conditions](today.html)", rendered_html],
     )
 
     output_path.write_text("last good page\n", encoding="utf-8")

@@ -991,7 +991,7 @@ def artifact_contents_match(kind: str, contents: list[str]) -> bool:
     elif kind == "published":
         index, rendered_report = contents
         passed = bool(
-            re.search(r"\[[^\]]+\]\(singapore-today\.html\)", index, re.IGNORECASE)
+            re.search(r"\[[^\]]+\]\(today\.html\)", index, re.IGNORECASE)
         ) and _report_has_complete_bulletin(rendered_report)
     elif kind == "timer":
         service, timer = contents

@@ -2005,7 +2005,7 @@ def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
     )
     (learner_home / "report.md").write_text(report, encoding="utf-8")
     (learner_home / "index.md").write_text(
-        "[Today's Singapore conditions](singapore-today.html)\n", encoding="utf-8"
+        "[Today's Singapore conditions](today.html)\n", encoding="utf-8"
     )
     rendered = "<h1>My local conditions</h1>" + "".join(
         f"<li>{line.removeprefix('- ')}</li>" for line in report.splitlines()

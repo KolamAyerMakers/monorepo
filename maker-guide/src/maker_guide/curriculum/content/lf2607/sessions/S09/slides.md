@@ -275,7 +275,7 @@ micro ~/scripts/today.sh
 
 Adapt the technique to extract every required field in TODO 1 and write the full attributed report in TODO 2. Only when both are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1`.
 
-Then run it and inspect `~/src/pages/singapore-today.md`:
+Then run it and inspect `~/src/pages/today.md`:
 
 ```bash
 bash ~/scripts/today.sh

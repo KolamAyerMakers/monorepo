@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-output=${1:-"$HOME/src/pages/singapore-today.md"}
+output=${1:-"$HOME/src/pages/today.md"}
 output_directory=$(dirname "$output")
 mkdir -p "$output_directory"
 report=$(mktemp "$output_directory/.singapore-today.XXXXXX")

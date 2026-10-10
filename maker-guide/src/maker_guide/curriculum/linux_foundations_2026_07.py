@@ -1902,7 +1902,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                             ),
                             ArtifactCheckValidation(
                                 kind="bulletin",
-                                paths=("~/src/pages/singapore-today.md",),
+                                paths=("~/src/pages/today.md",),
                             ),
                         ),
                     ),
@@ -1918,7 +1918,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         kind="published",
                         paths=(
                             "~/src/pages/index.md",
-                            "~/public_html/singapore-today.html",
+                            "~/public_html/today.html",
                         ),
                     ),
                 ),
