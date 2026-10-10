@@ -6,7 +6,7 @@ air_url='https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.32411&
 curl -fsS --max-time 15 "$weather_url" -o "$HOME/playground/singapore/weather.json" || exit 1
 curl -fsS --max-time 15 "$air_url" -o "$HOME/playground/singapore/air.json" || exit 1
 
-retrieved=$(date --iso-8601=seconds)
+retrieved=$(date)
 
 # TODO 1: Assign forecast_date, temperature, rain, sunrise, sunset, air_time,
 # and pm25 using jq -r and command substitution on weather.json and air.json.

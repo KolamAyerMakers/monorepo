@@ -1314,7 +1314,7 @@ def test_s9_self_study_guides_all_seven_artifact_objectives() -> None:
     objectives = CATALOG.session("S9").objectives
     assert len(objectives) == 7
     for number in range(1, len(objectives) + 1):
-        section = re.search(rf"(?ms)^### {number}\. .*?(?=^### |^## |\Z)", document)
+        section = re.search(rf"(?ms)^### {number}\. .*?(?=^### \d+\. |\Z)", document)
         assert section is not None
         assert all(f"**{label}:**" in section[0] for label in ("Goal", "Do", "Check", "Fix"))
 

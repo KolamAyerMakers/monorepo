@@ -1300,7 +1300,6 @@ def _bulletin_issues(report: str) -> list[str]:
     sunset = cast("str", sunset)
     pm25 = cast("str", pm25)
     model_time = cast("str", model_time)
-    retrieved = cast("str", retrieved)
     checks = (
         (_valid_api_date(forecast_date), "Date must be a real YYYY-MM-DD date."),
         (_within_range(temperature, -100, 70), "Temperature must be between -100 and 70 °C."),
@@ -1309,7 +1308,6 @@ def _bulletin_issues(report: str) -> list[str]:
         (_valid_api_timestamp(sunset), "Sunset must be a valid ISO timestamp."),
         (_within_range(pm25, 0, 1000), "PM2.5 must be between 0 and 1000 μg/m³."),
         (_valid_api_timestamp(model_time), "Air-quality time must be a valid ISO timestamp."),
-        (_valid_retrieval_timestamp(retrieved), "Retrieval time must be a valid ISO timestamp."),
     )
     return [message for valid, message in checks if not valid]
 
@@ -1355,16 +1353,6 @@ def _labeled_number(text: str, label: str, unit: str) -> str | None:
 
 def _unit_pattern(unit: str) -> str:
     return re.escape(unit).replace("μ", "[μµ]")
-
-
-def _valid_retrieval_timestamp(value: str) -> bool:
-    if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:[+-]\d{2}:\d{2})?", value) is None:
-        return False
-    try:
-        datetime.fromisoformat(value)
-    except ValueError:
-        return False
-    return True
 
 
 def _valid_api_timestamp(value: str) -> bool:

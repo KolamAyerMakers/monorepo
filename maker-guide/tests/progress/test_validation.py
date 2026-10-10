@@ -1990,9 +1990,14 @@ def test_weather_artifact_check_rejects_invalid_saved_json(
     assert "file_contents" not in result.evidence
 
 
+@pytest.mark.parametrize(
+    "retrieved",
+    ["2026-10-10T09:01:00+08:00", "Sat Oct 10 09:01:00 +08 2026", "10 October, 9:01 am"],
+)
 def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
     migrated_database_path: Path,
     tmp_path: Path,
+    retrieved: str,
 ) -> None:
     """Report checks accept labelled Markdown and its personalized static rendering."""
     learner_home = tmp_path / "alice"
@@ -2001,7 +2006,7 @@ def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
         "- Date: 2026-10-10\n- Temperature: 31.5 °C\n- Rain: 20%\n"
         "- Sunrise: 2026-10-10T06:54\n- Sunset: 2026-10-10T18:58\n"
         "- PM2.5: 4.2 μg/m³\n- Time: 2026-10-10T09:00\n"
-        "- Retrieval time: 2026-10-10T09:01:00+08:00\n"
+        f"- Retrieval time: {retrieved}\n"
         "Open-Meteo forecast; CAMS model estimate."
     )
     (learner_home / "report.md").write_text(report, encoding="utf-8")

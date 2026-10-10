@@ -70,7 +70,38 @@ vim ~/scripts/today.sh
 ```
 The script downloads weather and air data to the fixed JSON paths from steps 1 and 3. TODO 1: assign `forecast_date`, `temperature`, `rain`, `sunrise`, `sunset`, `air_time`, and `pm25` with `jq -r` and command substitution, using selectors `.daily.time[0]`, `.daily.temperature_2m_max[0]`, `.daily.precipitation_probability_max[0]`, `.daily.sunrise[0]`, `.daily.sunset[0]`, `.current.time`, and `.current.pm2_5`. TODO 2: use `printf` redirection (`>`) to compose attributed Markdown at `~/src/pages/today.md`.
 
-Include labelled forecast date (ISO `YYYY-MM-DD`), maximum (°C), rain probability (%), sunrise, sunset, PM2.5 (μg/m³), model time, and retrieval time. Keep the API date/time values as provided; `date --iso-8601=seconds` records retrieval time with the computer's UTC offset. Forecast and model times use Singapore time. Attribute forecast to Open-Meteo and air data to CAMS Global/Open-Meteo. Explicitly say PM2.5 is modelled, not official PSI or a station reading.
+Include labelled forecast date, maximum (°C), rain probability (%), sunrise, sunset, PM2.5 (μg/m³), model time, and retrieval time. Keep the API date/time values as provided. Use the output of `date` for retrieval time; no particular format is required. Forecast and model times use Singapore time. Attribute forecast to Open-Meteo and air data to CAMS Global/Open-Meteo. Explicitly say PM2.5 is modelled, not official PSI or a station reading.
+
+Example of the expected `~/src/pages/today.md` (illustrative values):
+
+```markdown
+# Singapore today
+
+Location: 1.32411, 103.8698 — Asia/Singapore
+
+## Forecast
+
+* Date: 2026-10-10
+* Temperature: 31.0 °C
+* Rain probability: 100%
+* Sunrise: 2026-10-10T06:48
+* Sunset: 2026-10-10T18:54
+
+## Air quality
+
+* Time: 2026-10-10T12:00
+* PM2.5: 89.2 μg/m³
+
+PM2.5 is modelled, not a station measurement or official Singapore PSI.
+Forecast and model times are in Singapore time.
+
+Retrieved: Sat Oct 10 12:05:00 +08 2026
+
+Sources: Open-Meteo weather forecast; CAMS Global air-quality model via Open-Meteo.
+```
+
+Generate the values from your JSON and `retrieved` variable, not these example numbers.
+With `printf`, write `%%` to output a literal `%`, and quote variable arguments.
 
 **Check:** finish both TODOs, remove the `EXERCISE_INCOMPLETE` comment, save, then:
 ```bash
@@ -79,7 +110,7 @@ bash ~/scripts/today.sh
 cat ~/src/pages/today.md
 guide check
 ```
-Confirm every field, units, attribution, ISO API times and retrieval time with its UTC offset.
+Confirm every field, units, attribution, unchanged API times, and retrieval time.
 **Fix:** correct syntax errors and check the JSON selectors if values are missing.
 
 ### 6. Link and inspect both pages
