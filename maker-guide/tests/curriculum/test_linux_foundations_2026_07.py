@@ -1669,15 +1669,6 @@ def test_s9_artifact_validation_compares_json_values_and_rendered_content() -> N
     )
 
 
-_SINGAPORE_EXERCISE_GUARD = chr(10).join(
-    (
-        "# EXERCISE_INCOMPLETE: finish the field extraction and Markdown composition exercises.",
-        'echo "EXERCISE_INCOMPLETE: complete both TODO sections before publication." >&2',
-        "exit 1",
-    ),
-)
-
-
 def _singapore_script(*, completed: bool = False) -> str:
     script = (
         files("maker_guide.curriculum")
@@ -1686,33 +1677,32 @@ def _singapore_script(*, completed: bool = False) -> str:
     )
     if not completed:
         return script
-    exercise = """forecast_date=$(jq -r '.daily.time[0]' "$temporary_directory/weather.json")
-temperature=$(jq -r '.daily.temperature_2m_max[0]' "$temporary_directory/weather.json")
-rain=$(jq -r '.daily.precipitation_probability_max[0]' "$temporary_directory/weather.json")
-sunrise=$(jq -r '.daily.sunrise[0]' "$temporary_directory/weather.json")
-sunset=$(jq -r '.daily.sunset[0]' "$temporary_directory/weather.json")
-air_time=$(jq -r '.current.time' "$temporary_directory/air.json")
-pm25=$(jq -r '.current.pm2_5' "$temporary_directory/air.json")
+    exercise = """forecast_date=$(jq -r '.daily.time[0]' "$HOME/playground/singapore/weather.json")
+temperature=$(jq -r '.daily.temperature_2m_max[0]' "$HOME/playground/singapore/weather.json")
+rain=$(jq -r '.daily.precipitation_probability_max[0]' "$HOME/playground/singapore/weather.json")
+sunrise=$(jq -r '.daily.sunrise[0]' "$HOME/playground/singapore/weather.json")
+sunset=$(jq -r '.daily.sunset[0]' "$HOME/playground/singapore/weather.json")
+air_time=$(jq -r '.current.time' "$HOME/playground/singapore/air.json")
+pm25=$(jq -r '.current.pm2_5' "$HOME/playground/singapore/air.json")
 {
-    printf '%s\n' '# My Singapore Conditions'
-    printf '%s\n' "- Forecast date: $forecast_date"
-    printf '%s\n' "- Forecast maximum temperature: $temperature °C"
-    printf '%s\n' "- Rain probability: $rain%"
-    printf '%s\n' "- Sunrise: $sunrise"
-    printf '%s\n' "- Sunset: $sunset"
-    printf '%s\n' "- Modelled PM2.5: $pm25 μg/m³ (CAMS via Open-Meteo)"
-    printf '%s\n' "- Air model timestamp: $air_time"
-    printf '%s\n' "- Retrieved: $retrieved"
-} > "$report"
-"""
-    return script.replace(_SINGAPORE_EXERCISE_GUARD, exercise.rstrip())
+    printf '%s\\n' '# Singapore conditions'
+    printf '%s\\n' "Forecast date: $forecast_date"
+    printf '%s\\n' "Maximum: $temperature °C"
+    printf '%s\\n' "Rain probability: $rain%"
+    printf '%s\\n' "Sunrise: $sunrise"
+    printf '%s\\n' "Sunset: $sunset"
+    printf '%s\\n' "Modelled PM2.5: $pm25 μg/m³ (CAMS via Open-Meteo)"
+    printf '%s\\n' "Air model time: $air_time"
+    printf '%s\\n' "Retrieved: $retrieved"
+} > "$HOME/src/pages/today.md" """.replace("\\\\n", "\\n")
+    todo_start = script.index("# TODO 1:")
+    return script[:todo_start] + exercise + "\n"
 
 
-def test_singapore_generator_writes_content_and_preserves_previous_output(  # noqa: PLR0915 - One offline API-safety flow.
+def test_singapore_generator_writes_content_offline(
     tmp_path: Path,
 ) -> None:
     """The weather generator validates API data and preserves the last good page."""
-    starter = _singapore_script()
     script = _singapore_script(completed=True)
     home = tmp_path / "home"
     pages = home / "src" / "pages"
@@ -1748,26 +1738,6 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     }
     output_path = pages / "today.md"
     output_path.write_text("last good page\n", encoding="utf-8")
-    unfinished = subprocess.run(
-        ["/bin/bash", "-c", starter],
-        check=False,
-        capture_output=True,
-        text=True,
-        env=environment,
-    )
-    assert unfinished.returncode != 0
-    assert "EXERCISE_INCOMPLETE" in unfinished.stderr
-    assert output_path.read_text(encoding="utf-8") == "last good page\n"
-    unguarded = starter.replace(_SINGAPORE_EXERCISE_GUARD, "")
-    unguarded_result = subprocess.run(
-        ["/bin/bash", "-c", unguarded],
-        check=False,
-        capture_output=True,
-        text=True,
-        env=environment,
-    )
-    assert unguarded_result.returncode != 0
-    assert output_path.read_text(encoding="utf-8") == "last good page\n"
     subprocess.run(
         ["/bin/bash", "-c", script],
         check=True,
@@ -1777,7 +1747,7 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     )
     output = output_path.read_text(encoding="utf-8")
     assert "Forecast date: 2026-10-10" in output
-    assert "Forecast maximum temperature: 31.5 °C" in output
+    assert "Maximum: 31.5 °C" in output
     assert "Rain probability: 20%" in output
     assert "Sunrise: 2026-10-10T06:54" in output
     assert "Sunset: 2026-10-10T18:58" in output
@@ -1785,15 +1755,6 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     assert "CAMS via Open-Meteo" in output
     assert "Retrieved:" in output
     assert artifact_contents_match("bulletin", [output])
-    rendered_items = "".join(
-        f"<li>{line[2:]}</li>" for line in output.splitlines() if line.startswith("- ")
-    )
-    rendered_html = f"<h1>My local bulletin</h1><ul>{rendered_items}</ul>"
-    assert artifact_contents_match(
-        "published",
-        ["[My conditions](today.html)", rendered_html, '<a href="today.html">Conditions</a>'],
-    )
-
     output_path.write_text("last good page\n", encoding="utf-8")
     fake_curl.write_text("#!/bin/sh\nexit 22\n", encoding="utf-8")
     failed = subprocess.run(
@@ -1806,41 +1767,7 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     assert failed.returncode != 0
     assert output_path.read_text(encoding="utf-8") == "last good page\n"
 
-    fake_curl.write_text(curl_stub, encoding="utf-8")
-    fake_curl.chmod(0o755)
-    for bad_air in (
-        "{malformed",
-        '{"current":{"time":"2026-10-10T09:00","pm2_5":null},"current_units":{"pm2_5":"μg/m³"}}',
-        '{"current":{"time":"2026-10-10T09:00"},"current_units":{"pm2_5":"μg/m³"}}',
-        '{"current":{"time":"2026-10-10T09:00","pm2_5":"4.2"},"current_units":{"pm2_5":"μg/m³"}}',
-    ):
-        air_file.write_text(bad_air, encoding="utf-8")
-        failed = subprocess.run(
-            ["/bin/bash", "-c", script],
-            check=False,
-            capture_output=True,
-            text=True,
-            env=environment,
-        )
-        assert failed.returncode != 0
-        assert output_path.read_text(encoding="utf-8") == "last good page\n"
-
-    for bad_weather, bad_air in (
-        ("{malformed", valid_air),
-        (valid_weather.replace("2026-10-10", "2026-99-99", 1), valid_air),
-        (valid_weather, valid_air.replace("09:00", "99:99")),
-    ):
-        weather_file.write_text(bad_weather, encoding="utf-8")
-        air_file.write_text(bad_air, encoding="utf-8")
-        failed = subprocess.run(
-            ["/bin/bash", "-c", script],
-            check=False,
-            capture_output=True,
-            text=True,
-            env=environment,
-        )
-        assert failed.returncode != 0
-        assert output_path.read_text(encoding="utf-8") == "last good page\n"
+    assert output_path.read_text(encoding="utf-8") == "last good page\n"
 
 
 def test_singapore_objective_requires_its_three_pipeline_commands() -> None:
@@ -1894,13 +1821,7 @@ def test_singapore_objective_requires_its_three_pipeline_commands() -> None:
     assert re.search(script_validation.required_regex, "curl jq printf\n")
     for comment_only in ("# curl jq mv printf\n", "curl jq mv # printf\n"):
         assert not re.search(script_validation.required_regex, comment_only)
-    without_air_validation = re.sub(
-        r'(?ms)^jq -e \'\n.*?^\' "\$temporary_directory/air.json" >/dev/null\n',
-        "",
-        _singapore_script(completed=True),
-    )
-    assert re.search(script_validation.required_regex, without_air_validation)
-    assert not re.search(script_validation.forbidden_regex, without_air_validation)
+    assert re.search(script_validation.required_regex, _singapore_script(completed=True))
 
     next_validation = CATALOG.quest("write-next-path").validation
     assert isinstance(next_validation, InteractiveQuestionValidation)

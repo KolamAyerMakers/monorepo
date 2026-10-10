@@ -1898,11 +1898,12 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     title="Complete the Singapore bulletin",
                     prompt=(
                         "Copy /docs/sessions/S09/resources/today.sh to ~/scripts/today.sh "
-                        "(create ~/scripts if needed). Complete its JSON-extraction and "
-                        "Markdown TODOs. Include the forecast and air values, retrieval time, "
-                        "coordinates, timezone, units, and Open-Meteo/CAMS sources. "
-                        "Keep the existing guards; remove only the EXERCISE_INCOMPLETE stop "
-                        "block. Run the script, inspect ~/src/pages/today.md, then guide check."
+                        "(create ~/scripts if needed). Complete its two TODOs: use jq -r "
+                        "command substitutions for the seven forecast/air fields, then use "
+                        "printf to write attributed Markdown to ~/src/pages/today.md. "
+                        "Include units, API times, retrieval time, and Open-Meteo/CAMS "
+                        "sources. Remove the EXERCISE_INCOMPLETE comment when finished. "
+                        "Run it, inspect the page, then guide check."
                     ),
                     validation=AllOfValidation(
                         validations=(

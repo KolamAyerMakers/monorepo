@@ -273,7 +273,7 @@ cp /docs/sessions/S09/resources/today.sh \
 micro ~/scripts/today.sh
 ```
 
-Adapt the technique to extract every required field in TODO 1 and write the full attributed report in TODO 2. Only when both are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1`.
+Adapt the technique to extract every required field in TODO 1 and write the full attributed report in TODO 2. When both are complete, remove the `EXERCISE_INCOMPLETE` comment.
 
 Then run it and inspect `~/src/pages/today.md`:
 

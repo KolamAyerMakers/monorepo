@@ -60,7 +60,7 @@ cat ~/playground/singapore/forecast.md
 **Check:** heading and matching `Maximum: <number> °C`; run `guide check`. **Fix:** check the assignment and `"$temperature"`, then rerun.
 
 ### 5. Complete the bulletin generator
-**Goal:** finish the validated starter to generate a complete bulletin.
+**Goal:** finish a small starter script that generates a complete bulletin.
 
 **Do:**
 ```bash
@@ -68,19 +68,19 @@ mkdir -p ~/scripts
 cp /docs/sessions/S09/resources/today.sh ~/scripts/today.sh
 vim ~/scripts/today.sh
 ```
-Read the whole copy. Keep its fetch, schema/unit/date validations, nonempty checks, and atomic `mv`. Preserve its variables `forecast_date`, `temperature`, `rain`, `sunrise`, `sunset`, `air_time`, `pm25`. For TODO 1 assign them using command substitution, `name=$(jq -r 'SELECTOR' "$temporary_directory/FILE.json")`, with selectors `.daily.time[0]`, `.daily.temperature_2m_max[0]`, `.daily.precipitation_probability_max[0]`, `.daily.sunrise[0]`, `.daily.sunset[0]`, `.current.time`, `.current.pm2_5` respectively. TODO 2 composes Markdown with `printf` redirected to `"$report"`. Unrelated example: `printf 'Book: %s\n' "$title" >> /tmp/reading.md` appends one line; this report needs full contents, so use `>`.
+The script downloads weather and air data to the fixed JSON paths from steps 1 and 3. TODO 1: assign `forecast_date`, `temperature`, `rain`, `sunrise`, `sunset`, `air_time`, and `pm25` with `jq -r` and command substitution, using selectors `.daily.time[0]`, `.daily.temperature_2m_max[0]`, `.daily.precipitation_probability_max[0]`, `.daily.sunrise[0]`, `.daily.sunset[0]`, `.current.time`, and `.current.pm2_5`. TODO 2: use `printf` redirection (`>`) to compose attributed Markdown at `~/src/pages/today.md`.
 
-Include labelled forecast date (ISO `YYYY-MM-DD`), maximum (°C), rain probability (%), sunrise, sunset, PM2.5 (μg/m³), model time, and retrieval time. Keep API date/time values ISO; preserve the existing Singapore timezone/offset in retrieval time. Attribute forecast to Open-Meteo and air data to CAMS Global/Open-Meteo. Explicitly say PM2.5 is modelled, not official PSI or a station reading.
+Include labelled forecast date (ISO `YYYY-MM-DD`), maximum (°C), rain probability (%), sunrise, sunset, PM2.5 (μg/m³), model time, and retrieval time. Keep the API date/time values as provided; `date --iso-8601=seconds` records retrieval time with the computer's UTC offset. Forecast and model times use Singapore time. Attribute forecast to Open-Meteo and air data to CAMS Global/Open-Meteo. Explicitly say PM2.5 is modelled, not official PSI or a station reading.
 
-**Check:** only after both TODOs are finished, remove the `EXERCISE_INCOMPLETE` message and `exit 1`; save, then:
+**Check:** finish both TODOs, remove the `EXERCISE_INCOMPLETE` comment, save, then:
 ```bash
 bash -n ~/scripts/today.sh
 bash ~/scripts/today.sh
 cat ~/src/pages/today.md
 guide check
 ```
-Confirm every field, units, attribution, ISO API times and timezone-bearing retrieval time.
-**Fix:** correct reported syntax lines; inspect JSON/selectors for missing values. Do not remove other guards or publish incomplete output.
+Confirm every field, units, attribution, ISO API times and retrieval time with its UTC offset.
+**Fix:** correct syntax errors and check the JSON selectors if values are missing.
 
 ### 6. Link and inspect both pages
 **Goal:** link the bulletin from the homepage and verify both rendered pages.

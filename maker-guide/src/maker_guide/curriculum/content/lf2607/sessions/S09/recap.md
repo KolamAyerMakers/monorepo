@@ -14,7 +14,7 @@ Session: S9
 
 ## Singapore Conditions
 
-The starter validates bounded Open-Meteo forecast and CAMS modelled PM2.5 data, then leaves field extraction and Markdown composition for you to complete. Keep the saved JSON snapshots, compare extracted values with their source, and distinguish forecast date, air-model timestamp, and retrieval time. The report includes units and source attribution; a failed update preserves the previous page and prevents the build.
+The starter downloads Open-Meteo forecast and CAMS modelled PM2.5 JSON, then leaves field extraction and Markdown composition for you to complete. Keep the saved snapshots, compare extracted values with their source, and distinguish forecast date, air-model timestamp, and retrieval time. The report includes units and source attribution; a failed download stops generation.
 
 Use [S9 self-study](self-study.md) for the seven artifact steps, starter, service, and hourly timer. A timer listing is configuration evidence, not proof of execution or publication.
 
