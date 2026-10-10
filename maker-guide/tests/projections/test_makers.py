@@ -466,9 +466,9 @@ def test_makers_projection_publishes_session_resources_only_after_release(
     """Released resources are projected and removed again after release rollback."""
     makers_root = temporary_path / "makers"
     documents_root = temporary_path / "docs"
-    relative_path = Path("sessions/S09/resources/singapore-today.sh")
+    relative_path = Path("sessions/S09/resources/today.sh")
     source = files("maker_guide.curriculum").joinpath(
-        "content/lf2607/sessions/S09/resources/singapore-today.sh"
+        "content/lf2607/sessions/S09/resources/today.sh"
     )
     with connect_database(migrated_database_path) as database_connection:
         _write_member(database_connection, "alice", "2026-07-18T09:00:00Z")

@@ -999,7 +999,7 @@ def artifact_contents_match(kind: str, contents: list[str]) -> bool:
         if service_section is not None:
             service_body = service_section["body"]
             prestart = re.search(
-                r"(?m)^ExecStartPre=/bin/bash %h/scripts/singapore-today\.sh\s*$",
+                r"(?m)^ExecStartPre=/bin/bash %h/scripts/today\.sh\s*$",
                 service_body,
             )
             start = re.search(

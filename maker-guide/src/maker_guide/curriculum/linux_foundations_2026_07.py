@@ -225,7 +225,7 @@ _SITE_BUILD_TIMER_EXTRA_SCHEDULE_PATTERN = (
     r"(?:(?!^\[).)*^[ \t]*RandomizedDelaySec=)"
 )
 _DAILY_PICK_SERVICE_PATTERN = (
-    r"(?ms)^\[Service\]$.*^ExecStartPre=/bin/bash %h/scripts/singapore-today\.sh[ \t]*$"
+    r"(?ms)^\[Service\]$.*^ExecStartPre=/bin/bash %h/scripts/today\.sh[ \t]*$"
     r".*^ExecStart=/usr/local/bin/maker-guide-build-personal-website[ \t]*$"
 )
 _DAILY_PICK_SCRIPT_PATTERN = (
@@ -271,7 +271,7 @@ _S9_STEP_VALIDATIONS = (
     AllOfValidation(
         validations=(
             FileCheckValidation(
-                path="~/scripts/singapore-today.sh",
+                path="~/scripts/today.sh",
                 required_regex=_DAILY_PICK_SCRIPT_PATTERN,
             ),
             ArtifactCheckValidation(

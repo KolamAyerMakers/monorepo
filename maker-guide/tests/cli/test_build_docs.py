@@ -269,7 +269,7 @@ def test_build_docs_publishes_open_reference_routes_and_gates_coursework(
         Path("docs/quests/measure-ping.md/index.html"),
     ):
         assert not (output / relative_route).exists()
-    assert not (output / "docs/sessions/S09/resources/singapore-today.sh").exists()
+    assert not (output / "docs/sessions/S09/resources/today.sh").exists()
 
     command_readme_page = (output / "docs" / "commands" / "README.md" / "index.html").read_text(
         encoding="utf-8"
@@ -321,10 +321,10 @@ def test_build_docs_publishes_released_session_resource_as_raw_file(
         )
         == 0
     )
-    public_resource = output / "docs/sessions/S09/resources/singapore-today.sh"
+    public_resource = output / "docs/sessions/S09/resources/today.sh"
     packaged_resource = (
         Path(__file__).parents[2]
-        / "src/maker_guide/curriculum/content/lf2607/sessions/S09/resources/singapore-today.sh"
+        / "src/maker_guide/curriculum/content/lf2607/sessions/S09/resources/today.sh"
     )
     assert public_resource.read_bytes() == packaged_resource.read_bytes()
     assert not (output / "docs/sessions/S10").exists()

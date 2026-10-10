@@ -59,13 +59,13 @@ The timer listing is not proof of a successful build; inspect the service journa
 
 ## Challenge: publish Singapore conditions
 
-The session resource starter at [/docs/sessions/S09/resources/singapore-today.sh](/docs/sessions/S09/resources/singapore-today.sh) fetches bounded Open-Meteo weather and air-quality responses and validates schema, units and dates. Copy it once and keep your own edits:
+The session resource starter at [/docs/sessions/S09/resources/today.sh](/docs/sessions/S09/resources/today.sh) fetches bounded Open-Meteo weather and air-quality responses and validates schema, units and dates. Copy it once and keep your own edits:
 
 ```bash
 mkdir -p ~/scripts
-cp /docs/sessions/S09/resources/singapore-today.sh \
-    ~/scripts/singapore-today.sh
-micro ~/scripts/singapore-today.sh
+cp /docs/sessions/S09/resources/today.sh \
+    ~/scripts/today.sh
+micro ~/scripts/today.sh
 ```
 
 The daily maximum is a forecast in °C. CAMS PM2.5 is modelled μg/m³, not Singapore's official PSI or a local-station reading; do not provide health advice.
@@ -86,7 +86,7 @@ Complete these steps in order, keeping these artifacts for inspection:
 4. Use a shell variable and `printf` to create `~/playground/singapore/forecast.md` with a heading and a line `Maximum: <value> °C`, matching the snapshot.
 5. Finish the copied script to generate `~/src/pages/singapore-today.md`. Include labelled forecast date, maximum temperature, rain probability, sunrise, sunset, PM2.5, model timestamp, and retrieval time, with units and Open-Meteo/CAMS attribution. Keep API dates and times in ISO format; include the retrieval timezone or UTC offset in its timestamp. Keep validation, nonempty-field checks, and atomic replacement; remove the starter's incomplete-exercise stop only when finished.
 6. Link `[Singapore today](singapore-today.html)` from `~/src/pages/index.md`; after a build inspect `~/public_html/singapore-today.html` for the complete bulletin. The browser displays static content, not live API data.
-7. Add `ExecStartPre=/bin/bash %h/scripts/singapore-today.sh` before the build helper in the user service. Preserve its working directory, helper, hourly timer, and 55-minute randomized delay. The next-timer listing proves configuration only, not execution or publication.
+7. Add `ExecStartPre=/bin/bash %h/scripts/today.sh` before the build helper in the user service. Preserve its working directory, helper, hourly timer, and 55-minute randomized delay. The next-timer listing proves configuration only, not execution or publication.
 
 Do not claim live freshness unless you actually run the generator and service and inspect the published page.
 

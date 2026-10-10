@@ -4,7 +4,7 @@ Quest: complete-singapore-bulletin
 
 ## Mission
 
-Complete your copied `~/scripts/singapore-today.sh` starter and generate the complete attributed report at `~/src/pages/singapore-today.md`.
+Complete your copied `~/scripts/today.sh` starter and generate the complete attributed report at `~/src/pages/singapore-today.md`.
 
 ## Commands You Will Use
 

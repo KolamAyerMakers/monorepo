@@ -1556,7 +1556,7 @@ def test_s9_artifact_validation_compares_json_values_and_rendered_content() -> N
         "[Service]\n"
         "Type=oneshot\n"
         "WorkingDirectory=%h/src\n"
-        "ExecStartPre=/bin/bash %h/scripts/singapore-today.sh\n"
+        "ExecStartPre=/bin/bash %h/scripts/today.sh\n"
         "ExecStart=/usr/local/bin/maker-guide-build-personal-website\n"
     )
     timer = (
@@ -1580,7 +1580,7 @@ _SINGAPORE_EXERCISE_GUARD = chr(10).join(
 def _singapore_script(*, completed: bool = False) -> str:
     script = (
         files("maker_guide.curriculum")
-        .joinpath("content/lf2607/sessions/S09/resources/singapore-today.sh")
+        .joinpath("content/lf2607/sessions/S09/resources/today.sh")
         .read_text(encoding="utf-8")
     )
     if not completed:
@@ -1753,7 +1753,7 @@ def test_singapore_objective_matches_the_complete_starter() -> None:
     script_validation = next(
         item
         for item in validation.validations
-        if isinstance(item, FileCheckValidation) and item.path.endswith("singapore-today.sh")
+        if isinstance(item, FileCheckValidation) and item.path.endswith("today.sh")
     )
     script = _singapore_script(completed=True)
     assert re.search(script_validation.required_regex, script)

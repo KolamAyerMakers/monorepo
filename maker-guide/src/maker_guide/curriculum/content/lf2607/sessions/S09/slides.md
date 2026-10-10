@@ -268,9 +268,9 @@ Copy the starter and edit it:
 
 ```bash
 mkdir -p ~/scripts
-cp /docs/sessions/S09/resources/singapore-today.sh \
-    ~/scripts/singapore-today.sh
-micro ~/scripts/singapore-today.sh
+cp /docs/sessions/S09/resources/today.sh \
+    ~/scripts/today.sh
+micro ~/scripts/today.sh
 ```
 
 Adapt the technique to extract every required field in TODO 1 and write the full attributed report in TODO 2. Only when both are complete, remove the `EXERCISE_INCOMPLETE` comment, diagnostic, and `exit 1`.
@@ -278,7 +278,7 @@ Adapt the technique to extract every required field in TODO 1 and write the full
 Then run it and inspect `~/src/pages/singapore-today.md`:
 
 ```bash
-bash ~/scripts/singapore-today.sh
+bash ~/scripts/today.sh
 ```
 
 <!-- end_slide -->
@@ -288,7 +288,7 @@ bash ~/scripts/singapore-today.sh
 Insert `ExecStartPre` before the existing `ExecStart` in `site-build.service`:
 
 ```ini
-ExecStartPre=/bin/bash %h/scripts/singapore-today.sh
+ExecStartPre=/bin/bash %h/scripts/today.sh
 ExecStart=/usr/local/bin/maker-guide-build-personal-website
 ```
 
