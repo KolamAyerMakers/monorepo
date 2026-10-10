@@ -1440,8 +1440,8 @@ def test_s8_lab_cases_are_distinct_and_keep_faults_out_of_public_prompts() -> No
         assert objective.validation.scenario not in public_text
 
 
-def test_s9_has_seven_ordered_artifact_objectives_and_reinforcement_quests() -> None:
-    """Each S9 objective checks the corresponding retained learner artifact."""
+def test_s9_has_seven_ordered_artifact_objectives_without_duplicate_quests() -> None:
+    """S9 retains its ordered artifact objectives without duplicate quests."""
     expected_ids = (
         "inspect-weather-json",
         "extract-daily-temperature",
@@ -1453,44 +1453,10 @@ def test_s9_has_seven_ordered_artifact_objectives_and_reinforcement_quests() -> 
     )
     objectives = CATALOG.session("S9").objectives
     assert tuple(objective.id for objective in objectives) == expected_ids
-    expected_quests = (
-        "inspect-weather-json",
-        "extract-daily-temperature",
-        "compare-air-snapshot",
-        "format-forecast",
-        "complete-singapore-bulletin",
-        "link-published-bulletin",
-        "schedule-site-rebuilds",
-    )
-    quests = tuple(CATALOG.quest(quest_id) for quest_id in expected_quests)
-    assert tuple(quest.sequence for quest in quests) == tuple(range(86, 93))
-    assert all(quest.available_after_session == "S9" for quest in quests)
-    assert all(
-        objective.validation is quest.validation
-        for objective, quest in zip(objectives, quests, strict=True)
-    )
-    assert all(
-        not isinstance(quest.validation, CommandHistoryValidation)
-        and (
-            not isinstance(quest.validation, AllOfValidation)
-            or all(
-                not isinstance(child, CommandHistoryValidation)
-                for child in quest.validation.validations
-            )
-        )
-        for quest in quests
-    )
-    retired = {
-        "try-cron-and-remove-it",
-        "transform-heading-with-sed",
-        "extract-fields-with-awk",
-        "survive-vim",
-        "enable-webring",
-        "refresh-pipes-for-bandit",
-        "prepare-bandit-approach",
-        "use-terminal-irc",
-    }
-    assert retired.isdisjoint(quest.id for quest in LINUX_FOUNDATIONS_2026_07.quests)
+    assert all(objective.validation is not None for objective in objectives)
+    quest_ids = {quest.id for quest in CATALOG.course.quests}
+    assert quest_ids.isdisjoint(expected_ids[:-1])
+    assert "schedule-site-rebuilds" not in quest_ids
     assert CATALOG.quest("demo-site").available_after_session == "S10"
     assert CATALOG.quest("write-next-path").available_after_session == "S10"
 
@@ -1809,13 +1775,21 @@ def test_packaged_content_references_exist_and_are_non_empty() -> None:
 
 
 def test_course_has_top_level_start_page() -> None:
-    """Autonomous learners have a deterministic entry point."""
+    """The course map links learners to sessions and available quest sections."""
     start_text = _content_text(f"content/{COURSE_ID}/README.md")
+    link_targets = set(_markdown_link_targets(start_text))
 
     assert "Start here" in start_text
-    assert "## Optional Quest Map" in start_text
-    assert "## Quest Calendar" in start_text
-    assert "They are not prerequisites for attending the next live session." in start_text
+    assert {
+        f"sessions/S{session_number:02}/self-study.md" for session_number in range(1, 11)
+    } <= link_targets
+    assert "quests/README.md" in link_targets
+    assert {
+        *(f"quests/README.md#s{session_number:02}-reinforcement" for session_number in range(1, 8)),
+        "quests/README.md#s10-reinforcement",
+    } <= link_targets
+    assert "quests/README.md#s08-reinforcement" not in link_targets
+    assert "quests/README.md#s09-reinforcement" not in link_targets
 
 
 def test_open_reference_indexes_link_every_card() -> None:

@@ -143,8 +143,8 @@ def test_current_quest_requires_session_placement(migrated_database_path: Path) 
         ("S8", ("keep-tmux-workbench",), "serve-local-check-page", "break-and-read-error"),
         (
             "S9",
-            ("schedule-site-rebuilds", "publish-daily-pick"),
-            "schedule-site-rebuilds",
+            ("configure-site-build-timer", "publish-daily-pick"),
+            "publish-daily-pick",
             "inspect-weather-json",
         ),
         (

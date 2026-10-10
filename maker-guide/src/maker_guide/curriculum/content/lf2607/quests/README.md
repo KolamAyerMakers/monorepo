@@ -60,18 +60,6 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 - [inspect-first-url-headers](inspect-first-url-headers.md)
 - [record-http-headers](record-http-headers.md)
 
-## S09 Reinforcement
-
-Keep Your Website Up To Date. These seven artifact-based quests practise inspecting JSON, extracting and formatting forecast values, publishing the Singapore bulletin, and configuring its hourly build. Existing artifacts can satisfy the related objective and quest checks; command history from objectives is not required again.
-
-- [inspect-weather-json](inspect-weather-json.md)
-- [extract-daily-temperature](extract-daily-temperature.md)
-- [compare-air-snapshot](compare-air-snapshot.md)
-- [format-forecast](format-forecast.md)
-- [complete-singapore-bulletin](complete-singapore-bulletin.md)
-- [link-published-bulletin](link-published-bulletin.md)
-- [schedule-site-rebuilds](schedule-site-rebuilds.md)
-
 ## S10 Reinforcement
 
 - [demo-site](demo-site.md)

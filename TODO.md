@@ -48,3 +48,5 @@
 - [ ] Migrate pulumi stacks to KAM account
 - [ ] Migrate domain name to KAM account
 - [ ] Encrypt secrets with KAM shared key
+
+- [ ] S09: preserve seven guided objectives without duplicate reinforcement quests; classroom capacity, jq availability, packaging, rendering, and rehearsal remain pending.

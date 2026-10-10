@@ -254,7 +254,7 @@ _DAILY_PICK_SCRIPT_PATTERN = (
     r"(?=.*^[ \t]*pm25=\$\(jq -r )(?=.*-s \"\$\{report:-\}\")"
     r"(?=.*^[ \t]*mv -- \"\$report\" \"\$output\"$).*$"
 )
-_S9_STEP_VALIDATIONS = (
+_S9_OBJECTIVE_VALIDATIONS = (
     ArtifactCheckValidation(kind="weather", paths=("~/playground/singapore/weather.json",)),
     ArtifactCheckValidation(
         kind="temperature",
@@ -1892,7 +1892,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Fetch weather JSON to ~/playground/singapore/weather.json and inspect "
                         "its daily fields and units with jq."
                     ),
-                    validation=_S9_STEP_VALIDATIONS[0],
+                    validation=_S9_OBJECTIVE_VALIDATIONS[0],
                 ),
                 SessionObjective(
                     id="extract-daily-temperature",
@@ -1901,7 +1901,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Use jq to save the numeric forecast maximum in temperature.txt and "
                         "check it against weather.json."
                     ),
-                    validation=_S9_STEP_VALIDATIONS[1],
+                    validation=_S9_OBJECTIVE_VALIDATIONS[1],
                 ),
                 SessionObjective(
                     id="compare-air-snapshot",
@@ -1912,7 +1912,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "`PM2.5: <value> μg/m³` and `Model time: <timestamp>`; match both "
                         "values to the JSON."
                     ),
-                    validation=_S9_STEP_VALIDATIONS[2],
+                    validation=_S9_OBJECTIVE_VALIDATIONS[2],
                 ),
                 SessionObjective(
                     id="format-forecast",
@@ -1922,7 +1922,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "~/playground/singapore/forecast.md "
                         "with a heading and `Maximum: <value> °C`, matching the snapshot."
                     ),
-                    validation=_S9_STEP_VALIDATIONS[3],
+                    validation=_S9_OBJECTIVE_VALIDATIONS[3],
                 ),
                 SessionObjective(
                     id="complete-singapore-bulletin",
@@ -1931,7 +1931,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Complete the copied starter and generate the full attributed bulletin "
                         "while retaining its validation and atomic-write guards."
                     ),
-                    validation=_S9_STEP_VALIDATIONS[4],
+                    validation=_S9_OBJECTIVE_VALIDATIONS[4],
                 ),
                 SessionObjective(
                     id="link-published-bulletin",
@@ -1940,7 +1940,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Link the report from your homepage, build the site, and inspect the "
                         "rendered static bulletin."
                     ),
-                    validation=_S9_STEP_VALIDATIONS[5],
+                    validation=_S9_OBJECTIVE_VALIDATIONS[5],
                 ),
                 SessionObjective(
                     id="configure-site-build-timer",
@@ -1949,7 +1949,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Run the generator before the build and keep the hourly timer with its "
                         "55-minute randomized delay; inspect the configured next deadline."
                     ),
-                    validation=_S9_STEP_VALIDATIONS[6],
+                    validation=_S9_OBJECTIVE_VALIDATIONS[6],
                 ),
             ),
         ),
@@ -3572,107 +3572,6 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             ),
             goal="Collect URL and service evidence before automating the build.",
             evidence="The guide needs to see header checks and service status.",
-        ),
-        _quest(
-            quest_id="inspect-weather-json",
-            title="Inspect a weather snapshot",
-            sequence=86,
-            available_after_session="S9",
-            prompt="Fetch and inspect a weather JSON snapshot with jq.",
-            required_commands=("curl", "jq"),
-            practiced_skills=("text-transforms",),
-            validation=_S9_STEP_VALIDATIONS[0],
-            goal="Read the forecast fields and units from a real JSON response.",
-            evidence="Inspect the saved JSON fields and their units.",
-        ),
-        _quest(
-            quest_id="extract-daily-temperature",
-            title="Extract the daily maximum",
-            sequence=87,
-            available_after_session="S9",
-            prompt=(
-                "Extract the forecast maximum into a text artifact and compare it with "
-                "the saved JSON."
-            ),
-            required_commands=("jq", "printf", ">"),
-            practiced_skills=("text-transforms",),
-            validation=_S9_STEP_VALIDATIONS[1],
-            goal="Extract a numeric value and verify it against its source.",
-            evidence="The saved number must equal the JSON snapshot value.",
-        ),
-        _quest(
-            quest_id="compare-air-snapshot",
-            title="Compare air-quality data",
-            sequence=88,
-            available_after_session="S9",
-            prompt=(
-                "Save the air-quality JSON and a text record of the model PM2.5 value "
-                "and timestamp."
-            ),
-            required_commands=("curl", "jq", "printf"),
-            practiced_skills=("text-transforms",),
-            validation=_S9_STEP_VALIDATIONS[2],
-            goal="Distinguish a model value and its observation time from retrieval time.",
-            evidence="Both the PM2.5 number and model timestamp must match the JSON.",
-        ),
-        _quest(
-            quest_id="format-forecast",
-            title="Format a forecast note",
-            sequence=89,
-            available_after_session="S9",
-            prompt=(
-                "Use a variable and printf to write a short Markdown forecast from the saved "
-                "temperature snapshot."
-            ),
-            required_commands=("jq", "printf", ">"),
-            practiced_skills=("text-transforms",),
-            validation=_S9_STEP_VALIDATIONS[3],
-            goal="Turn extracted JSON data into a small Markdown artifact.",
-            evidence="The note must contain the matching snapshot value and °C.",
-        ),
-        _quest(
-            quest_id="complete-singapore-bulletin",
-            title="Complete the Singapore bulletin",
-            sequence=90,
-            available_after_session="S9",
-            prompt=(
-                "Complete the copied starter and generate the attributed forecast and "
-                "air-quality bulletin."
-            ),
-            required_commands=("jq", "printf", "date", "mv"),
-            practiced_skills=("text-transforms",),
-            validation=_S9_STEP_VALIDATIONS[4],
-            goal="Generate a complete report while retaining its safety checks.",
-            evidence=(
-                "Include all forecast, model, and retrieval fields with units and attribution."
-            ),
-        ),
-        _quest(
-            quest_id="link-published-bulletin",
-            title="Link the published bulletin",
-            sequence=91,
-            available_after_session="S9",
-            prompt="Link the generated bulletin from the homepage and inspect its rendered page.",
-            required_commands=("build-website", "grep"),
-            practiced_skills=("multi-page-sites",),
-            validation=_S9_STEP_VALIDATIONS[5],
-            goal="Publish a complete static report and connect it from the homepage.",
-            evidence="Inspect the rendered page and its homepage link; it is static content.",
-        ),
-        _quest(
-            quest_id="schedule-site-rebuilds",
-            title="Schedule hourly site rebuilds",
-            sequence=92,
-            available_after_session="S9",
-            prompt=(
-                "Run the generator before the site build and retain the hourly timer with a "
-                "55-minute randomized delay."
-            ),
-            required_commands=("systemctl --user", "systemctl --user list-timers"),
-            practiced_skills=("automation-timers", "systemd-user-services"),
-            validation=_S9_STEP_VALIDATIONS[6],
-            goal="Configure a user timer to update the static bulletin before building.",
-            evidence="The unit files prove configuration, not that a timer actually ran.",
         ),
         _quest(
             quest_id="write-readme",

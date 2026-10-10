@@ -1,6 +1,6 @@
 # Linux Foundations 2026-07
 
-Follow the session work in class or through the self-study guides. Build, inspect, explain, and improve your own site; use reinforcement quests for extra practice.
+Follow the session work in class or through the self-study guides. Build, inspect, explain, and improve your own site.
 
 ## Start here
 
@@ -20,13 +20,6 @@ The guide bot is optional learner support, not a required workshop checklist. Fo
 
 Feeling stuck still counts as progress if you can describe what changed. Post the command you ran, the output you got, and what you expected in `#lf2607`.
 
-## Optional Quest Map
-
-Quests are highly recommended reinforcement. They are not prerequisites for attending the next live session. The [full quest index](quests/README.md) groups them by session.
-
-## Quest Calendar
-
-Quest ids are stable content ids. Availability follows the learner's reached session, not the wall-clock date.
 
 ## Sessions
 
@@ -109,7 +102,6 @@ Give your web server to a systemd user service. Test it while logged out, follow
 - [Slides](sessions/S08/slides.md)
 - [Self-study](sessions/S08/self-study.md)
 - [Recap](sessions/S08/recap.md)
-- [Reinforcement quests](quests/README.md#s08-reinforcement)
 - [Concept cards](concepts/README.md#s08-services)
 
 ### S09: Keep Your Website Up To Date
@@ -119,7 +111,6 @@ Learn to inspect JSON weather data, produce a validated Singapore bulletin, and 
 - [Slides](sessions/S09/slides.md)
 - [Self-study](sessions/S09/self-study.md)
 - [Recap](sessions/S09/recap.md)
-- [Reinforcement quests](quests/README.md#s09-reinforcement)
 - [Concept cards](concepts/README.md#automation)
 
 ### S10: Show What You Can Do
@@ -129,11 +120,12 @@ Lead a demonstration with evidence you choose, investigate an unfamiliar problem
 - [Slides](sessions/S10/slides.md)
 - [Self-study](sessions/S10/self-study.md)
 - [Recap](sessions/S10/recap.md)
+- [Reinforcement quests](quests/README.md#s10-reinforcement)
 - [Concept cards](concepts/README.md#s10-investigation)
 
 ## Reference Cards
 
-- Ordered quest index: [quests](quests/README.md).
+- Ordered reinforcement quest index: [quests](quests/README.md).
 - Command card index: [commands](commands/README.md).
 - Concept card index: [concepts](concepts/README.md).
 - Docs navigation rules live in [guides](guides/docs-map.md).

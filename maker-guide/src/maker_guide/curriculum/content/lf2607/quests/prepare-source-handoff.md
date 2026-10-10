@@ -2,7 +2,7 @@
 
 Quest: prepare-source-handoff
 
-> **Historical guide:** this quest documents an earlier project version and is not the current S9 handoff route. Its report-refresh and Git steps are not requirements for the current daily-pick project. For current setup, follow [S9 daily-build instructions](../sessions/S09/self-study.md) and the [daily-pick quest](schedule-site-rebuilds.md). Restoring files from this guide does not restore the current daily-pick generator; use the current S9 instructions to set that up.
+> **Historical guide:** this quest documents an earlier project version and is not the current S9 handoff route. Its report-refresh and Git steps are not requirements for the current daily-pick project. For current setup, follow [S9 daily-build instructions](../sessions/S09/self-study.md) and the [S9 self-study](../sessions/S09/self-study.md). Restoring files from this guide does not restore the current daily-pick generator; use the current S9 instructions to set that up.
 
 ## Mission
 
