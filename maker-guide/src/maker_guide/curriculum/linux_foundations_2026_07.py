@@ -228,32 +228,6 @@ _DAILY_PICK_SERVICE_PATTERN = (
     r"(?ms)^\[Service\]$.*^ExecStartPre=/bin/bash %h/scripts/today\.sh[ \t]*$"
     r".*^ExecStart=/usr/local/bin/maker-guide-build-personal-website[ \t]*$"
 )
-_DAILY_PICK_SCRIPT_PATTERN = (
-    r"(?ms)^(?!.*EXERCISE_INCOMPLETE)(?=.*^set -euo pipefail$)"
-    r"(?=.*^report=\$\(mktemp \"\$output_directory/\.singapore-today\.XXXXXX\"\)$)"
-    r"(?=.*^temporary_directory=\$\(mktemp -d\)$)"
-    r"(?=.*^trap 'rm -rf \"\$temporary_directory\"; rm -f \"\$report\"' EXIT$)"
-    r"(?=.*^[ \t]*if ! curl --max-time 15 -fsS \"\$url\" "
-    r"-o \"\$temporary_directory/\$name.json\"; then$)"
-    r"(?=.*^jq -e '$.*?\.daily\.temperature_2m_max\[0\]"
-    r".*?^' \"\$temporary_directory/weather.json\" >/dev/null$)"
-    r"(?=.*\.daily_units\.temperature_2m_max == \"°C\")"
-    r"(?=.*\.daily_units\.precipitation_probability_max == \"%\")"
-    r"(?=.*\.daily\.precipitation_probability_max\[0\] \| numbers \| \. >= 0 and \. <= 100)"
-    r"(?=.*\.daily\.sunrise\[0\] \| strings)(?=.*\.daily\.sunset\[0\] \| strings)"
-    r"(?=.*\.current\.pm2_5 \| numbers \| \. >= 0 and \. <= 1000)"
-    r"(?=.*\.current\.time \| strings)"
-    r"(?=.*\.current_units\.pm2_5 == \"μg/m³\")"
-    r"(?=.*strptime\(\"%Y-%m-%d\"\))(?=.*^[ \t]*parsed_date=)"
-    r"(?=.*^[ \t]*\[\[ \$parsed_date == \"\$calendar_value\" \]\] \|\| exit 1$)"
-    r"(?=.*^[ \t]*parsed_clock=)"
-    r"(?=.*^[ \t]*\[\[ \$parsed_clock == \"\$clock_value\" \]\] \|\| exit 1$)"
-    r"(?=.*^[ \t]*forecast_date=\$\(jq -r )(?=.*^[ \t]*temperature=\$\(jq -r )"
-    r"(?=.*^[ \t]*rain=\$\(jq -r )(?=.*^[ \t]*sunrise=\$\(jq -r )"
-    r"(?=.*^[ \t]*sunset=\$\(jq -r )(?=.*^[ \t]*air_time=\$\(jq -r )"
-    r"(?=.*^[ \t]*pm25=\$\(jq -r )(?=.*-s \"\$\{report:-\}\")"
-    r"(?=.*^[ \t]*mv -- \"\$report\" \"\$output\"$).*$"
-)
 _SOURCE_HANDOFF_PATHS = (
     "README.md",
     "scripts/maker-report.sh",
@@ -1918,7 +1892,8 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         validations=(
                             FileCheckValidation(
                                 path="~/scripts/today.sh",
-                                required_regex=_DAILY_PICK_SCRIPT_PATTERN,
+                                required_regex=r".*",
+                                forbidden_regex=r"EXERCISE_INCOMPLETE",
                             ),
                             ArtifactCheckValidation(
                                 kind="bulletin",

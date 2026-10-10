@@ -1708,8 +1708,8 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
         assert output_path.read_text(encoding="utf-8") == "last good page\n"
 
 
-def test_singapore_objective_matches_the_complete_starter() -> None:
-    """The curriculum validator tracks the supplied weather generator."""
+def test_singapore_objective_rejects_only_an_unfinished_starter_marker() -> None:
+    """The source check rejects the marker, not a particular implementation."""
     validation = next(
         objective.validation
         for objective in CATALOG.session("S9").objectives
@@ -1721,15 +1721,26 @@ def test_singapore_objective_matches_the_complete_starter() -> None:
         for item in validation.validations
         if isinstance(item, FileCheckValidation) and item.path.endswith("today.sh")
     )
-    script = _singapore_script(completed=True)
-    assert re.search(script_validation.required_regex, script)
-    assert not re.search(script_validation.required_regex, _singapore_script())
+    assert script_validation.required_regex == r".*"
+    assert script_validation.forbidden_regex == r"EXERCISE_INCOMPLETE"
+    for unfinished in (
+        _singapore_script(),
+        "# EXERCISE_INCOMPLETE: finish this\n",
+        'echo "EXERCISE_INCOMPLETE"\n',
+    ):
+        assert re.search(script_validation.required_regex, unfinished)
+        assert re.search(script_validation.forbidden_regex, unfinished)
+
+    reformatted = "#!/bin/bash\necho 'Singapore bulletin'\n"
+    assert re.search(script_validation.required_regex, reformatted)
+    assert not re.search(script_validation.forbidden_regex, reformatted)
     without_air_validation = re.sub(
         r'(?ms)^jq -e \'\n.*?^\' "\$temporary_directory/air.json" >/dev/null\n',
         "",
-        script,
+        _singapore_script(completed=True),
     )
-    assert not re.search(script_validation.required_regex, without_air_validation)
+    assert re.search(script_validation.required_regex, without_air_validation)
+    assert not re.search(script_validation.forbidden_regex, without_air_validation)
 
     next_validation = CATALOG.quest("write-next-path").validation
     assert isinstance(next_validation, InteractiveQuestionValidation)
