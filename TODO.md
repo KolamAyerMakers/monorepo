@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Verify Salt-SSH agent authentication with `uv run salt-runner ssh-test lf-dev`; roster defaults now use Salt's `priv: agent-forwarding` sentinel and `identities_only: false`. No Salt application performed.
 - [ ] Before S9 delivery, package and deploy the Singapore Today starter and verify both `/docs` synchronization and public-site build; rehearse learner completion and failure preservation. The distributed exercise is intentionally incomplete.
 
 - [ ] S09: verify classroom capacity for the hourly timer and jq availability in the deployed package set; package/synchronize the starter, render and review the deck, and rehearse the seven artifact checks plus Open-Meteo failure preservation before delivery. No API, classroom, deployment, or rendered-page verification was performed in this change.

@@ -3,8 +3,6 @@ lf2607:
   user: root
   port: 22
   sudo: false
-  ssh_options:
-    - IdentitiesOnly=yes
   minion_opts:
     grains:
       deployment_environment: production
@@ -16,8 +14,6 @@ lf-dev:
   user: root
   port: 22
   sudo: false
-  ssh_options:
-    - IdentitiesOnly=yes
   minion_opts:
     grains:
       deployment_environment: development

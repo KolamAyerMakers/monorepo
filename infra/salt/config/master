@@ -18,8 +18,8 @@ roster_defaults:
   user: root
   port: 22
   sudo: false
-  ssh_options:
-    - IdentitiesOnly=yes
+  priv: agent-forwarding
+  identities_only: false
 rand_thin_dir: true
 ssh_wipe: true
 # vim: ft=yaml
