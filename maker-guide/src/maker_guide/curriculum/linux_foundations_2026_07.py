@@ -254,44 +254,6 @@ _DAILY_PICK_SCRIPT_PATTERN = (
     r"(?=.*^[ \t]*pm25=\$\(jq -r )(?=.*-s \"\$\{report:-\}\")"
     r"(?=.*^[ \t]*mv -- \"\$report\" \"\$output\"$).*$"
 )
-_S9_OBJECTIVE_VALIDATIONS = (
-    ArtifactCheckValidation(kind="weather", paths=("~/playground/singapore/weather.json",)),
-    ArtifactCheckValidation(
-        kind="temperature",
-        paths=("~/playground/singapore/temperature.txt", "~/playground/singapore/weather.json"),
-    ),
-    ArtifactCheckValidation(
-        kind="air",
-        paths=("~/playground/singapore/air.json", "~/playground/singapore/air.txt"),
-    ),
-    ArtifactCheckValidation(
-        kind="forecast",
-        paths=("~/playground/singapore/weather.json", "~/playground/singapore/forecast.md"),
-    ),
-    AllOfValidation(
-        validations=(
-            FileCheckValidation(
-                path="~/scripts/today.sh",
-                required_regex=_DAILY_PICK_SCRIPT_PATTERN,
-            ),
-            ArtifactCheckValidation(
-                kind="bulletin",
-                paths=("~/src/pages/singapore-today.md",),
-            ),
-        ),
-    ),
-    ArtifactCheckValidation(
-        kind="published",
-        paths=("~/src/pages/index.md", "~/public_html/singapore-today.html"),
-    ),
-    ArtifactCheckValidation(
-        kind="timer",
-        paths=(
-            "~/.config/systemd/user/site-build.service",
-            "~/.config/systemd/user/site-build.timer",
-        ),
-    ),
-)
 _SOURCE_HANDOFF_PATHS = (
     "README.md",
     "scripts/maker-report.sh",
@@ -1892,7 +1854,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Fetch weather JSON to ~/playground/singapore/weather.json and inspect "
                         "its daily fields and units with jq."
                     ),
-                    validation=_S9_OBJECTIVE_VALIDATIONS[0],
+                    validation=ArtifactCheckValidation(
+                        kind="weather",
+                        paths=("~/playground/singapore/weather.json",),
+                    ),
                 ),
                 SessionObjective(
                     id="extract-daily-temperature",
@@ -1901,7 +1866,13 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Use jq to save the numeric forecast maximum in temperature.txt and "
                         "check it against weather.json."
                     ),
-                    validation=_S9_OBJECTIVE_VALIDATIONS[1],
+                    validation=ArtifactCheckValidation(
+                        kind="temperature",
+                        paths=(
+                            "~/playground/singapore/temperature.txt",
+                            "~/playground/singapore/weather.json",
+                        ),
+                    ),
                 ),
                 SessionObjective(
                     id="compare-air-snapshot",
@@ -1912,7 +1883,13 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "`PM2.5: <value> μg/m³` and `Model time: <timestamp>`; match both "
                         "values to the JSON."
                     ),
-                    validation=_S9_OBJECTIVE_VALIDATIONS[2],
+                    validation=ArtifactCheckValidation(
+                        kind="air",
+                        paths=(
+                            "~/playground/singapore/air.json",
+                            "~/playground/singapore/air.txt",
+                        ),
+                    ),
                 ),
                 SessionObjective(
                     id="format-forecast",
@@ -1922,7 +1899,13 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "~/playground/singapore/forecast.md "
                         "with a heading and `Maximum: <value> °C`, matching the snapshot."
                     ),
-                    validation=_S9_OBJECTIVE_VALIDATIONS[3],
+                    validation=ArtifactCheckValidation(
+                        kind="forecast",
+                        paths=(
+                            "~/playground/singapore/weather.json",
+                            "~/playground/singapore/forecast.md",
+                        ),
+                    ),
                 ),
                 SessionObjective(
                     id="complete-singapore-bulletin",
@@ -1931,7 +1914,18 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Complete the copied starter and generate the full attributed bulletin "
                         "while retaining its validation and atomic-write guards."
                     ),
-                    validation=_S9_OBJECTIVE_VALIDATIONS[4],
+                    validation=AllOfValidation(
+                        validations=(
+                            FileCheckValidation(
+                                path="~/scripts/today.sh",
+                                required_regex=_DAILY_PICK_SCRIPT_PATTERN,
+                            ),
+                            ArtifactCheckValidation(
+                                kind="bulletin",
+                                paths=("~/src/pages/singapore-today.md",),
+                            ),
+                        ),
+                    ),
                 ),
                 SessionObjective(
                     id="link-published-bulletin",
@@ -1940,7 +1934,13 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Link the report from your homepage, build the site, and inspect the "
                         "rendered static bulletin."
                     ),
-                    validation=_S9_OBJECTIVE_VALIDATIONS[5],
+                    validation=ArtifactCheckValidation(
+                        kind="published",
+                        paths=(
+                            "~/src/pages/index.md",
+                            "~/public_html/singapore-today.html",
+                        ),
+                    ),
                 ),
                 SessionObjective(
                     id="configure-site-build-timer",
@@ -1949,7 +1949,13 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         "Run the generator before the build and keep the hourly timer with its "
                         "55-minute randomized delay; inspect the configured next deadline."
                     ),
-                    validation=_S9_OBJECTIVE_VALIDATIONS[6],
+                    validation=ArtifactCheckValidation(
+                        kind="timer",
+                        paths=(
+                            "~/.config/systemd/user/site-build.service",
+                            "~/.config/systemd/user/site-build.timer",
+                        ),
+                    ),
                 ),
             ),
         ),
