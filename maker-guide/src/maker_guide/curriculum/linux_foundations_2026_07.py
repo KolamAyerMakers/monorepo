@@ -1912,13 +1912,15 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     title="Link and inspect the bulletin",
                     prompt=(
                         "Link the report from your homepage, build the site, and inspect the "
-                        "rendered static bulletin."
+                        "rendered static bulletin. Verify ~/public_html/index.html links to "
+                        "today.html."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="published",
                         paths=(
                             "~/src/pages/index.md",
                             "~/public_html/today.html",
+                            "~/public_html/index.html",
                         ),
                     ),
                 ),

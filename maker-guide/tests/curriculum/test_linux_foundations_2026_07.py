@@ -1516,8 +1516,20 @@ def test_s9_artifact_validation_compares_json_values_and_rendered_content() -> N
     assert artifact_contents_match("bulletin", [markdown_list])
     assert artifact_contents_match(
         "published",
-        ["[My Singapore](today.html)", f"<h1>My report</h1><p>{bulletin}</p>"],
+        [
+            "[My Singapore](today.html)",
+            f"<h1>My report</h1><p>{bulletin}</p>",
+            '<a href="today.html">Read</a>',
+        ],
     )
+    for homepage in (
+        "<!-- <a href='today.html'> -->",
+        "<a href='other.html'>Read</a>",
+        "<script>const fake = '<a href=\"today.html\">';</script>",
+    ):
+        assert not artifact_contents_match(
+            "published", ["[My Singapore](today.html)", f"<p>{bulletin}</p>", homepage]
+        )
     service = (
         "[Service]\n"
         "Type=oneshot\n"
@@ -1656,7 +1668,7 @@ def test_singapore_generator_writes_content_and_preserves_previous_output(  # no
     rendered_html = f"<h1>My local bulletin</h1><ul>{rendered_items}</ul>"
     assert artifact_contents_match(
         "published",
-        ["[My conditions](today.html)", rendered_html],
+        ["[My conditions](today.html)", rendered_html, '<a href="today.html">Conditions</a>'],
     )
 
     output_path.write_text("last good page\n", encoding="utf-8")

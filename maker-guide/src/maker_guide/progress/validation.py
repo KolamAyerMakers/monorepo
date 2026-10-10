@@ -15,8 +15,9 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+from html.parser import HTMLParser
 from pathlib import Path
-from typing import cast
+from typing import cast, override
 
 from maker_guide.curriculum.models import (
     AllOfValidation,
@@ -70,6 +71,22 @@ _OBSERVATION_LIMIT = 100
 _AUDIT_EVENT_LIMIT = 20
 _MAX_VALIDATION_FILE_BYTES = 1_048_576
 _MAX_DIAGNOSTIC_FILE_CHARS = 4_000
+
+
+class _TodayLinkParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.found = False
+
+    @override
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "a" and any(
+            name == "href" and value is not None and value.strip() in {"today.html", "./today.html"}
+            for name, value in attrs
+        ):
+            self.found = True
+
+
 _PATH_RESOLUTION_FAILURE_REASONS = frozenset(
     {
         "unknown-user",
@@ -989,10 +1006,14 @@ def artifact_contents_match(kind: str, contents: list[str]) -> bool:
     if kind == "bulletin":
         passed = _report_has_complete_bulletin(contents[0])
     elif kind == "published":
-        index, rendered_report = contents
-        passed = bool(
-            re.search(r"\[[^\]]+\]\(today\.html\)", index, re.IGNORECASE)
-        ) and _report_has_complete_bulletin(rendered_report)
+        index, rendered_report, published_homepage = contents
+        parser = _TodayLinkParser()
+        parser.feed(published_homepage)
+        passed = (
+            bool(re.search(r"\[[^\]]+\]\(today\.html\)", index, re.IGNORECASE))
+            and _report_has_complete_bulletin(rendered_report)
+            and parser.found
+        )
     elif kind == "timer":
         service, timer = contents
         service_section = re.search(r"(?ms)^\[Service\]\n(?P<body>.*?)(?=^\[|\Z)", service)

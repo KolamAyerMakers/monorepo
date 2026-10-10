@@ -783,7 +783,7 @@ def _validate_artifact_check(validation: ArtifactCheckValidation) -> None:
         "air": 2,
         "forecast": 2,
         "bulletin": 1,
-        "published": 2,
+        "published": 3,
         "timer": 2,
     }[validation.kind]
     if len(validation.paths) != path_count:

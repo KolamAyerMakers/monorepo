@@ -2011,6 +2011,9 @@ def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
         f"<li>{line.removeprefix('- ')}</li>" for line in report.splitlines()
     )
     (learner_home / "report.html").write_text(rendered, encoding="utf-8")
+    (learner_home / "published.html").write_text(
+        '<a\n class="home" href="./today.html">Bulletin</a>', encoding="utf-8"
+    )
 
     with connect_database(migrated_database_path) as database_connection:
         source_result = validate_quest(
@@ -2023,7 +2026,9 @@ def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
         published_result = validate_quest(
             _filesystem_validation_input(
                 database_connection,
-                ArtifactCheckValidation(kind="published", paths=("index.md", "report.html")),
+                ArtifactCheckValidation(
+                    kind="published", paths=("index.md", "report.html", "published.html")
+                ),
                 learner_home,
             ),
         )
