@@ -347,6 +347,17 @@ def _kam_classroom_pillar() -> dict[str, object]:
                 "tcp_port": 443,
                 "domains": ["registry.npmjs.org"],
             },
+            "weather_egress": {
+                "nftables_file": "/etc/nftables.d/49-classroom-weather-egress.nft",
+                "header": "# Classroom weather API egress policy",
+                "destination": "classroom-weather",
+                "set_v4": "classroom_weather_v4",
+                "set_v6": "classroom_weather_v6",
+                "destination_position": "29",
+                "domain_position": "69",
+                "tcp_port": 443,
+                "domains": ["api.open-meteo.com", "air-quality-api.open-meteo.com"],
+            },
             "identity": {
                 "registration_user": {
                     "user": "new",
@@ -500,6 +511,7 @@ def test_role_composes_debian_base_and_classroom_services() -> None:
             "ergo",
             "roles.kam-classroom.irc",
             "roles.kam-classroom.npm",
+            "roles.kam-classroom.weather",
             "roles.kam-classroom.network-diagnostics",
             "nftables",
             "root",
@@ -1956,6 +1968,71 @@ def test_role_npm_egress_limits_learners_to_the_npm_registry() -> None:
             ]
         },
     }
+
+
+def test_role_weather_egress_is_humans_only_https_to_dynamic_api_addresses() -> None:
+    """Test DNS-backed dual-stack HTTPS access is restricted to classroom humans."""
+    state = _load_state("roles/kam-classroom/weather.sls", _kam_classroom_pillar())
+    fragment = _state_arguments(
+        cast(dict[str, object], state["roles::kam_classroom::weather::dns_nftsets"]),
+        "dns_nftsets.fragment",
+    )
+    managed = _state_arguments(
+        cast(dict[str, object], state["roles::kam_classroom::weather"]),
+        "nftables_file.managed",
+    )
+
+    assert fragment["destinations"] == {
+        "classroom-weather": {
+            "family": "inet",
+            "table": "filter",
+            "set_v4": "classroom_weather_v4",
+            "set_v6": "classroom_weather_v6",
+        }
+    }
+    assert fragment["domains"] == [
+        {"exact": "api.open-meteo.com", "destination": "classroom-weather"},
+        {
+            "exact": "air-quality-api.open-meteo.com",
+            "destination": "classroom-weather",
+        },
+    ]
+    assert managed["sets"] == [
+        {
+            "name": "classroom_weather_v4",
+            "type": "ipv4_addr",
+            "flags": ["timeout"],
+            "timeout": "24h",
+            "position": "25",
+        },
+        {
+            "name": "classroom_weather_v6",
+            "type": "ipv6_addr",
+            "flags": ["timeout"],
+            "timeout": "24h",
+            "position": "25",
+        },
+    ]
+    assert managed["rules"] == [
+        {
+            "chain": "output",
+            "position": "10",
+            "rule": (
+                "meta skgid 1001 ip daddr @classroom_weather_v4 tcp dport 443 "
+                'counter name "output_classroom_weather" accept '
+                'comment "classroom weather APIs"'
+            ),
+        },
+        {
+            "chain": "output",
+            "position": "11",
+            "rule": (
+                "meta skgid 1001 ip6 daddr @classroom_weather_v6 tcp dport 443 "
+                'counter name "output_classroom_weather" accept '
+                'comment "classroom weather APIs"'
+            ),
+        },
+    ]
 
 
 def test_role_tldr_uses_shared_offline_cache() -> None:

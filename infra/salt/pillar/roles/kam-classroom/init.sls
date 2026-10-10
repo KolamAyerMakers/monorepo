@@ -10,6 +10,7 @@ include:
   - roles.kam-classroom.nodejs
   - roles.kam-classroom.network-diagnostics
   - roles.kam-classroom.npm
+  - roles.kam-classroom.weather
   - roles.kam-classroom.lldap
   - roles.kam-classroom.authelia
   - roles.kam-classroom.sssd
