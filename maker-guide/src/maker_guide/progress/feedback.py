@@ -50,6 +50,13 @@ _CHECK_DESCRIPTIONS = MappingProxyType(
         "site-check-required": "Simulated behavior of ~/scripts/site-check.sh.",
         "site-check-stale": "The script digest bound to the simulated checks.",
         "site-check-failed": "The seven simulated site-check outcomes.",
+        "timer-check-required": "A fresh check of the enabled S9 timer and its next deadline.",
+        "timer-check-stale": "The current service and timer unit files.",
+        "timer-check-failed": "The read-only status and deadline of your user timer.",
+        "timer-check-unsupported-client": "The current maker-guide CLI timer check.",
+        "timer-check-unsafe-user": (
+            "The timer check must run as your registered, non-root classroom account."
+        ),
         "service-lab-required": "A started troubleshooting challenge and fresh local inspection.",
         "service-lab-unavailable": "Fresh diagnostic evidence for the current challenge.",
         "service-lab-unrepaired": "The service and page after your repair.",
@@ -110,6 +117,27 @@ _FALLBACK_FAILURE_FINDINGS = MappingProxyType(
             "`~/scripts/site-check.sh` has not passed all simulated cases. "
             "Run `guide now` or `guide check` again in the classroom shell."
         ),
+        "timer-check-required": (
+            "Run `guide now` or `guide check` in your classroom shell so I can inspect "
+            "the live timer."
+        ),
+        "timer-check-stale": (
+            "A unit file changed during the check. Run `guide check` again after saving both units."
+        ),
+        "timer-check-failed": (
+            "The timer check did not pass. Inspect `systemctl --user status site-build.timer`; "
+            "after saving unit changes, use `systemctl --user daemon-reload`, then "
+            "`systemctl --user enable --now site-build.timer` and rerun `guide check`. "
+            "I did not change systemd state."
+        ),
+        "timer-check-unsupported-client": (
+            "Your classroom `guide` CLI is too old for this timer check. Update it using the "
+            "classroom instructions or ask a mentor, then rerun `guide check`."
+        ),
+        "timer-check-unsafe-user": (
+            "Run `guide check` directly in your registered classroom account, without `sudo`. "
+            "A mentor can help verify your account if this persists."
+        ),
         "service-lab-required": (
             "Run `guide now` in your SSH shell to start or inspect the challenge."
         ),
@@ -154,6 +182,11 @@ def site_check_feedback(validation_result: QuestValidationResult) -> str | None:
         "site-check-required",
         "site-check-stale",
         "site-check-failed",
+        "timer-check-required",
+        "timer-check-stale",
+        "timer-check-failed",
+        "timer-check-unsupported-client",
+        "timer-check-unsafe-user",
     }:
         return None
     messages = validation_result.evidence.get("failure_messages")

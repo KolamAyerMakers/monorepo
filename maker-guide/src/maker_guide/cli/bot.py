@@ -32,6 +32,7 @@ from maker_guide.service_lab import (
     ServiceLabReport,
 )
 from maker_guide.site_check import SITE_CHECK_TIMEOUT_SECONDS, SiteCheckError, SiteCheckReport
+from maker_guide.timer_check import TIMER_CHECK_TIMEOUT_SECONDS, TimerCheckError, TimerCheckReport
 from maker_guide.unix_socket import HelpChunkWriter, SocketHelpRequest, UnixSocketServer
 
 app = typer.Typer(
@@ -167,6 +168,19 @@ async def _handle_socket_help_request(  # noqa: C901 - Bind both worker continua
             pending.cancel()
             raise ServiceLabError("timeout") from error
 
+    def run_timer_check(service_sha256: str, timer_sha256: str) -> TimerCheckReport:
+        async def receive_report() -> TimerCheckReport:
+            if request.timer_check_runner is None:
+                raise TimerCheckError("runner-unavailable")
+            return await request.timer_check_runner(service_sha256, timer_sha256)
+
+        pending = asyncio.run_coroutine_threadsafe(receive_report(), loop)
+        try:
+            return pending.result(timeout=TIMER_CHECK_TIMEOUT_SECONDS + 3.0)
+        except TimeoutError as error:
+            pending.cancel()
+            raise TimerCheckError("timeout") from error
+
     def handle_request() -> ChatResponse:
         with connect_database(configuration.database.path) as database_connection:
             try:
@@ -197,6 +211,9 @@ async def _handle_socket_help_request(  # noqa: C901 - Bind both worker continua
                         site_check_runner=(run_site_check if request.site_check_runner else None),
                         service_lab_runner=(
                             run_service_lab if request.service_lab_runner else None
+                        ),
+                        timer_check_runner=(
+                            run_timer_check if request.timer_check_runner else None
                         ),
                     ),
                 )

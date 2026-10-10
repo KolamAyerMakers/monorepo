@@ -24,12 +24,32 @@ from maker_guide.site_check import (
     SiteCheckReport,
     site_check_report_payload,
 )
+from maker_guide.timer_check import (
+    TimerCheckError,
+    TimerCheckReport,
+    timer_check_report_payload,
+)
 from maker_guide.unix_socket import HelpChunkWriter, SocketHelpRequest, UnixSocketServer
 
 _SITE_CHECK_REPORT = SiteCheckReport(
     source_sha256="a" * 64,
     cases=tuple((case, True) for case in SITE_CHECK_CASES),
     error=None,
+)
+_TIMER_CHECK_REPORT = TimerCheckReport(
+    service_sha256="b" * 64,
+    timer_sha256="c" * 64,
+    timer_loaded=True,
+    timer_enabled=True,
+    timer_active=True,
+    timer_substate="waiting",
+    timer_unit="site-build.service",
+    timer_no_reload=True,
+    service_loaded=True,
+    service_active=False,
+    service_no_reload=True,
+    next_elapse_us=200,
+    observed_realtime_us=100,
 )
 
 
@@ -734,3 +754,61 @@ async def test_site_check_stays_on_original_connection_and_preserves_help(
     assert retained_requests[0].site_check_runner is not None
     with pytest.raises(SiteCheckError):
         await retained_requests[0].site_check_runner("a" * 64)
+
+
+@pytest.mark.asyncio
+async def test_timer_check_round_trip_is_authenticated_and_single_use(
+    temporary_path: Path,
+) -> None:
+    """The authenticated connection carries only one fixed timer report action."""
+    retained: list[SocketHelpRequest] = []
+
+    async def handle_help_request(
+        request: SocketHelpRequest, chunk_writer: HelpChunkWriter | None
+    ) -> str:
+        del chunk_writer
+        retained.append(request)
+        assert request.username == pwd.getpwuid(os.getuid()).pw_name
+        assert request.timer_check_runner is not None
+        assert await request.timer_check_runner("b" * 64, "c" * 64) == _TIMER_CHECK_REPORT
+        with pytest.raises(TimerCheckError):
+            await request.timer_check_runner("b" * 64, "c" * 64)
+        return "timer checked"
+
+    socket_path = temporary_path / "timer-check.sock"
+    server = UnixSocketServer(
+        SocketConfig(path=socket_path, allowed_user_ids=frozenset({os.getuid()})),
+        asyncio.Queue(),
+        help_handler=handle_help_request,
+    )
+    await server.start()
+    try:
+        reader, writer = await asyncio.open_unix_connection(str(socket_path))
+        writer.write(b'{"version":1,"kind":"help","text":"check","supports_timer_check":true}\n')
+        await writer.drain()
+        action = cast("dict[str, object]", json.loads(await reader.readline()))
+        assert action == {
+            "ok": True,
+            "timer_check": {
+                "version": 1,
+                "service_sha256": "b" * 64,
+                "timer_sha256": "c" * 64,
+            },
+        }
+        writer.write(
+            json.dumps(
+                {
+                    "kind": "timer_check_result",
+                    "report": timer_check_report_payload(_TIMER_CHECK_REPORT),
+                }
+            ).encode()
+            + b"\n"
+        )
+        await writer.drain()
+        result = cast("dict[str, object]", json.loads(await reader.readline()))
+        assert result == {"ok": True, "execute": True, "text": "timer checked"}
+        writer.close()
+        await writer.wait_closed()
+    finally:
+        await server.close()
+    assert len(retained) == 1

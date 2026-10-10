@@ -47,6 +47,7 @@ from maker_guide.repositories.command_observation import CommandObservation, add
 from maker_guide.repositories.helpers import connect_database
 from maker_guide.service_lab import ServiceLabReport
 from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckReport
+from maker_guide.timer_check import TimerCheckReport
 from maker_guide.validation_paths import UnixAccount, UnixAccountLookup
 from tests.repositories.helpers import write_learner
 
@@ -2035,6 +2036,81 @@ def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
 
     assert source_result.passed is True
     assert published_result.passed is True
+
+
+@pytest.mark.parametrize(
+    ("status", "validation_time_us", "expected_pass"),
+    [
+        ("enabled", 150, True),
+        ("disabled", 150, False),
+        ("service-active", 150, True),
+        ("enabled", 250, False),
+    ],
+)
+def test_timer_artifacts_also_require_fresh_enabled_runtime_state(
+    migrated_database_path: Path,
+    tmp_path: Path,
+    status: str,
+    validation_time_us: int,
+    expected_pass: bool,
+) -> None:
+    """Require runtime timer readiness and reject a deadline expired by validation time."""
+    home = tmp_path / "alice"
+    unit_dir = home / ".config/systemd/user"
+    unit_dir.mkdir(parents=True)
+    (unit_dir / "site-build.service").write_text(
+        """[Service]
+Type=oneshot
+WorkingDirectory=%h/src
+ExecStartPre=/bin/bash %h/scripts/today.sh
+ExecStart=/usr/local/bin/maker-guide-build-personal-website
+""",
+        encoding="utf-8",
+    )
+    (unit_dir / "site-build.timer").write_text(
+        """[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=55min
+[Install]
+WantedBy=timers.target
+""",
+        encoding="utf-8",
+    )
+    fresh_report = TimerCheckReport(
+        service_sha256="a" * 64,
+        timer_sha256="b" * 64,
+        timer_loaded=True,
+        timer_enabled=status != "disabled",
+        timer_active=True,
+        timer_substate="waiting",
+        timer_unit="site-build.service",
+        timer_no_reload=True,
+        service_loaded=True,
+        service_active=status == "service-active",
+        service_no_reload=True,
+        next_elapse_us=200,
+        observed_realtime_us=100,
+    )
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_quest(
+            replace(
+                _filesystem_validation_input(
+                    database_connection,
+                    ArtifactCheckValidation(
+                        kind="timer",
+                        paths=(
+                            "~/.config/systemd/user/site-build.service",
+                            "~/.config/systemd/user/site-build.timer",
+                        ),
+                    ),
+                    home,
+                ),
+                timer_check_report=fresh_report,
+                timer_validation_time_us=validation_time_us,
+            )
+        )
+    assert result.passed is expected_pass
+    assert result.failure_reason == (None if expected_pass else "timer-check-failed")
 
 
 def test_file_check_validation_reports_missing_path(

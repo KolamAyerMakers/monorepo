@@ -26,6 +26,7 @@ from maker_guide.chat.contract import (
 from maker_guide.chat.intents import chat_intent
 from maker_guide.cli.service_lab import run_service_lab
 from maker_guide.cli.site_check import run_site_check
+from maker_guide.cli.timer_check import run_timer_check
 from maker_guide.config import (
     DEFAULT_CONFIG_PATH,
     load_bot_name,
@@ -42,6 +43,14 @@ from maker_guide.site_check import (
     SITE_CHECK_VERSION,
     parse_site_check_report,
     site_check_report_payload,
+)
+from maker_guide.timer_check import (
+    TIMER_CHECK_MAX_FRAME_BYTES,
+    TIMER_CHECK_VERSION,
+    TimerCheckError,
+    TimerCheckReport,
+    parse_timer_check_report,
+    timer_check_report_payload,
 )
 
 try:
@@ -347,6 +356,7 @@ def _send_help_request(
                 "ssh_connection": os.environ.get("SSH_CONNECTION"),
                 "stream": chunk_writer is not None,
                 "supports_site_check": True,
+                "supports_timer_check": True,
                 "supports_service_lab": True,
             },
             separators=(",", ":"),
@@ -582,6 +592,17 @@ def _read_help_response(  # noqa: C901, PLR0911, PLR0912 - Keep frame guards and
                 action_used = True
                 client_socket.sendall(_site_check_reply(response_object, chunk_writer))
                 continue
+            if "timer_check" in response_object:
+                if (
+                    action_used
+                    or intent not in {"now", "check"}
+                    or not separator
+                    or len(response_line) + 1 > TIMER_CHECK_MAX_FRAME_BYTES
+                ):
+                    return _BAD_HELP_RESPONSE_TEXT
+                action_used = True
+                client_socket.sendall(_timer_check_reply(response_object))
+                continue
         except (ValueError, TypeError, RecursionError):
             return _BAD_HELP_RESPONSE_TEXT
         chunk = response_object.get("chunk")
@@ -654,6 +675,53 @@ def _site_check_reply(
     )
     if len(reply) > _SITE_CHECK_MAX_FRAME_BYTES:
         raise ValueError("site check result too large")
+    return reply
+
+
+def _timer_check_reply(response: dict[object, object]) -> bytes:
+    if set(response) != {"ok", "timer_check"} or response["ok"] is not True:
+        raise ValueError("invalid timer check action")
+    action = response["timer_check"]
+    if not isinstance(action, dict):
+        raise ValueError("invalid timer check action")
+    values = cast("dict[object, object]", action)
+    if (
+        set(values) != {"version", "service_sha256", "timer_sha256"}
+        or type(values["version"]) is not int
+        or values["version"] != TIMER_CHECK_VERSION
+        or not isinstance(values["service_sha256"], str)
+        or not isinstance(values["timer_sha256"], str)
+    ):
+        raise ValueError("invalid timer check action")
+    service_sha256 = values["service_sha256"]
+    timer_sha256 = values["timer_sha256"]
+    try:
+        local_report = run_timer_check(service_sha256, timer_sha256)
+    except TimerCheckError as error:
+        local_report = TimerCheckReport(
+            service_sha256=service_sha256,
+            timer_sha256=timer_sha256,
+            timer_loaded=False,
+            timer_enabled=False,
+            timer_active=False,
+            timer_substate="dead",
+            timer_unit="",
+            timer_no_reload=False,
+            service_loaded=False,
+            service_no_reload=False,
+            service_active=False,
+            next_elapse_us=0,
+            observed_realtime_us=0,
+            error=str(error),
+        )
+    report = timer_check_report_payload(local_report)
+    parse_timer_check_report(report, service_sha256, timer_sha256)
+    reply = (
+        json.dumps({"kind": "timer_check_result", "report": report}, separators=(",", ":")).encode()
+        + b"\n"
+    )
+    if len(reply) > TIMER_CHECK_MAX_FRAME_BYTES:
+        raise ValueError("timer check result too large")
     return reply
 
 

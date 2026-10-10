@@ -23,6 +23,7 @@ from maker_guide.chat.router import build_response_draft
 from maker_guide.chat.service_lab import current_lab_report, lab_status_text, prepare_service_lab
 from maker_guide.chat.site_check import prepare_site_check
 from maker_guide.chat.snapshot import build_learner_snapshot
+from maker_guide.chat.timer_check import prepare_timer_check
 from maker_guide.chat.tutor import (
     append_response_draft_side_effects,
     calls_private_tutor,
@@ -80,6 +81,11 @@ def handle_chat_request(request: ChatRequest, dependencies: ChatDependencies) ->
         dependencies,
         site_check_result=(
             prepare_site_check(request, dependencies, learner_handle)
+            if dependencies.service_lab_result is None
+            else None
+        ),
+        timer_check_result=(
+            prepare_timer_check(request, dependencies, learner_handle)
             if dependencies.service_lab_result is None
             else None
         ),

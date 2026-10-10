@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from maker_guide.chat.contract import ChatDependencies, ChatError, PreparedAnswerInterpretation
+from maker_guide.chat.contract import (
+    ChatDependencies,
+    ChatError,
+    PreparedAnswerInterpretation,
+)
 from maker_guide.chat.doc_selection import learner_document_path
 from maker_guide.chat.presenter import (
     format_completed_quest,
@@ -553,12 +558,24 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
         return CheckResponse(
             text=_current_response(dependencies, learner_handle, source, timestamp, cwd=cwd),
         )
+    prepared_timer_check = dependencies.timer_check_result
+    timer_check_is_current = (
+        prepared_timer_check is not None
+        and prepared_timer_check.course_id == dependencies.catalog.course.id
+        and prepared_timer_check.session_id == objective_result.session_id
+        and prepared_timer_check.objective_id == objective.id
+        and prepared_timer_check.evidence_since == objective_result.evidence_since
+    )
     validation_result = validate_session_objective(
         QuestValidationInput(
             database_connection=dependencies.database_connection,
             catalog=dependencies.catalog,
             handle=learner_handle,
-            checked_at=timestamp,
+            checked_at=(
+                dependencies.timestamp_factory()
+                if dependencies.timer_check_result is not None
+                else timestamp
+            ),
             assigned_at=objective_result.evidence_since,
             answer_text=answer_text,
             answer_concept_assessments=(
@@ -580,6 +597,21 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
                 dependencies.site_check_result.failure_reason
                 if dependencies.site_check_result is not None
                 else None
+            ),
+            timer_check_report=(
+                prepared_timer_check.report
+                if timer_check_is_current and prepared_timer_check is not None
+                else None
+            ),
+            timer_check_failure_reason=(
+                prepared_timer_check.failure_reason
+                if timer_check_is_current and prepared_timer_check is not None
+                else "timer-check-stale"
+                if prepared_timer_check is not None
+                else None
+            ),
+            timer_validation_time_us=(
+                dependencies.realtime_microseconds_factory() if timer_check_is_current else None
             ),
         ),
         objective.validation,
@@ -635,6 +667,21 @@ def _check_session_objective(  # noqa: PLR0913 - Chat routing supplies request c
     )
     next_work = _current_response(dependencies, learner_handle, source, timestamp, cwd=cwd)
     if not is_answer:
+        timer_report = (
+            dependencies.timer_check_result.report
+            if dependencies.timer_check_result is not None
+            else None
+        )
+        if timer_report is not None:
+            deadline = datetime.fromtimestamp(
+                timer_report.next_elapse_us / 1_000_000, UTC
+            ).isoformat(timespec="seconds")
+            next_work = (
+                "Timer check passed. Observed next deadline: "
+                + deadline
+                + ". This confirms timer state, not a completed build or publication.\n\n"
+                + next_work
+            )
         return CheckResponse(
             text=next_work,
             tier_promotions=completion_result.tier_promotions,

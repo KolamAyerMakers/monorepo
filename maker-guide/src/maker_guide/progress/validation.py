@@ -59,6 +59,7 @@ from maker_guide.site_check import (
     read_site_check_source,
     site_check_failure_messages,
 )
+from maker_guide.timer_check import TimerCheckReport
 from maker_guide.validation_paths import (
     UnixAccountLookup,
     ValidationPathResolution,
@@ -140,6 +141,11 @@ GENERIC_VALIDATION_FAILURE_REASONS = frozenset(
         "site-check-required",
         "site-check-stale",
         "site-check-failed",
+        "timer-check-required",
+        "timer-check-stale",
+        "timer-check-failed",
+        "timer-check-unsupported-client",
+        "timer-check-unsafe-user",
         "service-lab-required",
         "service-lab-unavailable",
         "service-lab-unrepaired",
@@ -226,6 +232,12 @@ class QuestValidationInput:
     """Source or transport failure encountered before the progress transaction."""
     service_lab_report: ServiceLabReport | None = None
     """Fresh invocation report; stored progress is never a substitute for inspection."""
+    timer_check_report: TimerCheckReport | None = None
+    """Fresh timer state report; static unit contents alone are insufficient."""
+    timer_check_failure_reason: str | None = None
+    """Failure preparing the current timer observation."""
+    timer_validation_time_us: int | None = None
+    """Injectable current realtime sampled immediately before timer validation."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -421,10 +433,23 @@ def validation_failure_reasons(validation: SessionObjectiveValidation) -> frozen
             for child_validation in validation.validations
             for failure_reason in validation_failure_reasons(child_validation)
         ) | frozenset({"incomplete-evidence"})
-    if isinstance(validation, FileCheckValidation):
-        failure_reasons = _VALIDATION_FAILURE_REASONS_BY_ID["file_check"]
-        if validation.forbidden_regex is None:
+    if isinstance(validation, (FileCheckValidation, ArtifactCheckValidation)):
+        validation_type = (
+            "file_check" if isinstance(validation, FileCheckValidation) else "artifact_check"
+        )
+        failure_reasons = _VALIDATION_FAILURE_REASONS_BY_ID[validation_type]
+        if isinstance(validation, FileCheckValidation) and validation.forbidden_regex is None:
             failure_reasons -= frozenset({"forbidden-content-present"})
+        if isinstance(validation, ArtifactCheckValidation) and validation.kind == "timer":
+            failure_reasons |= frozenset(
+                {
+                    "timer-check-required",
+                    "timer-check-stale",
+                    "timer-check-failed",
+                    "timer-check-unsupported-client",
+                    "timer-check-unsafe-user",
+                }
+            )
         return failure_reasons
     if isinstance(validation, InteractiveQuestionValidation):
         failure_reasons = _VALIDATION_FAILURE_REASONS_BY_ID["interactive_question"]
@@ -931,6 +956,18 @@ def _validate_artifact_check(
     else:
         if passed:
             artifact_issue = ""
+    if validation.kind == "timer":
+        runtime_failure = _timer_check_failure_reason(validation_input)
+        if runtime_failure is not None:
+            passed = False
+            failure_reason = runtime_failure
+        artifact_issue = (
+            "The timer must be enabled, active, waiting, current, and have a future deadline."
+            if runtime_failure is not None
+            else ""
+            if passed
+            else artifact_issue
+        )
     return _file_validation_result(
         "artifact_check",
         validation.paths[0],
@@ -939,7 +976,53 @@ def _validate_artifact_check(
         artifact=validation.kind,
         checked_paths=list(validation.paths),
         artifact_issue=artifact_issue or None,
+        **(
+            {
+                "service_sha256": report.service_sha256,
+                "timer_sha256": report.timer_sha256,
+                "timer_loaded": report.timer_loaded,
+                "timer_enabled": report.timer_enabled,
+                "timer_active": report.timer_active,
+                "timer_substate": report.timer_substate,
+                "timer_unit": report.timer_unit,
+                "timer_no_reload": report.timer_no_reload,
+                "service_loaded": report.service_loaded,
+                "service_active": report.service_active,
+                "service_no_reload": report.service_no_reload,
+                "timer_next_elapse_us": report.next_elapse_us,
+                "observed_realtime_us": report.observed_realtime_us,
+            }
+            if validation.kind == "timer"
+            and (report := validation_input.timer_check_report) is not None
+            else {}
+        ),
     )
+
+
+def _timer_check_failure_reason(validation_input: QuestValidationInput) -> str | None:
+    if validation_input.timer_check_failure_reason is not None:
+        return validation_input.timer_check_failure_reason
+    report = validation_input.timer_check_report
+    if report is None:
+        return "timer-check-required"
+    validation_time_us = validation_input.timer_validation_time_us
+    if report.error is not None or not (
+        report.timer_loaded
+        and report.timer_enabled
+        and report.timer_active
+        and report.timer_substate == "waiting"
+        and report.timer_unit == "site-build.service"
+        and report.timer_no_reload
+        and report.service_loaded
+        and report.service_no_reload
+        and 0 < report.next_elapse_us < 18_446_744_073_709_551_615
+        and report.next_elapse_us > report.observed_realtime_us
+        and validation_time_us is not None
+        and 0 <= validation_time_us <= 18_446_744_073_709_551_615
+        and report.next_elapse_us > validation_time_us
+    ):
+        return "timer-check-failed"
+    return None
 
 
 def artifact_contents_match(kind: str, contents: list[str]) -> bool:

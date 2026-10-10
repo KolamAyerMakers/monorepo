@@ -36,6 +36,14 @@ from maker_guide.site_check import (
     SiteCheckReport,
     parse_site_check_report,
 )
+from maker_guide.timer_check import (
+    TIMER_CHECK_MAX_FRAME_BYTES,
+    TIMER_CHECK_TIMEOUT_SECONDS,
+    TIMER_CHECK_VERSION,
+    TimerCheckError,
+    TimerCheckReport,
+    parse_timer_check_report,
+)
 
 LOGGER = logging.getLogger(__name__)
 LINUX_PEER_CREDENTIAL_FORMAT = "3i"
@@ -56,7 +64,10 @@ class SocketHelpRequest:
     stream: bool = False
     supports_site_check: bool = False
     site_check_runner: Callable[[str], Awaitable[SiteCheckReport]] | None = None
-    """Server-only, one-shot continuation on this authenticated connection."""
+    """Authenticated, one-shot local continuation on this connection."""
+    supports_timer_check: bool = False
+    timer_check_runner: Callable[[str, str], Awaitable[TimerCheckReport]] | None = None
+    """Authenticated, one-shot read-only probe on this connection."""
     supports_service_lab: bool = False
     service_lab_runner: Callable[[ServiceLabAction], Awaitable[ServiceLabReport]] | None = None
     """Server-only continuation sharing the connection's single local action budget."""
@@ -234,6 +245,7 @@ class UnixSocketServer:
             return
         action_used = False
         service_lab_used = False
+        timer_check_used = False
         request_active = True
 
         async def run_site_check(source_sha256: str) -> SiteCheckReport:
@@ -281,6 +293,50 @@ class UnixSocketServer:
                 return parse_site_check_report(result_object["report"], source_sha256)
             except (ValueError, OSError, RecursionError):
                 raise SiteCheckError("invalid-report") from None
+
+        async def run_timer_check(service_sha256: str, timer_sha256: str) -> TimerCheckReport:
+            nonlocal action_used, timer_check_used
+            if action_used or timer_check_used or not request_active:
+                raise TimerCheckError("invalid-report")
+            action_used = timer_check_used = True
+            if (
+                re.fullmatch("[0-9a-f]{64}", service_sha256) is None
+                or re.fullmatch("[0-9a-f]{64}", timer_sha256) is None
+            ):
+                raise TimerCheckError("invalid-report")
+            if _peer_credentials(writer) != credentials:
+                raise TimerCheckError("invalid-report")
+            try:
+                async with asyncio.timeout(TIMER_CHECK_TIMEOUT_SECONDS + 2.0):
+                    writer.write(
+                        json.dumps(
+                            {
+                                "ok": True,
+                                "timer_check": {
+                                    "version": TIMER_CHECK_VERSION,
+                                    "service_sha256": service_sha256,
+                                    "timer_sha256": timer_sha256,
+                                },
+                            },
+                            separators=(",", ":"),
+                        ).encode()
+                        + b"\n"
+                    )
+                    await writer.drain()
+                    result = await reader.readline()
+                return _parse_timer_check_result(
+                    result,
+                    (service_sha256, timer_sha256),
+                    min(self._config.max_line_bytes, TIMER_CHECK_MAX_FRAME_BYTES),
+                    writer,
+                    credentials,
+                )
+            except TimeoutError:
+                raise TimerCheckError("timeout") from None
+            except TimerCheckError:
+                raise
+            except (ValueError, OSError, RecursionError):
+                raise TimerCheckError("invalid-report") from None
 
         continuation_run_id: str | None = None
 
@@ -361,6 +417,8 @@ class UnixSocketServer:
             help_request = _parse_help_request(payload, self._authorizer.username_for(credentials))
             if help_request.supports_site_check:
                 help_request = replace(help_request, site_check_runner=run_site_check)
+            if help_request.supports_timer_check:
+                help_request = replace(help_request, timer_check_runner=run_timer_check)
             if help_request.supports_service_lab:
                 help_request = replace(help_request, service_lab_runner=run_service_lab)
             chunk_writer = write_help_chunk if help_request.stream else None
@@ -373,6 +431,9 @@ class UnixSocketServer:
         except SiteCheckError:
             await _write_response(writer, False, "site check failed")
             return
+        except TimerCheckError:
+            await _write_response(writer, False, "timer check failed")
+            return
         except EventParseError as error:
             await _write_response(writer, False, str(error))
             return
@@ -382,6 +443,32 @@ class UnixSocketServer:
         finally:
             request_active = False
         await _write_response(writer, True, None, text=response_text)
+
+
+def _parse_timer_check_result(
+    result: bytes,
+    expected_hashes: tuple[str, str],
+    max_frame_bytes: int,
+    writer: asyncio.StreamWriter,
+    credentials: PeerCredentials,
+) -> TimerCheckReport:
+    service_sha256, timer_sha256 = expected_hashes
+    if not result.endswith(b"\n") or len(result) > max_frame_bytes:
+        raise TimerCheckError("invalid-report")
+    loaded = cast(
+        "object",
+        json.loads(result.decode("utf-8"), object_pairs_hook=_unique_json_fields),
+    )
+    if not isinstance(loaded, dict):
+        raise TimerCheckError("invalid-report")
+    result_object = cast("dict[object, object]", loaded)
+    if (
+        set(result_object) != {"kind", "report"}
+        or result_object["kind"] != "timer_check_result"
+        or _peer_credentials(writer) != credentials
+    ):
+        raise TimerCheckError("invalid-report")
+    return parse_timer_check_report(result_object["report"], service_sha256, timer_sha256)
 
 
 async def _reject_buffered_service_lab_input(reader: asyncio.StreamReader) -> None:
@@ -546,6 +633,7 @@ def _parse_help_request(  # noqa: C901 - Validate the small, fixed request direc
         "ssh_connection",
         "stream",
         "supports_site_check",
+        "supports_timer_check",
         "supports_service_lab",
     }:
         raise EventParseError("unknown help request fields")
@@ -565,7 +653,7 @@ def _parse_help_request(  # noqa: C901 - Validate the small, fixed request direc
     ssh_connection = request_object.get("ssh_connection")
     if ssh_connection is not None and not isinstance(ssh_connection, str):
         raise EventParseError("ssh_connection must be null or a string")
-    for field in ("stream", "supports_site_check", "supports_service_lab"):
+    for field in ("stream", "supports_site_check", "supports_timer_check", "supports_service_lab"):
         if not isinstance(request_object.get(field, False), bool):
             raise EventParseError("help capabilities must be booleans")
     return SocketHelpRequest(
@@ -576,5 +664,6 @@ def _parse_help_request(  # noqa: C901 - Validate the small, fixed request direc
         ssh_connection=ssh_connection,
         stream=request_object.get("stream") is True,
         supports_site_check=request_object.get("supports_site_check") is True,
+        supports_timer_check=request_object.get("supports_timer_check") is True,
         supports_service_lab=request_object.get("supports_service_lab") is True,
     )

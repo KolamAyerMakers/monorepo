@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -13,6 +14,7 @@ from maker_guide.curriculum.models import AnswerConceptAssessment, CourseCatalog
 from maker_guide.llm_tutor import DEFAULT_TUTOR_MAX_TOKENS, AnswerInterpreter, TutorClient
 from maker_guide.service_lab import ServiceLabAction, ServiceLabReport
 from maker_guide.site_check import SiteCheckReport
+from maker_guide.timer_check import TimerCheckReport
 from maker_guide.validation_paths import UnixAccountLookup, lookup_unix_account
 
 ChatVisibility = Literal["public", "private"]
@@ -71,6 +73,10 @@ def _utc_timestamp() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
+def _realtime_microseconds() -> int:
+    return time.time_ns() // 1000
+
+
 @dataclass(frozen=True, kw_only=True, slots=True)
 class ChatDependencies:
     """Dependencies required by shared chat handling."""
@@ -91,6 +97,8 @@ class ChatDependencies:
     """Maximum tokens to request from the tutor provider."""
     timestamp_factory: Callable[[], str] = _utc_timestamp
     """Factory for audit-friendly interaction timestamps."""
+    realtime_microseconds_factory: Callable[[], int] = _realtime_microseconds
+    """Precise current realtime for checks with expiring deadlines."""
     account_lookup: UnixAccountLookup = lookup_unix_account
     """Unix account lookup used by filesystem validation rules."""
     response_chunk_writer: Callable[[str], None] | None = None
@@ -103,6 +111,10 @@ class ChatDependencies:
     """Authenticated learner-side service action, never executed as the daemon."""
     service_lab_result: PreparedServiceLab | None = None
     """Fresh local observation bound to this request's current objective."""
+    timer_check_runner: Callable[[str, str], TimerCheckReport] | None = None
+    """Authenticated CLI bridge for the fixed, read-only S9 timer probe."""
+    timer_check_result: PreparedTimerCheck | None = None
+    """Fresh timer observation bound to the current objective and unit hashes."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -161,6 +173,18 @@ class PreparedServiceLab:
     action: ServiceLabAction
     report: ServiceLabReport | None = None
     launch_message: str | None = None
+    failure_reason: str | None = None
+
+
+@dataclass(frozen=True, kw_only=True, slots=True)
+class PreparedTimerCheck:
+    """One fresh user-manager observation prepared before the progress transaction."""
+
+    course_id: str
+    session_id: str
+    objective_id: str
+    evidence_since: str
+    report: TimerCheckReport | None = None
     failure_reason: str | None = None
 
 
