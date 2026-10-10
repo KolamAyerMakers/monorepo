@@ -354,8 +354,6 @@ def _export_slides(content_root: Path, output_root: Path) -> None:
                 str(slides_path),
             )
         )
-        # ponytail: Presenterm 0.16.1 needs a terminal during HTML export. Remove this
-        # wrapper after a release includes https://github.com/mfontanini/presenterm/pull/857.
         _ = subprocess.run(  # noqa: S603 - fixed tools with shell-escaped paths.
             ("/usr/bin/script", "-qefc", f"stty rows 40 cols 100 && {command}", "/dev/null"),
             check=True,

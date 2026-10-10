@@ -72,7 +72,6 @@ def test_service_serves_replaced_public_directory_without_restart(
     public_directory.joinpath("index.html").write_text("before publication", encoding="utf-8")
     log_path = temporary_path / "caddy.log"
     with log_path.open("w", encoding="utf-8") as log_output:
-        # ponytail: release the allocated port immediately before spawn; fail on a bind race.
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             port = cast("tuple[str, int]", listener.getsockname())[1]

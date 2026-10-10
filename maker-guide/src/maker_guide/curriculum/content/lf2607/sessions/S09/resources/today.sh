@@ -12,5 +12,3 @@ retrieved=$(date --iso-8601=seconds)
 # and pm25 using jq -r and command substitution on weather.json and air.json.
 # TODO 2: Use printf to write the bulletin to "$HOME/src/pages/today.md".
 # EXERCISE_INCOMPLETE
-
-# ponytail: direct write can leave a partial page if interrupted; use a temporary file and mv if that matters.

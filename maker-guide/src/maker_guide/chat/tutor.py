@@ -320,7 +320,6 @@ def build_read_only_tutor_context(  # noqa: PLR0913 - Keep fresh evidence separa
                 response=_bounded_interaction_text(interaction.response or ""),
                 created_at=interaction.created_at,
             )
-            # ponytail: four turns cover follow-ups; add summaries only if that proves too short.
             for interaction in reversed(
                 list_recent_help_interactions(
                     database_connection,

@@ -36,7 +36,6 @@ def main(arguments: list[str] | None = None) -> int:
     # Populate before expiring: sss_cache fails when no cached group exists yet.
     _ = grp.getgrnam(group_name)
     _ = subprocess.run(["/usr/sbin/sss_cache", "-g", group_name], check=True)
-    # ponytail: explicit members only; revoke lingering before removing membership.
     usernames = sorted(set(grp.getgrnam(group_name).gr_mem))
     if options.username is not None:
         if options.username not in usernames and not options.disable:

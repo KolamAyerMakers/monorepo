@@ -1998,9 +1998,9 @@ def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
     learner_home = tmp_path / "alice"
     learner_home.mkdir()
     report = (
-        "- Date: 2026-10-10\n- High: 31.5 °C\n- Chance of rain: 20%\n"
+        "- Date: 2026-10-10\n- Temperature: 31.5 °C\n- Rain: 20%\n"
         "- Sunrise: 2026-10-10T06:54\n- Sunset: 2026-10-10T18:58\n"
-        "- PM2.5: 4.2 μg/m³\n- Model time: 2026-10-10T09:00\n"
+        "- PM2.5: 4.2 μg/m³\n- Time: 2026-10-10T09:00\n"
         "- Retrieval time: 2026-10-10T09:01:00+08:00\n"
         "Open-Meteo forecast; CAMS model estimate."
     )
@@ -2036,6 +2036,86 @@ def test_bulletin_artifact_checks_complete_markdown_and_personalized_html(
 
     assert source_result.passed is True
     assert published_result.passed is True
+    (learner_home / "index.md").write_text("No report link.\n", encoding="utf-8")
+    (learner_home / "published.html").write_text("<p>No report link.</p>", encoding="utf-8")
+    with connect_database(migrated_database_path) as database_connection:
+        broken_links = validate_quest(
+            _filesystem_validation_input(
+                database_connection,
+                ArtifactCheckValidation(
+                    kind="published", paths=("index.md", "report.html", "published.html")
+                ),
+                learner_home,
+            ),
+        )
+    assert broken_links.passed is False
+    link_issues = cast("str", broken_links.evidence["artifact_issue"])
+    assert "Link to today.html from the site index" in link_issues
+    assert "Link to today.html from the published homepage" in link_issues
+
+
+def test_incomplete_bulletin_reports_specific_missing_fields(
+    migrated_database_path: Path,
+    tmp_path: Path,
+) -> None:
+    """Incomplete reports identify missing units, retrieval time, and sources."""
+    learner_home = tmp_path / "alice"
+    learner_home.mkdir()
+    (learner_home / "report.md").write_text(
+        "Date: 2026-10-10\nTemperature: 31\nRain: 100%\nPM2.5: 89.2\nTime: 2026-10-10T12:00\n",
+        encoding="utf-8",
+    )
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_quest(
+            _filesystem_validation_input(
+                database_connection,
+                ArtifactCheckValidation(kind="bulletin", paths=("report.md",)),
+                learner_home,
+            ),
+        )
+
+    assert result.passed is False
+    issue = cast("str", result.evidence["artifact_issue"])
+    assert "Add °C to Temperature" in issue
+    assert "Missing Rain probability" not in issue
+    assert "Add μg/m³ to PM2.5" in issue
+    assert "Retrieval time" in issue
+    assert "Open-Meteo" in issue
+    assert "CAMS" in issue
+
+
+def test_complete_bulletin_rejects_extreme_exponent_with_specific_feedback(
+    migrated_database_path: Path,
+    tmp_path: Path,
+) -> None:
+    """A complete report still safely rejects an out-of-range exponent value."""
+    learner_home = tmp_path / "alice"
+    learner_home.mkdir()
+    (learner_home / "report.md").write_text(
+        """Date: 2026-10-10
+Temperature: 31 °C
+Rain: 1e999999999999999999999%
+Sunrise: 2026-10-10T06:54
+Sunset: 2026-10-10T18:58
+PM2.5: 89.2 μg/m³
+Time: 2026-10-10T12:00
+Retrieval time: 2026-10-10T12:01:00+08:00
+Open-Meteo; CAMS.""",
+        encoding="utf-8",
+    )
+    with connect_database(migrated_database_path) as database_connection:
+        result = validate_quest(
+            _filesystem_validation_input(
+                database_connection,
+                ArtifactCheckValidation(kind="bulletin", paths=("report.md",)),
+                learner_home,
+            ),
+        )
+
+    assert result.passed is False
+    assert "Rain probability must be between 0 and 100%" in cast(
+        "str", result.evidence["artifact_issue"]
+    )
 
 
 @pytest.mark.parametrize(

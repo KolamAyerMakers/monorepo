@@ -1,7 +1,5 @@
 # Agent Notes
 
-<!-- ponytail: this is the smallest useful handoff for the Python bot. -->
-
 ## Project
 
 - `maker-guide` is a Python 3.13 learner support and teaching automation bot.

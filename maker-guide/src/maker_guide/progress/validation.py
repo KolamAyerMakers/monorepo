@@ -14,7 +14,7 @@ import subprocess
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import cast, override
@@ -390,7 +390,6 @@ def _validate_service_lab(
             != {concept.id for concept in validation.answer.required_concepts}
         )
     ):
-        # ponytail: causal explanations need semantic assessment, not a second regex grader.
         failure_reason = "service-lab-explanation-unavailable"
     else:
         answer_result = _validate_interactive_question(validation_input, validation.answer)
@@ -939,23 +938,7 @@ def _validate_artifact_check(
             )
         contents.append(file_read.file_contents)
 
-    artifact_issue = "The artifact fields, units, or snapshot values do not match the exercise."
-    try:
-        passed = artifact_contents_match(validation.kind, contents)
-        failure_reason = None if passed else "file-content-mismatch"
-    except json.JSONDecodeError:
-        passed = False
-        failure_reason = "file-content-mismatch"
-        artifact_issue = "The JSON artifact is malformed; inspect its saved response."
-    except (ValueError, TypeError, KeyError, IndexError, OverflowError):
-        passed = False
-        failure_reason = "file-content-mismatch"
-        artifact_issue = (
-            "The JSON artifact is missing a required field or has an invalid field type."
-        )
-    else:
-        if passed:
-            artifact_issue = ""
+    passed, failure_reason, artifact_issue = _artifact_content_result(validation.kind, contents)
     if validation.kind == "timer":
         runtime_failure = _timer_check_failure_reason(validation_input)
         if runtime_failure is not None:
@@ -997,6 +980,33 @@ def _validate_artifact_check(
             else {}
         ),
     )
+
+
+def _artifact_content_result(kind: str, contents: list[str]) -> tuple[bool, str | None, str]:
+    artifact_issue = "The artifact fields, units, or snapshot values do not match the exercise."
+    try:
+        passed = artifact_contents_match(kind, contents)
+    except json.JSONDecodeError:
+        return (
+            False,
+            "file-content-mismatch",
+            "The JSON artifact is malformed; inspect its saved response.",
+        )
+    except (ValueError, TypeError, KeyError, IndexError, OverflowError):
+        return (
+            False,
+            "file-content-mismatch",
+            "The JSON artifact is missing a required field or has an invalid field type.",
+        )
+    if passed:
+        return True, None, ""
+    if kind in {"bulletin", "published"}:
+        report = contents[0] if kind == "bulletin" else contents[1]
+        issues = _bulletin_issues(report)
+        if kind == "published":
+            issues.extend(_published_link_issues(contents[0], contents[2]))
+        artifact_issue = "; ".join(issues)
+    return False, "file-content-mismatch", artifact_issue
 
 
 def _timer_check_failure_reason(validation_input: QuestValidationInput) -> str | None:
@@ -1090,12 +1100,8 @@ def artifact_contents_match(kind: str, contents: list[str]) -> bool:
         passed = _report_has_complete_bulletin(contents[0])
     elif kind == "published":
         index, rendered_report, published_homepage = contents
-        parser = _TodayLinkParser()
-        parser.feed(published_homepage)
-        passed = (
-            bool(re.search(r"\[[^\]]+\]\(today\.html\)", index, re.IGNORECASE))
-            and _report_has_complete_bulletin(rendered_report)
-            and parser.found
+        passed = _report_has_complete_bulletin(rendered_report) and not _published_link_issues(
+            index, published_homepage
         )
     elif kind == "timer":
         service, timer = contents
@@ -1204,6 +1210,10 @@ def _valid_hourly_timer(timer: str) -> bool:
 
 
 def _report_has_complete_bulletin(report: str) -> bool:
+    return not _bulletin_issues(report)
+
+
+def _bulletin_issues(report: str) -> list[str]:
     plain_report = html.unescape(
         re.sub(
             r"</(?:p|li|h[1-6]|tr|dt|dd|div)>|<br\s*/?>",
@@ -1214,7 +1224,7 @@ def _report_has_complete_bulletin(report: str) -> bool:
     )
     plain_report = re.sub(r"<[^>]*>|[*_`]", " ", plain_report)
     field_labels = r"""
-        forecast\s+date|date|forecast\s+maximum(?:\s+temperature)?|
+        forecast\s+date|date|forecast\s+maximum(?:\s+temperature)?|temperature|time|
         daily\s+maximum(?:\s+temperature)?|maximum(?:\s+temperature)?|
         high(?:\s+temperature)?|rain(?:fall)?(?:\s+(?:probability|chance))?|
         precipitation(?:\s+probability)?|chance\s+of\s+rain|sunrise|sunset|
@@ -1222,15 +1232,15 @@ def _report_has_complete_bulletin(report: str) -> bool:
         (?:air\s+)?timestamp|retrieved|retrieval\s+time|generated(?:\s+at)?
     """
     plain_report = re.sub(
-        rf"\s+(?=(?:{field_labels})\s*:)",
-        "\n",
+        rf"\b(?P<label>{field_labels})\s*:",
+        r"\n\g<label>:",
         plain_report,
         flags=re.IGNORECASE | re.VERBOSE,
     )
     forecast_date = _labeled_field(plain_report, r"(?:forecast\s+)?date")
     temperature = _labeled_number(
         plain_report,
-        r"(?:forecast\s+)?(?:maximum|daily\s+maximum)(?:\s+temperature)?|high(?:\s+temperature)?",
+        r"(?:forecast\s+)?(?:maximum|daily\s+maximum)(?:\s+temperature)?|high(?:\s+temperature)?|temperature",
         "°C",
     )
     rain = _labeled_number(
@@ -1243,11 +1253,46 @@ def _report_has_complete_bulletin(report: str) -> bool:
     pm25 = _labeled_number(plain_report, r"(?:(?:modelled|modeled)\s+)?PM2\.5", "μg/m³")
     model_time = _labeled_field(
         plain_report,
-        r"(?:air\s+)?model\s+(?:timestamp|time)|(?:air\s+)?timestamp",
+        r"(?:air\s+)?model\s+(?:timestamp|time)|(?:air\s+)?timestamp|time",
     )
     retrieved = _labeled_field(plain_report, r"retrieved|retrieval\s+time|generated(?:\s+at)?")
-    if None in (forecast_date, temperature, rain, sunrise, sunset, pm25, model_time, retrieved):
-        return False
+    issues: list[str] = []
+    for value, label in (
+        (forecast_date, "Date"),
+        (sunrise, "Sunrise"),
+        (sunset, "Sunset"),
+        (model_time, "Air-quality time"),
+        (retrieved, "Retrieval time"),
+    ):
+        if value is None:
+            issues.append(f"Missing {label}.")
+    for value, label, names, unit in (
+        (
+            temperature,
+            "Temperature",
+            r"(?:forecast\s+)?(?:maximum|daily\s+maximum)(?:\s+temperature)?|high(?:\s+temperature)?|temperature",
+            "°C",
+        ),
+        (
+            rain,
+            "Rain probability",
+            r"rain(?:fall)?(?:\s+(?:probability|chance))?|precipitation(?:\s+probability)?|chance\s+of\s+rain",
+            "%",
+        ),
+        (pm25, "PM2.5", r"(?:(?:modelled|modeled)\s+)?PM2\.5", "μg/m³"),
+    ):
+        if value is None:
+            field = _labeled_field(plain_report, names)
+            if field is not None and re.search(r"\d", field):
+                issues.append(f"Add {unit} to {label}.")
+            else:
+                issues.append(f"Missing {label} ({unit}).")
+    if "open-meteo" not in plain_report.casefold():
+        issues.append("Name Open-Meteo as a source.")
+    if "cams" not in plain_report.casefold():
+        issues.append("Name CAMS as a source.")
+    if issues:
+        return issues
     forecast_date = cast("str", forecast_date)
     temperature = cast("str", temperature)
     rain = cast("str", rain)
@@ -1256,21 +1301,36 @@ def _report_has_complete_bulletin(report: str) -> bool:
     pm25 = cast("str", pm25)
     model_time = cast("str", model_time)
     retrieved = cast("str", retrieved)
-    return (
-        _valid_api_date(forecast_date)
-        and Decimal(temperature) >= -100
-        and Decimal(temperature) <= 70
-        and Decimal(rain) >= 0
-        and Decimal(rain) <= 100
-        and _valid_api_timestamp(sunrise)
-        and _valid_api_timestamp(sunset)
-        and Decimal(pm25) >= 0
-        and Decimal(pm25) <= 1000
-        and _valid_api_timestamp(model_time)
-        and _valid_retrieval_timestamp(retrieved)
-        and "open-meteo" in plain_report.casefold()
-        and "cams" in plain_report.casefold()
+    checks = (
+        (_valid_api_date(forecast_date), "Date must be a real YYYY-MM-DD date."),
+        (_within_range(temperature, -100, 70), "Temperature must be between -100 and 70 °C."),
+        (_within_range(rain, 0, 100), "Rain probability must be between 0 and 100%."),
+        (_valid_api_timestamp(sunrise), "Sunrise must be a valid ISO timestamp."),
+        (_valid_api_timestamp(sunset), "Sunset must be a valid ISO timestamp."),
+        (_within_range(pm25, 0, 1000), "PM2.5 must be between 0 and 1000 μg/m³."),
+        (_valid_api_timestamp(model_time), "Air-quality time must be a valid ISO timestamp."),
+        (_valid_retrieval_timestamp(retrieved), "Retrieval time must be a valid ISO timestamp."),
     )
+    return [message for valid, message in checks if not valid]
+
+
+def _within_range(value: str, minimum: int, maximum: int) -> bool:
+    try:
+        number = Decimal(value)
+        return number.is_finite() and minimum <= number <= maximum
+    except InvalidOperation:
+        return False
+
+
+def _published_link_issues(index: str, homepage: str) -> list[str]:
+    issues: list[str] = []
+    if re.search(r"\[[^\]]+\]\(today\.html\)", index, re.IGNORECASE) is None:
+        issues.append("Link to today.html from the site index.")
+    parser = _TodayLinkParser()
+    parser.feed(homepage)
+    if not parser.found:
+        issues.append("Link to today.html from the published homepage.")
+    return issues
 
 
 def _labeled_field(text: str, label: str) -> str | None:

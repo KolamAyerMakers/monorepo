@@ -149,7 +149,6 @@ _LOCAL_SERVICE_COMMAND_PATTERN = (
     r'(?:[0-9]+|\$PORT|\$\{PORT\}|\$\(\(10000 \+ \$\(id -u\)\)\))/?"?$'
 )
 _LOCAL_REFUSAL_PATTERN = (
-    # ponytail: conservative fallback phrases; semantic assessment handles other explanations.
     r"\b(?:localhost|local (?:curl|connection|request))\s+(?:was |is )?"
     r"(?:connection )?refused\s+(?:because|since|as)\s+(?:the |my )?"
     r"(?:personal caddy (?:was |is )?stopped|(?:there (?:was|is) )?no listener)\b"
@@ -475,7 +474,6 @@ _RUNNING_PROCESS_CONCEPT = AnswerConcept(
         r"\bprocess\b.{0,20}\b(is|means)\b(?!\s+(not|never)\b).{0,20}\b(file|disk)\b",
     ),
 )
-# ponytail: stdout is not captured, so this checks the reported pair's shape, not provenance.
 _REPORTED_PROCESS_PAIR_CONCEPT = AnswerConcept(
     id="reported-process-pair",
     rubric=(

@@ -100,6 +100,11 @@ def format_failed_check(
 def _found_text(fallback_text: str, validation_result: QuestValidationResult) -> str:
     if (feedback := site_check_feedback(validation_result)) is not None:
         return feedback
+    artifact_issue = validation_result.evidence.get("artifact_issue")
+    if validation_result.evidence.get("artifact") in {"bulletin", "published"} and isinstance(
+        artifact_issue, str
+    ):
+        return artifact_issue
     if validation_result.failure_reason != "missing-command":
         return fallback_text
     matched_commands = _string_list_evidence(validation_result, "matched_commands")

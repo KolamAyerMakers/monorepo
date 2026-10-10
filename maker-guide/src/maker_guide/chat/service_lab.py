@@ -151,7 +151,6 @@ def prepare_service_lab(  # noqa: PLR0911 - gate mutation and bind its fresh res
     return replace(
         prepared,
         report=report,
-        # ponytail: a stable byte sum is enough variety for jokes, not a cryptographic hash.
         launch_message=(
             _MESSAGES[(sum(learner_handle.encode()) + attempt.message_index) % len(_MESSAGES)]
             if first_started and not report.healthy and report.error is None

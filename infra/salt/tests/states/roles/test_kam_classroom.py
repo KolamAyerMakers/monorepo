@@ -2380,7 +2380,6 @@ def test_classroom_readiness_dependency_graph_is_acyclic() -> None:
                     **_state_arguments(body, function),
                 }
 
-    # ponytail: unrelated includes are leaves; use full highstate for cross-role cycles.
     for chunk in list(chunks.values()):
         for requisite in (
             "require",

@@ -69,21 +69,19 @@ RandomizedDelaySec=55min
 WantedBy=timers.target
 ```
 
-The matching name makes this timer start `site-build.service`. The random delay spreads builds across the hour.
+The matching name makes this timer start `site-build.service`.
 
-<!-- end_slide -->
-
-# Read The Calendar
-
-`OnCalendar=hourly` sets an event at each clock hour. `RandomizedDelaySec=55min` adds up to 55 minutes before the build. Ask systemd to explain the next calendar occurrence:
-
-```bash
-systemd-analyze calendar hourly
-```
+`OnCalendar=hourly` sets an event at each clock hour. `RandomizedDelaySec=55min` adds up to 55 minutes before the build.
 
 <!-- end_slide -->
 
 # Read The Next Run
+
+Ask systemd to explain the next calendar occurrence:
+
+```bash
+systemd-analyze calendar hourly
+```
 
 Example: Saturday 10 October 2026, 13:00 (+08).
 

@@ -792,7 +792,7 @@ def _format_session_objective(  # noqa: PLR0913 - Check and display share object
     return "\n\n".join(response_parts)
 
 
-def _objective_status(  # noqa: C901, PLR0911 - Each validation failure has one direct response.
+def _objective_status(  # noqa: PLR0911 - Each validation failure has one direct response.
     validation_result: QuestValidationResult,
     tutor_feedback: str | None = None,
 ) -> str:
@@ -837,23 +837,7 @@ def _objective_status(  # noqa: C901, PLR0911 - Each validation failure has one 
     }:
         return f"Let's work through your answer:\n{tutor_feedback}"
     if (failed_artifact := _objective_failed_artifact(validation_result)) is not None:
-        failure_reason, catalog_path = failed_artifact
-        if failure_reason == "missing-path":
-            return f"I cannot find `{catalog_path}`. Create it, then run `guide check`."
-        if failure_reason == "file-content-mismatch":
-            if catalog_path == "~/public_html/maker-report.html":
-                return (
-                    f"`{catalog_path}` is stale or does not contain this report. "
-                    "Run `build-website`, then run `guide check`."
-                )
-            return (
-                f"`{catalog_path}` exists, but its contents do not match this objective. "
-                "Recheck the required structure, then run `guide check`."
-            )
-        return (
-            f"Cannot verify `{catalog_path}`: {failure_reason.replace('-', ' ')}. "
-            "Check the file against the objective reference, then run `guide check`."
-        )
+        return _objective_artifact_feedback(validation_result, failed_artifact)
     concept_nudges = tuple(
         _CONCEPT_ASSOCIATION_NUDGES[concept_id]
         for concept_id in _objective_evidence_strings(
@@ -890,21 +874,59 @@ def _objective_status(  # noqa: C901, PLR0911 - Each validation failure has one 
 
 def _objective_failed_artifact(validation_result: QuestValidationResult) -> tuple[str, str] | None:
     """Return the first failed file check with its learner-facing path."""
-    catalog_path = validation_result.evidence.get("catalog_path")
-    if validation_result.failure_reason is not None and isinstance(catalog_path, str):
-        return validation_result.failure_reason, catalog_path
-    checks = validation_result.evidence.get("checks")
-    if not isinstance(checks, list):
+    evidence = _objective_first_failed_evidence(validation_result.evidence)
+    if evidence is None:
         return None
-    for check in cast("list[object]", checks):
-        if not isinstance(check, dict):
-            continue
-        check_evidence = cast("dict[str, object]", check)
-        failure_reason = check_evidence.get("failure_reason")
-        catalog_path = check_evidence.get("catalog_path")
-        if isinstance(failure_reason, str) and isinstance(catalog_path, str):
-            return failure_reason, catalog_path
+    failure_reason = evidence.get("failure_reason")
+    catalog_path = evidence.get("catalog_path")
+    if isinstance(failure_reason, str) and isinstance(catalog_path, str):
+        return failure_reason, catalog_path
     return None
+
+
+def _objective_bulletin_issue(validation_result: QuestValidationResult) -> str | None:
+    """Return bounded bulletin feedback from a failed objective check."""
+    evidence = _objective_first_failed_evidence(validation_result.evidence)
+    if evidence is None or evidence.get("artifact") not in {"bulletin", "published"}:
+        return None
+    issue = evidence.get("artifact_issue")
+    return issue if isinstance(issue, str) and issue else None
+
+
+def _objective_artifact_feedback(
+    validation_result: QuestValidationResult,
+    failed_artifact: tuple[str, str],
+) -> str:
+    if (issue := _objective_bulletin_issue(validation_result)) is not None:
+        return issue
+    failure_reason, catalog_path = failed_artifact
+    if failure_reason == "missing-path":
+        return f"I cannot find `{catalog_path}`. Create it, then run `guide check`."
+    if failure_reason == "file-content-mismatch":
+        if catalog_path == "~/public_html/maker-report.html":
+            return (
+                f"`{catalog_path}` is stale or does not contain this report. "
+                "Run `build-website`, then run `guide check`."
+            )
+        return (
+            f"`{catalog_path}` exists, but its contents do not match this objective. "
+            "Recheck the required structure, then run `guide check`."
+        )
+    return (
+        f"Cannot verify `{catalog_path}`: {failure_reason.replace('-', ' ')}. "
+        "Check the file against the objective reference, then run `guide check`."
+    )
+
+
+def _objective_first_failed_evidence(evidence: dict[str, object]) -> dict[str, object] | None:
+    checks = evidence.get("checks")
+    if isinstance(checks, list):
+        for check in cast("list[object]", checks):
+            if isinstance(check, dict):
+                failed = _objective_first_failed_evidence(cast("dict[str, object]", check))
+                if failed is not None:
+                    return failed
+    return evidence if isinstance(evidence.get("failure_reason"), str) else None
 
 
 def _objective_evidence_strings(

@@ -12,6 +12,7 @@ from typing import cast
 
 import pytest
 
+import maker_guide.chat.progress as chat_progress
 from maker_guide.chat.contract import (
     CHAT_INPUT_TOO_LONG_TEXT,
     DEFAULT_CHAT_MAX_INPUT_CHARS,
@@ -20,9 +21,10 @@ from maker_guide.chat.contract import (
     CliChatContext,
     IrcChatContext,
 )
+from maker_guide.chat.progress import check_response
 from maker_guide.chat.service import handle_chat_request
 from maker_guide.curriculum.catalogs import DEFAULT_CATALOG as CATALOG
-from maker_guide.curriculum.models import CourseCatalog
+from maker_guide.curriculum.models import CourseCatalog, SessionObjectiveValidation
 from maker_guide.llm_tutor import (
     AnswerComponentAnalysis,
     AnswerInterpretation,
@@ -36,6 +38,7 @@ from maker_guide.llm_tutor import (
 )
 from maker_guide.progress.models import CourseReleaseInput
 from maker_guide.progress.service import release_course
+from maker_guide.progress.validation import QuestValidationInput, QuestValidationResult
 from maker_guide.repositories.audit_event import (
     AuditEvent,
     append_audit_event,
@@ -82,6 +85,81 @@ from maker_guide.site_check import SITE_CHECK_CASES, SiteCheckError, SiteCheckRe
 from maker_guide.validation_paths import UnixAccount, UnixAccountLookup, lookup_unix_account
 
 SITE_CHECK_SIMULATED_RUN = "ran locally against simulated responses, not your live website"
+
+
+def test_session_objective_feedback_uses_only_first_failed_check(
+    migrated_database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The guide reports script failures before later bulletin failures."""
+    script_and_report_failed = QuestValidationResult(
+        passed=False,
+        failure_reason="incomplete-evidence",
+        evidence={
+            "checks": [
+                {
+                    "failure_reason": "file-content-mismatch",
+                    "catalog_path": "~/scripts/today.sh",
+                    "artifact": "script",
+                    "passed": False,
+                },
+                {
+                    "artifact": "bulletin",
+                    "artifact_issue": "Add °C to Temperature.",
+                    "failure_reason": "file-content-mismatch",
+                    "catalog_path": "today.md",
+                    "passed": False,
+                },
+            ],
+        },
+    )
+    report_failed = QuestValidationResult(
+        passed=False,
+        failure_reason="incomplete-evidence",
+        evidence={
+            "checks": [
+                {"passed": True, "failure_reason": None},
+                {
+                    "artifact": "bulletin",
+                    "artifact_issue": "Add °C to Temperature.",
+                    "failure_reason": "file-content-mismatch",
+                    "catalog_path": "today.md",
+                    "passed": False,
+                },
+            ],
+        },
+    )
+
+    results = [script_and_report_failed, report_failed]
+
+    def next_validation_result(
+        _validation_input: QuestValidationInput,
+        _validation: SessionObjectiveValidation,
+    ) -> QuestValidationResult:
+        return results.pop(0)
+
+    monkeypatch.setattr(chat_progress, "validate_session_objective", next_validation_result)
+    with connect_database(migrated_database_path) as database_connection:
+        _write_member(database_connection)
+        dependencies = _chat_dependencies(database_connection)
+        script_feedback = check_response(
+            dependencies,
+            "alice",
+            "chat",
+            "2026-07-19T09:02:00Z",
+            is_answer=False,
+        )
+        report_feedback = check_response(
+            dependencies,
+            "alice",
+            "chat",
+            "2026-07-19T09:03:00Z",
+            is_answer=False,
+        )
+
+    assert "today.sh" in script_feedback.text
+    assert "Add °C to Temperature." in report_feedback.text
+
 
 FREEFORM_TUTOR_DISABLED_TEXT = (
     dedent(
