@@ -50,4 +50,4 @@
 - [ ] Migrate domain name to KAM account
 - [ ] Encrypt secrets with KAM shared key
 
-- [ ] S09: preserve seven guided objectives without duplicate reinforcement quests; classroom capacity, jq availability, packaging, rendering, and rehearsal remain pending.
+- [ ] S09: rehearse learner-led seven-step docs on classroom account; verify jq/curl availability, deployment packaging, rendering, timer capacity, and published output. Docs now provide exact commands and checks; no classroom, live API, deployment, or browser verification was performed.

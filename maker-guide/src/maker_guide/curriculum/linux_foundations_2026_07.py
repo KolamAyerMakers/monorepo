@@ -1825,8 +1825,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="inspect-weather-json",
                     title="Inspect the weather snapshot",
                     prompt=(
-                        "Fetch weather JSON to ~/playground/singapore/weather.json and inspect "
-                        "its daily fields and units with jq."
+                        "1. In the S09 self-study, create ~/playground/singapore, fetch the "
+                        "one-day Open-Meteo forecast with the documented curl command, then "
+                        "inspect its daily fields and units with jq."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="weather",
@@ -1837,8 +1838,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="extract-daily-temperature",
                     title="Extract the daily maximum",
                     prompt=(
-                        "Use jq to save the numeric forecast maximum in temperature.txt and "
-                        "check it against weather.json."
+                        "2. Run the self-study jq extraction to save the first daily maximum "
+                        "to ~/playground/singapore/temperature.txt; compare it with the same "
+                        "selector in weather.json."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="temperature",
@@ -1852,8 +1854,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="compare-air-snapshot",
                     title="Compare the air-quality snapshot",
                     prompt=(
-                        "Save ~/playground/singapore/air.json and "
-                        "~/playground/singapore/air.txt. Use labelled lines "
+                        "3. Run the documented CAMS Global curl request and save "
+                        "~/playground/singapore/air.json and ~/playground/singapore/air.txt. "
+                        "Use labelled lines "
                         "`PM2.5: <value> μg/m³` and `Model time: <timestamp>`; match both "
                         "values to the JSON."
                     ),
@@ -1869,7 +1872,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="format-forecast",
                     title="Format a Markdown forecast",
                     prompt=(
-                        "Use a shell variable and printf to write "
+                        "4. Use the documented shell variable and printf commands to write "
                         "~/playground/singapore/forecast.md "
                         "with a heading and `Maximum: <value> °C`, matching the snapshot."
                     ),
@@ -1885,8 +1888,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="complete-singapore-bulletin",
                     title="Complete the Singapore bulletin",
                     prompt=(
-                        "Complete the copied starter and generate the full attributed bulletin "
-                        "while retaining its validation and atomic-write guards."
+                        "5. Copy and edit the supplied starter as directed in the self-study. "
+                        "Use its named variables and selectors to finish both TODOs, generate "
+                        "the full attributed bulletin, and retain every validation and "
+                        "atomic-write guard."
                     ),
                     validation=AllOfValidation(
                         validations=(
@@ -1911,9 +1916,9 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="link-published-bulletin",
                     title="Link and inspect the bulletin",
                     prompt=(
-                        "Link the report from your homepage, build the site, and inspect the "
-                        "rendered static bulletin. Verify ~/public_html/index.html links to "
-                        "today.html."
+                        "6. Add [Singapore today](today.html) to ~/src/pages/index.md, run "
+                        "/usr/local/bin/maker-guide-build-personal-website, and inspect both "
+                        "~/public_html/index.html and ~/public_html/today.html."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="published",
@@ -1928,8 +1933,10 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                     id="configure-site-build-timer",
                     title="Configure the hourly build",
                     prompt=(
-                        "Run the generator before the build and keep the hourly timer with its "
-                        "55-minute randomized delay; inspect the configured next deadline."
+                        "7. Add ExecStartPre=/bin/bash %h/scripts/today.sh before the existing "
+                        "build ExecStart, manually start and inspect site-build.service, enable "
+                        "site-build.timer, and check its hourly 55-minute-delay configuration "
+                        "and active/enabled status."
                     ),
                     validation=ArtifactCheckValidation(
                         kind="timer",

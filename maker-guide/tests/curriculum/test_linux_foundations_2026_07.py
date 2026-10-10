@@ -13,6 +13,7 @@ from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import cast
 
+import pytest
 from rich.markdown import Markdown
 
 from maker_guide.curriculum.catalogs import DEFAULT_CATALOG as CATALOG
@@ -1305,6 +1306,129 @@ def test_s3_cards_keep_later_syntax_out_of_completion_criteria() -> None:
     assert "`2>>` is optional exploration for later" in _content_text(
         f"content/{COURSE_ID}/commands/stderr-redirect.md"
     )
+
+
+def test_s9_self_study_guides_all_seven_artifact_objectives() -> None:
+    """Every S9 artifact gate has an actionable matching learner procedure."""
+    document = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
+    objectives = CATALOG.session("S9").objectives
+    assert len(objectives) == 7
+    for number, objective in enumerate(objectives, 1):
+        section = re.search(rf"(?ms)^### {number}\. .*?(?=^### |^## |\Z)", document)
+        assert section is not None
+        assert all(f"**{label}:**" in section[0] for label in ("Goal", "Do", "Check", "Fix"))
+        assert f"{number}." in objective.prompt
+
+    assert all(
+        name in document for name in ("weather.json", "air.json", "temperature.txt", "forecast.md")
+    )
+    assert all(
+        selector in document
+        for selector in (".daily.temperature_2m_max[0]", ".current.pm2_5", ".current.time")
+    )
+    starter = _content_root().joinpath("sessions", "S09", "resources", "today.sh")
+    assert "EXERCISE_INCOMPLETE" in starter.read_text(encoding="utf-8")
+
+
+def test_s9_first_four_documented_exercises_run_offline(temporary_path: Path) -> None:
+    """Run the actual learner command blocks with real jq and fixture-backed curl."""
+    jq_path = shutil.which("jq")
+    bash_path = shutil.which("bash")
+    if jq_path is None:
+        pytest.skip("jq is not installed")
+    assert bash_path is not None
+
+    weather = (
+        '{"daily":{"time":["2026-10-10"],"temperature_2m_max":[31.5],'
+        '"precipitation_probability_max":[20],"sunrise":["2026-10-10T06:54"],'
+        '"sunset":["2026-10-10T18:58"]},"daily_units":{"temperature_2m_max":"°C",'
+        '"precipitation_probability_max":"%"}}'
+    )
+    air = '{"current":{"time":"2026-10-10T09:00","pm2_5":4.2},"current_units":{"pm2_5":"μg/m³"}}'
+    document = _content_text(f"content/{COURSE_ID}/sessions/S09/self-study.md")
+    sections: list[str] = []
+    for number in range(1, 5):
+        section = re.search(rf"(?ms)^### {number}\. .*?(?=^### |^## |\Z)", document)
+        assert section is not None
+        sections.append(section[0])
+    command_pattern = re.compile(r"(?s)```bash\n(?P<commands>.*?)\n```\n?")
+    commands = [
+        [match.group("commands") for match in command_pattern.finditer(section)]
+        for section in sections
+    ]
+    assert all(len(blocks) == 1 for blocks in commands)
+
+    home = temporary_path / "home"
+    fake_bin = temporary_path / "bin"
+    home.mkdir()
+    fake_bin.mkdir()
+    fixture_server = fake_bin / "curl"
+    fixture_server.write_text(
+        f"""#!/usr/bin/python3
+import pathlib, sys
+args = sys.argv[1:]
+url = next(arg for arg in args if arg.startswith('https://'))
+assert 'latitude=1.32411' in url and 'longitude=103.8698' in url
+if 'api.open-meteo.com/v1/forecast' in url:
+    assert 'temperature_2m_max' in url and 'precipitation_probability_max' in url
+    body = {weather!r}
+else:
+    assert 'air-quality-api.open-meteo.com' in url and 'current=pm2_5' in url
+    assert 'domains=cams_global' in url
+    body = {air!r}
+destination = pathlib.Path(args[args.index('-o') + 1]).expanduser()
+destination.write_text(body, encoding='utf-8')
+""",
+        encoding="utf-8",
+    )
+    fixture_server.chmod(0o755)
+    guide = fake_bin / "guide"
+    guide.write_text(
+        """#!/bin/sh
+[ "$1" = check ]
+""",
+        encoding="utf-8",
+    )
+    guide.chmod(0o755)
+    environment = os.environ | {
+        "HOME": str(home),
+        "PATH": f"{fake_bin}:{Path(jq_path).parent}:{Path(bash_path).parent}:/usr/bin:/bin",
+    }
+
+    def run_block(block: str, work_home: Path = home) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [bash_path, "--noprofile", "--norc", "-e", "-c", block],
+            check=False,
+            capture_output=True,
+            env=environment | {"HOME": str(work_home)},
+            text=True,
+        )
+
+    expected_paths = (
+        ("weather", ("weather.json",)),
+        ("temperature", ("temperature.txt", "weather.json")),
+        ("air", ("air.json", "air.txt")),
+        ("forecast", ("weather.json", "forecast.md")),
+    )
+    for blocks, (kind, filenames) in zip(commands, expected_paths, strict=True):
+        result = run_block(blocks[0])
+        assert result.returncode == 0, result.stderr
+        contents = [
+            (home / "playground/singapore" / filename).read_text(encoding="utf-8")
+            for filename in filenames
+        ]
+        assert artifact_contents_match(kind, contents)
+
+    wrong_home = temporary_path / "wrong-home"
+    wrong_fetch = commands[0][0].replace(
+        "-o ~/playground/singapore/weather.json",
+        "-o ~/playground/singapore/wrong.json",
+        1,
+    )
+    wrong_result = run_block(wrong_fetch, wrong_home)
+    assert wrong_result.returncode != 0
+    expected_weather = wrong_home / "playground/singapore/weather.json"
+    assert not expected_weather.exists()
 
 
 def test_guide_answer_commands_quote_shell_payloads() -> None:
