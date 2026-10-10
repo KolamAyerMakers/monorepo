@@ -1721,19 +1721,27 @@ def test_singapore_objective_rejects_only_an_unfinished_starter_marker() -> None
         for item in validation.validations
         if isinstance(item, FileCheckValidation) and item.path.endswith("today.sh")
     )
-    assert script_validation.required_regex == r".*"
+    assert script_validation.required_regex == r"(?m)^[ \t]*printf\b"
     assert script_validation.forbidden_regex == r"EXERCISE_INCOMPLETE"
     for unfinished in (
         _singapore_script(),
         "# EXERCISE_INCOMPLETE: finish this\n",
         'echo "EXERCISE_INCOMPLETE"\n',
+        "",
+        " \t\n",
+        "# printf 'not a command'\n",
     ):
-        assert re.search(script_validation.required_regex, unfinished)
-        assert re.search(script_validation.forbidden_regex, unfinished)
+        assert not re.search(script_validation.required_regex, unfinished)
+        if "EXERCISE_INCOMPLETE" in unfinished:
+            assert re.search(script_validation.forbidden_regex, unfinished)
 
-    reformatted = "#!/bin/bash\necho 'Singapore bulletin'\n"
-    assert re.search(script_validation.required_regex, reformatted)
-    assert not re.search(script_validation.forbidden_regex, reformatted)
+    for complete in (
+        "#!/bin/bash\nprintf 'Singapore bulletin\\n'\n",
+        "  printf 'Singapore bulletin\\n'\n",
+        ' # indented printf is a legitimate command\nprintf "%s\\n" "$forecast_date"\n',
+    ):
+        assert re.search(script_validation.required_regex, complete)
+        assert not re.search(script_validation.forbidden_regex, complete)
     without_air_validation = re.sub(
         r'(?ms)^jq -e \'\n.*?^\' "\$temporary_directory/air.json" >/dev/null\n',
         "",

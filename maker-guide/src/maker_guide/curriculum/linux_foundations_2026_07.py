@@ -1892,7 +1892,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                         validations=(
                             FileCheckValidation(
                                 path="~/scripts/today.sh",
-                                required_regex=r".*",
+                                required_regex=r"(?m)^[ \t]*printf\b",
                                 forbidden_regex=r"EXERCISE_INCOMPLETE",
                             ),
                             ArtifactCheckValidation(
