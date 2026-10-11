@@ -14,7 +14,7 @@ COVER_BACKGROUND = (244 / 255, 240 / 255, 230 / 255)  # #f4f0e6 in front.svg/bac
 def add_bleed(source: Path, output: Path, cover_faces: tuple[int, ...] = ()) -> None:
     """Keep artwork at trim size; extend only the outer covers' ivory background."""
     with pymupdf.open(source) as original, pymupdf.open() as result:
-        for index, original_page in enumerate(original):
+        for index, original_page in enumerate(original.pages()):
             if original_page.rotation or any(
                 abs(actual - expected * MILLIMETER) > 0.1
                 for actual, expected in zip(
