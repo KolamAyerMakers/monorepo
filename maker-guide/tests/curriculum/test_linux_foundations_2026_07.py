@@ -972,7 +972,8 @@ def test_catalog_exposes_ordered_quest_lookup() -> None:
         "personalize-homepage",
     )
     assert CATALOG.next_quest_after("personalize-homepage", "S2") is None
-    assert CATALOG.next_quest_after("write-next-path", "S10") is None
+    assert CATALOG.quests_available_after("S10") == ()
+    assert CATALOG.quests_available_through("S10") == CATALOG.quests_available_through("S9")
     assert CATALOG.next_assignable_quest("S1", frozenset()) == CATALOG.quest("prove-shell-alive")
     assert CATALOG.next_assignable_quest(
         "S1",

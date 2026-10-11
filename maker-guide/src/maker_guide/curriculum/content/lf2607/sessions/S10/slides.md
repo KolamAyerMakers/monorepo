@@ -1,78 +1,278 @@
-# Show What You Can Do
+# KEEP LEARNING FOREVER
 
 Session: S10
 
-Linux Foundations graduation
-
 2026-10-24
 
-<!-- end_slide -->
-
-# Ten Sessions, One Skill At A Time
-
-We started by opening a terminal and creating a file.
-
-We ended with websites people can visit, tools that stay available, and reports that update themselves.
-
-This evening is about what this group can now do.
+The course ends. Your learning does not.
 
 <!-- end_slide -->
 
-# Here Is What We Learnt
+# You Have A Foundation
 
-- Find your way around a computer, its files, and its running programs.
-- Write a small program instead of repeating work by hand.
-- Put a page online and check that visitors really see it.
-- Keep a website available without leaving a window open.
-- Read what a running program reports and investigate a problem.
-- Make a task happen automatically, and leave instructions for someone else.
+- Find files, processes, and services.
+- Write scripts and use data from an API.
+- Read errors and logs. Investigate. Repair.
+
+**You know enough to start something of your own.**
 
 <!-- end_slide -->
 
-# Where It Applies
+# Linux Is Your Workshop
 
-| What they learned | What it can do for a group |
+Programming. Data. Networks. Games. Electronics. AI.
+
+You do not need to become a Linux specialist.
+
+Linux gives you tools to explore all of these.
+
+<!-- end_slide -->
+
+# I Still Get Stuck
+
+Chrome had no sound. I did not understand Linux audio.
+
+With AI's help, I found:
+
+- My laptop used PulseAudio.
+- Chrome's own audio channel was muted.
+- `pulsemixer` let me unmute it.
+
+**I fixed the problem and learned how it worked.**
+
+<!-- end_slide -->
+
+# Investigate, Don't Guess
+
+1. What did I want to happen?
+2. What actually happened? Read the error.
+3. What could explain it?
+4. Test one thing. Observe the result.
+
+**Each attempt should teach you something.**
+
+<!-- end_slide -->
+
+# Ask AI To Help You Understand
+
+> Chrome has no sound, but other apps do. I do not know how Linux audio works. Help me investigate: what should I check first, and why?
+
+Give it your goal, context, observations, and exact errors.
+
+You can ask for an explanation, a test, or a procedure.
+
+<!-- end_slide -->
+
+# Unfamiliar Does Not Mean Impossible
+
+- **Wireless@SGx:** understand an unfamiliar Wi-Fi authentication setup.
+- **My old cameras:** discover ONVIF, recover access, connect them to my recorder.
+
+AI helped connect things I did not know.
+
+**You bring the goal. AI helps investigate. You verify.**
+
+<!-- end_slide -->
+
+# Stay In Control
+
+- Understand changes before approving them, especially with `sudo`.
+- Keep passwords, tokens, and private data out of prompts.
+- Test on your own equipment. Keep a way back.
+- Check security settings against official documentation.
+
+**Working is not always the same as correct or safe.**
+
+<!-- end_slide -->
+
+# Documentation Answers Specific Questions
+
+```bash
+ls --help
+man ls
+```
+
+Find the option you need. Read its example. Try it.
+
+You do not need to read the whole manual first.
+
+<!-- end_slide -->
+
+# You Don't Have To Learn Alone
+
+Ask a project's community, a forum, or a local makerspace:
+
+- What are you trying to do? On which system?
+- What did you try? What happened?
+- What is the exact error?
+
+Share text, not secrets. Report what solved it.
+
+<!-- end_slide -->
+
+# Your Next Linux: Ubuntu
+
+We learned on Debian. Ubuntu builds on Debian.
+
+Familiar commands and packages, with a desktop ready to use.
+
+**Start with Ubuntu LTS. You can explore other choices later.**
+
+<!-- end_slide -->
+
+# Keep Your Current Computer
+
+| Computer | Start here |
 |---|---|
-| Small programs | Produce a report or a list without repeating the work |
-| Websites | Share activities, information, and contact details |
-| Always-on tools | Keep something useful available when nobody is watching |
-| Reading problems | Find the cause of a failure instead of guessing |
-| Automatic tasks | Refresh information, run checks, send reminders |
-| Notes and versions | Preserve work and let someone else continue it |
+| Windows | Ubuntu in WSL2: terminal and development tools |
+| Windows, full Linux machine | Ubuntu in a virtual machine |
+| Mac | Ubuntu in a virtual machine, using UTM |
+
+A VM is a separate computer inside your computer.
+
+On Mac, choose the image for your chip: Intel or Apple Silicon.
 
 <!-- end_slide -->
 
-# What They Built
+# Feeling Adventurous? Omarchy
 
-- A personal website, published and reachable.
-- A service that keeps that website available.
-- A report that refreshes itself on a schedule.
-- Personal notes for operating and maintaining it.
+A keyboard-driven desktop, built on Arch and Hyprland.
 
-<!-- end_slide -->
+An integrated workspace with AI tools to help you understand and reshape it.
 
-# What You Could Build Next
+**Change one thing. Test it. Know how to undo it.**
 
-| Project | You already know | One next step |
-|---|---|---|
-| A website for an association or event | Pages, publishing, versions | Organising content for visitors |
-| A page that updates itself | Scripts, pages, automatic tasks | Reading data from a public service |
-| A monitor that warns when a site is down | Checks, logs, automatic tasks | Sending a warning |
-| A backup routine for important files | Files, scripts, scheduling | Testing that a restore works |
-| A small web tool for a group | Services, pages, troubleshooting | Collecting input from visitors |
+Try a supported VM setup first. Check the current installation guide.
 
 <!-- end_slide -->
 
-# Keep Going
+# A Playground Of Your Own
 
-Course access remains available for now.
+- **One computer:** experiment in a VM.
+- **An old PC:** give it a new job as your server.
+- **A Raspberry Pi:** a small machine for services and hardware projects.
 
-Use the documentation, small experiments, and each other.
-
-Thank you to the group, the volunteers, and our hosts.
+You do not need a rack, a cloud subscription, or new equipment to start.
 
 <!-- end_slide -->
 
-# Congratulations
+# Start A Homelab
 
-You did the work. Enjoy the evening.
+Your own small collection of services, built to use and understand.
+
+Start with **Jellyfin**: watch your own videos on another device.
+
+Install one service. Make it work on your home network. Use it.
+
+**The next thing you want to improve becomes your next lesson.**
+
+<!-- end_slide -->
+
+# Let It Grow One Step At A Time
+
+1. Jellyfin plays one video.
+2. Another device can watch it.
+3. You understand its files, permissions, service, and logs.
+4. You back it up—and test a restore.
+5. You add something else you want.
+
+Keep it local at first. Learn secure access before exposing services online.
+
+<!-- end_slide -->
+
+# What Would You Enjoy Running?
+
+| Idea | First useful result |
+|---|---|
+| Media server | Watch your own videos with Jellyfin |
+| Retro gaming | Play a homebrew game on an old PC or Pi |
+| Video surveillance | View your own camera on your local network |
+| Game server | Play with a friend on your own server |
+| Home automation | Read a sensor or control a lamp |
+| Photo library | Browse a small collection of your own photos |
+
+**Pick one, not all six.**
+
+<!-- end_slide -->
+
+# Other Paths From The Same Foundation
+
+- **Data:** make a report about a game, sport, or subject you follow.
+- **Programming:** turn a useful script into a small Python tool.
+- **Your desktop:** build a shortcut or workflow that fits you.
+- **Security:** investigate puzzles on a training platform.
+
+Choose something you want to use, understand, or show someone.
+
+<!-- end_slide -->
+
+# Small, Working, Then Better
+
+**Build → use → understand → improve → repeat.**
+
+One working service beats ten unfinished installations.
+
+A small project you can explain is worth more than a large one you cannot.
+
+When it breaks, you have a new question to investigate.
+
+<!-- end_slide -->
+
+# A Book To Experiment With
+
+**At the Prompt** brings together five Julia Evans zines:
+
+- The Secret Rules of the Terminal
+- Bite Size Command Line
+- Bite Size Linux
+- Bite Size Bash
+- How Git Works
+
+**Pick a page. Try something. Change it. See what happens.**
+
+<!-- end_slide -->
+
+# A Small Learning Shelf
+
+- **Your book and course PDFs:** revisit an idea, then try it.
+- **Official project docs:** install, configure, and understand your next tool.
+- **Julia Evans's blog and playgrounds:** explore how things work.
+- **OverTheWire Bandit:** practice investigation through Linux puzzles.
+
+Choose one resource for your current question—not a reading backlog.
+
+<!-- end_slide -->
+
+# Make Coming Back Easy
+
+You do not need hours every day.
+
+Before stopping, leave yourself the next small thing to try.
+
+When stuck: reread, reduce the problem, ask, or take a break.
+
+**Persist with the problem, not with the same failed command.**
+
+<!-- end_slide -->
+
+# After The Course
+
+The classroom server will close shortly after graduation.
+
+We will email the closure date, your scripts, useful playground files, and course PDFs.
+
+Your next environment does not need to recreate the classroom.
+
+Choose where to practice and one small thing you want to build.
+
+<!-- end_slide -->
+
+# KEEP LEARNING FOREVER
+
+Read. Try. Observe. Ask. Understand. Repeat.
+
+There is always another approach, another explanation, another person to ask.
+
+Thank you for learning with us.
+
+**Congratulations. This is a beginning.**

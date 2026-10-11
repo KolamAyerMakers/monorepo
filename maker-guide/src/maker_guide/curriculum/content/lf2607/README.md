@@ -113,9 +113,9 @@ Learn to inspect JSON weather data, produce a validated Singapore bulletin, and 
 - [Recap](sessions/S09/recap.md)
 - [Concept cards](concepts/README.md#automation)
 
-### S10: Show What You Can Do
+### S10: Keep Learning Forever
 
-Lead a demonstration with evidence you choose, investigate an unfamiliar problem, and choose a concrete next step. Explain your actual work in your own words, not a fixed answer script.
+Keep learning independently: investigate unfamiliar problems with documentation, AI, and community help; choose your next Linux environment; start a small project and improve it through experiments. Use the Julia Evans anthology as a companion, not a reading obligation.
 
 - [Slides](sessions/S10/slides.md)
 - [Self-study](sessions/S10/self-study.md)

@@ -1,213 +1,183 @@
-# S10 Self-Study: Show What You Can Do
+# S10: Keep Learning Forever
 
 Session: S10
 
 2026-10-24
 
-## Three-Hour Shape
+This is a starting guide for after the course, not another assignment. Choose an environment, a project, and one useful resource. You do not need to do everything here.
 
-| Minutes | Activity |
+## Keep Your Work
+
+The classroom server and SSH accounts will close shortly after graduation. The follow-up email will confirm the date and include your scripts, useful files from your playground, and the course PDFs. You do not need to learn archive or transfer commands during the final session.
+
+The printed *At the Prompt* anthology is your reading and experimenting companion. The email contains course PDFs, not copies of the purchased Julia Evans zines.
+
+## Choose Your Next Linux
+
+We used Debian in the classroom. **Ubuntu LTS** is a practical next step: it builds on Debian, uses familiar package tools, and offers a desktop. Pick an environment before spending time comparing distributions.
+
+### Windows: Start With WSL2
+
+WSL2 runs Linux alongside Windows. It is useful for Bash, scripts, programming, packages, and many services. It is not just a simulated terminal, but it does not give you the same independent desktop and boot experience as a full VM.
+
+Follow [Microsoft's WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install). Check Windows compatibility, administrator access, and virtualization support first. On a supported machine, the basic installation is:
+
+```powershell
+wsl --install
+```
+
+Run that in **Windows PowerShell as administrator**, not in classroom SSH or a Linux shell. Follow the restart instructions, open Ubuntu, and create your Linux account. Check the installed version from PowerShell:
+
+```powershell
+wsl --list --verbose
+```
+
+Your Ubuntu entry should show version `2`. If installation fails, use the error and the official troubleshooting guide rather than repeatedly guessing commands.
+
+### Windows: A Full Linux VM
+
+For a Linux desktop, independent boot, and a machine you can experiment with, use a VM. A virtual machine runs a guest operating system inside your existing computer without replacing Windows.
+
+Use a virtualization application compatible with your hardware; [VirtualBox's manual](https://www.virtualbox.org/manual/) is one starting point for supported Windows hosts. Follow its installation instructions and use an [official Ubuntu LTS image](https://ubuntu.com/download). Match the guest image to the supported processor architecture, leave memory and disk space for Windows, and take a VM snapshot before risky experiments. WSL2 and VM applications can interact with Windows virtualization features; consult their current compatibility guidance if performance or startup is poor.
+
+### Mac: Ubuntu In UTM
+
+Use [UTM for macOS](https://mac.getutm.app/) and its [Ubuntu guide](https://docs.getutm.app/guides/ubuntu/). Check your chip in **About This Mac**:
+
+- Apple Silicon (M-series): use an **ARM64/aarch64** image.
+- Intel: use an **amd64/x86-64** image.
+
+Virtualizing the matching architecture is different from emulating another processor. Follow the current UTM guide and Ubuntu download information; the guide's example release may be older than the current LTS. If it uses Ubuntu Server, it starts without a graphical desktop and explains how to add one.
+
+The macOS terminal is useful, but macOS is not Linux. Commands and options can differ, and classroom systemd services need a Linux environment.
+
+### A Machine You Can Dedicate
+
+An old PC can become an Ubuntu machine or home server. A Raspberry Pi with Raspberry Pi OS can run small services and connect to sensors. Use the [Ubuntu installation guide](https://ubuntu.com/tutorials/install-ubuntu-desktop) or [Raspberry Pi's getting-started guide](https://www.raspberrypi.com/documentation/computers/getting-started.html).
+
+Back up anything you need before installing an operating system. Disk installation or imaging can erase files. Dual boot is possible, but is not required to continue learning; a VM is a simpler first experiment on your only computer.
+
+### Optional: Omarchy
+
+[Omarchy](https://omarchy.org/) combines Arch Linux, Hyprland, a keyboard-driven desktop, and integrated development and AI tools. It is an adventurous alternative for people who want to reshape their working environment, not another prerequisite.
+
+Use its current official installation and try-in-a-VM instructions for your hardware. Do not assume an image or installer works on every PC or Mac. Keep a working environment and backups. AI can help change a configuration, understand an error, or create a shortcut; understand the change, test it, and know how to undo it. Paid AI services are optional tools, not a requirement for this learning path.
+
+## Your First Small Experiment
+
+Once you have a Linux shell on your own machine, use a scratch directory:
+
+```bash
+mkdir -p ~/playground/learning
+cd ~/playground/learning
+printf '%s\n' '$HOME'
+printf '%s\n' "$HOME"
+```
+
+Before running the last two commands, predict whether they will print the same thing. Compare the result. Read about quoting in *Bite Size Bash* or your course notes. Change the example and predict again.
+
+That is a complete learning session: **a question, a prediction, an experiment, and an explanation**. You do not need a large project to practice.
+
+## When You Get Stuck
+
+1. State the intended result and what actually happened.
+2. Read the complete error. Look for a path, an option, a permission, or a connection that failed.
+3. Form one hypothesis. Choose one small test.
+4. Observe the result before changing anything else.
+5. Keep what worked; revise what did not. Ask for help when you need it.
+
+Repeating an unchanged failed command is not the same as investigating. Reduce the example, read the relevant documentation, inspect the code if it helps, or take a break. Before stopping, leave yourself the next thing to test so restarting is easy.
+
+### Read Documentation With A Question
+
+```bash
+ls --help
+man ls
+```
+
+Use help for a quick overview and the manual for details. In the usual manual pager, `/sort` searches for `sort`, `n` finds the next match, and `q` exits. Start with the description and the option you need; you do not need to read every option. A minimal Linux installation may need its manual packages installed before `man` is available.
+
+For a project, prefer its current official documentation for your version. Read the prerequisites and distinguish instructions for your computer from those for a server. Try examples in your playground, not on your only copy of important files.
+
+### Use AI As An Investigation Partner
+
+Give your goal, system, exact error, and observations. For example:
+
+> Chrome has no sound, but other apps do. I am using Linux and do not understand its audio system. Help me investigate. What should I check first, and what would the result tell us?
+
+Ask for explanations, tests, or a procedure. Feed back the real result rather than saying only "it doesn't work." AI can introduce tools and concepts you have never used, but it can also guess incorrectly.
+
+Before approving a change, understand what it does and how to undo it. Be especially careful with `sudo`, disk operations, deletion, and network security. Do not share passwords, tokens, private keys, or other people's personal data. Redact them from logs too.
+
+For Wi-Fi authentication, use the provider's official settings and certificate requirements; do not disable certificate verification to bypass a connection problem. For cameras, investigate only equipment you own or are authorized to manage, change default passwords, and keep access local until you understand secure remote access.
+
+### Ask People Too
+
+Use a project's official support community, a relevant forum, or a local makerspace. Search for the exact error first. A useful question includes:
+
+- Your goal and operating system/application version.
+- The command or configuration, with secrets removed.
+- The exact error and what you already tested.
+- The observation you do not understand.
+
+Explain what eventually solved it so someone else can learn from your investigation. The instructor may be able to answer an occasional specific question by email, but your learning should not depend on one person's availability.
+
+## Build Something You Want To Use
+
+### A Homelab That Grows With You
+
+A homelab is your own place to run services and experiment. Start in a VM if you have one computer; an old PC or a Raspberry Pi can become a dedicated machine if you already have one. You do not need to buy equipment before starting.
+
+One possible progression:
+
+1. Follow [Jellyfin's official documentation](https://jellyfin.org/docs/) to install it on a supported system. Add one video you own or have permission to use.
+2. Play it on the host, then on another device on your home network. Learn which address and port to use. If a VM cannot be reached, investigate its network mode instead of opening your router to the Internet.
+3. Locate the service, configuration, media files, and logs. Explain what they do. Storage, media formats, and hardware affect playback; a small Pi may not handle demanding video transcoding.
+4. Back up something useful and test restoring it. A backup you have never restored is an untested plan.
+5. Add one more service because you want to use it, not because a diagram looks impressive.
+
+Possible directions—not a checklist:
+
+| Interest | First result | One next improvement |
+|---|---|---|
+| Media | Play one video with Jellyfin | Add a second device and investigate playback |
+| Retro gaming | Run a homebrew game with [RetroArch](https://www.retroarch.com/) | Configure a controller; learn the host's supported setup |
+| Video surveillance | View your own camera locally | Learn its stream/protocol and record to local storage |
+| A game server | Run a small server and join on your LAN | Invite a friend; understand access before exposing it |
+| Home automation | Read a sensor with [Home Assistant](https://www.home-assistant.io/getting-started/) | Make one useful automation |
+| Photos | Import a small copied sample into [Immich](https://immich.app/docs/) | Test backup and restore before trusting it with originals |
+
+Use legal game/media sources. Keep cameras and other services off the public Internet at first. Adding containers, monitoring, secure remote access, or multiple machines can come later when you have a reason to learn them.
+
+### Other Paths
+
+- **Data:** choose an API about a game, sport, or subject you follow. Save one response and produce a small useful report. Check the API's terms, limits, and units.
+- **Programming:** use the [official Python tutorial](https://docs.python.org/3/tutorial/) to explore turning a shell script into a small tool. Start with one input and one result, not an entire application.
+- **Your environment:** make one keyboard shortcut or small command that removes an annoyance. Try AI-assisted customization on a copy or a VM snapshot first.
+- **Security puzzles:** [OverTheWire Bandit](https://overthewire.org/wargames/bandit/) gives you authorized Linux challenges. Read the current connection instructions, start at level 0, and investigate one question at a time. No score or completion target is required.
+
+For employment, a small project you can explain is useful evidence: its purpose, how it works, one real failure, and how you verified a repair. A copied project you cannot explain is not the same evidence, and no project guarantees a job.
+
+## A Small Learning Shelf
+
+Start with **At the Prompt**, the printed anthology of five Julia Evans zines. Use it according to your question, not a required reading order:
+
+| Zine | Reach for it when… |
 |---|---|
-| 0-10 | Choose an investigation and demo focus |
-| 10-30 | Investigate one unfamiliar question |
-| 30-45 | Share the method and observations |
-| 45-55 | Break |
-| 55-75 | Prepare and rehearse |
-| 75-150 | Twelve five-minute demos plus 15 minutes for transitions |
-| 150-170 | Choose a next action and date |
-| 170-180 | Closing reflection |
+| The Secret Rules of the Terminal | Terminal behavior surprises you |
+| Bite Size Command Line | You want to try a tool or combine commands |
+| Bite Size Linux | You want to understand what the system is doing |
+| Bite Size Bash | You are building a script or investigating shell behavior |
+| How Git Works | You want to understand changes and versions in a project |
 
-Protect the 75-minute demo block. Stop the investigation after 20 minutes even if it remains unresolved. Explain your method rather than racing to finish the most puzzles.
+Read one page, predict what an example will do, try a small experiment, and change something. You can return to difficult pages when your project gives you a reason.
 
-The main work is a five-minute demonstration with self-chosen evidence and a real recovery explanation. The detailed commands below are fallback tools for preparation or recovery, not a script everyone must perform.
+Keep just a few extra resources nearby:
 
-## Bounded Unfamiliar Investigation
+- [Julia Evans's blog](https://jvns.ca/) and [Wizard Zines experiments](https://wizardzines.com/#experiments): approachable explanations and small playgrounds. [Mess with DNS](https://messwithdns.net/) lets you experiment without changing your real domain.
+- Your course PDFs and the official docs for the project you are currently building.
+- Bandit when you want a puzzle, not another obligation.
 
-Choose one question small enough to investigate in 20 minutes. You can inspect a file provided by the instructor, explain an unfamiliar command option or service log line, or try an optional [Bandit puzzle](https://overthewire.org/wargames/bandit/). No solve count is required.
+Choose one next result small enough to finish, and a time that fits your life. Ten focused minutes count. If you stop for a week, return to the next small test—not to guilt about an unfinished plan.
 
-Work alone or in pairs. If pairing, swap the reader and keyboard roles halfway through. Record the question, documentation or command used, actual observation, and next test. A well-evidenced blocker is a useful result.
-
-Do not execute unknown files, try commands against other learners' services, or make privileged changes. Use read-only inspection first. For a file task, the instructor must identify the exact input and permitted scope; do not scan unrelated private files.
-
-## Three Contexts
-
-| Context | Work Here |
-|---|---|
-| Laptop | Browser, classroom SSH tab, and a separate direct Bandit SSH tab if chosen |
-| Classroom | Your site, source, scripts, user services, and durable notes |
-| Bandit | Only the optional puzzle's accounts and files |
-
-When unsure, run:
-
-```bash
-whoami
-hostname
-pwd
-```
-
-`~` and `$USER` refer to the current machine's account. From your laptop, reconnect to the classroom only if needed, replacing the username before running:
-
-```bash
-ssh your-classroom-username@lf2607.kolamayermakers.org
-```
-
-Keep that classroom terminal open. You can keep private investigation notes there:
-
-```bash
-mkdir -p ~/playground
-micro ~/playground/investigation-notes.md
-```
-
-Save with `Ctrl-S`, quit with `Ctrl-Q`, and omit all passwords, tokens, and private puzzle answers from shared notes.
-
-## Optional Bandit Start
-
-Read the current login instructions and goal on [OverTheWire Bandit](https://overthewire.org/wargames/bandit/). From a **new laptop terminal at the local shell**, not inside classroom SSH:
-
-```bash
-ssh bandit0@bandit.labs.overthewire.org -p 2220
-```
-
-SSH password input is invisible. Do not put passwords in command lines, public notes, the site, repository, or chat. Keep your classroom notes in the classroom tab; they are not files on Bandit.
-
-For an unfamiliar puzzle file, inspect the goal and actual paths before choosing a tool:
-
-```bash
-pwd
-ls -la
-```
-
-Use `file` with the actual filename and read its result. If you need writable scratch space, do not assume Bandit's home is writable. Replace the placeholder path below with the real puzzle input before running, one command at a time:
-
-```bash
-work_directory="$(mktemp -d /tmp/bandit-work.XXXXXX)"
-cp -- /absolute/path/from-the-current-level "$work_directory/input"
-file "$work_directory/input"
-xxd -l 128 "$work_directory/input"
-```
-
-Stop if directory creation or copying fails. Keep the original untouched. Do not execute the copy. Choose any decoding from actual evidence, not a list of guessed decoders. Consult [file encoding](../../concepts/file-encoding.md) or [file compression](../../concepts/file-compression.md) if relevant; these are optional references, not a requirement to decode an archive today.
-
-At the time limit, note the result and next safe test. Run `exit` in the Bandit tab to return to your laptop; exit nested connections too. Then switch to the classroom SSH tab, confirm account and hostname, and update your notes. Exiting Bandit does not put you in the classroom automatically.
-
-## Plan Your Five Minutes
-
-Choose one claim from your work: a useful script, an automatic refresh, a reachable page, or a repaired service. Decide what evidence would convince someone of that claim.
-
-| Time | Content |
-|---|---|
-| 0:00-0:30 | Name what you chose and its purpose |
-| 0:30-3:00 | Demonstrate the result with your chosen evidence |
-| 3:00-4:30 | Explain one real failure and recovery |
-| 4:30-5:00 | State what you learned and take one question |
-
-Use evidence you actually observed. Logs, page bodies, source changes, and peer feedback can all be useful; no fixed tour of every course artifact is required. Recorded evidence is acceptable if access is unavailable, provided you state when it was collected and what cannot be verified live.
-
-For recovery, explain the symptom, observation that narrowed the cause, repair, and confirming result. Do not stage a risky break during the demo. If you lack a recovered example, use the recovery guidance in [S8 self-study](../S08/self-study.md#8-restore-and-recover) before the demo block. If still unresolved, show the blocker honestly and agree on a dated recovery action rather than fabricating a story.
-
-## Demo Script
-
-This is fallback evidence for a site/service claim, not a required presentation sequence. Run it in the classroom, using only the parts that support your chosen claim. For timer basics and the Singapore conditions challenge, see [S9 self-study](../S09/self-study.md).
-
-For stable body comparisons, pause automation and inspect the build state first:
-
-```bash
-systemctl --user stop site-build.timer
-systemctl --user status site-build.service --no-pager
-```
-
-If the build is still `activating`, wait until it finishes and inspect again. Do not interrupt publication. Let any standalone build finish too, and do not launch another during the comparisons. If you have not created these units, name that missing work; do not create empty files for a demonstration.
-
-Compute the classroom port directly; no helper is needed:
-
-```bash
-service_port="$((10000 + $(id -u)))"
-printf 'Service port: %s\n' "$service_port"
-systemctl --user cat site.service
-bash ~/scripts/site-check.sh "" maker-report.html
-systemctl --user status site.service --no-pager
-```
-
-If the port exceeds `65535` or does not match the unit, stop and ask the instructor rather than choosing another port. The unit needs `WorkingDirectory=%h` and `ExecStart=/usr/bin/caddy file-server --listen :12345 --root %h/public_html --access-log`, with your numeric port in place of `12345`; see the [complete S8 unit](../S08/self-study.md#2-create-the-user-unit). The publisher swaps its output directory, so the explicit root must follow the current published path rather than an old working directory.
-
-Shared Caddy handles public HTTPS and forwards requests to personal Caddy over loopback HTTP. Same software, two separate processes; no `--domain` or shared configuration changes. Control personal Caddy with `systemctl --user`, never `caddy stop` or `caddy reload`, which can target shared Caddy. The root is not a sandbox: keep secrets and symlinks to private files out of the published tree.
-
-The checker covers the static homepage and report, not the personal service hostname. A successful static check or active service is not proof of the whole backend route.
-
-## Compare Report Bodies
-
-With publishing paused, make a fresh scratch directory and snapshot the generated report:
-
-```bash
-demo_directory="$(mktemp -d /tmp/site-demo.XXXXXX)"
-cp ~/public_html/maker-report.html "$demo_directory/generated-report.html"
-curl --max-time 10 -fsS "https://lf2607.kolamayermakers.org/~$USER/maker-report.html" -o "$demo_directory/static-report.html"
-curl --max-time 10 -fsS "http://127.0.0.1:$service_port/maker-report.html" -o "$demo_directory/local-report.html"
-curl --max-time 10 -fsS "https://$USER.lf2607.kolamayermakers.org/maker-report.html" -o "$demo_directory/service-report.html"
-diff -u "$demo_directory/generated-report.html" "$demo_directory/static-report.html"
-diff -u "$demo_directory/generated-report.html" "$demo_directory/local-report.html"
-diff -u "$demo_directory/generated-report.html" "$demo_directory/service-report.html"
-journalctl --user -u site.service --no-pager -n 20
-```
-
-Run one command at a time. Stop if creating, copying, or fetching fails; do not compare a missing or partial response as though it succeeded. `curl -f` fails on HTTP errors, `-sS` hides progress but retains errors, and `--max-time 10` bounds each request. No `diff` output with exit `0` means matching bodies; exit `1` means differences and higher values mean comparison errors.
-
-Point to actual report requests in the web-service journal: `--access-log` records structured fields `request.method`, `request.uri`, `status`, and a timestamp or time (`ts` in JSON). Journal formatting can differ from the foreground terminal. From your laptop browser, open the [static report](https://lf2607.kolamayermakers.org/~your-handle/maker-report.html) and [service report](https://your-handle.lf2607.kolamayermakers.org/maker-report.html), replacing `your-handle` with your classroom username. Inspect the content, not just headers. Requests from the classroom machine can use local host mappings and are not a substitute for the outside view.
-
-When finished comparing or reviewing source, stop the timer and wait for any active build to finish:
-
-```bash
-systemctl --user stop site-build.timer
-systemctl --user status site-build.service --no-pager
-```
-
-Open the complete unit with `micro ~/.config/systemd/user/site-build.timer`; remove temporary interval/calendar directives, restore `OnCalendar=hourly` and `RandomizedDelaySec=55min` in `[Timer]`, save, and quit. Then reload and inspect the effective unit before starting it:
-
-```bash
-systemctl --user daemon-reload
-systemctl --user cat site-build.timer
-systemctl --user start site-build.timer
-systemctl --user list-timers --all site-build.timer
-```
-
-Do not leave a classroom-speed timer running or layer schedules. If a failure means it is unsafe to restart automation, leave it stopped and ask the instructor for help.
-
-## Automation Evidence
-
-For an automation claim, explain what your oneshot generates before building and how you checked the resulting public page. A schedule listing is not evidence of successful publication. For the Singapore bulletin, distinguish the configured service and next deadline from an actual run; inspect the service journal and rendered page before claiming publication. See [S9 self-study](../S09/self-study.md#challenge-publish-singapore-conditions) for the manual service, page, and deadline checks.
-
-## Recovery Pointers
-
-| Observation | Narrow The Cause |
-|---|---|
-| Static report `404` | Inspect `~/src/pages/maker-report.md`, the build log, and `~/public_html/maker-report.html`. |
-| Personal URL `502` | Compare the local request, assigned numeric port, unit state, and web-service journal. |
-| Local response fresh, browser stale | Inspect actual bodies, browser refresh, and personal Caddy's explicit `--root`. |
-| Pre-start failure | Rerun the failing command and inspect its service journal; fix the generator error before retrying. Do not bypass generation. |
-| Local works, public hostname fails | Collect hostname and request evidence for the instructor; do not change DNS, shared Caddy settings, or TLS verification. |
-
-Use the [S9 self-study](../S09/self-study.md) and [S8 unit recovery](../S08/self-study.md#8-restore-and-recover) for repairs. Keep the serving unit aligned with the S8 Caddy example. Owners operate their own accounts even when peers help read instructions. Do not exchange passwords or stop other people's processes.
-
-## Next Path Template
-
-Choose one action and a date. Keep it in a calendar, private note, README, or a public page if that audience is useful. Any clear wording is acceptable; no required Linux heading or exact label.
-
-For example:
-
-```markdown
-# Keep My Site Useful
-
-On 2026-10-31, I will check the published Singapore forecast and air-quality page.
-
-I will record what changed and one instruction that needs improving.
-
-Reference: [systemd service units](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html).
-```
-
-Adapt the action and date to something you intend to do. A documentation link can help but is not a formatting gate. Follow [Write the next path](../../quests/write-next-path.md) for optional page editing and local preview, including guidance on pausing and restoring the build timer. Do not publish private plans merely to satisfy a page requirement.
-
-## Unfinished Work
-
-Agree with the instructor on the scope of your demo if earlier work is incomplete. Name what works, what is missing, and the next recovery action with a date. The audience should be able to distinguish observed success from planned work.
-
-After the course, carry out the chosen action and record what happened. Further puzzles, a homelab, or teaching someone a command are options, not new requirements.
+**Start small. Make it work. Use it. Understand it. Improve it. KEEP LEARNING FOREVER.**

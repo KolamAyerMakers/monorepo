@@ -20,4 +20,4 @@ Use [S9 self-study](self-study.md) for the seven artifact steps, starter, servic
 
 ## Before S10
 
-S10 is **2026-10-24: Show What You Can Do**. No preparation is required.
+S10 is **2026-10-24: Keep Learning Forever**. No preparation is required.

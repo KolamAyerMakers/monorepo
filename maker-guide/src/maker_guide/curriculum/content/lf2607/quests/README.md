@@ -60,7 +60,6 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 - [inspect-first-url-headers](inspect-first-url-headers.md)
 - [record-http-headers](record-http-headers.md)
 
-## S10 Reinforcement
+## After The Course
 
-- [demo-site](demo-site.md)
-- [write-next-path](write-next-path.md)
+The final session adds no assigned quests. Choose your own experiment or project using the [Keep Learning Forever guide](../sessions/S10/self-study.md).

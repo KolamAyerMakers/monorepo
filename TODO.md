@@ -1,5 +1,8 @@
 # TODO
 
+- [ ] S10: visually review the Keep Learning Forever deck (HTML export and 100×40 overflow validation passed); prepare redacted audio-investigation excerpts and optional Omarchy/homelab visuals before 24 October. Rehearse 90–120 minutes of teaching plus the one-hour ceremony. No S10 deployment or classroom rehearsal performed.
+- [ ] After graduation: confirm and email the classroom closure date; prepare private per-learner exports of useful scripts/playground files and course PDFs, reviewing secrets/personal data before delivery. Do not include purchased Julia Evans PDFs or require site migration. Export tooling, email delivery, and server shutdown need separate authorization.
+
 - [ ] Verify Salt-SSH agent authentication with `uv run salt-runner ssh-test lf-dev`; roster defaults now use Salt's `priv: agent-forwarding` sentinel and `identities_only: false`. No Salt application performed.
 - [ ] Before S9 delivery, package and deploy the Singapore Today starter and verify both `/docs` synchronization and public-site build; rehearse learner completion and failure preservation. The distributed exercise is intentionally incomplete.
 

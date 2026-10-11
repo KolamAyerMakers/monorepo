@@ -464,7 +464,8 @@ class CourseCatalog:
             for quest in sorted(self.course.quests, key=lambda course_quest: course_quest.sequence)
             if quest.available_after_session == session_id
             and session_id != "S8"
-            and quest.id not in {"prepare-source-handoff", "write-readme"}
+            and quest.id
+            not in {"prepare-source-handoff", "write-readme", "demo-site", "write-next-path"}
         )
 
     def quests_available_through(self, session_id: str) -> tuple[Quest, ...]:
@@ -477,7 +478,8 @@ class CourseCatalog:
             for quest in sorted(self.course.quests, key=lambda course_quest: course_quest.sequence)
             if quest.available_after_session in released_session_ids
             and quest.available_after_session != "S8"
-            and quest.id not in {"prepare-source-handoff", "write-readme"}
+            and quest.id
+            not in {"prepare-source-handoff", "write-readme", "demo-site", "write-next-path"}
         )
 
     def session_is_after(self, session_id: str, previous_session_id: str) -> bool:
