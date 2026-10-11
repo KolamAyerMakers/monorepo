@@ -1,0 +1,19 @@
+[project]
+name = "at-the-prompt-production"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["pymupdf==1.27.2.3", "Pillow>=12,<13"]
+
+[dependency-groups]
+dev = ["ruff", "basedpyright", "pytest"]
+
+[tool.basedpyright]
+typeCheckingMode = "basic"
+include = ["*.py"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["local"]
+
+[tool.pytest.ini_options]
+testpaths = ["test_assembly.py"]

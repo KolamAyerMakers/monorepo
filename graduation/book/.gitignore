@@ -1,0 +1,18 @@
+local/
+# Purchased works, derived proofs, renders and transcripts must never be public.
+*.[pP][dD][fF]
+*.[pP][nN][gG]
+*.[jJ][pP][gG]
+*.[jJ][pP][eE][gG]
+*.[hH][tT][mM][lL]
+*.[hH][tT][mM]
+*.[zZ][iI][pP]
+*.[jJ][sS][oO][nN]
+*Transcript*
+*.[tT][xX][tT]
+!foreword.txt
+!fonts/OFL.txt
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/

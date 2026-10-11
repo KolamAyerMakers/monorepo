@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="148mm" viewBox="0 0 210 148">
+  <rect width="210" height="148" fill="#f4f0e6"/>
+  <g fill="#111111" font-family="Liberation Sans">
+    <g font-size="7" font-weight="700">
+      <text x="18" y="26">There’s more to explore.</text>
+    </g>
+    <g font-size="3.8">
+      <text x="18" y="43">The course was a starting point. These five illustrated guides by Julia</text>
+      <text x="18" y="49">Evans will take you further into Linux, the terminal, Bash and Git.</text>
+      <text x="18" y="55">Pick a page that catches your eye, discover something unexpected,</text>
+      <text x="18" y="61">and try it for yourself. You don’t need to read everything in order.</text>
+      <text x="18" y="67">Just bring your curiosity.</text>
+    </g>
+    <text x="18" y="79" font-size="3.2" letter-spacing="0.6">FIVE GUIDES TO EXPLORE</text>
+    <g font-size="3.8">
+      <text x="27" y="88">The Secret Rules of the Terminal</text>
+      <text x="27" y="95">Bite Size Command Line</text>
+      <text x="27" y="102">Bite Size Linux</text>
+      <text x="27" y="109">Bite Size Bash</text>
+      <text x="27" y="116">How Git Works</text>
+    </g>
+    <g font-size="3" fill="#245b43" font-family="Liberation Mono">
+      <text x="18" y="88">01</text><text x="18" y="95">02</text>
+      <text x="18" y="102">03</text><text x="18" y="109">04</text><text x="18" y="116">05</text>
+    </g>
+    <text x="18" y="130" font-size="3.5">Linux Foundations &#183; 2026</text>
+    <text x="18" y="136" font-size="3.5">Kolam Ayer Community Club &#183; Singapore</text>
+  </g>
+</svg>

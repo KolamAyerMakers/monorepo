@@ -66,7 +66,7 @@ cat ~/playground/singapore/forecast.md
 ```bash
 mkdir -p ~/scripts
 cp /docs/sessions/S09/resources/today.sh ~/scripts/today.sh
-vim ~/scripts/today.sh
+micro ~/scripts/today.sh
 ```
 The script downloads weather and air data to the fixed JSON paths from steps 1 and 3. TODO 1: assign `forecast_date`, `temperature`, `rain`, `sunrise`, `sunset`, `air_time`, and `pm25` with `jq -r` and command substitution, using selectors `.daily.time[0]`, `.daily.temperature_2m_max[0]`, `.daily.precipitation_probability_max[0]`, `.daily.sunrise[0]`, `.daily.sunset[0]`, `.current.time`, and `.current.pm2_5`. TODO 2: use `printf` redirection (`>`) to compose attributed Markdown at `~/src/pages/today.md`.
 
@@ -116,7 +116,7 @@ Confirm every field, units, attribution, unchanged API times, and retrieval time
 ### 6. Link and inspect both pages
 **Goal:** link the bulletin from the homepage and verify both rendered pages.
 
-**Do:** add `[Singapore today](today.html)` to `~/src/pages/index.md` using `vim`, then:
+**Do:** add `[Singapore today](today.html)` to `~/src/pages/index.md` using `micro`, then:
 ```bash
 /usr/local/bin/maker-guide-build-personal-website
 grep -n 'today.html' ~/public_html/index.html
@@ -132,7 +132,7 @@ guide check
 **Do:** create both user unit files in the editor:
 ```bash
 mkdir -p ~/.config/systemd/user
-vim ~/.config/systemd/user/site-build.service
+micro ~/.config/systemd/user/site-build.service
 ```
 Put this complete service in the editor, save, then open the timer path and enter its complete contents:
 ```ini
@@ -146,7 +146,7 @@ ExecStartPre=/bin/bash %h/scripts/today.sh
 ExecStart=/usr/local/bin/maker-guide-build-personal-website
 ```
 ```bash
-vim ~/.config/systemd/user/site-build.timer
+micro ~/.config/systemd/user/site-build.timer
 ```
 ```ini
 [Unit]
