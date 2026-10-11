@@ -1,4 +1,4 @@
-# S10: Keep Learning Forever
+# S10: This Is Just The Beginning
 
 Session: S10
 
@@ -107,11 +107,15 @@ Give your goal, system, exact error, and observations. For example:
 
 Ask for explanations, tests, or a procedure. Feed back the real result rather than saying only "it doesn't work." AI can introduce tools and concepts you have never used, but it can also guess incorrectly.
 
+Use AI to get results **and accumulate knowledge**. As a search assistant, ask it to find relevant official documentation, then read and verify it. As a tutor, ask how something works, why it failed, and what a proposed fix changes. Try a small variation and explain the result yourself. You do not have to memorize every command, but do not let the tool do all your learning for you: understanding more makes you better at directing and checking it.
+
 Before approving a change, understand what it does and how to undo it. Be especially careful with `sudo`, disk operations, deletion, and network security. Do not share passwords, tokens, private keys, or other people's personal data. Redact them from logs too.
 
 For Wi-Fi authentication, use the provider's official settings and certificate requirements; do not disable certificate verification to bypass a connection problem. For cameras, investigate only equipment you own or are authorized to manage, change default passwords, and keep access local until you understand secure remote access.
 
 ### Ask People Too
+
+Independent learning does not have to mean learning alone. Keep in touch with someone from this class if you both want to. Meet to try a small project, investigate a problem, or show each other something you discovered. A local makerspace or an in-person meetup can give you people to build with, not just answers to technical questions.
 
 Use a project's official support community, a relevant forum, or a local makerspace. Search for the exact error first. A useful question includes:
 
@@ -180,4 +184,4 @@ Keep just a few extra resources nearby:
 
 Choose one next result small enough to finish, and a time that fits your life. Ten focused minutes count. If you stop for a week, return to the next small test—not to guilt about an unfinished plan.
 
-**Start small. Make it work. Use it. Understand it. Improve it. KEEP LEARNING FOREVER.**
+**Start small. Make it work. Use it. Understand it. Improve it. Stay curious. Keep building.**

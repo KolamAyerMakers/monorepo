@@ -1981,7 +1981,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
         ),
         Session(
             id="S10",
-            title="Keep Learning Forever",
+            title="This Is Just The Beginning",
             date=date(2026, 10, 24),
             starts_at=datetime(2026, 10, 24, 9, tzinfo=UTC),
             introduced_commands=("man",),
@@ -1993,7 +1993,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
                 "Choose a Linux environment and a small project for independent learning.",
                 "Use the Julia Evans anthology to learn through small experiments and iterations.",
             ),
-            content=_session_content("S10", "Keep Learning Forever"),
+            content=_session_content("S10", "This Is Just The Beginning"),
         ),
     ),
     quests=(

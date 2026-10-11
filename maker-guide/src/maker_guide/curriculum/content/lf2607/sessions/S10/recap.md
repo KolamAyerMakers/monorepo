@@ -1,4 +1,4 @@
-# S10 Recap: Keep Learning Forever
+# S10 Recap: This Is Just The Beginning
 
 Session: S10
 
@@ -34,4 +34,4 @@ The classroom will close after graduation. The follow-up email will confirm the 
 
 Use [the S10 starting guide](self-study.md) for setup links, project ideas, and help-seeking examples.
 
-**KEEP LEARNING FOREVER.**
+**Stay curious. Keep building.**

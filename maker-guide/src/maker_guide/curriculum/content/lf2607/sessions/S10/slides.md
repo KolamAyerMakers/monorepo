@@ -1,4 +1,4 @@
-# KEEP LEARNING FOREVER
+# This Is Just The Beginning
 
 Session: S10
 
@@ -28,131 +28,18 @@ Linux gives you tools to explore all of these.
 
 <!-- end_slide -->
 
-# I Still Get Stuck
+# What Would You Enjoy Running?
 
-Chrome had no sound. I did not understand Linux audio.
-
-With AI's help, I found:
-
-- My laptop used PulseAudio.
-- Chrome's own audio channel was muted.
-- `pulsemixer` let me unmute it.
-
-**I fixed the problem and learned how it worked.**
-
-<!-- end_slide -->
-
-# Investigate, Don't Guess
-
-1. What did I want to happen?
-2. What actually happened? Read the error.
-3. What could explain it?
-4. Test one thing. Observe the result.
-
-**Each attempt should teach you something.**
-
-<!-- end_slide -->
-
-# Ask AI To Help You Understand
-
-> Chrome has no sound, but other apps do. I do not know how Linux audio works. Help me investigate: what should I check first, and why?
-
-Give it your goal, context, observations, and exact errors.
-
-You can ask for an explanation, a test, or a procedure.
-
-<!-- end_slide -->
-
-# Unfamiliar Does Not Mean Impossible
-
-- **Wireless@SGx:** understand an unfamiliar Wi-Fi authentication setup.
-- **My old cameras:** discover ONVIF, recover access, connect them to my recorder.
-
-AI helped connect things I did not know.
-
-**You bring the goal. AI helps investigate. You verify.**
-
-<!-- end_slide -->
-
-# Stay In Control
-
-- Understand changes before approving them, especially with `sudo`.
-- Keep passwords, tokens, and private data out of prompts.
-- Test on your own equipment. Keep a way back.
-- Check security settings against official documentation.
-
-**Working is not always the same as correct or safe.**
-
-<!-- end_slide -->
-
-# Documentation Answers Specific Questions
-
-```bash
-ls --help
-man ls
-```
-
-Find the option you need. Read its example. Try it.
-
-You do not need to read the whole manual first.
-
-<!-- end_slide -->
-
-# You Don't Have To Learn Alone
-
-Ask a project's community, a forum, or a local makerspace:
-
-- What are you trying to do? On which system?
-- What did you try? What happened?
-- What is the exact error?
-
-Share text, not secrets. Report what solved it.
-
-<!-- end_slide -->
-
-# Your Next Linux: Ubuntu
-
-We learned on Debian. Ubuntu builds on Debian.
-
-Familiar commands and packages, with a desktop ready to use.
-
-**Start with Ubuntu LTS. You can explore other choices later.**
-
-<!-- end_slide -->
-
-# Keep Your Current Computer
-
-| Computer | Start here |
+| Idea | First useful result |
 |---|---|
-| Windows | Ubuntu in WSL2: terminal and development tools |
-| Windows, full Linux machine | Ubuntu in a virtual machine |
-| Mac | Ubuntu in a virtual machine, using UTM |
+| Media server | Watch your own videos with Jellyfin |
+| Retro gaming | Play a homebrew game on an old PC or Pi |
+| Video surveillance | View your own camera on your local network |
+| Game server | Play with a friend on your own server |
+| Home automation | Read a sensor or control a lamp |
+| Photo library | Browse a small collection of your own photos |
 
-A VM is a separate computer inside your computer.
-
-On Mac, choose the image for your chip: Intel or Apple Silicon.
-
-<!-- end_slide -->
-
-# Feeling Adventurous? Omarchy
-
-A keyboard-driven desktop, built on Arch and Hyprland.
-
-An integrated workspace with AI tools to help you understand and reshape it.
-
-**Change one thing. Test it. Know how to undo it.**
-
-Try a supported VM setup first. Check the current installation guide.
-
-<!-- end_slide -->
-
-# A Playground Of Your Own
-
-- **One computer:** experiment in a VM.
-- **An old PC:** give it a new job as your server.
-- **A Raspberry Pi:** a small machine for services and hardware projects.
-
-You do not need a rack, a cloud subscription, or new equipment to start.
+**Pick one, not all six.**
 
 <!-- end_slide -->
 
@@ -180,21 +67,6 @@ Keep it local at first. Learn secure access before exposing services online.
 
 <!-- end_slide -->
 
-# What Would You Enjoy Running?
-
-| Idea | First useful result |
-|---|---|
-| Media server | Watch your own videos with Jellyfin |
-| Retro gaming | Play a homebrew game on an old PC or Pi |
-| Video surveillance | View your own camera on your local network |
-| Game server | Play with a friend on your own server |
-| Home automation | Read a sensor or control a lamp |
-| Photo library | Browse a small collection of your own photos |
-
-**Pick one, not all six.**
-
-<!-- end_slide -->
-
 # Other Paths From The Same Foundation
 
 - **Data:** make a report about a game, sport, or subject you follow.
@@ -215,6 +87,64 @@ One working service beats ten unfinished installations.
 A small project you can explain is worth more than a large one you cannot.
 
 When it breaks, you have a new question to investigate.
+
+<!-- end_slide -->
+
+# A Playground Of Your Own
+
+- **One computer:** experiment in a VM.
+- **An old PC:** give it a new job as your server.
+- **A Raspberry Pi:** a small machine for services and hardware projects.
+
+You do not need a rack, a cloud subscription, or new equipment to start.
+
+<!-- end_slide -->
+
+# Your Next Linux: Ubuntu
+
+We learned on Debian. Ubuntu builds on Debian.
+
+Familiar commands and packages, with a desktop ready to use.
+
+**Start with Ubuntu LTS. You can explore other choices later.**
+
+<!-- end_slide -->
+
+# Keep Your Current Computer
+
+| Computer | Start here |
+|---|---|
+| Windows | Ubuntu in WSL2: terminal and development tools |
+| Windows, full Linux machine | Ubuntu in a virtual machine |
+| Mac | Ubuntu in a virtual machine, using UTM |
+
+A VM is a separate computer inside your computer.
+
+On Mac, choose the image for your chip: Intel or Apple Silicon.
+
+<!-- end_slide -->
+
+# Investigate, Don't Guess
+
+1. What did I want to happen?
+2. What actually happened? Read the error.
+3. What could explain it?
+4. Test one thing. Observe the result.
+
+**Each attempt should teach you something.**
+
+<!-- end_slide -->
+
+# Documentation Answers Specific Questions
+
+```bash
+ls --help
+man ls
+```
+
+Find the option you need. Read its example. Try it.
+
+You do not need to read the whole manual first.
 
 <!-- end_slide -->
 
@@ -243,6 +173,83 @@ Choose one resource for your current question—not a reading backlog.
 
 <!-- end_slide -->
 
+# I Still Get Stuck
+
+Chrome had no sound. I did not understand Linux audio.
+
+A useful question for AI:
+
+> Other apps have sound, but Chrome does not. What should I check first, and why?
+
+Together, we found:
+
+- My laptop used PulseAudio.
+- Chrome's own audio channel was muted.
+- `pulsemixer` let me unmute it.
+
+**I fixed the problem and learned how it worked.**
+
+<!-- end_slide -->
+
+# Unfamiliar Does Not Mean Impossible
+
+- **Wireless@SGx:** understand an unfamiliar Wi-Fi authentication setup.
+- **My old cameras:** discover ONVIF, recover access, connect them to my recorder.
+
+AI helped me find protocols, tools, and explanations I did not know.
+
+**Use it as a smart search assistant—not just a machine that does things for you.**
+
+<!-- end_slide -->
+
+# Get The Result. Keep The Knowledge.
+
+AI can make you faster. You must keep learning too.
+
+- **Search assistant:** find relevant documentation, then read and verify it.
+- **Tutor:** ask how it works, why it failed, and what the fix changes.
+- **Practice partner:** try a small variation and explain the result yourself.
+
+> Help me fix this, and explain it so I can understand the next problem better.
+
+**The more you understand, the better you can direct and check AI.**
+
+<!-- end_slide -->
+
+# Stay In Control
+
+- Understand changes before approving them, especially with `sudo`.
+- Keep passwords, tokens, and private data out of prompts.
+- Test on your own equipment. Keep a way back.
+- Check security settings against official documentation.
+
+**Working is not always the same as correct or safe.**
+
+<!-- end_slide -->
+
+# Feeling Adventurous? Omarchy
+
+A keyboard-driven desktop, built on Arch and Hyprland.
+
+An integrated workspace with AI tools to help you understand and reshape it.
+
+**Change one thing. Test it. Know how to undo it.**
+
+Try a supported VM setup first. Check the current installation guide.
+
+<!-- end_slide -->
+
+# Keep Learning With People
+
+- Keep in touch with someone from this class.
+- Meet to build something or investigate a problem.
+- Show someone what you discovered. Help them try it.
+- Visit a local makerspace or an in-person meetup.
+
+**You can learn independently without learning alone.**
+
+<!-- end_slide -->
+
 # Make Coming Back Easy
 
 You do not need hours every day.
@@ -267,7 +274,7 @@ Choose where to practice and one small thing you want to build.
 
 <!-- end_slide -->
 
-# KEEP LEARNING FOREVER
+# Stay Curious. Keep Building.
 
 Read. Try. Observe. Ask. Understand. Repeat.
 

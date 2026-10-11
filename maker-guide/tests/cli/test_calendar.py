@@ -63,7 +63,7 @@ def test_calendar_exports_sessions_as_csv_rows() -> None:
         '2026-08-01,session,S3,"Streams, pipes, processes"',
     ]
     assert "quest" not in result.output
-    assert "2026-10-24,session,S10,Keep Learning Forever" in result.output
+    assert "2026-10-24,session,S10,This Is Just The Beginning" in result.output
 
 
 def test_calendar_rejects_unknown_curriculum() -> None:

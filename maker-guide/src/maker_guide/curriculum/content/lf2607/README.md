@@ -113,7 +113,7 @@ Learn to inspect JSON weather data, produce a validated Singapore bulletin, and 
 - [Recap](sessions/S09/recap.md)
 - [Concept cards](concepts/README.md#automation)
 
-### S10: Keep Learning Forever
+### S10: This Is Just The Beginning
 
 Keep learning independently: investigate unfamiliar problems with documentation, AI, and community help; choose your next Linux environment; start a small project and improve it through experiments. Use the Julia Evans anthology as a companion, not a reading obligation.
 

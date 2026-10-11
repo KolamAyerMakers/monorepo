@@ -62,4 +62,4 @@ Run Your Own Web Server: requests and responses, visitor logs, processes, and li
 
 ## After The Course
 
-The final session adds no assigned quests. Choose your own experiment or project using the [Keep Learning Forever guide](../sessions/S10/self-study.md).
+The final session adds no assigned quests. Choose your own experiment or project using the [This Is Just The Beginning guide](../sessions/S10/self-study.md).
