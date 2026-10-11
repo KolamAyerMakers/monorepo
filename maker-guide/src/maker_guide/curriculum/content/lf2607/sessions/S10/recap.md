@@ -30,7 +30,7 @@ A data report, a Python tool, or a personalized desktop can be an equally good b
 
 *At the Prompt* collects five Julia Evans zines. Pick a page that interests you, predict what an example does, try it, and change something. The course PDFs and official project docs remain useful references; you do not need a huge reading backlog.
 
-The classroom will close after graduation. The follow-up email will confirm the date and provide your scripts, useful playground files, and course PDFs. Purchased zine PDFs are not part of that email.
+The classroom server will close when the cloud credits run out; there is no confirmed date. After graduation, the follow-up email will provide your scripts, useful playground files, and course PDFs. Purchased zine PDFs are not part of that email.
 
 Use [the S10 starting guide](self-study.md) for setup links, project ideas, and help-seeking examples.
 

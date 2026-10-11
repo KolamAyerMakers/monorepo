@@ -8,7 +8,7 @@ This is a starting guide for after the course, not another assignment. Choose an
 
 ## Keep Your Work
 
-The classroom server and SSH accounts will close shortly after graduation. The follow-up email will confirm the date and include your scripts, useful files from your playground, and the course PDFs. You do not need to learn archive or transfer commands during the final session.
+The classroom server and SSH accounts will close when the cloud credits run out; there is no confirmed date. After graduation, the follow-up email will include your scripts, useful files from your playground, and the course PDFs. You do not need to learn archive or transfer commands during the final session.
 
 The printed *At the Prompt* anthology is your reading and experimenting companion. The email contains course PDFs, not copies of the purchased Julia Evans zines.
 
@@ -40,6 +40,14 @@ For a Linux desktop, independent boot, and a machine you can experiment with, us
 
 Use a virtualization application compatible with your hardware; [VirtualBox's manual](https://www.virtualbox.org/manual/) is one starting point for supported Windows hosts. Follow its installation instructions and use an [official Ubuntu LTS image](https://ubuntu.com/download). Match the guest image to the supported processor architecture, leave memory and disk space for Windows, and take a VM snapshot before risky experiments. WSL2 and VM applications can interact with Windows virtualization features; consult their current compatibility guidance if performance or startup is poor.
 
+### Mac: Start With Terminal
+
+For command-line practice, you already have a Unix environment. Open **Terminal** from Applications → Utilities; nothing needs installing to start using familiar commands such as `pwd`, `ls`, `cd`, `mkdir`, `cat`, and `man`.
+
+macOS is Unix, not Linux. Many ideas carry over, but command options can differ, the default shell is usually zsh rather than Bash, and extra tools such as `jq` may need installing. Use the Mac's own manuals when checking an option. You can explore files, pipes, and redirection without setting up a VM first.
+
+For systemd, Linux-specific exercises, or a complete Linux desktop, use a Linux VM.
+
 ### Mac: Ubuntu In UTM
 
 Use [UTM for macOS](https://mac.getutm.app/) and its [Ubuntu guide](https://docs.getutm.app/guides/ubuntu/). Check your chip in **About This Mac**:
@@ -48,8 +56,6 @@ Use [UTM for macOS](https://mac.getutm.app/) and its [Ubuntu guide](https://docs
 - Intel: use an **amd64/x86-64** image.
 
 Virtualizing the matching architecture is different from emulating another processor. Follow the current UTM guide and Ubuntu download information; the guide's example release may be older than the current LTS. If it uses Ubuntu Server, it starts without a graphical desktop and explains how to add one.
-
-The macOS terminal is useful, but macOS is not Linux. Commands and options can differ, and classroom systemd services need a Linux environment.
 
 ### A Machine You Can Dedicate
 
@@ -109,6 +115,8 @@ Ask for explanations, tests, or a procedure. Feed back the real result rather th
 
 Use AI to get results **and accumulate knowledge**. As a search assistant, ask it to find relevant official documentation, then read and verify it. As a tutor, ask how something works, why it failed, and what a proposed fix changes. Try a small variation and explain the result yourself. You do not have to memorize every command, but do not let the tool do all your learning for you: understanding more makes you better at directing and checking it.
 
+Sometimes, deliberately work without AI. Read the error and documentation, form your own hypothesis, and test it. Spending time thinking through a problem builds your own reasoning; the goal is not always to finish as fast as possible. If you later ask for help, bring what you tried and what you observed.
+
 Before approving a change, understand what it does and how to undo it. Be especially careful with `sudo`, disk operations, deletion, and network security. Do not share passwords, tokens, private keys, or other people's personal data. Redact them from logs too.
 
 For Wi-Fi authentication, use the provider's official settings and certificate requirements; do not disable certificate verification to bypass a connection problem. For cameras, investigate only equipment you own or are authorized to manage, change default passwords, and keep access local until you understand secure remote access.
@@ -156,7 +164,7 @@ Use legal game/media sources. Keep cameras and other services off the public Int
 ### Other Paths
 
 - **Data:** choose an API about a game, sport, or subject you follow. Save one response and produce a small useful report. Check the API's terms, limits, and units.
-- **Programming:** use the [official Python tutorial](https://docs.python.org/3/tutorial/) to explore turning a shell script into a small tool. Start with one input and one result, not an entire application.
+- **Programming:** improve your Bash skills, then learn Python. Start by improving one of your course scripts: make it accept an input or handle a failed command clearly. When you want to explore another language, try a small Python quiz or number-guessing game. You do not need to master Bash first. Use the [official Python tutorial](https://docs.python.org/3/tutorial/) as a reference; ask a tutor or AI to explain one small step at a time when needed.
 - **Your environment:** make one keyboard shortcut or small command that removes an annoyance. Try AI-assisted customization on a copy or a VM snapshot first.
 - **Security puzzles:** [OverTheWire Bandit](https://overthewire.org/wargames/bandit/) gives you authorized Linux challenges. Read the current connection instructions, start at level 0, and investigate one question at a time. No score or completion target is required.
 
@@ -178,7 +186,7 @@ Read one page, predict what an example will do, try a small experiment, and chan
 
 Keep just a few extra resources nearby:
 
-- [Julia Evans's blog](https://jvns.ca/) and [Wizard Zines experiments](https://wizardzines.com/#experiments): approachable explanations and small playgrounds. [Mess with DNS](https://messwithdns.net/) lets you experiment without changing your real domain.
+- [The Linux Command Line, by William Shotts](https://linuxcommand.org/tlcl.php): a free, legally downloadable PDF covering terminal basics, common tools, and Bash scripting. Use it for a structured path or look up a chapter relevant to your project; try the examples rather than treating the whole book as required reading.
 - Your course PDFs and the official docs for the project you are currently building.
 - Bandit when you want a puzzle, not another obligation.
 

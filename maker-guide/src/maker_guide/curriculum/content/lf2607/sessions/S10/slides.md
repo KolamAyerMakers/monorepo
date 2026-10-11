@@ -70,7 +70,7 @@ Keep it local at first. Learn secure access before exposing services online.
 # Other Paths From The Same Foundation
 
 - **Data:** make a report about a game, sport, or subject you follow.
-- **Programming:** turn a useful script into a small Python tool.
+- **Programming:** improve your Bash skills, then learn Python.
 - **Your desktop:** build a shortcut or workflow that fits you.
 - **Security:** investigate puzzles on a training platform.
 
@@ -96,7 +96,7 @@ When it breaks, you have a new question to investigate.
 - **An old PC:** give it a new job as your server.
 - **A Raspberry Pi:** a small machine for services and hardware projects.
 
-You do not need a rack, a cloud subscription, or new equipment to start.
+You probably already have what you need. No need to buy new equipment to start.
 
 <!-- end_slide -->
 
@@ -112,15 +112,20 @@ Familiar commands and packages, with a desktop ready to use.
 
 # Keep Your Current Computer
 
+**WSL2:** use Linux tools inside Windows.
+
+**VM:** run a separate Linux system, with its own desktop and boot.
+
 | Computer | Start here |
 |---|---|
-| Windows | Ubuntu in WSL2: terminal and development tools |
-| Windows, full Linux machine | Ubuntu in a virtual machine |
-| Mac | Ubuntu in a virtual machine, using UTM |
+| Windows: terminal work | Ubuntu with WSL2 |
+| Windows: Linux desktop | Ubuntu VM with VirtualBox |
+| Mac: terminal work | Open Terminal—nothing to install |
+| Mac: Linux system | Ubuntu VM with UTM |
 
-A VM is a separate computer inside your computer.
+macOS is Unix, not Linux. Many commands are familiar; some options differ.
 
-On Mac, choose the image for your chip: Intel or Apple Silicon.
+Use a VM when you want a complete Linux environment.
 
 <!-- end_slide -->
 
@@ -148,75 +153,36 @@ You do not need to read the whole manual first.
 
 <!-- end_slide -->
 
-# A Book To Experiment With
-
-**At the Prompt** brings together five Julia Evans zines:
-
-- The Secret Rules of the Terminal
-- Bite Size Command Line
-- Bite Size Linux
-- Bite Size Bash
-- How Git Works
-
-**Pick a page. Try something. Change it. See what happens.**
-
-<!-- end_slide -->
-
 # A Small Learning Shelf
 
-- **Your book and course PDFs:** revisit an idea, then try it.
+- **Course PDFs:** revisit an idea, then try it.
 - **Official project docs:** install, configure, and understand your next tool.
-- **Julia Evans's blog and playgrounds:** explore how things work.
-- **OverTheWire Bandit:** practice investigation through Linux puzzles.
+- **[The Linux Command Line](https://linuxcommand.org/tlcl.php) — William Shotts:** free PDF, from terminal basics to Bash scripting.
+- **[OverTheWire Bandit](https://overthewire.org/wargames/bandit/):** practice investigation through Linux puzzles.
 
-Choose one resource for your current question—not a reading backlog.
-
-<!-- end_slide -->
-
-# I Still Get Stuck
-
-Chrome had no sound. I did not understand Linux audio.
-
-A useful question for AI:
-
-> Other apps have sound, but Chrome does not. What should I check first, and why?
-
-Together, we found:
-
-- My laptop used PulseAudio.
-- Chrome's own audio channel was muted.
-- `pulsemixer` let me unmute it.
-
-**I fixed the problem and learned how it worked.**
+**And to help you keep exploring, I have a little surprise for you at the ceremony.**
 
 <!-- end_slide -->
 
-# Unfamiliar Does Not Mean Impossible
+# Learn With AI
 
-- **Wireless@SGx:** understand an unfamiliar Wi-Fi authentication setup.
-- **My old cameras:** discover ONVIF, recover access, connect them to my recorder.
+When you do not know what to look for, AI can help you begin.
 
-AI helped me find protocols, tools, and explanations I did not know.
-
-**Use it as a smart search assistant—not just a machine that does things for you.**
-
-<!-- end_slide -->
-
-# Get The Result. Keep The Knowledge.
-
-AI can make you faster. You must keep learning too.
-
-- **Search assistant:** find relevant documentation, then read and verify it.
+- **Search assistant:** discover tools, concepts, and documentation. Verify what you find.
 - **Tutor:** ask how it works, why it failed, and what the fix changes.
 - **Practice partner:** try a small variation and explain the result yourself.
 
-> Help me fix this, and explain it so I can understand the next problem better.
+**Get the result. Keep the knowledge.**
 
-**The more you understand, the better you can direct and check AI.**
+## BUT DON'T OUTSOURCE YOUR THINKING
+
+Sometimes, put AI aside. Read, think, investigate, and test your own ideas.
 
 <!-- end_slide -->
 
-# Stay In Control
+# AI Helps. You Stay In Control.
+
+Understanding a suggestion also means knowing its risks.
 
 - Understand changes before approving them, especially with `sudo`.
 - Keep passwords, tokens, and private data out of prompts.
@@ -227,19 +193,21 @@ AI can make you faster. You must keep learning too.
 
 <!-- end_slide -->
 
-# Feeling Adventurous? Omarchy
+# Shape Your Linux With AI: Omarchy
 
-A keyboard-driven desktop, built on Arch and Hyprland.
+Make your computer fit the way you work.
 
-An integrated workspace with AI tools to help you understand and reshape it.
+Omarchy combines a keyboard-driven desktop with integrated AI tools.
 
 **Change one thing. Test it. Know how to undo it.**
 
-Try a supported VM setup first. Check the current installation guide.
+An adventurous option, not a requirement. Try a supported VM setup first.
 
 <!-- end_slide -->
 
 # Keep Learning With People
+
+Learning is not only about getting answers. Build and discover things together.
 
 - Keep in touch with someone from this class.
 - Meet to build something or investigate a problem.
@@ -250,27 +218,21 @@ Try a supported VM setup first. Check the current installation guide.
 
 <!-- end_slide -->
 
-# Make Coming Back Easy
+# Keep Going, A Little At A Time
 
-You do not need hours every day.
+- Make time regularly to try one small thing.
+- Before stopping, write down what you want to try next.
+- Missed a week? Start again. It is not a race.
 
-Before stopping, leave yourself the next small thing to try.
-
-When stuck: reread, reduce the problem, ask, or take a break.
-
-**Persist with the problem, not with the same failed command.**
+**Small, regular experiments build your skills.**
 
 <!-- end_slide -->
 
 # After The Course
 
-The classroom server will close shortly after graduation.
+The classroom server will close when our cloud credits run out.
 
-We will email the closure date, your scripts, useful playground files, and course PDFs.
-
-Your next environment does not need to recreate the classroom.
-
-Choose where to practice and one small thing you want to build.
+After graduation, we will email your scripts, useful playground files, and course PDFs.
 
 <!-- end_slide -->
 
@@ -282,4 +244,4 @@ There is always another approach, another explanation, another person to ask.
 
 Thank you for learning with us.
 
-**Congratulations. This is a beginning.**
+**🎉 Congratulations. This is a beginning.**
