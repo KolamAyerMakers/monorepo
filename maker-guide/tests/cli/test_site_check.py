@@ -155,8 +155,10 @@ def test_equivalent_checkers_pass_all_outcomes(
     if variant == "reference":
         source = (
             files("maker_guide.curriculum")
-            .joinpath("content/lf2607/mentors/s06-solutions/site-check.sh")
+            .joinpath("content/lf2607/sessions/S06/self-study.md")
             .read_text(encoding="utf-8")
+            .split("````bash\n", 1)[1]
+            .split("\n````", 1)[0]
         )
     elif variant == "reversed-pages":
         source = source.replace(

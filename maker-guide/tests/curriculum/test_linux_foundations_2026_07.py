@@ -688,14 +688,13 @@ def test_s5_reinforcement_preserves_the_cumulative_script(temporary_path: Path) 
     assert isinstance(extension_validation, AllOfValidation)
     assert isinstance(preserve_validation, AllOfValidation)
 
-    uptime_reference_text = (
-        _content_root()
-        .joinpath(
-            "mentors",
-            "s05-solutions",
-            "maker-report-with-uptime.sh",
-        )
-        .read_text(encoding="utf-8")
+    beginner_match = re.search(
+        r"(?ms)^````bash\n(?P<script>#!/bin/bash\n.*?)^````$",
+        _content_text(f"content/{COURSE_ID}/sessions/S05/self-study.md"),
+    )
+    assert beginner_match is not None
+    uptime_reference_text = beginner_match["script"].replace(
+        "  date\n", "  date\n  printf '* Uptime: '\n  uptime\n"
     )
     extension_source_validations = tuple(
         validation

@@ -11,10 +11,6 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.parametrize(
-    "script_path",
-    ["mentors/s06-solutions/site-check.sh", "sessions/S06/self-study.md"],
-)
 @pytest.mark.parametrize("homepage_curl_exit_status", [0, 6])
 @pytest.mark.parametrize(
     "pages",
@@ -41,9 +37,8 @@ import pytest
         ("200", 28, "CONNECTION FAILED:"),
     ],
 )
-def test_reference_checker_diagnoses_supplied_pages(  # noqa: C901, PLR0912, PLR0915 - page matrix
+def test_reference_checker_diagnoses_supplied_pages(  # noqa: PLR0915 - page matrix
     temporary_path: Path,
-    script_path: str,
     homepage_curl_exit_status: int,
     pages: tuple[str, ...],
     report_response: tuple[str, int, str],
@@ -52,11 +47,10 @@ def test_reference_checker_diagnoses_supplied_pages(  # noqa: C901, PLR0912, PLR
     http_status, curl_exit_status, expected_message = report_response
     reference_script = (
         files("maker_guide.curriculum")
-        .joinpath("content/lf2607", script_path)
+        .joinpath("content/lf2607/sessions/S06/self-study.md")
         .read_text(encoding="utf-8")
     )
-    if script_path.endswith(".md"):
-        reference_script = reference_script.split("````bash\n", 1)[1].split("\n````", 1)[0]
+    reference_script = reference_script.split("````bash\n", 1)[1].split("\n````", 1)[0]
     bash_path = shutil.which("bash")
     assert bash_path is not None
     temporary_path.joinpath("curl").write_text(
