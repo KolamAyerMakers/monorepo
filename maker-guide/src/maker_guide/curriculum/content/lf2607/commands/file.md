@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-file unknown-data
+file /bin/ls /etc/os-release
 ```
 
 ## What It Does
@@ -17,8 +17,7 @@ Use it before choosing text, archive, compression, or binary inspection tools.
 ```bash
 file /bin/ls
 file /etc/passwd
-file ~/src/pages/index.md
-file archive.tar.gz
+file /etc/os-release
 ```
 
 `file` compares the beginning bytes against known signatures, checks whether bytes look like text in an encoding, and uses filesystem metadata where useful. The result is a strong hint, not a mathematical proof.

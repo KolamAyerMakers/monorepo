@@ -22,7 +22,7 @@ ls -la ~
 ## Long Listing
 
 ```bash
-ls -l ~/src/pages
+ls -l /etc/os-release
 ```
 
 The first column shows file type and permissions. The owner and group columns matter on a shared server.

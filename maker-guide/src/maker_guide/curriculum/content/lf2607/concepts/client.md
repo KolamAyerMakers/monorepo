@@ -4,7 +4,7 @@
 
 A client is the program that initiates a request to a server.
 
-## Course Examples
+## Examples
 
 - `ssh` is a client for the SSH server.
 - `curl` is a client for HTTP and other protocols.
@@ -23,13 +23,13 @@ A client is the program that initiates a request to a server.
 ## Example
 
 ```bash
-curl -I https://lf2607.kolamayermakers.org/~username/
+curl -I --max-time 10 https://example.org/
 ```
 
 - Client: `curl`
 - Protocol: HTTPS
-- Server name: `lf2607.kolamayermakers.org`
-- Path: `/~username/`
+- Server name: `example.org`
+- Path: `/`
 - Default port: `443`
 
 ## Common Confusions

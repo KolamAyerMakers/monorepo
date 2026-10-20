@@ -70,14 +70,14 @@ alias gs='git status'
 Function:
 
 ```bash
-gacp() {
-  git add "$@"
-  git commit
-  git push
+show_arguments() {
+  printf '[%s]\n' "$@"
 }
 ```
 
 Use aliases for fixed abbreviations. Use functions when you need arguments, tests, variables, or several commands.
+
+Try `show_arguments 'one value' two`: quoted spaces stay inside one argument. For dependent commands inside a function, use `&&` or explicit failure handling rather than assuming a failed command stops the function.
 
 ## Service Example
 

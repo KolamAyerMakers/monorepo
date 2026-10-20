@@ -3,13 +3,13 @@
 `bat` prints files with syntax highlighting, line numbers, and paging.
 
 ```bash
-bat ~/src/pages/index.md
+bat /etc/services
 bat --plain /etc/os-release
 ```
 
-`bat` is a good everyday replacement for both `cat` and `less` when you are reading code, Markdown, or configuration files interactively. It is not the true standard: `cat` and `less` are available on almost every Unix-like system, while `bat` may be missing on minimal servers.
+Use `bat` for highlighted reading when installed; Ubuntu's package may name it `batcat`. Use `cat` for plain output or `less` for paging without highlighting.
 
-Use `cat` for tiny files, exact proof output, and pipelines where extra formatting would get in the way. Use `less` when `bat` is unavailable and you need paging.
+Press `q` to leave its pager. Do not install an extra reader just to complete an exercise.
 
 ## Watch Out
 

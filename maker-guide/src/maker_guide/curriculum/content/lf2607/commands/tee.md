@@ -3,7 +3,9 @@
 ## Use
 
 ```bash
-cut -d: -f7 /etc/passwd | tee ~/playground/login-shells.txt | wc -l
+work=$(mktemp -d)
+cut -d: -f7 /etc/passwd | tee "$work/login-shells.txt" | wc -l
+head "$work/login-shells.txt"
 ```
 
 ## What It Does

@@ -52,12 +52,6 @@ Your home directory is your base. System files such as `/etc/os-release` are rea
 
 `/docs` is your course-material playground. Run `cd /docs`, read anything in it, and follow what interests you.
 
-## IRC
-
-Join IRC at [the classroom IRC page](https://lf2607.kolamayermakers.org/irc/). Use `#lf2607` for course help during class or between sessions, and `#kolamayermakers` for general chat.
-
-Never paste passwords, private keys, tokens, or private account links into IRC.
-
 ## If You Are Stuck
 
 - Run `pwd` to see where you are.
@@ -66,7 +60,7 @@ Never paste passwords, private keys, tokens, or private account links into IRC.
 - Use Ctrl-C if a command will not stop.
 - Press `q` to leave `less` or `man`.
 - Read the error before asking for help.
-- Ask in `#lf2607` with the command and the error, without secrets.
+- Ask for help with your intended result, command, and exact error, without secrets.
 
 ## Live Core
 

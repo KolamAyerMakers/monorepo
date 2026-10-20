@@ -8,6 +8,13 @@ Linux tools can reshape text without opening an editor.
 
 Use `sed` for substitutions and `awk` for fields.
 
+```bash
+printf 'hello makers\n' | sed 's/makers/world/'
+printf 'Ada:42\nGrace:31\n' | awk -F: '{print $1}'
+```
+
+Expect `hello world`, then `Ada` and `Grace` on separate lines. Single quotes keep Bash from expanding awk's `$1`; here it means the first colon-separated input field, not a script argument.
+
 ## Done When
 
 You can transform a line and extract a field from a structured file.

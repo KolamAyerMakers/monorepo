@@ -2,6 +2,8 @@
 
 ## Use
 
+Use an existing local repository with a commit and a remote you are authorized to write to. Inspect `git remote -v` and `git branch --show-current` first. This example uses remote `origin` and branch `main`; substitute your actual names.
+
 ```bash
 git push -u origin main
 ```
@@ -22,9 +24,9 @@ Push commits, not uncommitted files. Run `git status` first.
 
 | Symptom | What It Usually Means | Fix |
 |---|---|---|
-| `src refspec main does not match any` | No local `main` branch or no commits | Run `git log --oneline -1`. The course repository uses `main`; ask before changing branches. |
+| `src refspec main does not match any` | No local `main` branch or no commits | Inspect `git branch --show-current` and `git log --oneline -1`; push the intended existing branch, not a guessed name. |
 | `remote origin already exists` | The remote name is already configured | Run `git remote -v`; ask before changing an existing remote. |
-| Authentication failed | Forgejo credentials or SSH key are not accepted | Verify the remote URL and key setup before retrying. |
+| Authentication failed | The Git host rejected your credentials or SSH key | Verify the remote URL and the host's authentication setup before retrying. |
 | Push rejected | Remote has commits your local branch does not have | Do not force push. Ask before merging or rebasing. |
 
 ## Proof Commands

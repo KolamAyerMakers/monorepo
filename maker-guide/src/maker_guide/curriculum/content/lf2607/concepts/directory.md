@@ -9,14 +9,15 @@ A directory is a filesystem object that maps names to entries such as files, sub
 ```bash
 pwd
 ls -la
-mkdir -p ~/playground/nested
-rmdir ~/playground/nested
-find ~/src -maxdepth 2 -type d
+work=$(mktemp -d)
+mkdir "$work/nested"
+find "$work" -maxdepth 2 -type d
+rmdir "$work/nested"
 ```
 
 ## Directory Permissions
 
-Read permission lets you list names. Write permission lets you add or remove entries. Execute permission lets you traverse into the directory. Directory execute permission is why `x` matters even when a directory is not a program.
+Read permission lets you list names. Write **and execute** permissions let you add or remove entries. Execute permission lets you traverse the directory and access entries by name. Directory `x` matters even though a directory is not a program.
 
 ## Mental Model
 
@@ -31,7 +32,7 @@ Think of a directory as a table of names. The table itself has permissions and m
 
 ## Proof Check
 
-Run `ls -ld ~ ~/src ~/src/pages` and compare directory permissions.
+Run `ls -ld ~ /etc /usr` and compare directory permissions. Why does `-d` matter here?
 
 ## Docs Pointers
 

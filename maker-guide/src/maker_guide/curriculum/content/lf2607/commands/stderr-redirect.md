@@ -3,7 +3,9 @@
 ## Use
 
 ```bash
-ls /no/such/path 2>~/playground/errors.txt
+work=$(mktemp -d)
+ls /no/such/path 2>"$work/errors.txt"
+cat "$work/errors.txt"
 ```
 
 ## What It Does
@@ -15,7 +17,9 @@ ls /no/such/path 2>~/playground/errors.txt
 Use it when permission errors are useful evidence but should not mix with normal output.
 
 ```bash
-ls /etc/hostname /no/such/path >~/playground/stdout.txt 2>~/playground/stderr.txt
+ls /etc/hostname /no/such/path >"$work/stdout.txt" 2>"$work/stderr.txt"
+cat "$work/stdout.txt"
+cat "$work/stderr.txt"
 ```
 
 ## Watch Out

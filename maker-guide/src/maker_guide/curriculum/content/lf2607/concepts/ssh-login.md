@@ -1,16 +1,16 @@
 # Concept: SSH Login
 
-Skill: ssh-login
-
 SSH lets your terminal talk to a shell running on another machine.
 
-For this course, your server is `lf2607.kolamayermakers.org`.
+Requires a remote account and host supplied by its administrator. Replace both placeholders:
 
 ```bash
-ssh username@lf2607.kolamayermakers.org
+ssh username@server.example
 ```
 
-Your course username is your handle. If `whoami` does not print it after login, you are not in the right account.
+The example address is not a live server. After connecting, `whoami` identifies the remote account and `hostname` identifies the remote machine. Commands now affect that machine, not your laptop. `exit` closes the remote shell and returns to the local one.
+
+Verify the server's host-key fingerprint before accepting a new key. A changed-key warning needs investigation, not deletion of the warning. Classroom addresses are in [Platform Reference](../guides/platform-reference.md); home Ubuntu practice does not need SSH.
 
 ## Go Deeper
 

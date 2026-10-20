@@ -2,6 +2,12 @@
 
 `maker-guide` is a teaching automation and learner support system for Kolam Ayer Makers. It connects IRC, CLI help, shell observations, quest validation, learner progress, LLM tutoring, audit logs, and operational repair commands.
 
+## Self-study distribution
+
+`make self-study-pack` builds public learner PDFs and `linux-foundations-practice.zip` under `dist/self-study/`. Rendering requires Pandoc, XeLaTeX with `fvextra` and `seqsplit`, and DejaVu fonts. For the practice ZIP alone, run `uv run python -m maker_guide.self_study_pack --kit-only`.
+
+The kit reuses the Astro starter and safe publication code, with a local layout and no classroom bot, progress projections, Codex export, or account tokens. It contains no personal learner exports or purchased zines. Review rendered PDFs and rehearse the local exercises before distribution; private exports and email delivery remain separate operations.
+
 ## Security Model
 
 The daemon is designed to run under its own UID and accept events from multiple local users through `/run/maker-guide/preexec.sock`.
@@ -33,7 +39,7 @@ CI installs the Ubuntu `caddy` package before pytest. Local developers need the 
 
 ### Curriculum
 
-The [course map](src/maker_guide/curriculum/content/lf2607/README.md) follows session work, not a mandatory bot checklist. Dedicated support and scoring guides remain available for optional help and recorded progress.
+The [course map](src/maker_guide/curriculum/content/lf2607/README.md) follows session work, not a mandatory bot checklist. Platform and scoring guides cover optional CLI help and recorded progress; learner IRC material is omitted from the reading bundle.
 
 - [S7: Run Your Own Web Server](src/maker_guide/curriculum/content/lf2607/sessions/S07/self-study.md): foreground personal Caddy, visitor logs, own PID/listener correlation with `ps` and `ss`, and core raw HTTP. Recover an occupied own port, an empty public practice root, and a stopped backend, distinguishing HTTP `404`, local refusal, proxy `502`, and independent static delivery. Publishing, notes, and Git remain optional self-study.
 - [S8: Keep Your Server Running](src/maker_guide/curriculum/content/lf2607/sessions/S08/self-study.md): systemd supervision, safe repair, and logout evidence; tmux and helpers are optional.

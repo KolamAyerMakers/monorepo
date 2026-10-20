@@ -15,13 +15,15 @@ File manipulation means changing directory entries and file content deliberately
 
 ```bash
 pwd
-ls -la
-cp -i source.txt backup.txt
-mv -i draft.md final.md
-rm -i old.txt
+work=$(mktemp -d)
+printf 'draft\n' > "$work/source.txt"
+cp -i "$work/source.txt" "$work/backup.txt"
+mv -i "$work/backup.txt" "$work/final.txt"
+rm -i "$work/final.txt"
+ls -la "$work"
 ```
 
-Practice in `~/playground` so mistakes are contained.
+The example uses a fresh temporary directory. Answer the removal prompt only after checking its path; the original `source.txt` should remain afterward.
 
 ## Watch Out
 

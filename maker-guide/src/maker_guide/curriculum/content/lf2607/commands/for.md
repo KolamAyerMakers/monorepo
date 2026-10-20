@@ -35,7 +35,7 @@ Bash expands `{1..3}` to `1 2 3`, then `for` iterates over those three words.
 Globbed files:
 
 ```bash
-for path in ~/src/pages/*.md; do
+for path in /etc/*.conf; do
   printf '%s\n' "$path"
 done
 ```
@@ -43,6 +43,8 @@ done
 ## Watch Out
 
 Quote variables inside loops.
+
+With Bash's default settings, an unmatched glob remains literal: a loop over `*.md` may print `*.md` once if no files match. Inspect the input pattern before treating it as a list of real files.
 
 If a loop body grows past a few commands, move it into a script.
 

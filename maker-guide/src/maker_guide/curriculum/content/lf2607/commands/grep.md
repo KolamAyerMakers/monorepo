@@ -25,12 +25,14 @@ Recursive directory search is later material. `-r` descends through subdirectori
 Regex anchors are optional exploration for later. They restrict a match to a position in the line:
 
 ```bash
-grep '^#' ~/src/pages/index.md
+grep '^#' /etc/services
 ```
 
 ## Watch Out
 
 Quote patterns that contain spaces or shell characters.
+
+Use `-F` for literal text rather than regex. Exit status `0` means a match, `1` means no match, and `2` means an error; empty output alone does not distinguish them.
 
 ## Docs Pointers
 

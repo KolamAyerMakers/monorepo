@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-sort names.txt
+printf 'Linus\nAda\nAda\n' | sort
 ```
 
 ## What It Does
@@ -15,31 +15,31 @@ sort names.txt
 Sort a file:
 
 ```bash
-sort names.txt
+printf 'Linus\nAda\nAda\n' | sort
 ```
 
 Sort pipeline output:
 
 ```bash
-grep makers ~/src/pages/*.md | sort
+cut -d: -f7 /etc/passwd | sort
 ```
 
 Sort uniquely:
 
 ```bash
-sort -u names.txt
+printf 'Linus\nAda\nAda\n' | sort -u
 ```
 
 Sort numerically:
 
 ```bash
-sort -n numbers.txt
+printf '10\n2\n1\n' | sort -n
 ```
 
 Reverse the order with `-r`. Combine it with numeric sorting to rank counts from largest to smallest:
 
 ```bash
-sort -nr counts.txt
+printf '10\n2\n1\n' | sort -nr
 ```
 
 ## `sort -u` Versus `uniq`
@@ -49,7 +49,7 @@ sort -nr counts.txt
 `uniq` only removes adjacent duplicate lines, so it usually needs sorted input first:
 
 ```bash
-sort names.txt | uniq
+printf 'Linus\nAda\nAda\n' | sort | uniq
 ```
 
 Use `sort -u` when you only need unique sorted lines. Use `sort | uniq -c` when you need counts.

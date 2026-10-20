@@ -21,12 +21,15 @@ For `>` and `>>`, no descriptor means stdout. Descriptor `2` means stderr. Redir
 
 Group several commands when one redirection should capture all their stdout:
 
+Use a fresh temporary directory for the output:
+
 ```bash
+work=$(mktemp -d)
 {
   printf '# Report\n'
   whoami
   hostname
-} > ~/src/pages/report.md
+} > "$work/report.md"
 ```
 
 The braces create one grouped command. The single `>` replaces the destination with stdout from the whole group. Stderr remains visible because it was not redirected.
@@ -36,8 +39,8 @@ The braces create one grouped command. The single `>` replaces the destination w
 ## Practice Alone
 
 ```bash
-ls /etc/hostname /no/such/path >stdout.txt 2>stderr.txt
-ls /etc/hostname /no/such/path >combined.txt 2>&1
+ls /etc/hostname /no/such/path >"$work/stdout.txt" 2>"$work/stderr.txt"
+ls /etc/hostname /no/such/path >"$work/combined.txt" 2>&1
 ```
 
 Read the two output files from the first command, then confirm the second command put both streams into one file.

@@ -3,7 +3,11 @@
 ## Use
 
 ```bash
-gzip -d file.gz
+work=$(mktemp -d)
+printf 'hello\n' > "$work/note.txt"
+gzip -k "$work/note.txt"
+file "$work/note.txt.gz"
+gzip -dc "$work/note.txt.gz"
 ```
 
 ## What It Does
@@ -18,7 +22,7 @@ Use `file` first to confirm the compression type.
 
 ## Watch Out
 
-Decompression may replace the input file with the output file.
+The example keeps the input with `-k` and decodes to stdout with `-dc`, so both files survive. Plain `gzip FILE` or `gzip -d FILE.gz` normally replaces its input. Use `-dc` when you only want to inspect it.
 
 ## Docs Pointers
 

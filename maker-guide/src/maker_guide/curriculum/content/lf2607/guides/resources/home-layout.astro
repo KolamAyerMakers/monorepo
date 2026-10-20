@@ -1,0 +1,21 @@
+---
+import "../styles/site.css";
+import "../styles/student.css";
+
+const { title = "My Linux site" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <main class="site-shell">
+      <header class="masthead"><a href="/">My Linux site</a></header>
+      <article><slot /></article>
+    </main>
+  </body>
+</html>

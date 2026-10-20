@@ -3,7 +3,10 @@
 ## Use
 
 ```bash
-git clone <repo-url>
+work=$(mktemp -d)
+git init --bare "$work/remote.git"
+git clone "$work/remote.git" "$work/copy"
+git -C "$work/copy" remote -v
 ```
 
 ## What It Does
@@ -12,7 +15,9 @@ git clone <repo-url>
 
 ## Practice
 
-Use it for smoke tests when you need proof your project is reproducible.
+The local example needs no network. An empty-repository warning is expected: the bare remote has no commits yet. `remote -v` shows the local remote path.
+
+For a real project, use `git clone 'REPOSITORY_URL' 'NEW_DIRECTORY'`, replacing both placeholders. Cloning retrieves committed files and history, not uncommitted edits or installed dependencies.
 
 ## Watch Out
 

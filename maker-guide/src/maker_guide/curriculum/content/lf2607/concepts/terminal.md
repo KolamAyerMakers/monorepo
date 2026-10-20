@@ -2,7 +2,7 @@
 
 ## Core Idea
 
-A terminal is the text interface you use to talk to programs. In this course, your terminal usually runs an SSH client locally, and that SSH client connects you to a shell on `lf2607.kolamayermakers.org`.
+A terminal displays program output and carries your keyboard input. It can run a local shell directly, or an SSH client connected to a remote shell.
 
 ## Terminal Versus Shell
 
@@ -10,6 +10,7 @@ The terminal is the window, tab, pane, or app that displays text and sends your 
 
 ```text
 keyboard -> terminal -> ssh -> remote shell -> Linux commands
+keyboard -> terminal -> local shell -> Linux commands
 ```
 
 Tmux sits inside this path and keeps a terminal session alive on the remote server even if your local SSH connection drops.
@@ -43,7 +44,7 @@ For prompt editing muscle memory, read [Readline](readline.md).
 
 ## Proof Check
 
-Open two terminal tabs and SSH into the server from both. Run `tty` in each. Different terminal sessions should show different pseudo-terminal paths such as `/dev/pts/2`.
+Open two Linux terminal tabs on the same machine and run `tty` in each. Expect different pseudo-terminal paths such as `/dev/pts/2`. No remote account is needed. A program without a controlling terminal may instead report `not a tty`.
 
 ## Docs Pointers
 

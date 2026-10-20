@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-sort names.txt | uniq
+printf 'Ada\nLinus\nAda\n' | sort | uniq
 ```
 
 ## What It Does
@@ -15,19 +15,19 @@ sort names.txt | uniq
 Collapse duplicates after sorting:
 
 ```bash
-sort names.txt | uniq
+printf 'Ada\nLinus\nAda\n' | sort | uniq
 ```
 
 Count duplicates:
 
 ```bash
-sort names.txt | uniq -c
+printf 'Ada\nLinus\nAda\n' | sort | uniq -c
 ```
 
 Show only duplicate lines:
 
 ```bash
-sort names.txt | uniq -d
+printf 'Ada\nLinus\nAda\n' | sort | uniq -d
 ```
 
 ## Watch Out

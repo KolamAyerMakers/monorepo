@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-curl -v https://example.org
+curl -v --max-time 10 https://example.org
 ```
 
 ## What It Does
@@ -16,7 +16,7 @@ Use it when a plain request fails and you need to see where.
 
 ## Watch Out
 
-Verbose output mixes diagnostic lines with response data. Read carefully.
+Diagnostics go to stderr; the body goes to stdout. Verbose logs can contain credentials and private request data. Redact them before sharing.
 
 ## What To Look For
 
@@ -31,8 +31,14 @@ Verbose output mixes diagnostic lines with response data. Read carefully.
 
 - No DNS answer: use `host NAME`.
 - Connection refused: the service is not listening on the target address and port.
-- `502` from the public service URL: check `systemctl --user status site.service` and the journal.
-- Output is too much: redirect stderr to a file with `curl -v URL >/tmp/body 2>/tmp/curl.log`.
+- `502`: the proxy answered but could not get a valid backend response. If you manage that backend, inspect its status and logs; otherwise report the exact result to its owner.
+- Output is too much: in a fresh temporary directory, capture stdout and stderr separately:
+
+```bash
+work=$(mktemp -d)
+curl -v --max-time 10 https://example.org >"$work/body.html" 2>"$work/curl.log"
+less "$work/curl.log"
+```
 
 ## Docs Pointers
 

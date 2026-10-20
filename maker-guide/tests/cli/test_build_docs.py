@@ -148,7 +148,7 @@ def test_build_docs_packages_curriculum_and_publishes_site(  # noqa: PLR0915 - O
     assert "/docs/commands/tmux.md/" in curriculum_indexes["commands"]
     assert "/docs/concepts/shell-basics.md/" in curriculum_indexes["concepts"]
     assert "/docs/concepts/terminal-multiplexing.md/" in curriculum_indexes["concepts"]
-    assert "Go Deeper After S03" in curriculum_indexes["concepts"]
+    assert "More About Processes" in curriculum_indexes["concepts"]
     assert "/docs/quests/prove-shell-alive.md/" in curriculum_indexes["quests"]
     assert "/docs/quests/build-playground.md/" not in curriculum_indexes["quests"]
     assert ".site-shell" in theme_content
@@ -254,7 +254,7 @@ def test_build_docs_publishes_open_reference_routes_and_gates_coursework(
     assert "/docs/commands/tmux.md/" in command_index
     assert "/docs/concepts/shell-basics.md/" in concept_index
     assert "/docs/concepts/terminal-multiplexing.md/" in concept_index
-    assert "Go Deeper After S03" in concept_index
+    assert "More About Processes" in concept_index
     assert "/docs/quests/prove-shell-alive.md/" in quest_index
     assert "/docs/quests/build-playground.md/" in quest_index
     assert "/docs/quests/measure-ping.md/" not in quest_index

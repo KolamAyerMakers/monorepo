@@ -3,8 +3,10 @@
 ## Use
 
 ```bash
-mv old-name.txt new-name.txt
-mv ~/playground/draft.md ~/playground/final.md
+work=$(mktemp -d)
+printf 'draft\n' > "$work/draft.md"
+mv -i "$work/draft.md" "$work/final.md"
+ls "$work"
 ```
 
 ## What It Does
@@ -22,13 +24,14 @@ That same operation covers both renaming and moving:
 Rename in the same directory:
 
 ```bash
-mv draft.md final.md
+mv -i "$work/final.md" "$work/renamed.md"
 ```
 
 Move into another directory, keeping the name:
 
 ```bash
-mv final.md ~/src/pages/
+mkdir "$work/finished"
+mv -i "$work/renamed.md" "$work/finished/"
 ```
 
 ## Watch Out

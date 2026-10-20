@@ -3,8 +3,10 @@
 ## Use
 
 ```bash
-rm ~/playground/old.txt
-rm -i ~/playground/old.txt
+work=$(mktemp -d)
+printf 'disposable\n' > "$work/old.txt"
+rm -i "$work/old.txt"
+ls -la "$work"
 ```
 
 ## What It Does
@@ -16,10 +18,12 @@ rm -i ~/playground/old.txt
 Prompt before removing:
 
 ```bash
-rm -i file.txt
+rm -i PATH
 ```
 
 `rm -rf` means recursive and force. It can remove a whole directory tree without prompting, so understand it before you need it.
+
+In the example, answer `y` only after reading the exact temporary path. `old.txt` should disappear. `PATH` above is a placeholder, not a file to create or a command to run unchanged. There is no automatic trash or undo.
 
 ## Watch Out
 

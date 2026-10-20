@@ -2,6 +2,8 @@
 
 Use command cards when you need a command's shape, purpose, or common failure mode. Examples introduce their own inputs or link to the setup they need; a card is a reference, not a required checklist.
 
+Run examples one command at a time in Bash and stop on unexpected errors. A `work=$(mktemp -d)` line creates a fresh temporary directory; keep using that same terminal for the rest of the example. Repeat the setup in a new terminal. Replace labelled placeholders such as `FILE`, `PID`, or `REPOSITORY_URL` before running syntax examples; variables such as `$HOME` are expanded by Bash.
+
 ## Login And Orientation
 
 - [ssh](ssh.md)
@@ -115,7 +117,6 @@ Use command cards when you need a command's shape, purpose, or common failure mo
 - [cron](cron.md)
 - [crontab](crontab.md)
 - [tmux](tmux.md)
-- [weechat](weechat.md)
 
 Use systemd for service supervision and scheduled work. Tmux keeps a terminal workspace; it does not replace a service manager. A scheduled build renders existing inputs unless its service explicitly refreshes them first.
 

@@ -4,7 +4,7 @@
 
 A glob pattern matches path names. Git reads `.gitignore` patterns to decide which untracked paths to hide from `git status`.
 
-## Patterns In This Course
+## Ignore Patterns
 
 | Pattern | Matches |
 |---|---|
@@ -16,7 +16,7 @@ A glob pattern matches path names. Git reads `.gitignore` patterns to decide whi
 
 ## Repository Scope
 
-Patterns in `~/src/.gitignore` apply inside `~/src`, not to sibling paths such as `~/public_html`.
+Patterns in a repository's `.gitignore` apply within that repository, not to sibling directories.
 
 An ignored untracked file stays untracked. A pattern does not remove a file from Git history or hide a file that Git already tracks.
 

@@ -2,7 +2,13 @@
 
 Install your public SSH key on the server.
 
-Use `ssh-copy-id` followed by the personal SSH address printed during registration. Do not target `new`.
+Requires a matching key pair on your own computer and a remote account you can already log into. Replace the example account, host, and public-key filename with your actual values:
+
+```bash
+ssh-copy-id -i ~/.ssh/id_ed25519.pub username@server.example
+```
+
+Run this on your own Ubuntu machine, not in the remote shell. See [SSH Keys](../concepts/ssh-keys.md) before creating or replacing a key.
 
 ## What It Does
 
@@ -17,7 +23,7 @@ Use `ssh-copy-id` followed by the personal SSH address printed during registrati
 
 ## Common Failures
 
-- Target is `new@...`: wrong account. Use the personal SSH address printed during registration.
+- Wrong account: verify the username and host from your normal login, not a registration account.
 - `No identities found`: reuse a safe existing key or generate one with `ssh-keygen` only when needed.
 - Permission denied: check username and password, then confirm the account exists.
 - Still asks for password after install: use verbose mode with your personal SSH address and inspect which key files SSH tries.

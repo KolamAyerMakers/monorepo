@@ -12,7 +12,7 @@ bg
 
 ## Practice
 
-Stop a safe command with `Ctrl-Z`, then run `jobs`, then `bg`.
+Run `sleep 60`, press `Ctrl-Z`, then run `jobs` and `bg`. The job changes from stopped to running. Bring it back with `fg` and press `Ctrl-C` to finish the experiment.
 
 ## Watch Out
 

@@ -8,4 +8,4 @@ cat /etc/os-release
 
 Use `cat` for short files. Use `less` when output is too long.
 
-`bat` is often nicer than both `cat` and `less` for interactive reading because it adds highlighting and paging. `cat` and `less` are the real standards: expect them everywhere, and expect `bat` only when the system has installed it.
+For optional syntax highlighting, see [bat](bat.md). Check unknown files with [file](file.md) before printing them: binary bytes can disrupt the terminal display.

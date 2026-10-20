@@ -2,6 +2,8 @@
 
 ## Use
 
+Use a repository with at least one commit, such as the [Git card's demo](git.md).
+
 ```bash
 git log --oneline
 ```

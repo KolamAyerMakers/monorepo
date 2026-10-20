@@ -3,7 +3,9 @@
 ## Use
 
 ```bash
-bash script.sh
+work=$(mktemp -d)
+printf '#!/bin/bash\nprintf "hello\\n"\n' > "$work/hello.sh"
+bash "$work/hello.sh"
 ```
 
 ## What It Does
@@ -12,20 +14,15 @@ bash script.sh
 
 ## Practice
 
-Save commands one per line in a file such as `~/scripts/report.sh`, then run it:
+The example creates a script and prints `hello`. Reveal each command as Bash runs it:
 
 ```bash
-cd ~/scripts
-bash report.sh
-```
-
-Reveal each command as Bash runs it:
-
-```bash
-bash -x report.sh
+bash -x "$work/hello.sh"
 ```
 
 Trace lines begin with `+` and go to stderr. Normal script stdout remains separate.
+
+Tracing can expose expanded secrets; do not share a trace without reviewing it.
 
 ## Watch Out
 

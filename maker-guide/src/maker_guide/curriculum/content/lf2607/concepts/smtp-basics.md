@@ -2,7 +2,7 @@
 
 ## Core Idea
 
-SMTP is the protocol mail servers use to move email between systems. You do not administer mail in this course, but SMTP is a useful comparison point because it shows that the internet is many text-based protocols, not just HTTP.
+SMTP is the protocol mail servers use to transfer email. It is distinct from HTTP: reaching a website does not prove mail delivery works for that domain.
 
 ## Mental Model
 
@@ -24,7 +24,7 @@ dig MX example.org
 
 ## Why We Do Not Practice Sending Mail Here
 
-Mail systems have spam, abuse, reputation, authentication, privacy, and operational risks. The course uses SMTP as protocol literacy, not as a shared-server exercise.
+Mail systems have spam, abuse, reputation, authentication, privacy, and operational risks. Inspecting DNS is enough for this example; do not send test mail through a server without permission.
 
 ## Common Confusions
 

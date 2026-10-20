@@ -7,10 +7,10 @@ A file is a named filesystem object that usually stores bytes plus metadata such
 ## Commands To Try
 
 ```bash
-ls -l ~/src/pages/index.md
-stat ~/src/pages/index.md
-file ~/src/pages/index.md
-cat ~/src/pages/index.md
+ls -l /etc/os-release
+stat /etc/os-release
+file /etc/os-release
+cat /etc/os-release
 ```
 
 `ls -l` shows compact metadata. `stat` shows detailed metadata. `file` guesses content type. `cat` prints file bytes as text.
@@ -21,10 +21,10 @@ File content is the bytes inside the file. Metadata is information about the fil
 
 ## Source Versus Generated File
 
-In this course:
+For a generated website, for example:
 
-- Source file: `~/src/pages/index.md`.
-- Generated file: `~/public_html/index.html`.
+- Source file: Markdown you edit, such as `pages/index.md`.
+- Generated file: HTML produced by a build, such as `output/index.html`.
 
 Edit source. Rebuild generated files.
 
@@ -37,7 +37,7 @@ Edit source. Rebuild generated files.
 
 ## Proof Check
 
-Run `stat` on one source file and identify size, owner, permissions, and modification time.
+Run `stat /etc/passwd` and identify size, owner, permissions, and modification time. Do not edit the system file.
 
 ## Docs Pointers
 

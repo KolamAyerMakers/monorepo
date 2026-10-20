@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-cd ~/src
+cd /etc
 ```
 
 ## What It Does
@@ -14,7 +14,7 @@ cd ~/src
 
 ```bash
 cd
-cd ~/src
+cd /etc
 cd ..
 cd -
 ```

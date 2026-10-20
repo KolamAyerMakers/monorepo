@@ -3,16 +3,17 @@
 ## Use
 
 ```bash
-git init
+work=$(mktemp -d)
+git -C "$work" init -b main
 ```
 
 ## What It Does
 
-`git init` creates a repository in the current directory.
+`git init` creates a repository. Here, `-C` selects a fresh temporary directory and `-b main` names the initial branch. No commit exists until you stage and commit a file.
 
 ## Practice
 
-Run this from `~/src` to start your site's Git history.
+Follow the [Git card](git.md) to create a file and its first commit.
 
 ## Watch Out
 

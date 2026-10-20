@@ -36,6 +36,17 @@ cat >> ~/.ssh/authorized_keys
 
 After manual installation, run `exit` to return to your own computer. After either installation method, reconnect from your own computer with your normal SSH command and run `whoami`. For a non-default key filename, insert `-i` followed by the matching private-key path immediately after `ssh` in that command. Your device uses the private key locally to prove it matches the public key installed on the server. A key passphrase prompt is not your server account password prompt.
 
+## Replace a lost or exposed key
+
+Contact each server's administrator promptly if a private key is exposed. Changing an account password does not revoke an authorized key.
+
+1. Keep a working login or administrator recovery path available.
+2. Generate a new pair under an unused filename on your own computer; install its public key.
+3. Verify a new login with `ssh -i NEW_PRIVATE_KEY username@host`, replacing the placeholders. Never send that private key to the server.
+4. Remove **only the old public-key entry** from each affected account's `~/.ssh/authorized_keys`, and from any hosting service where it was registered. Preserve unrelated keys. For an exposure, ask the administrator to revoke it immediately if you cannot do so safely yourself.
+
+Do not delete the entire key list or overwrite a private key just to make its filename match an example.
+
 ## Related Docs
 
 - [ssh-keygen](../commands/ssh-keygen.md)

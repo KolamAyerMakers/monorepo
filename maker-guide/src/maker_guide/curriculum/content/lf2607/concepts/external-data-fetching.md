@@ -1,38 +1,28 @@
 # External Data Fetching
 
-## Core Idea
+Download into a separate file, validate it, then replace the last good result. Redirecting directly onto the good file destroys it before the request succeeds.
 
-External data fetching means a script asks a network service for data, saves the response, and uses it as input for local work.
+## Try it
 
-In this course, the local work is usually publishing a small fetched response into a Markdown page.
-
-## Safe Pattern
+This example uses a fresh temporary directory, so it cannot replace your existing work:
 
 ```bash
-curl -L https://example.org > ~/playground/example.html
+work=$(mktemp -d)
+printf 'Previous good page\n' > "$work/page.html"
+if curl -fLsS --max-time 10 https://example.org/ -o "$work/download.html" && [[ -s "$work/download.html" ]]; then
+  mv "$work/download.html" "$work/page.html"
+else
+  printf 'Download failed or was empty; previous page kept.\n' >&2
+fi
+head "$work/page.html"
 ```
 
-Inspect before publishing:
+On success, inspect the fetched HTML. To practise failure, rerun the full example with `https://example.invalid/`; the last command should still show `Previous good page`. The `.invalid` domain is reserved for names that do not resolve.
 
-```bash
-head ~/playground/example.html
-file ~/playground/example.html
-```
+`-f` rejects HTTP errors, `-L` follows redirects, `-sS` keeps error messages, and `--max-time` bounds the request. Nonempty content is only a basic check: for JSON, also validate required fields and types with [jq](../commands/jq.md) before replacing the output.
 
-Then write a small Markdown page and rebuild.
+Only rebuild or publish after the required download and validation succeed. Keep credentials out of URLs and logs; never execute downloaded data as shell commands.
 
-## Questions To Ask
+## Related reading
 
-- What URL did the data come from?
-- Did the request follow redirects?
-- Is the response text, HTML, JSON, or binary data?
-- Where did you write it locally?
-- Can you rebuild the page without manually copying output?
-
-## Watch Out
-
-Do not fetch huge data blindly into your site. Start with small text endpoints and inspect headers with `curl -I`.
-
-## Docs Pointers
-
-- Read [curl](../commands/curl.md), [curl -I](../commands/curl-head.md), [HTTP](http.md), [client](client.md), [file encoding](file-encoding.md), and [filesystem as CMS](filesystem-as-cms.md).
+- [curl](../commands/curl.md), [HTTP](http.md), and [file encoding](file-encoding.md)

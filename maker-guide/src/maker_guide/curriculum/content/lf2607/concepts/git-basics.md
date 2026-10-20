@@ -2,7 +2,7 @@
 
 ## Core Idea
 
-Git records source history as commits. In this course, commit source under `~/src`; do not treat generated HTML under `~/public_html/` as the source of truth.
+Git records selected versions of files as commits. Commit source, not merely output that a build can regenerate. A local repository needs neither an online account nor a remote server.
 
 The basic loop is:
 
@@ -12,14 +12,15 @@ edit source -> inspect changes -> stage changes -> commit -> push when ready
 
 ## Practice Alone
 
-Run these from `~/src`:
+Create the disposable repository on the [Git card](../commands/git.md), which introduces `note.txt` and records a first commit. Edit that note, save it, then run these from that repository:
 
 ```bash
 git status
 git diff
-git add pages/index.md
+git add note.txt
 git status
-git commit -m "update homepage"
+git diff --staged
+git commit -m "Clarify the note"
 git log --oneline -3
 ```
 
@@ -27,7 +28,7 @@ Use `git status` before and after staging. It tells you which files are untracke
 
 ## Common Recovery
 
-- `nothing to commit`: save the file, check that you are in `~/src`, then run `git status` again.
+- `nothing to commit`: save the file, check your repository directory, then inspect `git status` and `git diff --staged`.
 - Scratch file appears in status: add a deliberate `.gitignore` rule before broad staging.
 - Unsure what changed: run `git diff` before `git add`.
 

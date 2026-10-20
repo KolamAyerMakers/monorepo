@@ -4,34 +4,17 @@
 
 An archive groups files. Compression makes bytes smaller. These are related but not the same. A `.tar` file is usually an archive. `.gz` and `.bz2` are compression formats. A `.tar.gz` file is both: tar archive first, gzip compression around it.
 
-## Always Identify First
+## Identify First
 
-```bash
-file unknown
-```
-
-Do not guess the decoder from the filename. Filenames can lie, especially in puzzles.
+Run `file PATH`, replacing `PATH` with the file you are investigating. Do not choose the decoder solely from its filename: extensions can be wrong.
 
 ## Safe Archive Workflow
 
-```bash
-mkdir -p ~/extract-work
-tar -tf archive.tar
-tar -xf archive.tar -C ~/extract-work
-find ~/extract-work -maxdepth 2 -type f -print
-```
-
-List before extracting. Extract into a scratch directory so an archive cannot spray files across your current workspace.
+The [tar card](../commands/tar.md) creates a small archive and an empty extraction directory. Follow that example before trying an unfamiliar archive. List paths before extraction, use a new directory without sudo, and do not execute extracted files merely because extraction succeeded. A scratch directory is not a sandbox for malicious content.
 
 ## Compression Workflow
 
-```bash
-gzip -d file.gz
-bzip2 -d file.bz2
-base64 -d encoded.txt > decoded.bin
-```
-
-Decompression tools often replace the compressed file with the decompressed output. Work on copies when experimenting.
+The [gzip](../commands/gzip.md) and [bzip2](../commands/bzip2.md) cards introduce their own input files. Their `-dc` examples decode to stdout without replacing the compressed input. Plain decompression commonly replaces its input; preserve originals when investigating.
 
 ## Common Confusions
 

@@ -12,10 +12,10 @@ find ~ -maxdepth 2 -type f
 
 ## Examples
 
-Find files under your source tree:
+Find files in your home directory:
 
 ```bash
-find ~/src -type f
+find ~ -maxdepth 2 -type f
 ```
 
 Limit depth while learning:
@@ -27,19 +27,19 @@ find ~ -maxdepth 2 -type d
 Find Markdown files:
 
 ```bash
-find ~/src/pages -name '*.md'
+find ~ -maxdepth 3 -type f -name '*.md'
 ```
 
 Find recently changed files:
 
 ```bash
-find ~/src -type f -mtime -1
+find ~ -maxdepth 3 -type f -mtime -1
 ```
 
 Find empty directories:
 
 ```bash
-find ~/playground -type d -empty
+find ~ -maxdepth 3 -type d -empty
 ```
 
 Ignore permission noise when deliberately searching system paths:

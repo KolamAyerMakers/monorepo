@@ -2,6 +2,8 @@
 
 ## Use
 
+Use the [Git card's demo repository](git.md). Change `note.txt`, save it, then run `git add note.txt` before this command.
+
 ```bash
 git commit -m "describe the change"
 ```

@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-ls -l ~/playground
+ls -l /etc/os-release
 ```
 
 ## What It Does

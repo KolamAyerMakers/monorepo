@@ -15,9 +15,10 @@ A file descriptor is a small integer handle a process uses for an open file, pip
 ## Redirection Examples
 
 ```bash
-ls /etc/hostname >out.txt
-ls /no/such/path 2>error.txt
-ls /etc/hostname /no/such/path >combined.txt 2>&1
+work=$(mktemp -d)
+ls /etc/hostname >"$work/out.txt"
+ls /no/such/path 2>"$work/error.txt"
+ls /etc/hostname /no/such/path >"$work/combined.txt" 2>&1
 ls /no/such/path 2>/dev/null
 ```
 
@@ -26,13 +27,13 @@ ls /no/such/path 2>/dev/null
 ## Why Order Matters
 
 ```bash
-ls /etc/hostname /no/such/path >combined.txt 2>&1
+ls /etc/hostname /no/such/path >"$work/combined.txt" 2>&1
 ```
 
 This sends stdout to `combined.txt`, then sends stderr to the same destination.
 
 ```bash
-ls /etc/hostname /no/such/path 2>&1 >out.txt
+ls /etc/hostname /no/such/path 2>&1 >"$work/out.txt"
 ```
 
 This first sends stderr to the old stdout, then sends stdout to `out.txt`. The result is different.

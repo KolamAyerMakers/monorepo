@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-xxd file.bin
+printf 'A\n' | xxd
 ```
 
 ## What It Does
@@ -14,7 +14,7 @@ It is useful when a file is not safe or meaningful to print with `cat`.
 
 ## Practice
 
-Use it to inspect file headers.
+Expect hexadecimal `41 0a`: ASCII `A`, then a newline. Use `xxd -l 32 /bin/ls` to inspect only the first 32 bytes of a Linux executable.
 
 ## Watch Out
 

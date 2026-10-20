@@ -3,7 +3,8 @@
 ## Use
 
 ```bash
-printf 'again\n' >> ~/playground/hi.txt
+work=$(mktemp -d)
+printf 'again\n' >> "$work/hi.txt"
 ```
 
 ## What It Does
@@ -13,9 +14,9 @@ printf 'again\n' >> ~/playground/hi.txt
 ## Practice
 
 ```bash
-printf 'first\n' > ~/playground/hi.txt
-printf 'second\n' >> ~/playground/hi.txt
-cat ~/playground/hi.txt
+printf 'first\n' > "$work/hi.txt"
+printf 'second\n' >> "$work/hi.txt"
+cat "$work/hi.txt"
 ```
 
 Both lines remain because only the first command overwrites.

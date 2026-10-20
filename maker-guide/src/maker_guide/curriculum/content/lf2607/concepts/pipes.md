@@ -48,7 +48,8 @@ cat /etc/hostname /no/such/path 2>&1 | grep path
 Keep a copy while continuing the pipeline:
 
 ```bash
-cut -d: -f7 /etc/passwd | tee ~/playground/login-shells.txt | wc -l
+work=$(mktemp -d)
+cut -d: -f7 /etc/passwd | tee "$work/login-shells.txt" | wc -l
 ```
 
 Count and rank login shells:

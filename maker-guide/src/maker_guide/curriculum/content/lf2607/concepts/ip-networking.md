@@ -15,13 +15,12 @@ When a network task fails, separate the questions:
 5. Protocol: did the client and server speak the same protocol?
 6. Application: did authentication, routing, files, or permissions succeed?
 
-## Course Commands
+## Commands to Try
 
 ```bash
-host lf2607.kolamayermakers.org
+host example.org
 ping -c 3 1.1.1.1
-curl -I https://lf2607.kolamayermakers.org/~username/
-ssh username@lf2607.kolamayermakers.org
+curl -I --max-time 10 https://example.org/
 ```
 
 Each command answers a different networking question. Do not use one command as proof for every layer.
@@ -35,7 +34,7 @@ Each command answers a different networking question. Do not use one command as 
 - HTTPS default port: `443`
 - SSH default port: `22`
 
-A port identifies a service endpoint on a host. Your course user-managed service listens on a local high port behind the public proxy.
+A port identifies a service endpoint on a host. A server may listen locally on one port while a reverse proxy accepts public requests on another.
 
 ## DNS Is Not The Service
 

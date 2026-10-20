@@ -232,7 +232,7 @@ def test_makers_projection_rebuilds_files_and_marks_projection_outbox(  # noqa: 
         assert "[whoami](../commands/whoami.md)" in (documents_root / QUEST_CONTENT_PATH).read_text(
             encoding="utf-8"
         )
-        assert "[Time Zones](../../concepts/time-zones.md)" in (
+        assert "[Terminal](../../concepts/terminal.md)" in (
             documents_root / S01_SELF_STUDY_PATH
         ).read_text(encoding="utf-8")
         command_index = (documents_root / "commands" / "README.md").read_text(encoding="utf-8")
@@ -242,7 +242,7 @@ def test_makers_projection_rebuilds_files_and_marks_projection_outbox(  # noqa: 
         assert "(grep.md)" in command_index
         assert "(shell-basics.md)" in concept_index
         assert "(pipes.md)" in concept_index
-        assert "### Go Deeper After S03" in concept_index
+        assert "### More About Processes" in concept_index
         assert "(prove-shell-alive.md)" in quest_index
         assert "(count-stream.md)" not in quest_index
         assert not (documents_root / "sessions" / "S03").exists()
@@ -407,7 +407,7 @@ def test_makers_projection_publishes_open_references_and_gates_coursework(
         assert "(tmux.md)" in (documents_root / "commands" / "README.md").read_text(
             encoding="utf-8"
         )
-        assert "### Go Deeper After S03" in (documents_root / "concepts" / "README.md").read_text(
+        assert "### More About Processes" in (documents_root / "concepts" / "README.md").read_text(
             encoding="utf-8"
         )
         assert find_missing_doc_references(documents_root) == []

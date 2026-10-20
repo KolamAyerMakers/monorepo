@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-host lf2607.kolamayermakers.org
+host example.org
 ```
 
 ## What It Does

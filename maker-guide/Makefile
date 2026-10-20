@@ -3,7 +3,10 @@ SHELL := /bin/bash
 VENV_DIRECTORY := dist/venv
 VENV_ARTIFACT_LABEL := $(shell git describe --always | tr -d '\n' | tr -cs '[:alnum:]._' '-')
 
-.PHONY: venv-artifact clean-venv-artifact
+.PHONY: venv-artifact clean-venv-artifact self-study-pack
+
+self-study-pack:
+	uv run python -m maker_guide.self_study_pack
 
 venv-artifact:
 	@artifact_label="$(VENV_ARTIFACT_LABEL)"; \

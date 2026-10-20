@@ -6,7 +6,7 @@ Show the end of a file.
 tail -n 5 /etc/services
 ```
 
-`tail` is useful for recent log output later in the course.
+`tail -f FILE` follows newly appended lines; replace `FILE` with a log you can read. Press `Ctrl-C` to stop following, without stopping the process writing the log.
 
 You may see the shorter old form `tail -5`, but use `-n` when teaching yourself because it states what the number controls.
 

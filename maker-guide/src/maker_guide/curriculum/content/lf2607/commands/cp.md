@@ -3,7 +3,10 @@
 ## Use
 
 ```bash
-cp source.txt copy.txt
+work=$(mktemp -d)
+printf 'original\n' > "$work/source.txt"
+cp -i "$work/source.txt" "$work/copy.txt"
+cat "$work/copy.txt"
 ```
 
 ## What It Does
@@ -12,28 +15,31 @@ cp source.txt copy.txt
 
 ## Common Forms
 
-Copy one file:
+The example creates a fresh temporary directory and prints `original` from the copy. Use its `work` variable for these variations.
+
+Copy one file to another name:
 
 ```bash
-cp ~/src/pages/index.md ~/playground/index.backup.md
+cp -i "$work/source.txt" "$work/backup.txt"
 ```
 
 Copy into a directory:
 
 ```bash
-cp notes.md ~/playground/
+mkdir "$work/backup"
+cp -i "$work/source.txt" "$work/backup/"
 ```
 
 Copy a directory tree recursively:
 
 ```bash
-cp -r ~/src/pages ~/playground/pages-backup
+cp -r "$work/backup" "$work/backup-copy"
 ```
 
 Prompt before overwriting:
 
 ```bash
-cp -i source.txt target.txt
+cp -i "$work/source.txt" "$work/copy.txt"
 ```
 
 ## Watch Out

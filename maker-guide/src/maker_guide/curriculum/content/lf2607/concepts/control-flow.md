@@ -16,11 +16,10 @@ Without control flow, a script is just a fixed list of commands. With control fl
 ## Example
 
 ```bash
-if [[ -f ~/src/pages/index.md ]]; then
-  printf 'source exists\n'
+if [[ -f /etc/os-release ]]; then
+  printf 'distribution information exists\n'
 else
-  printf 'missing source\n' >&2
-  exit 1
+  printf 'distribution information is missing\n' >&2
 fi
 ```
 

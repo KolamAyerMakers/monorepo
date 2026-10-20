@@ -3,7 +3,8 @@
 ## Use
 
 ```bash
-printf 'Hello %s\n' "$1"
+name='Ada Lovelace'
+printf 'Hello %s\n' "$name"
 ```
 
 ## What It Does

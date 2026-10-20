@@ -6,14 +6,16 @@ Logging is the practice of recording events, warnings, errors, and context so a 
 
 ## Logs Versus Output
 
-Output is what a command returns to the caller. Logs are records kept for diagnosis. A service may return a short `502` to a client while the journal contains the useful reason.
+Output is what a command prints to the caller. Logs are records kept for diagnosis; systemd commonly captures a service's stdout and stderr in the journal. A proxy's short `502` response may have a more useful explanation in its own logs or the backend's logs.
 
-## Course Commands
+## Commands to Try
+
+First create and start the [sample web service](systemd-user-services.md), which supplies its own page and unit:
 
 ```bash
-journalctl --user -u site.service --no-pager -n 50
-journalctl --user -u site.service -f
-systemctl --user status site.service
+journalctl --user -u sample-web.service --no-pager -n 50
+journalctl --user -u sample-web.service -f
+systemctl --user status sample-web.service
 ```
 
 Use `status` for the current summary and `journalctl` for the detailed event history.
@@ -43,7 +45,7 @@ Use `status` for the current summary and `journalctl` for the detailed event his
 
 ## Proof Check
 
-Restart `site.service`, then run `journalctl --user -u site.service --no-pager -n 20`. Identify the timestamp and one message from the restart.
+Restart your demo with `systemctl --user restart sample-web.service`, then run `journalctl --user -u sample-web.service --no-pager -n 20`. Identify the timestamp and a message from that restart. Stop and disable the demo as shown on its setup card when finished.
 
 ## Docs Pointers
 

@@ -1,143 +1,156 @@
-# S9 Self-Study: Keep Your Website Up To Date
+# S9 — Keep Your Website Up to Date
 
-Session: S9
+Fetch a forecast, turn JSON into a page, and schedule generation before publication.
 
-2026-10-10
+**You need:** curl, jq, Bash, your site source, and a working systemd user manager. These exercises need Internet access. At home, use [Continue at Home](../../guides/continue-at-home.md); a public website is not required.
 
-## The idea
+## Before fetching
 
-A systemd timer is the **when**; its matching service is the **what**. A oneshot service runs a finite task and exits. It is separate from the always-running web server. Timers are useful for daily site builds, rotating recommendations, scheduled reminders, and refreshing dashboards.
+An API returns structured data. **JSON** objects have named fields; arrays hold ordered values. In jq, `.daily.temperature_2m_max[0]` means: the `daily` object → its temperature array → the first value. `-r` prints a string without JSON quotes.
 
-`OnCalendar=hourly` means at each clock hour. `RandomizedDelaySec=55min` spreads starts over a window of up to 55 minutes; it is neither strict concurrency spacing nor a real-time start guarantee. Check the calendar occurrence with `systemd-analyze calendar hourly`.
+We use Singapore coordinates `1.32411, 103.8698`. Forecast temperatures are °C. PM2.5 is modelled by CAMS Global in μg/m³—not a station reading or official Singapore PSI. Forecast/model timestamps use Singapore time; retrieval time describes when you fetched them.
 
-The installed `maker-guide-build-personal-website` helper is the executable behind the classroom's `build-website` shortcut. systemd does not run interactive shell aliases. The build renders existing source; it does not create new content by itself. User timers need the user manager running. See [lingering](../../concepts/lingering.md) for logout behavior.
+Keep a working script or page if repeating the lesson. The early exercises overwrite only their named practice files.
 
-## Exercise: publish Singapore conditions
-
-Complete all seven steps in order, in the same SSH shell so `~/` refers to the same account. You need `curl` and `jq`; if either is missing, ask your mentor rather than installing packages. Forecast maxima are °C. CAMS PM2.5 is modelled μg/m³, not official Singapore PSI or a station reading.
+## Build the bulletin
 
 ### 1. Fetch and inspect weather
-**Goal:** save today's forecast and inspect its shape.
+
+**Goal:** save one day's forecast and understand its shape.
 
 **Do:**
+
 ```bash
 mkdir -p ~/playground/singapore
 curl -fsS --max-time 15 'https://api.open-meteo.com/v1/forecast?latitude=1.32411&longitude=103.8698&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset&timezone=Asia%2FSingapore&forecast_days=1' -o ~/playground/singapore/weather.json
 jq '{daily: .daily, units: .daily_units}' ~/playground/singapore/weather.json
 ```
-**Check:** daily time, maximum, rain probability, sunrise and sunset appear; units include °C and %. Then run `guide check`.
-**Fix:** inspect curl's error and retry; do not proceed with empty/partial JSON.
+
+**Check:** identify the date, maximum, rain probability, sunrise, sunset, and units. Each daily array has one day's value.
+
+**Fix:** read curl's error and retry. Do not continue with partial JSON. `-f` makes HTTP errors fail, unlike our S6 diagnostic checker; `-sS` keeps errors visible.
 
 ### 2. Extract maximum temperature
-**Goal:** save the first-day value and compare it to the source.
-**Do:** run the commands below.
+
+**Goal:** select a value, not copy it by hand.
+
+**Do:**
+
 ```bash
 jq -r '.daily.temperature_2m_max[0]' ~/playground/singapore/weather.json > ~/playground/singapore/temperature.txt
 cat ~/playground/singapore/temperature.txt
 jq -r '.daily.temperature_2m_max[0]' ~/playground/singapore/weather.json
 ```
-**Check:** both numeric values match; run `guide check`. **Fix:** use selector `.daily.temperature_2m_max[0]` and repeat.
 
-### 3. Save and compare air quality
-**Goal:** preserve the CAMS response and create labelled values.
-**Do:** run the commands below.
+**Check:** both numbers match the first temperature in the JSON.
+
+**Fix:** check the selector. `null` is not a temperature; inspect the response instead of publishing it.
+
+### 3. Save air quality
+
+**Goal:** preserve the model value and its timestamp.
+
+**Do:**
+
 ```bash
 curl -fsS --max-time 15 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1.32411&longitude=103.8698&current=pm2_5&timezone=Asia%2FSingapore&domains=cams_global' -o ~/playground/singapore/air.json
 jq '{current: .current, units: .current_units}' ~/playground/singapore/air.json
 printf 'PM2.5: %s μg/m³\nModel time: %s\n' "$(jq -r '.current.pm2_5' ~/playground/singapore/air.json)" "$(jq -r '.current.time' ~/playground/singapore/air.json)" > ~/playground/singapore/air.txt
 cat ~/playground/singapore/air.txt
 ```
-**Check:** labelled value and `YYYY-MM-DDTHH:MM` match `.current.pm2_5` and `.current.time`; run `guide check`. **Fix:** verify those selectors and recreate the file.
 
-### 4. Format a Markdown forecast
-**Goal:** use a variable and `printf` with the same snapshot.
-**Do:** run the commands below.
+**Check:** the labelled number and time match `.current.pm2_5` and `.current.time`.
+
+**Fix:** inspect those fields and units. Do not replace missing values with invented numbers.
+
+### 4. Format a small page
+
+**Goal:** use the same saved snapshot to generate Markdown.
+
+**Do:**
+
 ```bash
 temperature=$(jq -r '.daily.temperature_2m_max[0]' ~/playground/singapore/weather.json)
 printf '# Singapore forecast\n\nMaximum: %s °C\n' "$temperature" > ~/playground/singapore/forecast.md
 cat ~/playground/singapore/forecast.md
 ```
-**Check:** heading and matching `Maximum: <number> °C`; run `guide check`. **Fix:** check the assignment and `"$temperature"`, then rerun.
 
-### 5. Complete the bulletin generator
-**Goal:** finish a small starter script that generates a complete bulletin.
+**Check:** one heading and the matching maximum. Quotes keep the variable as one argument.
 
-**Do:**
+**Fix:** check assignment syntax—no spaces around `=`—and the jq result.
+
+### 5. Complete the generator
+
+**Goal:** fetch fresh data and write a complete bulletin.
+
+**Do:** in class, copy the starter; `-i` protects an existing script:
+
 ```bash
 mkdir -p ~/scripts
-cp /docs/sessions/S09/resources/today.sh ~/scripts/today.sh
+cp -i /docs/sessions/S09/resources/today.sh ~/scripts/today.sh
 micro ~/scripts/today.sh
 ```
-The script downloads weather and air data to the fixed JSON paths from steps 1 and 3. TODO 1: assign `forecast_date`, `temperature`, `rain`, `sunrise`, `sunset`, `air_time`, and `pm25` with `jq -r` and command substitution, using selectors `.daily.time[0]`, `.daily.temperature_2m_max[0]`, `.daily.precipitation_probability_max[0]`, `.daily.sunrise[0]`, `.daily.sunset[0]`, `.current.time`, and `.current.pm2_5`. TODO 2: use `printf` redirection (`>`) to compose attributed Markdown at `~/src/pages/today.md`.
 
-Include labelled forecast date, maximum (°C), rain probability (%), sunrise, sunset, PM2.5 (μg/m³), model time, and retrieval time. Keep the API date/time values as provided. Use the output of `date` for retrieval time; no particular format is required. Forecast and model times use Singapore time. Attribute forecast to Open-Meteo and air data to CAMS Global/Open-Meteo. Explicitly say PM2.5 is modelled, not official PSI or a station reading.
+At home, copy from `~/linux-foundations-practice/starters/today.sh` instead.
 
-Example of the expected `~/src/pages/today.md` (illustrative values):
+The starter downloads the two JSON responses and assigns `retrieved=$(date)`. Finish its two TODOs:
 
-```markdown
-# Singapore today
+1. Assign these variables with `jq -r` and `$()`:
 
-Location: 1.32411, 103.8698 — Asia/Singapore
+| Variable | Selector | File |
+|---|---|---|
+| `forecast_date` | `.daily.time[0]` | `weather.json` |
+| `temperature` | `.daily.temperature_2m_max[0]` | `weather.json` |
+| `rain` | `.daily.precipitation_probability_max[0]` | `weather.json` |
+| `sunrise` | `.daily.sunrise[0]` | `weather.json` |
+| `sunset` | `.daily.sunset[0]` | `weather.json` |
+| `air_time` | `.current.time` | `air.json` |
+| `pm25` | `.current.pm2_5` | `air.json` |
 
-## Forecast
+2. Use grouped `printf` commands and `>` to write `~/src/pages/today.md`, as in S5. Include:
+   - Forecast date, maximum (°C), rain probability (%), sunrise, and sunset.
+   - PM2.5 (μg/m³), model time, and retrieval time.
+   - Singapore timezone, coordinates, and sources: Open-Meteo forecast; CAMS Global via Open-Meteo.
+   - The distinction between modelled PM2.5, a station reading, and official PSI.
 
-* Date: 2026-10-10
-* Temperature: 31.0 °C
-* Rain probability: 100%
-* Sunrise: 2026-10-10T06:48
-* Sunset: 2026-10-10T18:54
+Keep API timestamps unchanged. In a `printf` **format**, use `%%` for a literal `%`; quote each variable argument. Remove the `EXERCISE_INCOMPLETE` comment when finished.
 
-## Air quality
-
-* Time: 2026-10-10T12:00
-* PM2.5: 89.2 μg/m³
-
-PM2.5 is modelled, not a station measurement or official Singapore PSI.
-Forecast and model times are in Singapore time.
-
-Retrieved: Sat Oct 10 12:05:00 +08 2026
-
-Sources: Open-Meteo weather forecast; CAMS Global air-quality model via Open-Meteo.
-```
-
-Generate the values from your JSON and `retrieved` variable, not these example numbers.
-With `printf`, write `%%` to output a literal `%`, and quote variable arguments.
-
-**Check:** finish both TODOs, remove the `EXERCISE_INCOMPLETE` comment, save, then:
 ```bash
 bash -n ~/scripts/today.sh
 bash ~/scripts/today.sh
 cat ~/src/pages/today.md
-guide check
 ```
-Confirm every field, units, attribution, unchanged API times, and retrieval time.
-**Fix:** correct syntax errors and check the JSON selectors if values are missing.
 
-### 6. Link and inspect both pages
-**Goal:** link the bulletin from the homepage and verify both rendered pages.
+**Check:** every field matches the saved JSON, with labels, units, timestamps, and attribution.
 
-**Do:** add `[Singapore today](today.html)` to `~/src/pages/index.md` using `micro`, then:
+**Fix:** compare with [the worked generator](../../guides/self-study-answers.md#s9-bulletin-and-timer). Before scheduling, use its checked, failure-preserving version or add equivalent handling: failed downloads or missing fields must not replace your last good bulletin.
+
+### 6. Link and publish
+
+**Goal:** reach the bulletin from the homepage.
+
+**Do:** add `[Singapore today](today.html)` to `~/src/pages/index.md`. Build with `build-website` in class, or `cd ~/src && node scripts/build.mjs` at home. Then:
+
 ```bash
-/usr/local/bin/maker-guide-build-personal-website
 grep -n 'today.html' ~/public_html/index.html
 grep -n 'Singapore\|PM2.5\|Open-Meteo\|CAMS' ~/public_html/today.html
-guide check
 ```
-**Check:** homepage links to `today.html`; separate bulletin page contains the content. It is static, not live API data. Browse only to a personal URL actually supplied by the classroom; do not guess a hostname.
-**Fix:** correct the source link and rebuild, or regenerate `today.md` and rebuild if bulletin output is incomplete.
 
-### 7. Run the generator hourly
-**Goal:** generate before each build and verify configuration plus one manual run.
+**Check:** open the homepage, follow its link, and inspect the bulletin. It is a saved snapshot, not a live API request from the browser.
 
-**Do:** create both user unit files in the editor:
-```bash
-mkdir -p ~/.config/systemd/user
-micro ~/.config/systemd/user/site-build.service
-```
-Put this complete service in the editor, save, then open the timer path and enter its complete contents:
+**Fix:** correct source or generation, then rebuild. Inspect the rendered page, not only grep's matches.
+
+### 7. Schedule generation before building
+
+**Goal:** define the task and its schedule separately.
+
+A **oneshot service** performs a task and exits. A **timer** decides when to start it. Neither replaces your always-running web server.
+
+**Do:** create `~/.config/systemd/user/site-build.service`:
+
 ```ini
 [Unit]
-Description=Build my website
+Description=Generate and publish my bulletin
 
 [Service]
 Type=oneshot
@@ -145,12 +158,14 @@ WorkingDirectory=%h/src
 ExecStartPre=/bin/bash %h/scripts/today.sh
 ExecStart=/usr/local/bin/maker-guide-build-personal-website
 ```
-```bash
-micro ~/.config/systemd/user/site-build.timer
-```
+
+**At home**, replace the last line with `ExecStart=/usr/bin/node %h/src/scripts/build.mjs`, substituting the actual absolute Node path from `command -v node`. If Node is in a version-manager directory, also set `Environment=PATH=ACTUAL_NODE_DIRECTORY:/usr/local/bin:/usr/bin:/bin` in `[Service]`. Use the real directory, not that placeholder or `$PATH`: systemd does not load your interactive shell setup.
+
+Create `~/.config/systemd/user/site-build.timer`:
+
 ```ini
 [Unit]
-Description=Build my website every hour
+Description=Publish my bulletin hourly
 
 [Timer]
 OnCalendar=hourly
@@ -159,26 +174,49 @@ RandomizedDelaySec=55min
 [Install]
 WantedBy=timers.target
 ```
-systemd runs the installed helper, not an interactive alias. Load and test the service, inspect its journal and output, then enable the schedule:
+
+`hourly` means each clock hour, plus a random delay of up to 55 minutes. It spreads starts; it is not precise concurrency spacing. The matching filename makes this timer start `site-build.service`.
+
+```bash
+systemd-analyze --user verify ~/.config/systemd/user/site-build.service ~/.config/systemd/user/site-build.timer
+```
+
+Resolve verification errors, then load and run manually:
+
 ```bash
 systemctl --user daemon-reload
 systemctl --user start site-build.service
 journalctl --user -u site-build.service --no-pager -n 30
-grep -n 'PM2.5\|Open-Meteo\|CAMS' ~/public_html/today.html
+```
+
+Confirm the manual run published the correct page before enabling the schedule:
+
+```bash
 systemctl --user enable --now site-build.timer
 systemctl --user list-timers --all site-build.timer
-systemctl --user is-enabled site-build.timer
-systemctl --user is-active site-build.timer
-guide check
 ```
-**Check:** manual run succeeds, journal has no error, page contains bulletin; timer is enabled and active. A completed oneshot is normally inactive; active timer may wait for deadline. Listing a deadline proves configuration, not future execution/publication.
-**Fix:** after changing an active timer, restart it after daemon-reload. Read journal and correct failure. Do not wait for the randomized run as proof; manually start and inspect.
 
-## If It Does Not Work
+`ExecStartPre` must succeed before the build runs. The class helper is the executable behind `build-website`; systemd cannot use an interactive alias.
 
-- Read `journalctl --user -u site-build.service --no-pager -n 50` for the first failing command.
-- Confirm `systemctl --user list-timers --all site-build.timer` shows a next run.
-- After changing a unit, run `systemctl --user daemon-reload`; stop and start the timer when changing its deadline.
-- A build only publishes existing source unless its service explicitly runs your generator first.
+**Check:** the manual run generates and publishes the page; the timer is enabled, active, and lists a next run. Later, compare a scheduled journal entry and retrieval time with the published page. A deadline alone does not prove execution.
 
-For another self-contained timer example, see [the systemd timer card](../../commands/systemd-timer.md).
+**Fix:** read the first service error. After changing a timer, run `daemon-reload` and restart the timer. A completed oneshot is normally inactive; that alone is not failure.
+
+## Stop the schedule
+
+When you no longer want hourly requests:
+
+```bash
+systemctl --user disable --now site-build.timer
+```
+
+This removes future scheduling; it does not cancel a build already running. User timers need a running user manager. Sleeping/stopped environments cannot execute the task; this timer does not catch up every missed hour.
+
+## Check yourself
+
+- Explain how a jq selector reaches an array's first value.
+- Explain why generation must happen before publication.
+- Explain why an active timer and an inactive oneshot can both be normal.
+- What should remain published after an API failure?
+
+[Answers](../../guides/self-study-answers.md#s9-bulletin-and-timer). Reference: [systemd timer](../../commands/systemd-timer.md). Use the providers' current terms and limits before adapting the API to a larger project.

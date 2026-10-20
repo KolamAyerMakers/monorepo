@@ -2,20 +2,25 @@
 
 ## Core Idea
 
-Git records source history as commits. A commit is a named record of selected tracked-file changes.
-
-In this course, git protects `~/src`, not generated output in `~/public_html`.
+Git records selected file changes as commits. It works locally; a server or account is not required.
 
 ## Basic Loop
 
 ```bash
-cd ~/src
+work=$(mktemp -d)
+cd "$work"
+git init -b main
+git config user.name "Practice User"
+git config user.email "practice@example.invalid"
+printf 'First note\n' > note.txt
 git status
-git add pages/index.md
-git commit -m "Update homepage"
+git add note.txt
+git diff --staged
+git commit -m "Add first note"
 git log --oneline -5
-git push
 ```
+
+Run one command at a time and stop on errors. The identity settings apply only to this temporary repository, not your other projects. Expect one commit containing `note.txt`. Edit that file and repeat from `git status` to record a second version.
 
 ## Mental Model
 
@@ -39,7 +44,7 @@ git push
 
 ## Watch Out
 
-Run `git status` before `git add`, before `git commit`, and before `git push`. Most beginner git mistakes start with not reading status.
+Read `git status` and the diff before staging or committing. Git does not automatically save untracked files, uncommitted edits, or secrets safely. Keep credentials out of the repository. A remote copy is optional; use [git push](git-push.md) only after choosing and checking a destination.
 
 ## Docs Pointers
 

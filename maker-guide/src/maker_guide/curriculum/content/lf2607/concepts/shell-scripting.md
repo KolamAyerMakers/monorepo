@@ -8,27 +8,40 @@ Start with commands that already work at the prompt. Save them one per line, run
 
 ## Practice Alone
 
-Save commands that already work at the prompt into `~/scripts/report.sh`: start the file with `#!/bin/bash` and put one command per line below it.
+Create a script in a fresh temporary directory:
+
+```bash
+work=$(mktemp -d)
+micro "$work/report.sh"
+```
+
+Save this content:
+
+```bash
+#!/bin/bash
+printf 'User: %s\n' "$(whoami)"
+printf 'Host: %s\n' "$(hostname)"
+```
 
 Run the file explicitly with Bash:
 
 ```bash
-bash report.sh
+bash "$work/report.sh"
 ```
 
-Try the current-directory path before changing permissions, then add execute permission for the user who owns the file:
+The direct path should initially fail with `Permission denied`. Add the owner's execute permission, then try again:
 
 ```bash
-./report.sh
-chmod u+x report.sh
-./report.sh
+"$work/report.sh"
+chmod u+x "$work/report.sh"
+"$work/report.sh"
 ```
 
 ## Done When
 
 Your script works twice in a row without manual fixes.
 
-You can explain how `bash path` differs from `./path`, why a quoted argument remains one value, and how grouped commands can share one redirection.
+From the script's directory, `./report.sh` names the same file. Explain why `bash PATH` needed no execute bit but direct execution did.
 
 ## Go Deeper
 

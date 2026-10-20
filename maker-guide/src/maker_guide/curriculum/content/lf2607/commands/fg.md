@@ -12,7 +12,7 @@ fg
 
 ## Practice
 
-Use `jobs` first if there is more than one job.
+Run `sleep 60`, press `Ctrl-Z`, then run `jobs` and `fg`. The sleep returns to the foreground; press `Ctrl-C` to stop it. With multiple jobs, `fg %1` selects shell job number `1`, not process ID `1`.
 
 ## Watch Out
 

@@ -4,10 +4,11 @@
 
 Check a unit file for mistakes without starting the service.
 
-Create a sample file named for your account:
+Create a sample file in a fresh temporary directory:
 
 ```bash
-micro "/tmp/$USER-example.service"
+work=$(mktemp -d)
+micro "$work/example.service"
 ```
 
 Add this content. `/usr/bin/true` is a command that simply succeeds:
@@ -20,7 +21,7 @@ ExecStart=/usr/bin/true
 Save with `Ctrl-S`, exit with `Ctrl-Q`, then check it as a user unit:
 
 ```bash
-systemd-analyze --user verify "/tmp/$USER-example.service"
+systemd-analyze --user verify "$work/example.service"
 ```
 
 `--user` selects the user manager's rules; `verify` checks the named file without installing or starting it. The command reports unknown settings, invalid values, and missing executables. Fix errors and warnings, then check again. A clean result normally prints nothing.

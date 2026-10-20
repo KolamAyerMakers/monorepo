@@ -31,7 +31,7 @@ The [cases](../sessions/S06/self-study.md#diagnostic-cases) cover both pages ret
 
 Output must identify each page by its URL, path, or a homepage/report label, include the HTTP code and diagnosis or a transport-failure diagnosis, and never claim a failed request succeeded. Report-404 advice must name `maker-report.sh`, then `build-website`. Exact sentences, variable names, `if` nesting, functions versus `case`, page order, and curl flag order are not prescribed.
 
-IRC cannot run the local suite and directs you to the classroom shell. Do not use sudo. An older CLI without local-check support cannot complete this quest by accepting the source instead; ask a mentor to update it.
+Run the local check in your classroom shell without sudo. If your CLI lacks local-check support, ask a mentor to update it; a source-only review does not replace executing the checker.
 
 ## Hints
 

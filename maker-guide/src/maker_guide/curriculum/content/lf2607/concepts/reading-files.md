@@ -1,14 +1,17 @@
 # Concept: Reading Files
 
-Skill: reading-files
-
-Unix systems explain themselves through files.
+Choose a reader according to the file and the question:
 
 Use `cat` for short plain output, `bat` for highlighted interactive reading, `less` for longer files, `head` for the beginning, and `tail` for the end.
 
-`bat` is often a better human reader than both `cat` and `less`, but it is not as portable. `cat` and `less` are the true standards on Unix-like systems.
+```bash
+cat /etc/os-release
+head -n 5 /etc/services
+tail -n 5 /etc/services
+less /etc/services
+```
 
-If a file floods your screen, use a better reading command next time.
+In `less`, `/ssh` searches for `ssh`, `n` finds the next match, and `q` quits. For an unknown file, run `file PATH` first instead of sending arbitrary binary bytes to the terminal.
 
 ## Go Deeper
 

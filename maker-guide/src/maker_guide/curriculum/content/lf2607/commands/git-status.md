@@ -2,6 +2,8 @@
 
 ## Use
 
+Run this inside a Git repository. The [Git card](git.md) creates a disposable one if you need it.
+
 ```bash
 git status
 ```

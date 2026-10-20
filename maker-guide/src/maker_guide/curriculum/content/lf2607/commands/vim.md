@@ -3,7 +3,8 @@
 ## Use
 
 ```bash
-vim ~/playground/vim-note.txt
+work=$(mktemp -d)
+vim "$work/note.txt"
 ```
 
 ## What It Does
@@ -17,7 +18,7 @@ Use `nvim` when it is available. Neovim keeps the same core editing model and is
 Open a scratch file:
 
 ```bash
-vim ~/playground/vim-note.txt
+vim "$work/note.txt"
 ```
 
 Then:

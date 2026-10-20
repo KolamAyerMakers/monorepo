@@ -1,106 +1,154 @@
-# S2 Self-Study Guide: Files, Editing, Identity
+# S2 — Files, Editing, Identity
 
-Session: S2
+Create, edit, move, and remove practice files. Then learn how an SSH key identifies you.
 
-## Study Path
+**You need:** your classroom shell or the Ubuntu setup in [Continue at Home](../../guides/continue-at-home.md). All file exercises run there. SSH key setup runs on **your own computer**, except where labelled.
 
-1. Inspect local SSH keys; reuse a safe pair or create a new one with a passphrase, install its public key, and reconnect without your account password.
-2. Create a safe workspace under `~/playground/`.
-3. Create files with `touch`, use `micro` to write the exact note `edited with micro`, and verify with `cat`.
-4. Practice `>`, `>>`, `cp`, `mv`, `rm -i`, and `rmdir` only in the playground first.
-5. Edit `~/src/pages/index.md`, run `build-website` successfully, then refresh `https://lf2607.kolamayermakers.org/~username/`.
-6. Explain source versus generated output to another learner using the files you edited and rebuilt.
+## 1. Make a playground
 
-## Mental Model
-
-Files are named byte containers. Directories map names to files and subdirectories. Your website source is Markdown under `~/src/pages/`; generated HTML is output under `~/public_html/`. If output breaks, rebuild from source. If source breaks, edit source carefully and commit it later.
-
-## Exact Editor Keys
-
-- Open: `micro path/to/file`
-- Save: `Ctrl-S`
-- Quit: `Ctrl-Q`
-- If you edited the wrong file, save nothing important, quit, run `pwd`, and reopen the correct path.
-
-## Redirection Checks
+Use these filenames only for practice. If they already contain work you want to keep, use a new practice directory instead.
 
 ```bash
+mkdir -p ~/playground
 cd ~/playground
+touch one.txt two.txt three.txt
+micro micro-note.txt
+```
+
+Type `edited with micro`. Save with `Ctrl-S`; quit with `Ctrl-Q`.
+
+```bash
+cat micro-note.txt
+ls -l
+```
+
+Check the saved text. In `ls -l`, find your username in the owner column. `touch` creates a missing file; it does not erase an existing file.
+
+## 2. Replace or append
+
+Predict the final contents before running:
+
+```bash
 echo "hello makers" > hi.txt
-cat hi.txt
 echo again >> hi.txt
 cat hi.txt
 echo "first version" > overwrite-demo.txt
-cat overwrite-demo.txt
 echo replacement > overwrite-demo.txt
 cat overwrite-demo.txt
 ```
 
-Expected final contents:
+`hi.txt` has two lines. `overwrite-demo.txt` has only `replacement`.
 
-```text
-hi.txt:
-hello makers
-again
+**`>` replaces; `>>` appends.** The shell performs the redirection, so check the destination before pressing Enter.
 
-overwrite-demo.txt:
-replacement
-```
-
-`>` replaces a file. `>>` appends. This distinction matters because replacing source accidentally loses work.
-
-## Move And Remove Safely
+## 3. Copy, move, remove
 
 ```bash
-cp ~/playground/one.txt ~/playground/one-copy.txt
-mv ~/playground/one-copy.txt ~/playground/one-renamed.txt
-mkdir ~/playground/moved
-mv ~/playground/one-renamed.txt ~/playground/moved/
-mkdir ~/playground/empty-directory
-rmdir ~/playground/empty-directory
-rm -i ~/playground/moved/one-renamed.txt
-rmdir ~/playground/moved
-ls -l ~/playground
+cp one.txt one-copy.txt
+mv one-copy.txt one-renamed.txt
+mkdir moved
+mv one-renamed.txt moved/
+ls -l moved
+rm -i moved/one-renamed.txt
+rmdir moved
+mkdir empty-directory
+rmdir empty-directory
 ```
 
-`mv` moves or renames. `rm -i` asks before removing a file. `rmdir` removes empty directories and refuses non-empty ones. `rm -rf` recursively forces removal, so do not run it in S2. There is no trash where you can recover files. Make mistakes in the playground, not in source.
+Answer `y` to the removal prompt only after checking its path.
 
-## SSH Key Safety
+- `cp` copies; `mv` moves or renames. Both can replace an existing destination; use `-i` when unsure.
+- `rm -i` asks before removing. Shell deletion normally has no trash or undo.
+- `rmdir` removes an empty directory, refusing one that still contains entries.
 
-Before generating or inspecting a key, read your prompt. A prompt ending in `@lf2607` means you are on the server. Run `exit`, then use a terminal on your own computer.
+## 4. Edit source, not output
 
-Inspect `~/.ssh` with `ls -l ~/.ssh` on macOS or Linux, or `Get-ChildItem -Force ~/.ssh` in PowerShell. A missing directory means there are no keys at that location. Look for a private key and its matching `.pub` file, such as `id_ed25519` and `id_ed25519.pub`, or `id_rsa` and `id_rsa.pub`. List filenames, not private-key contents. Reuse a safe existing pair.
+Your site's Markdown is in `~/src/pages`. Generated HTML is in `~/public_html`.
 
-A previous bare `ssh-keygen` on an older client may have created `id_rsa`, not `id_ed25519`. If `id_ed25519.pub` is missing but your safe `id_rsa` pair exists, use `~/.ssh/id_rsa.pub` below instead. A missing public-key file alone is not a reason to replace its private key. If you find only half a pair or are unsure which key is safe, ask the instructor.
+```bash
+micro ~/src/pages/index.md
+```
 
-Only for a genuinely new pair, run `ssh-keygen -t ed25519` and choose a passphrase. Accept the default location only when neither `~/.ssh/id_ed25519` nor `~/.ssh/id_ed25519.pub` exists; otherwise choose an unused filename. At any overwrite prompt, answer `n` or cancel with `Ctrl-C`. Note the saved paths. The private key stays on your own computer; only the `.pub` file is safe to install on the server.
+Replace the starter heading with your own and save. **In class**, run `build-website` and reload your static homepage. **At home**, run `cd ~/src && node scripts/build.mjs` and use your local preview.
 
-On macOS or Linux, type `ssh-copy-id -i ~/.ssh/id_ed25519.pub` followed by the address from your personal registration command. Replace the example `.pub` path with the actual public-key path you selected. Reconnect using your personal command without entering your account password and run `whoami`.
+Find your new heading in the browser. A source edit is not published until a successful build. Editing generated HTML is temporary: the next build replaces it.
 
-In PowerShell on Windows, run `Get-Content ~/.ssh/id_ed25519.pub`, substituting your actual `.pub` path. This preview-only command displays the public key and changes nothing. Copy that one public-key line, then use your personal registration command to sign in with your password. On the server, run `mkdir -p ~/.ssh`, then `chmod 700 ~/.ssh` so only you can enter or change that directory. Run `cat >> ~/.ssh/authorized_keys`; paste the line, press Enter and Ctrl-D, then run `chmod 600 ~/.ssh/authorized_keys` so only you can read or change the key list. This appends without replacing existing keys. Exit, reconnect with the same personal command without entering your account password, and run `whoami`.
+## 5. Set up an SSH key — optional at home
 
-If you chose a non-default key filename, insert `-i` followed by its matching private-key path immediately after `ssh` in your personal command so SSH knows which key to use. A key passphrase prompt is different from your server account password prompt.
+A key pair has a **private key**, which stays on your computer, and a **public key**, which the server stores. A passphrase protects the private-key file. It is not your server account password.
 
-If your private key is lost or copied, create and test a replacement key, then remove the former public-key line from `~/.ssh/authorized_keys`. If you cannot still log in with another key, use browser SSH recovery or ask the instructor. Never send a private key.
+At home, skip this section unless you have another machine or Git host to connect to. A local shell needs no SSH key.
 
-## Troubleshooting
+### A. Inspect on your own computer
 
-- `No such file or directory`: run `pwd` and `ls` on the parent directory.
-- `Permission denied` when running a script: run `ls -l` and ask for help. Permissions are covered in S4.
-- `ssh-copy-id` targets `new@...`: wrong target. Use the personal SSH address printed during registration.
-- Public page did not change: edit `~/src/pages/index.md`, run `build-website`, then refresh `https://lf2607.kolamayermakers.org/~username/`.
+If still in classroom SSH, run `exit` first. Check existing filenames without printing private-key contents:
 
-## Proof Checklist
+```bash
+ls -l ~/.ssh
+```
 
-- `~/playground/one.txt`, `two.txt`, and `three.txt` exist; the empty directory and `moved/` were removed deliberately.
-- `~/playground/micro-note.txt` contains the exact note.
-- `~/playground/hi.txt` contains `hello makers` then `again`.
-- You can identify the owner column from `ls -l`.
-- You can reconnect with your key without entering the account password, run `whoami`, and explain where the private key stays.
-- You made a real edit to `~/src/pages/index.md` and the generated homepage no longer contains `A Linux site under construction` after rebuilding.
+In Windows PowerShell, use `Get-ChildItem -Force ~/.ssh` instead. A missing directory is normal for a first key.
 
-## Docs Pointers
+Look for a pair such as `id_ed25519` / `id_ed25519.pub` or `id_rsa` / `id_rsa.pub`. Reuse your own pair if its private key has not been exposed. A missing `.pub` file is **not** a reason to overwrite its private key; get help recovering the public key if needed.
 
-- Run `man ssh-keygen`, then search for `ed25519`.
-- Run `tldr micro` and `tldr ssh-copy-id`.
-- Read [Platform Reference](../../guides/platform-reference.md) for the current host names.
+For a new pair:
+
+```bash
+ssh-keygen -t ed25519
+```
+
+Choose a passphrase. Accept the default filename only if neither file exists. Otherwise choose an unused filename. At an overwrite prompt, answer `n` or cancel with `Ctrl-C`.
+
+### B. Install the public key
+
+**Linux/macOS, on your computer:**
+
+```bash
+ssh-copy-id -i ~/.ssh/id_ed25519.pub username@lf2607.kolamayermakers.org
+```
+
+Use your actual username and public-key path.
+
+**Windows PowerShell, on your computer:**
+
+```powershell
+Get-Content ~/.ssh/id_ed25519.pub
+```
+
+Copy that public-key line. Sign into the classroom using your password. **In the classroom shell:**
+
+```bash
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+cat >> ~/.ssh/authorized_keys
+```
+
+Paste the line, press Enter, then `Ctrl-D` on the empty line. This appends rather than replacing existing keys.
+
+```bash
+chmod 600 ~/.ssh/authorized_keys
+exit
+```
+
+### C. Test from your own computer
+
+Reconnect with your personal SSH command and run `whoami`. You should not need the **account password**; a **key passphrase** prompt is normal.
+
+For a non-default filename, select the private key explicitly:
+
+```bash
+ssh -i ~/.ssh/my-class-key username@lf2607.kolamayermakers.org
+```
+
+If it fails, use `ssh -v` with the same command to see which key was offered; do not publish the whole log without reviewing it. Keep password/browser access until the key works.
+
+If a private key is lost or exposed, test a replacement first, then remove its old public-key line from `authorized_keys`. Never send anyone the private key.
+
+## Check yourself
+
+- Your playground contains the three empty files, the editor note, and the two redirection examples.
+- The practice `moved` directory is gone; your original `one.txt` remains.
+- Your source edit appears in the rebuilt site.
+- Can you explain which key may be copied and why an existing key must not be overwritten?
+
+[Answers](../../guides/self-study-answers.md#s2-files-and-keys). References: [micro](../../commands/micro.md), [Redirection](../../commands/redirect.md), and [SSH Keys](../../concepts/ssh-keys.md).

@@ -1,5 +1,7 @@
 # Command: `build-website`
 
+**Classroom-only helper.** At home, follow [Continue at Home](../guides/continue-at-home.md) for the kit and its local build command.
+
 ## Use
 
 ```bash

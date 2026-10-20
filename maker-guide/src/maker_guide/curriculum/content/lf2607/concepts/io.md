@@ -17,7 +17,10 @@ When Bash starts a command, it normally connects three standard streams:
 ```bash
 echo hello
 cat < /etc/hostname
-ls /etc /no/such/path > ~/playground/stdout.txt 2> ~/playground/stderr.txt
+work=$(mktemp -d)
+ls /etc /no/such/path > "$work/stdout.txt" 2> "$work/stderr.txt"
+cat "$work/stdout.txt"
+cat "$work/stderr.txt"
 ```
 
 ## Why It Matters

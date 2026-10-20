@@ -34,7 +34,7 @@ Link:
 Inline code:
 
 ```markdown
-Run `build-website` after editing.
+Run `pwd` to print the current directory.
 ```
 
 Fenced code block:
@@ -57,13 +57,21 @@ The optional word after the opening triple backticks describes the content. Use 
 
 ## Source Versus Output
 
-Your source Markdown lives under `~/src/pages`. `build-website` turns it into generated HTML under `~/public_html`.
+Markdown source is text you edit; a renderer converts it into HTML or another format. The original `.md` file and generated `.html` file are different documents.
 
 Edit Markdown source. Treat generated HTML as output.
 
 ## Practice Alone
 
-Create a page with a heading, one paragraph, one link, one list, and one fenced code block. Build it and inspect the public page.
+Use a new file in a fresh temporary directory:
+
+```bash
+work=$(mktemp -d)
+micro "$work/page.md"
+cat "$work/page.md"
+```
+
+Add a heading, paragraph, link, list, and fenced code block using the examples above. Save with `Ctrl-S` and quit with `Ctrl-Q`. For a complete rendered site example, follow [First Site Build](first-site-build.md); reading Markdown alone does not require a build.
 
 ## Done When
 

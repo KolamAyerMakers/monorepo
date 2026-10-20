@@ -6,7 +6,24 @@ Executable permission lets the system run a script directly.
 
 ## Practice Alone
 
-Create a script named `report.sh` in `~/scripts`: its first line is `#!/bin/bash`, followed by one ordinary command such as `whoami`. From `~/scripts`, run `bash report.sh`, then try `./report.sh` and observe `Permission denied`. Inspect with `ls -l`, add `chmod u+x report.sh`, and run `./report.sh` again.
+Create a fresh script, run it through Bash, then try direct execution:
+
+```bash
+work=$(mktemp -d)
+printf '#!/bin/bash\nwhoami\n' > "$work/report.sh"
+bash "$work/report.sh"
+"$work/report.sh"
+```
+
+The first run prints your username. The second should fail with `Permission denied`: a newly created ordinary file has no execute bit. Now inspect and change just the owner's execute permission:
+
+```bash
+ls -l "$work/report.sh"
+chmod u+x "$work/report.sh"
+"$work/report.sh"
+```
+
+Expect the username again. From that script's directory, `./report.sh` is another path to the same file.
 
 ## Done When
 

@@ -2,13 +2,13 @@
 
 ## Core Idea
 
-An IP address names a network interface location. DNS names such as `lf2607.kolamayermakers.org` are human-readable labels that resolve to addresses. Ports identify a service on an address.
+An IP address identifies a network endpoint. DNS names such as `example.org` are human-readable labels that resolve to addresses. Ports distinguish service endpoints on an address.
 
 ## Commands To Try
 
 ```bash
-host lf2607.kolamayermakers.org
-curl -I https://lf2607.kolamayermakers.org/~username/
+host example.org
+curl -I --max-time 10 https://example.org/
 ```
 
 `host` gives a compact DNS answer. `dig` gives a fuller DNS answer. `curl` tests whether an HTTP service responds after DNS and connection setup.
@@ -16,12 +16,13 @@ curl -I https://lf2607.kolamayermakers.org/~username/
 ## Address, Port, Protocol
 
 ```text
-https://lf2607.kolamayermakers.org/~username/
-|     |                                             |
-scheme host name                                     path
+https://example.org/docs/
+scheme: https
+host:   example.org
+path:   /docs/
 ```
 
-`https` implies TCP port 443 unless another port is written explicitly. Your user-managed service uses a local high port behind the public reverse proxy.
+HTTPS defaults to port `443` unless a port is written explicitly. For local HTTP, `http://127.0.0.1:8000/` names IPv4 loopback and port `8000`.
 
 ## IPv4 And IPv6
 
@@ -29,6 +30,8 @@ scheme host name                                     path
 - IPv6 addresses look like `2001:db8::10`.
 - DNS can return either or both.
 - A service can work on one address family and fail on another if routing or firewall rules differ.
+
+The two addresses above are reserved documentation examples, not live hosts to contact. `localhost` may resolve to IPv4 `127.0.0.1`, IPv6 `::1`, or both; a listener on only one family need not answer the other.
 
 ## Common Confusions
 

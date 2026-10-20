@@ -4,39 +4,33 @@
 
 Forgejo is where your source repository becomes visible and reviewable.
 
-For this course, your site source starts in `~/src`. Generated HTML under `~/public_html/` should not be the repository you push. Push the source so someone else can read how your site is built.
+Git commits exist locally until you push them to a remote. Forgejo hosts that remote and provides a web interface. Publish source so another person can inspect or rebuild it; do not include passwords, tokens, or private files.
 
-## Repository Shape
+## Before publishing
 
-- Web UI: [lf2607.kolamayermakers.org/git/](https://lf2607.kolamayermakers.org/git/).
-- Repository name: `src`.
-- Local source path: `~/src`.
-- Remote name: `origin`.
-- HTTPS remote shape: `https://lf2607.kolamayermakers.org/git/username/src.git`.
-- SSH remote shape: `git@lf2607.kolamayermakers.org:username/src.git`.
-- Proof command: `git remote -v`.
+You need a local repository with a commit, a Forgejo account, and permission to create/write a remote repository. The [Git card](../commands/git.md) creates a local demo; it needs no account. Classroom credentials and address conventions are in [Platform Reference](../guides/platform-reference.md).
 
-Use your course username in place of `username`. Forgejo uses the same course identity as Unix and IRC. Use HTTPS first unless the instructor has confirmed your Forgejo SSH key setup.
+Create an **empty** remote repository using Forgejo's web interface or a configured [fj](../commands/fj.md). Do not initialize its README when you already have local commits. Copy its clone URL from Forgejo; an HTTPS credential setup is different from an SSH-key setup.
 
 ## Practice Alone
 
-Create an empty `src` repository with `fj` first. Your configured class token creates it without README, `.gitignore`, or license initialization because your local repository already has commits. Then add a remote, push your commits, and inspect the repository in the web UI.
+In your chosen local repository, first inspect the destination and branch:
 
 ```bash
-cd ~/src
-fj repo create src
-git remote add origin "https://lf2607.kolamayermakers.org/git/$USER/src.git"
+git remote -v
+git branch --show-current
+git log --oneline -1
+```
+
+If no `origin` exists, add the URL you copied. Replace `REPOSITORY_URL` before running this; replace `main` if your branch has a different name:
+
+```bash
+git remote add origin 'REPOSITORY_URL'
 git remote -v
 git push -u origin main
 ```
 
-If `origin` already exists, inspect it before changing it:
-
-```bash
-git remote -v
-```
-
-The course repository initializes on `main`. If `origin` is missing or points elsewhere, ask before changing it.
+If `origin` already exists, do not add it again or replace it blindly. Verify that it is your intended destination. Do not force-push to resolve a rejected push.
 
 ## Done When
 

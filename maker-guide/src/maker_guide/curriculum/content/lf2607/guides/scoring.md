@@ -1,54 +1,52 @@
-# Scoring and Rankings
+# Classroom Score and Rankings
 
-Your score records recognised course progress. It is not a grade and does not prevent you from attending sessions or continuing the course.
+Score records recognised classroom progress. **It is not a grade**, an attendance requirement, or a condition for continuing the course. Independent practice at home needs no score.
 
-Every award is recorded in your personal [points ledger](https://lf2607.kolamayermakers.org/~username/points-ledger.html). The score on your site is the sum of that ledger.
+## Awards
 
-## How You Earn Score
+| Accepted event | Points | Limit |
+|---|---:|---|
+| Complete your assigned quest | +25 | Once per quest |
+| Complete a session objective | +50 | Once per objective |
+| First, second, or third eligible completion of either | +5, +3, +2 | Once for that quest/objective |
+| Receive an accepted classroom thank-you | +10 | Subject to the rules below |
 
-| Event | Score | Limit |
-| --- | ---: | --- |
-| Complete a quest after a passing guide check | +25 | Once per quest |
-| Be among the first three learners to complete a quest | +5, +3, or +2 | First, second, and third completion of that quest |
-| Complete a session objective with accepted evidence | +50 | Once per objective |
-| Be among the first three learners to complete a session objective | +5, +3, or +2 | First, second, and third completion of that objective |
-| Receive a valid peer thank-you | +10 | Subject to the thank-you rules below |
+The guide awards completion points after the required check passes. Repeating completed work adds no points; a failed check subtracts none. Bonuses use recorded passing completions among ranking-eligible learners—not typing speed or an unverified submission.
 
-The guide only awards quest score after its deterministic check passes and the quest is your current assigned quest. Repeating a completed quest does not add score. A failed check does not subtract score.
+## Thank-you limits
 
-Speed bonuses reward the first three recorded passing completions across the course, not speed of typing or submitting. They apply only after a valid completion.
+Recorded thank-yous recognise specific help from another enrolled learner:
 
-## Thank-You Score
+- Both people must be enrolled; no self-thanks.
+- The reason must contain 1–280 characters.
+- One sent thank-you per Singapore calendar day.
+- At most three to the same person during the course.
+- The same pair cannot exchange thank-yous on one day.
 
-Use `!thank nickname reason` in IRC to recognise specific help from a classmate. The recipient earns +10 score when the thank-you is accepted.
-
-- You and the recipient must be enrolled in this course.
-- You cannot thank yourself.
-- Give a nonempty reason of at most 280 characters.
-- You can send one thank-you per Singapore calendar day.
-- You can thank the same person at most three times during the course.
-- Two learners cannot exchange thank-yous with each other on the same day.
+These describe recorded classroom awards, not a self-study exercise or a requirement to find a partner.
 
 ## Tiers
 
-Your tier is based on your total score:
+Your total points determine your tier:
 
-| Tier | Minimum score |
-| --- | ---: |
+| Tier | Minimum |
+|---|---:|
 | Newcomer | 0 |
 | Apprentice | 500 |
 | Builder | 1000 |
 | Maker | 2000 |
 
-Reaching a minimum score promotes you to that tier. The guide reports new tiers after successful quest checks. Promotions earned from session objectives and valid peer thank-yous are announced in the course IRC channels.
+Crossing a threshold earns that tier. No extra task or payment is required.
 
-## Rankings
+## Rankings and your ledger
 
-Every enrolled learner appears in the ranking, including learners with zero score. A rank is one position per learner, so ties are resolved in this order:
+Ranking-eligible enrolled learners appear in the public ranking, including those with zero points. Ties are resolved by:
 
-1. Higher total score.
+1. Higher total points.
 2. More completed quests.
-3. Earlier most recent score award.
+3. Earlier most recent score award; a learner with an award precedes one without one.
 4. Alphabetical course username.
 
-The public rankings and your personal site are refreshed from the same course records. Your points ledger is the detailed record for checking your displayed score.
+Your [points ledger](https://lf2607.kolamayermakers.org/~username/points-ledger.html) lists each award; replace `username` with yours. The site's score is their sum. Sites and rankings refresh from the same course records, so a newly accepted award may not appear immediately.
+
+For a discrepancy, compare the specific ledger entry with the accepted task before asking the instructor. Do not repeat already completed work just to try to increase the total.

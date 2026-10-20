@@ -10,15 +10,15 @@ Use the [docs navigation guide](guides/docs-map.md) to move through these files 
 
 For self-study:
 
+After class, start with [Continue at Home](guides/continue-at-home.md): Ubuntu LTS, a local site, and no classroom account required. Keep [Worked Answers](guides/self-study-answers.md) separate until you have tried the exercises. The practice ZIP supplies starter and complete scripts; the PDF bundle includes the guides and reference cards.
+
 1. Read the session's goals and practical steps.
 2. Do the work in your own shell, preserving existing source.
 3. Compare actual output with your prediction; inspect the result in a browser when relevant.
 4. Diagnose failures, recover safely, and record what you learned.
-5. Explain the result to a peer or use the recap to review it.
+5. Explain the result in your own words, then compare with the worked answers or recap.
 
-The guide bot is optional learner support, not a required workshop checklist. For help and recorded progress, use the dedicated [IRC support guide](guides/irc-support.md) and [scoring and rankings](guides/scoring.md). Recorded checks do not replace inspecting your live work.
-
-Feeling stuck still counts as progress if you can describe what changed. Post the command you ran, the output you got, and what you expected in `#lf2607`.
+The classroom `guide` command offers help and optional recorded progress. See [Platform Reference](guides/platform-reference.md) and [Scoring](guides/scoring.md). Recorded checks do not replace inspecting your work. When asking for help, include your goal, command, exact error, and what you already tested; remove secrets.
 
 
 ## Sessions

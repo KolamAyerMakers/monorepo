@@ -20,7 +20,7 @@ pre-commit:
       run: uv --directory maker-guide run basedpyright
 
     maker-guide.pytest:
-      glob: "maker-guide/**/*.{py,toml,lock}"
+      glob: "maker-guide/**/*.{py,toml,lock,md,sh,astro,mjs}"
       run: uv --directory maker-guide run pytest
 
     pulumi.classroom.ruff-check:

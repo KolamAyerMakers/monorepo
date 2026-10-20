@@ -7,10 +7,10 @@ DNS maps human-readable names to records, including IP addresses, mail exchanger
 ## Commands To Try
 
 ```bash
-host lf2607.kolamayermakers.org
-dig lf2607.kolamayermakers.org
-dig lf2607.kolamayermakers.org A
-dig lf2607.kolamayermakers.org AAAA
+host example.org
+dig example.org
+dig example.org A
+dig example.org AAAA
 dig example.org MX
 ```
 
@@ -48,7 +48,7 @@ TTL means time to live. It tells resolvers how long they may cache an answer. Re
 
 ## Proof Check
 
-Run `dig lf2607.kolamayermakers.org`. Identify the `ANSWER SECTION`, record type, and returned address or name.
+Run `dig example.org`. Identify the `ANSWER SECTION`, record type, and returned address or name. A successful DNS query can have no answers; read the status as well as the records.
 
 ## Docs Pointers
 

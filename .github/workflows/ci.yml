@@ -30,10 +30,10 @@ jobs:
       - run: uv --directory maker-guide run ruff check
       - run: uv --directory maker-guide run ruff format --check
       - run: uv --directory maker-guide run basedpyright
-      - name: Install Caddy for learner server regression tests
+      - name: Install tools for offline learner exercise regression tests
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends caddy
+          sudo apt-get install --yes --no-install-recommends caddy jq
       - run: uv --directory maker-guide run pytest
       - run: uv --directory infra/pulumi/classroom run ruff check
       - run: uv --directory infra/pulumi/classroom run ruff format --check

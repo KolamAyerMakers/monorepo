@@ -1,31 +1,12 @@
-# S6 Self-Study: Is Your Site Actually Working?
+# S6 — Is Your Site Actually Working?
 
-Session: S6
+Inspect a web response, then write a checker that repeats a request and explains the result.
 
-## Study Path
-
-1. Warm up with ping to an IP address and a short traceroute demonstration.
-2. Follow the web-request path: look up the classroom hostname with DNS.
-3. Inspect headers, page bodies, missing paths, and redirects with curl.
-4. Write a one-page checker, capture the status, and choose a message with `if`.
-5. Repeat the check for the homepage and report with `for`.
-6. Add report repair advice and handle failed connections explicitly.
-7. Predict diagnostic messages, run the unchanged checker, then verify both pages from your browser.
+**You need:** `curl`, `host`, `ping`, `traceroute`, and your homepage and S5 report. In class, use your SSH shell. At home, follow [Continue at Home](../../guides/continue-at-home.md) and keep the local preview running in another terminal.
 
 ## Preflight
 
-Open your classroom SSH session:
-
-```bash
-whoami
-hostname
-```
-
-In the URLs below, `$USER` expands to your classroom username.
-
-## Provided Report Script
-
-Your S5 version stays in `~/src`. A ready-to-use reference is available on the classroom server at `/docs/guides/resources/maker-report.sh`:
+If your report generator is missing, inspect the supplied version before copying it:
 
 ```bash
 mkdir -p ~/scripts
@@ -33,150 +14,93 @@ cp -i /docs/guides/resources/maker-report.sh ~/scripts/
 chmod u+x ~/scripts/maker-report.sh
 ```
 
-`cp -i` asks before replacing an existing script. Answer `n` to keep your own working version. The copy does not modify your repository or require completed Git homework. If the shared reference is missing, ask the instructor.
+At home, the same reference is in `~/linux-foundations-practice/answers/maker-report.sh`. Answer `n` to keep an existing working script. Run it with a quoted title, then rebuild your site.
 
-Running the script regenerates `~/src/pages/maker-report.md`; `build-website` publishes it. Keep the existing site project and its `pages` directory.
-
-## Network Warm-Up
-
-Use the public IP (Internet Protocol) address `1.1.1.1`, not a hostname:
-
-```bash
-ping -c 3 1.1.1.1
-```
-
-ICMP (Internet Control Message Protocol) carries network diagnostics and error messages. Ping uses echo requests and replies to measure round-trip time. `-c 3` sends three requests; read packet loss and `min/avg/max` times in milliseconds. Report the actual result, including no replies. `Ctrl-C` cancels.
-
-For the short traceroute demonstration, use the same address:
-
-```bash
-traceroute -m 8 1.1.1.1
-```
-
-Its UDP probes travel progressively farther; replies reveal some hops. Eight hops may not reach the destination. A `*` means a missing probe reply, not proof of a broken route. `Ctrl-C` cancels.
-
-These are network diagnostics, not steps required to fetch a web page. The destination is not the classroom server; filtering, routing, or destination policy can prevent replies while HTTPS still works.
-
-## From Name To Page
+## 1. Separate the network questions
 
 ```text
-web address -> resolve a name -> connect to a service -> request a path -> response
+name → address → connection → HTTP request → response
 ```
 
-- DNS (Domain Name System) provides records for a name, including IPv4 (`A`) and IPv6 (`AAAA`) addresses.
-- HTTP (Hypertext Transfer Protocol) carries web requests and responses. HTTPS is its secure form: TLS (Transport Layer Security) encrypts the exchange and lets the client verify the server certificate. A port identifies the service endpoint; HTTPS normally uses port `443`.
-
-Browsers, SSH clients, and many other programs resolve hostnames before connecting. Cached answers and local name overrides can avoid a DNS lookup on each request. A successful lookup does not prove the service or requested page works.
-
-## DNS Lookup
+- **DNS** gives records for names, including IPv4 (`A`) and IPv6 (`AAAA`) addresses.
+- A **port** identifies a service endpoint. HTTPS usually uses `443`.
+- **HTTP** carries requests and responses. **HTTPS** protects that exchange with TLS encryption and server identity verification.
 
 ```bash
 host lf2607.kolamayermakers.org
+ping -c 3 1.1.1.1
+traceroute -m 8 1.1.1.1
 ```
 
-Read one complete address answer from `host`, for example `name has address ...` or `name has IPv6 address ...`. The actual addresses may change; use your output, not a copied value.
+If the course hostname has retired, use `example.com` for the DNS lookup.
 
-## HTTP Experiments
+Read an address answer, ping's packet loss and round-trip times, and traceroute's hops. Ping uses ICMP; this traceroute uses UDP probes. A `*` means no probe reply, not proof that the route is broken. Eight hops may not reach the destination.
 
-`curl -I` sends `HEAD`, asking for response headers without the page body:
+These probes target a public diagnostic address, not your website. No ping reply does not prove HTTPS is down; filtering may treat them differently.
+
+## 2. Inspect headers and content
+
+Choose the base address for **this shell**:
 
 ```bash
-curl -I "https://lf2607.kolamayermakers.org/~$USER/"
-curl -I "https://lf2607.kolamayermakers.org/~$USER/maker-report.html"
+BASE_URL="https://lf2607.kolamayermakers.org/~$USER"
 ```
 
-Find a status line such as `HTTP/2 200` or `HTTP/1.1 200 OK`, then `content-type`. Versions and optional headers vary. The homepage and report are independent paths: one can work while the other is missing.
+**At home, use `BASE_URL="http://localhost:8080"` instead.** No trailing slash: the commands add it.
 
-Read status families before memorizing individual numbers:
+```bash
+curl -I "$BASE_URL/"
+curl -I "$BASE_URL/maker-report.html"
+curl "$BASE_URL/maker-report.html"
+curl -i "$BASE_URL/maker-report.html"
+```
 
-| Family | Meaning | Common examples |
+`-I` sends `HEAD`: headers, no body. Lowercase `-i` includes headers with the normal `GET` body. Find the status, `content-type`, and your report title in the HTML.
+
+| Family | Meaning | Examples |
 |---|---|---|
-| `2xx` | Success | `200 OK` |
-| `3xx` | Redirection or further action | `301`, `302`, `308` redirect; `304` use a cached copy |
-| `4xx` | The server cannot fulfil this request | `403` access refused; `404` missing path |
-| `5xx` | Server failure | `500` internal error; `502` unusable upstream response |
+| `2xx` | Success | `200` |
+| `3xx` | Redirection or further action | `301`, `302`, `308`; `304` means use cached content |
+| `4xx` | Request cannot be fulfilled | `403` access refused; `404` missing path |
+| `5xx` | Server failure | `500`; `502` unusable upstream response |
 
-Fetch the actual report body, then headers and body together:
-
-```bash
-curl "https://lf2607.kolamayermakers.org/~$USER/maker-report.html"
-curl -i "https://lf2607.kolamayermakers.org/~$USER/maker-report.html"
-```
-
-These send `GET`. Find your report title in the HTML. A browser renders that content; curl prints it. Lowercase `-i` includes headers with the body; uppercase `-I` asks for headers only.
-
-Choose a filename you never published:
+Request an unpublished filename:
 
 ```bash
-curl -I "https://lf2607.kolamayermakers.org/~$USER/not-a-page.html"
+curl -I "$BASE_URL/not-a-page.html"
+printf 'curl exit code: %s\n' "$?"
 ```
 
-Expected: `404`. If the file exists, pick another nonexistent filename. Remove `-I` and inspect the error body too. Do not delete an actual page to create this result.
+Expect `404` if that path is absent, usually with curl exit code **`0`**: a response arrived. Read `$?` immediately; the next command replaces it. DNS, TLS, connection, and timeout failures instead give nonzero exit codes.
 
-Inspect the classroom's HTTP-to-HTTPS redirect:
+**Classroom extension:** compare `curl -I "http://lf2607.kolamayermakers.org/~$USER/"` with the same command plus `-L`. Shared Caddy normally redirects HTTP to HTTPS with `308`; `-L` follows `Location`.
 
-```bash
-curl -I "http://lf2607.kolamayermakers.org/~$USER/"
-curl -I -L "http://lf2607.kolamayermakers.org/~$USER/"
-```
+## 3. Capture one answer
 
-Caddy normally returns `308` with a `Location` header. `-L` follows it, showing another response. The lesson's final example deliberately does not follow redirects: it reports whether the exact HTTPS paths return `200`.
-
-## Know The Viewpoint
-
-On the classroom server, `/etc/hosts` maps its public hostname to `127.0.0.1`, the same machine. `host` asks DNS for public records, while curl's normal name resolution can use that local mapping. These two results need not show the same address.
-
-The script proves those page requests work from the server, not that outside clients can reach it. Open both page URLs in your laptop browser as well. Replace `your-handle` in the [homepage URL](https://lf2607.kolamayermakers.org/~your-handle/) and [report URL](https://lf2607.kolamayermakers.org/~your-handle/maker-report.html). Even that is evidence from one outside network, not every visitor's network.
-
-## Exercise 1: One Page
-
-If you already started `~/scripts/site-check.sh` during the session, use the [complete script](#complete-script) as one example and finish any missing behavior below. Keep your existing work rather than starting over. Continue directly to [the final exercise](#exercise-6-predict-then-check) if your script already checks arbitrary page arguments, gives usage help when none are supplied, and handles HTTP results and connection failures.
-
-If your script is the one-page version below, continue from [Exercise 2](#exercise-2-capture-one-answer) through Exercise 5. Passing `bash -n` checks syntax, not whether the script is complete or runs successfully.
-
-```bash
-mkdir -p ~/scripts
-cd ~/scripts
-micro site-check.sh
-```
-
-Type this inside Micro:
+Create `~/scripts/site-check.sh` with Micro. Preserve existing work if you already started it.
 
 ```bash
 #!/bin/bash
-set -euo pipefail
 
-base_url="https://lf2607.kolamayermakers.org/~$USER"
+base_url="${BASE_URL:-https://lf2607.kolamayermakers.org/~$USER}"
 page="$1"
 url="$base_url/$page"
-curl -I "$url"
-```
-
-Save with `Ctrl-S`, quit with `Ctrl-Q`, inspect with `cat site-check.sh`, and run `bash site-check.sh maker-report.html`. This works without execute permission. Keep the shebang for future direct execution.
-
-`page="$1"` uses the first argument, as in S5. With `set -u`, omitting it stops the script with an unset-variable error. Pass `""` to check the homepage: `bash site-check.sh ""`.
-
-Keep `set -euo pipefail` from S5: `-e` stops on an unhandled command failure, `-u` rejects unset variables, and `pipefail` makes a pipeline fail if any command in it fails. A curl connection failure stops this first version; later we will handle it with `if`.
-
-## Exercise 2: Capture One Answer
-
-Replace the last line with:
-
-```bash
 status=$(curl -sS -I --max-time 10 -o /dev/null -w '%{http_code}' "$url")
 printf 'status=<%s>\n' "$status"
 ```
 
-- `-sS` removes the progress meter but keeps diagnostic errors.
-- `-I` requests headers only.
-- `--max-time 10` bounds each request to ten seconds.
-- `-o /dev/null` discards the headers, not the diagnostic stream.
-- `-w '%{http_code}'` writes the HTTP code to stdout.
-- `$()` captures stdout in the variable. Stderr still reaches your terminal.
+`$()` captures stdout. Here curl discards headers with `-o /dev/null`, then writes only the response code using `-w`. `-sS` removes the progress meter but keeps errors; `--max-time 10` bounds the request.
 
-Run the curl command alone first if the combination is unclear. Add `\n` inside its write-out format when displaying it directly at the prompt. Assignment has no spaces around `=`.
+The default is the class site. At home, pass the override into the script's environment:
 
-## Exercise 3: Choose A Message
+```bash
+export BASE_URL="http://localhost:8080"
+bash ~/scripts/site-check.sh maker-report.html
+```
+
+An unexported shell variable is not inherited by a child script. In class, the default works without an override.
+
+## 4. Choose a message, then repeat
 
 Replace the status-printing line with:
 
@@ -188,84 +112,23 @@ else
 fi
 ```
 
-`==` compares text. `[[ ... ]]` is a Bash test, with spaces inside the brackets. `then` runs when the test succeeds; `else` runs otherwise; `fi` ends it. Keep quoting variable expansions consistently, even though `[[ ... ]]` itself prevents word splitting.
+`[[ ... ]]` is a Bash test; `==` compares text. `then` and `else` choose branches; `fi` closes the decision.
 
-Use the page argument to test both branches without editing the script or changing any web files:
-
-```bash
-bash ~/scripts/site-check.sh maker-report.html
-bash ~/scripts/site-check.sh not-a-page.html
-```
-
-Predict each result: `200` selects `OK`; a real `404` selects `CHECK`. Use another unused path if `not-a-page.html` already exists; do not delete a working page.
-
-## Exercise 4: Two Pages
-
-Keep `base_url=...` above the loop. Remove `page="$1"`; the loop will set `page` from each argument instead. Replace the single-page body with argument traversal:
+Try a real page and an absent path. Next, remove `page="$1"` and put the URL, curl capture, and decision inside:
 
 ```bash
 for page in "$@"; do
-  url="$base_url/$page"
-  printf 'Checking %s\n' "$url"
+  # Put the per-page commands here.
 done
 ```
 
-`"$@"` preserves each supplied argument, including an empty string. Run `bash ~/scripts/site-check.sh "" maker-report.html`: the first URL ends in `/`, and the second appends `maker-report.html`. You can pass one page, other paths, or reverse their order; do not hardcode the two pages in the script.
+`"$@"` preserves each argument. `""` is one empty argument, selecting the homepage; no arguments should show usage instead. `$#` counts arguments; `-eq` compares numbers.
 
-Zero arguments are different from one empty argument: `""` selects the homepage, while no arguments should print usage and exit `2`. Add this guard after `set -euo pipefail`, before building URLs:
+## 5. Handle failure separately
 
-```bash
-if [[ "$#" -eq 0 ]]; then
-  printf 'Usage: site-check.sh PAGE [PAGE ...] (use "" for homepage)\n' >&2
-  exit 2
-fi
-```
+HTTP status and curl exit code answer different questions. Curl's `000` means no HTTP response code was received; it is not an HTTP status or curl's exit code.
 
-`$#` counts arguments; `-eq` compares numbers. The interface is `site-check.sh PAGE [PAGE ...]`.
-
-Replace the loop's `printf` with your existing curl capture and `if` block. Now the same decision handles each path. Indent the body so the nesting is visible; Bash uses `do`/`done` and `then`/`fi`, not indentation, to determine structure.
-
-Before the existing `else`, insert a report-specific branch:
-
-```bash
-elif [[ "$page" == "maker-report.html" && "$status" == "404" ]]; then
-  printf 'MISSING: maker-report.html returned HTTP 404\n'
-  printf 'Run ~/scripts/maker-report.sh "S5 Report", then build-website.\n'
-```
-
-`elif` means "otherwise, test this". Inside `[[ ... ]]`, `&&` requires both tests to succeed. A generic `404` must not pretend every missing path is the report.
-
-Add `printf 'Inspect headers with: curl -I %s\n' "$url"` inside the final `else`, after printing its status.
-
-## Exercise 5: Command Failure Is Different
-
-At the prompt, compare the HTTP status with curl's exit code:
-
-```bash
-curl -I "https://lf2607.kolamayermakers.org/~$USER/not-a-page.html"
-printf 'curl exit code: %s\n' "$?"
-```
-
-Read `$?` immediately: another command replaces it. Receiving `404` normally still means curl exits `0`; a response arrived. DNS, TLS, connection, and timeout failures return a nonzero exit code. With `-w '%{http_code}'`, curl prints `000` when no HTTP response code was received. This placeholder is neither an HTTP status nor curl's exit code; read `$?` for the exit code.
-
-Keep the two results in separate variables. Replace the curl capture inside the loop with:
-
-```bash
-curl_exit_code=0
-status=$(curl -sS -I --max-time 10 -o /dev/null -w '%{http_code}' "$url") \
-  || curl_exit_code=$?
-if [[ "$curl_exit_code" -eq 0 ]]; then
-```
-
-Reset `curl_exit_code=0` on every iteration. `$()` captures the HTTP status in `status`; the assignment takes curl's exit code. `||` runs its right-hand command only on failure, saving `$?` immediately and preventing `set -e` from stopping the script. The backslash continues the command onto the next line. `-eq` compares numbers.
-
-Place your existing HTTP `if` inside this outer `then`, then add an outer `else` for connection diagnostics and a second `fi` before `done`.
-
-Do not add `-f`: it would turn `404` into a command failure before our explicit HTTP decision. Do not add `-k` to bypass certificates. `set -e` is not a substitute for handling expected failures.
-
-## Complete Script
-
-This is one implementation, not a required copy. The lesson uses `for` and `if` to teach repetition and decisions. Focus on the behavior: request each supplied page, distinguish HTTP results from curl failures, and print useful advice.
+Use this complete example to compare with your script. The outer `if` tests whether curl succeeded; the inner one interprets HTTP. A failed request must not claim success, even if curl printed `200` before failing.
 
 ````bash
 #!/bin/bash
@@ -276,13 +139,12 @@ if [[ "$#" -eq 0 ]]; then
   exit 2
 fi
 
-base_url="https://lf2607.kolamayermakers.org/~$USER"
+base_url="${BASE_URL:-https://lf2607.kolamayermakers.org/~$USER}"
 
 for page in "$@"; do
   url="$base_url/$page"
   curl_exit_code=0
-  status=$(curl -sS -I --max-time 10 -o /dev/null -w '%{http_code}' "$url") \
-    || curl_exit_code=$?
+  status=$(curl -sS -I --max-time 10 -o /dev/null -w '%{http_code}' "$url") || curl_exit_code=$?
   if [[ "$curl_exit_code" -eq 0 ]]; then
     if [[ "$status" == "200" ]]; then
       printf 'OK: %s returned HTTP 200\n' "$url"
@@ -300,133 +162,53 @@ for page in "$@"; do
 done
 ````
 
-Save, check, and run:
+New syntax:
+
+- `||` runs its right side only after failure; capture `$?` immediately. Reset the saved exit code for each page.
+- `elif` adds a test; `&&` inside `[[ ... ]]` requires both conditions.
+- `set -u` rejects unset variables. `pipefail` propagates pipeline failures. `set -e` exits on certain unhandled failures, but has exceptions; the explicit `||` handles this expected curl failure.
+- `${BASE_URL:-...}` uses the override if nonempty, otherwise the default.
+
+At home, change the report-repair message to suggest `cd ~/src && node scripts/build.mjs` instead of `build-website`. Do not add `-k` to bypass certificates or `-f` to turn HTTP errors into curl failures in this checker.
 
 ```bash
 bash -n ~/scripts/site-check.sh
 bash ~/scripts/site-check.sh "" maker-report.html
 ```
 
-`bash -n` parses without executing and normally prints nothing on success. For unexpected behaviour, use `bash -x ~/scripts/site-check.sh "" maker-report.html`. Add `chmod u+x ~/scripts/site-check.sh` only if you want direct execution instead of `bash`.
-
-This is a human-readable checker, not a complete monitoring system. It prints each result; its process exit code does not summarize website health. A `HEAD` response of `200` does not prove the report's contents are correct or fresh. Inspect the page body and browser view too. Some other servers handle `HEAD` differently from `GET`.
-
-## Exercise 6: Predict, Then Check
-
-Read the unchanged checker and predict its message and advice for these hypothetical results:
-
-| Page | Curl exit code | HTTP status |
-|---|---|---|
-| Either | `0` | `200` |
-| Homepage | `0` | `404` |
-| Report | `0` | `404` |
-| Either | `0` | `302` or `500` |
-| Either | `6` | No response |
-| Report | `28` | `200` printed before curl failed |
-
-Explain why the two `404` cases produce different advice and why a curl failure must not claim success, even if curl printed `200`. Continue to the remaining supplied pages when a request fails. Do not change the script or delete a page to produce these cases.
-
-Exercise a real `404` through the checker with `bash ~/scripts/site-check.sh not-a-page.html`. Choose another unused path if needed. It must diagnose that page without report-regeneration advice. Also try `bash ~/scripts/site-check.sh` with no arguments: expect usage help and exit `2`, not a homepage request. Use `printf 'exit code: %s\n' "$?"` immediately afterward to read it.
-
-Run `bash ~/scripts/site-check.sh "" maker-report.html` against your real pages. Read the actual results, repair only observed problems, and rerun. Verify both pages in your laptop browser too.
-
-To observe a failed request without altering your site or checker, try at the prompt:
-
-```bash
-if curl -I --max-time 3 https://s6-network-test.invalid; then
-  printf 'A response arrived. Read its status.\n'
-else
-  printf 'The request failed. Read the curl error.\n'
-fi
-```
-
-`.invalid` is reserved for names that should not resolve. A configured proxy may instead return a response; explain what you actually see. Do not disable TLS checks, alter DNS, or open firewall rules yourself.
+This prints results for people; its exit code does **not** summarize site health. `HEAD 200` does not prove correct or fresh content. Check the body and browser too.
 
 ## Diagnostic Cases
 
-Use this table to reason through your script with another learner. Predict the output without changing your site to cause failures. Run your script as your own account, without sudo, and keep repairs as printed advice rather than automatic file changes.
+Predict the message and advice without deleting pages or editing the checker:
 
-| Case | Expected checker behavior |
-|---|---|
-| Both pages return `200` | Identify each page and its HTTP `200` success. |
-| Report alone returns `404` | Diagnose the missing report; suggest `maker-report.sh`, then `build-website`. |
-| Homepage alone returns `404` | Diagnose the missing homepage without suggesting report regeneration. |
-| Report `500`, homepage `200` | Diagnose the report's HTTP `500` as an error. |
-| Homepage connection fails | Diagnose that failure and still check the report. |
-| Report connection fails | Diagnose that failure and still check the homepage. |
-| Report curl prints `200` but exits nonzero | Diagnose the failed request, not a success; still check both pages. |
-| An arbitrary missing page alone returns `404` | Identify that page and HTTP `404`; do not suggest report regeneration. |
-| No page arguments | Print concise usage help and exit nonzero without requesting a page. The reference uses exit `2`. |
+| Page | Curl exit | HTTP code | What should it diagnose? |
+|---|---|---|---|
+| Either | `0` | `200` | Successful response |
+| Report | `0` | `404` | Missing report; generation, then build |
+| Another path | `0` | `404` | Missing path; not report regeneration |
+| Either | `0` | `302` or `500` | Actual HTTP code; inspect headers |
+| Either | `6` | `000` | Failed request; continue to next argument |
+| Report | `28` | `200` | Failed request, not success |
 
-Check only the supplied pages, in the supplied order. `""` is an explicit homepage argument, not the same as no arguments. A real missing page tests HTTP `404`, not a connection failure.
+Run the checker with an absent path and with no arguments. The latter should print usage and exit `2`. Then check both real pages.
 
-Identify each page by its URL, path, or a homepage/report label. Print the actual HTTP code with a clear diagnosis. For transport failures, use clear failure wording and do not also call the request successful. Report repair advice should explain both generation and rebuilding.
+At home, stop the local preview with `Ctrl-C` in its terminal and check both paths again. Expect connection-failure diagnoses for both, not HTTP statuses. Restart the same preview command and confirm recovery; no website files need changing.
 
-Predictions do not verify your live website. Run `bash ~/scripts/site-check.sh "" maker-report.html` against the real pages and open both in your laptop browser. Repair only observed problems, then rerun.
+**Classroom viewpoint:** curl may resolve the course hostname through `/etc/hosts` to loopback, while `host` queries public DNS. Server-side success is not proof of outside access. Open both public pages in your laptop browser as well.
 
-## Repair A Missing Report
+## Check yourself
 
-If the real script prints the report `MISSING` line, use your working generator or the [provided report script](#provided-report-script), then run:
+- Explain the different questions answered by DNS, ping, curl's exit code, and HTTP status.
+- Explain why `""` and zero arguments are different.
+- Explain how `for`, `"$@"`, and `if` check arbitrary supplied paths.
+- Find your report title in a `GET` response and browser view.
 
-```bash
-~/scripts/maker-report.sh "S5 Report"
-build-website
-bash ~/scripts/site-check.sh "" maker-report.html
-```
+[Answers](../../guides/self-study-answers.md#s6-site-checker). References: [curl](../../commands/curl.md), [Conditionals](../../concepts/conditionals.md), and [DNS](../../concepts/dns.md).
 
-Generation writes Markdown; rebuilding publishes HTML. Verify `200`, then open the report in your browser. For a missing homepage, inspect `~/src/pages/index.md` and rebuild; do not overwrite that source file with the report.
+## If you get stuck
 
-## Troubleshooting
-
-| Symptom | Check | Repair |
-|---|---|---|
-| `command not found` for host, ping, curl, or traceroute | Read the command name | Ask the instructor; do not install software yourself. |
-| Wrong username in URLs | Compare `whoami` with `printf '%s\n' "$USER"` | Reconnect with your course account. |
-| No DNS address answer | Read the exact host error | Ask the instructor about the resolver or hostname. |
-| No ping replies, HTTP works | Read packet loss | Report no replies, not an invented time or "website down". |
-| `CONNECTION FAILED` | Read curl's stderr | Distinguish name resolution, refusal, timeout, and TLS failure. Ask for help rather than using `-k`. |
-| Homepage `404` | Inspect `~/src/pages/index.md` | Rebuild; ask for recovery if source is missing. |
-| Generator path is missing | Inspect `~/scripts/maker-report.sh` | Copy the provided report script; leave your version in `~/src` untouched. |
-| Report `404` | Inspect `~/src/pages/maker-report.md` | Generate the report, then rebuild. |
-| `301`, `302`, or `308` | Inspect `Location` with curl | Use the documented HTTPS URL and trailing homepage slash. |
-| `403`, `500`, or `502` | Preserve the response and URL | Ask the instructor; do not change shared-service permissions or configuration. |
-| `syntax error` | Run `bash -n` | Check both `if`/`fi` pairs, `do`/`done`, quotes, and bracket spaces. |
-| Both iterations show the same URL | Inspect the loop body | Use `url="$base_url/$page"`, not a fixed homepage URL. |
-
-## Proof Checklist
-
-- Explain the different questions answered by DNS, ping, and HTTP.
-- Identify an observed status and response header, then find your report title in a `GET` body.
-- Explain why curl can exit `0` after an HTTP `404`.
-- Explain how `"$@"` extends the early `$1` exercise and how `for` and `if` repeat checks and choose diagnoses. Your implementation accepts arbitrary page arguments, distinguishes no arguments from `""`, and handles curl failure separately from HTTP status.
-- Predict the diagnostics for missing-report, other HTTP statuses, and curl failures without changing the checker.
-- Both real paths return `200` from the server and open correctly in your laptop browser.
-
-## Next Session
-
-You have already inspected HTTP statuses, headers, and bodies. In S7, Run Your Own Web Server, start a backend manually, watch requests in its log, match its PID to its listening port, send raw HTTP, and diagnose and recover three safe incidents. Publishing, notes, and Git remain optional practice. Keep your report and checker working.
-
-## Optional Practice
-
-Compare a known-list `for` with a condition-controlled `while` at the prompt:
-
-```bash
-remaining=3
-while [[ "$remaining" -gt 0 ]]; do
-  printf '%s\n' "$remaining"
-  remaining=$((remaining - 1))
-done
-```
-
-`-gt` means numerically greater than; `$((...))` performs arithmetic. The update makes the loop stop. This is optional; `Ctrl-C` cancels a loop that does not stop.
-
-Optional Git practice: inspect `~/src/scripts/site-check.sh` before copying your working script there; do not overwrite an existing version without comparing it. Use S4's deliberate stage, diff, commit workflow.
-
-## Docs Pointers
-
-- Run `man host`, `man ping`, `man curl`, and `man traceroute`.
-- Read [DNS](../../concepts/dns.md), [ICMP](../../concepts/icmp.md), [HTTP](../../concepts/http.md), and [HTTP Status Codes](../../concepts/http-status-codes.md).
-- Read [IP Networking](../../concepts/ip-networking.md) for diagnostic layers.
-- Read [curl](../../commands/curl.md), [curl -I](../../commands/curl-head.md), and [traceroute](../../commands/traceroute.md).
-- Run `help if`, `help for`, `help [[`, and optionally `help while`.
-- Read [Conditionals](../../concepts/conditionals.md) and [Shell Scripting](../../concepts/shell-scripting.md).
+- Syntax error: `bash -n` checks quotes, bracket spaces, `if`/`fi`, and `do`/`done`.
+- Repeated wrong URL: calculate `url` inside the loop, using `page`.
+- Report `404`: regenerate Markdown, then build; restarting a server cannot create it.
+- Connection failure: read curl's error before changing anything. At home, confirm the preview is running; in class, bring the URL and exact error to support.

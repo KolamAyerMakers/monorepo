@@ -2,7 +2,9 @@
 
 Use concept cards when you need the idea behind a command. Commands prove one action; concepts explain why the action works.
 
-## S01 Orientation
+Start with the topic you need, not every card in order. Run examples in Bash, one command at a time. Keep a card's temporary-directory variables in the same terminal; they do not carry into a new tab.
+
+## Linux, Terminals, and Navigation
 
 - [Linux](linux.md)
 - [Unix](unix.md)
@@ -14,7 +16,6 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [server](server.md)
 - [client](client.md)
 - [SSH login](ssh-login.md)
-- [IRC](irc.md)
 - [terminal](terminal.md)
 - [shell](shell.md)
 - [readline](readline.md)
@@ -31,7 +32,7 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [memory](memory.md)
 - [time zones](time-zones.md)
 
-## S02 Files And Identity
+## Files, Editing, and Identity
 
 - [file creation](file-creation.md)
 - [file editing](file-editing.md)
@@ -40,7 +41,7 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [Markdown basics](markdown-basics.md)
 - [site source ownership](site-source-ownership.md)
 
-## S03 Streams And Processes
+## Streams and Processes
 
 - [I/O](io.md)
 - [pipes](pipes.md)
@@ -51,13 +52,13 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [process](process.md)
 - [process basics](process-basics.md)
 
-### Go Deeper After S03
+### More About Processes
 
 - [devices](devices.md)
 - [signal](signal.md)
 - [job control](job-control.md)
 
-## S04 Permissions, Git, And Forgejo
+## Permissions and Version Control
 
 - [permissions](permissions.md)
 - [glob patterns](glob-pattern.md)
@@ -66,7 +67,7 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [multi-user filesystems](multi-user-filesystems.md)
 - [number bases](number-bases.md)
 
-## S05 Scripting
+## Scripting
 
 - [shell scripting](shell-scripting.md)
 - [shebang](shebang.md)
@@ -75,12 +76,12 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [quoting](quoting.md)
 - [script arguments](script-arguments.md)
 
-### Go Deeper After S05
+### Script Inputs and Environment
 
 - [environment variables](environment-variables.md)
 - [standard input](standard-input.md)
 
-## S06 Control Flow And Networking
+## Control Flow and Networking
 
 - [control flow](control-flow.md)
 - [conditionals](conditionals.md)
@@ -93,14 +94,14 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [HTTP](http.md)
 - [HTTP status codes](http-status-codes.md)
 
-### Go Deeper After S06
+### More About Networking
 
 - [one-liners](oneliner.md)
 - [IP addressing basics](ip-addressing-basics.md)
 - [SMTP basics](smtp-basics.md)
 - [external data fetching](external-data-fetching.md)
 
-## S07 Web Servers And Diagnostics
+## Web Servers and Diagnostics
 
 - [manual web service](manual-web-service.md)
 - [service](service.md)
@@ -110,7 +111,7 @@ Use concept cards when you need the idea behind a command. Commands prove one ac
 - [reverse proxy](reverse-proxy.md)
 - [multi-page sites](multi-page-sites.md)
 
-## S08 Services
+## Supervised Services
 
 - [systemd user services](systemd-user-services.md)
 - [logging](logging.md)
@@ -129,11 +130,10 @@ Optional extensions:
 
 Optional interests:
 
-- [IRC](irc.md)
 - [text transforms](text-transforms.md)
 - [vim survival](vim-survival.md)
 
-## S10 Investigation
+## File Investigation
 
 - [shell investigation](shell-investigation.md)
 - [number bases](number-bases.md)

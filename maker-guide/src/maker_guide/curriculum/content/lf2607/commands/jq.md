@@ -7,12 +7,13 @@
 Create a small input and select a nested field:
 
 ```bash
-printf '%s\n' '{"forecast":{"maximum":31.5,"unit":"°C"}}' > forecast.json
-jq '.forecast.maximum' forecast.json
-jq -r '.forecast.unit' forecast.json
+work=$(mktemp -d)
+printf '%s\n' '{"forecast":{"maximum":31.5,"unit":"°C"}}' > "$work/forecast.json"
+jq '.forecast.maximum' "$work/forecast.json"
+jq -r '.forecast.unit' "$work/forecast.json"
 ```
 
-The first filter outputs a JSON number; the second outputs plain text. Array indexes such as `[0]` select the first element. Use `jq -e` when a filter's truth value should affect the command's exit status.
+Expect `31.5`, then `°C`. Array indexes such as `[0]` select the first element. An absent field commonly produces `null`, not a parsing error. Use `jq -e` to fail when the final result is `false` or `null`; validate the expected type too before using a value in a report.
 
 ## Related Reading
 

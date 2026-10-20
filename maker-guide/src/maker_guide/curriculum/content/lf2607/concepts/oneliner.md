@@ -28,25 +28,25 @@ cut -d: -f1 /etc/passwd | wc -l
 Run the next command only if the first succeeds:
 
 ```bash
-mkdir -p ~/playground/oneliners && cd ~/playground/oneliners
+work=$(mktemp -d) && cd "$work"
 ```
 
 Group several commands and redirect their combined output:
 
 ```bash
-{ printf '# Status\n\n'; date; hostname; } > ~/src/pages/status.md
+{ printf '# Status\n\n'; date; hostname; } > status.md
 ```
 
 Loop over a list:
 
 ```bash
-for path in ~/src/pages/*.md; do printf '%s\n' "$path"; done
+for path in /etc/*.conf; do printf '%s\n' "$path"; done
 ```
 
 Branch on a command result:
 
 ```bash
-if curl -fsS https://example.org >/dev/null; then printf 'up\n'; else printf 'down\n'; fi
+if curl -fsS --max-time 10 https://example.org >/dev/null; then printf 'request succeeded\n'; else printf 'request failed\n'; fi
 ```
 
 Use command output as an argument:
@@ -66,7 +66,7 @@ A good one-liner is compressed, not mysterious. The skill is composition, not sh
 - Expand and test each piece before combining it.
 - Quote variables and command substitutions.
 - Prefer `&&` when the second command depends on the first succeeding.
-- Use scratch paths before touching course source files.
+- Use scratch paths before touching important files.
 - Read destructive commands twice before pressing Enter.
 - If history would not explain it to future you, make it a script.
 

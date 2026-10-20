@@ -9,9 +9,10 @@ A timestamp is only useful when you know which clock rules produced it. Linux st
 ```bash
 date
 date -u
+TZ=Asia/Singapore date
 ```
 
-`date` prints local time. `date -u` prints UTC. Course dates use the course-local timezone `Asia/Singapore`, even if a server, website, or external API displays another timezone.
+`date` prints local time. `date -u` prints UTC. The third command displays Singapore time for that invocation only; it does not change the machine's time zone.
 
 ## Why It Matters
 

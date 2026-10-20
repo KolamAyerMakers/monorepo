@@ -1,178 +1,121 @@
-# S3 Self-Study Guide: Streams, Pipes, Processes
+# S3 — Streams, Pipes, Processes
 
-Session: S3
+Separate results from errors, connect commands, and identify a running process.
 
-## Study Path
+**You need:** a classroom shell or Ubuntu terminal. These examples work in either. Use `~/playground` for saved output.
 
-1. Identify stdin, stdout, and stderr.
-2. Redirect stdout and stderr separately before combining or discarding them.
-3. Run each pipeline stage alone, then connect the stages with `|`.
-4. Use `tee` when a stream must continue and also be saved.
-5. Distinguish an executable program file from a running process.
-6. Inspect processes owned by your account.
+## 1. See two output streams
 
-## Standard Streams
+Commands normally have three standard streams:
 
-When the shell starts a command, it normally connects three standard streams:
-
-| Descriptor | Name | Usual role |
+| Number | Name | Purpose |
 |---|---|---|
-| `0` | stdin | Input available to the command. |
-| `1` | stdout | Normal results from the command. |
-| `2` | stderr | Diagnostics, including errors and warnings. |
-
-Run one command that produces both output streams:
+| `0` | stdin | Input |
+| `1` | stdout | Normal results |
+| `2` | stderr | Diagnostics: errors, warnings, other messages |
 
 ```bash
 ls /etc/hostname /no/such/path
 ```
 
-Both streams normally appear on the terminal, so redirection is how you prove which is which.
-
-## Redirection Grammar
-
-Read redirection as `[stream][operator][destination]`:
-
-```text
->file          stdout to file, replacing it
->/dev/null     stdout to the black hole
->>file         stdout to file, appending
->>/dev/null    stdout to the black hole
-2>file         stderr to file, replacing it
-2>/dev/null    stderr to the black hole
-2>&1           stderr to wherever stdout points now
-```
-
-For `>` and `>>`, an omitted descriptor means stdout. Descriptor `2` means stderr.
-
-`/dev/null` is a special device path that discards every byte written to it. Do not discard an error until you know it is irrelevant.
-
-Separate stdout and stderr:
+The valid filename and the error both appear on your terminal. Separate them to see which stream carries each:
 
 ```bash
 mkdir -p ~/playground
 ls /etc/hostname /no/such/path >~/playground/stdout.txt 2>~/playground/stderr.txt
 cat ~/playground/stdout.txt
 cat ~/playground/stderr.txt
-cat /etc/hostname >/dev/null
 ```
 
-Combine them by applying redirections from left to right:
+The first file contains `/etc/hostname`; the second contains the missing-path diagnostic. Their wording may vary.
+
+## 2. Redirect deliberately
+
+| Syntax | Effect |
+|---|---|
+| `>file` | Replace a file with stdout |
+| `>>file` | Append stdout |
+| `2>file` | Replace a file with stderr |
+| `>/dev/null` | Discard stdout |
+| `2>&1` | Send stderr wherever stdout points **at this step** |
+
+Redirections apply **left to right**:
 
 ```bash
 ls /etc/hostname /no/such/path >~/playground/combined.txt 2>&1
 cat ~/playground/combined.txt
 ```
 
-First stdout points to `combined.txt`; then stderr points to stdout's current destination.
+First stdout goes to the file; then stderr follows it. Reverse the redirections and stderr still goes to the terminal's original stdout.
 
-## Search With grep
+`/dev/null` discards anything written to it. Try `cat /etc/hostname >/dev/null`: no output appears. Do not hide an error before understanding it.
 
-`grep` prints lines that match a pattern. Start with literal text in one known file. The `-n` option adds matching line numbers:
+## 3. Build a pipeline one stage at a time
+
+A pipe, `|`, carries the left command's **stdout** into the right command's **stdin**. It does not carry stderr.
 
 ```bash
-grep ssh /etc/services
 grep -n ssh /etc/services
-```
-
-Recursive directory search and symbolic links come later.
-
-## Build Pipelines Slowly
-
-A normal pipe connects stdout from the left command to stdin of the right command. It does not carry stderr.
-
-`cut -d: -f1` selects the first colon-separated field. `wc -l` counts lines.
-
-```bash
 cut -d: -f1 /etc/passwd
 cut -d: -f1 /etc/passwd | wc -l
 ```
 
-If the final result surprises you, remove the rightmost stage and inspect the previous output.
+`grep` prints matching lines; `-n` adds line numbers. `cut` selects field 1 using `:` as the separator. `wc -l` counts newline characters—not users in every identity system.
 
-Explain to another learner which command writes to the pipe and which reads from it, using your output.
-
-When you need to process error text too, move stderr onto stdout before the pipe:
+Now ask: which login-shell value appears most often in local `/etc/passwd`?
 
 ```bash
-cat /etc/hostname /no/such/path 2>&1 | grep path
+cut -d: -f7 /etc/passwd | sort | uniq -c | sort -nr
 ```
 
-## Keep A Copy With tee
+Read from left to right: select field 7 → group equal lines → count each group → rank counts largest first. `uniq` counts adjacent equal lines, so the first sort matters.
 
-`tee` copies stdin to a file and also sends it onward through stdout.
+If a result surprises you, remove the rightmost stage and inspect its input.
+
+## 4. Save a stream without stopping it
+
+`tee` copies stdin to a file **and** stdout:
 
 ```bash
 cut -d: -f7 /etc/passwd | tee ~/playground/login-shells.txt | wc -l
 cat ~/playground/login-shells.txt
 ```
 
-The same stream is transformed, saved, and counted without a temporary pipeline stage.
+Check that the saved file has the same number of lines as the printed count.
 
-Put both output streams through the same pipeline:
+To send diagnostics through a pipe too:
 
 ```bash
 date --debug +%F 2>&1 | tee ~/playground/combined.txt | wc -l
 cat ~/playground/combined.txt
 ```
 
-GNU `date` writes an ISO date to stdout and an output-format diagnostic to stderr. It still exits zero: stderr can carry diagnostics even when a command succeeds. `2>&1` combines the streams before `tee` saves them and `wc` prints their line count, `2`.
+GNU `date` prints the date to stdout and a format diagnostic to stderr; `wc` counts the two lines. It succeeds: **stderr is not proof of failure**. `2>&1` combines the streams before `tee` saves them, replacing the earlier practice contents of `combined.txt`.
 
-Explain descriptor 2 and the left-to-right meaning of `2>&1` to another learner, pointing to the saved diagnostic.
+## 5. Program file or process?
 
-## A Useful Pipeline
+An executable file, such as `/usr/bin/grep`, is stored on disk. A **process** is a running instance with a process ID (PID), owner, memory, and open streams. Several processes can run the same program.
 
-Ask which login shell is configured for the most accounts:
-
-`cut` selects field 7 from each colon-separated line. `sort` groups equal shells, `uniq -c` counts each group, and the final `sort -nr` ranks the counts from largest to smallest.
-
-```bash
-cut -d: -f7 /etc/passwd
-cut -d: -f7 /etc/passwd | sort | uniq -c | sort -nr
-```
-
-## Program Files And Processes
-
-Many external commands name binary executable files, such as `/usr/bin/grep`. A binary executable stores machine instructions and loading information as bytes. The kernel loads it into memory, then the CPU executes those instructions.
-
-The executable is the program file on disk. When the shell asks the kernel to run it, Linux creates a process: a running instance with its own process ID, owner, memory, arguments, and open streams.
-
-Shell built-ins, including `cd` and `history`, run inside the shell instead of launching a separate executable.
-
-`$USER` is a shell-provided value containing your username. For now, quote it so the shell passes one value. Environment inheritance is later exploration.
-
-Inspect your own processes:
+Shell built-ins such as `cd` run inside the shell rather than starting a separate executable.
 
 ```bash
 ps -u "$USER" -o pid,comm,args
 ```
 
-The output has a PID, a short command name, and the command with arguments. Long arguments can be clipped to the terminal width. Pick one row and note its numeric PID and command.
+`$USER` contains your username; quotes preserve it as one argument. Find a row owned by you and note its PID and command. Long arguments may be clipped to the terminal width.
 
-Explain program file versus process to another learner, including the numeric PID and command from your chosen row.
+## Check yourself
 
-## Troubleshooting
+1. Why do the two files in Exercise 1 contain different text?
+2. Where does stderr go in `>file 2>&1`? What changes in `2>&1 >file`?
+3. Why sort before `uniq -c`?
+4. What does `tee` let the next command receive?
+5. Is a PID a property of the executable file or the running instance?
 
-- stdout and stderr still look mixed: redirect each to a different file, then read both files.
-- `2>&1` went somewhere unexpected: read every redirection from left to right.
-- `grep` prints nothing: no line matched. Run the left pipeline stage alone and inspect its exact output.
-- `wc -l` looks wrong: it counts lines, not abstract objects.
-- Pipeline hangs: the right command may be waiting for stdin. Press `Ctrl-C` and test each stage alone.
+[Answers](../../guides/self-study-answers.md#s3-streams-pipes-and-processes). References: [Stream Redirection](../../concepts/stream-redirection.md), [Pipes](../../concepts/pipes.md), and [ps](../../commands/ps.md).
 
-## Proof Checklist
+## If you get stuck
 
-- You can name stdin, stdout, and stderr and their descriptor numbers.
-- `~/playground/stdout.txt` and `~/playground/stderr.txt` contain different streams.
-- You can explain where stderr goes in `>combined.txt 2>&1`.
-- You can explain every stage of one useful pipeline.
-- `~/playground/login-shells.txt` contains the stream copied by `tee`.
-- You can explain executable program file versus running process.
-- You can name one process owned by your account.
-
-## Docs Pointers
-
-- Run `man bash`, then search for `REDIRECTION` and `Pipelines`.
-- Run `man date`, `man grep`, `man tee`, and `man ps`.
-- Read [I/O](../../concepts/io.md), [Pipes](../../concepts/pipes.md), [Stream Redirection](../../concepts/stream-redirection.md), [File Descriptor](../../concepts/file-descriptor.md), and [`/dev/null`](../../concepts/dev-null.md).
-- Read [Process Basics](../../concepts/process-basics.md) and [Process](../../concepts/process.md).
-- Use the [date](../../commands/date.md), [tee](../../commands/tee.md), [stderr redirect](../../commands/stderr-redirect.md), [stderr to stdout](../../commands/stderr-to-stdout.md), and [ps](../../commands/ps.md) command cards for exact syntax.
+- `grep` prints nothing: inspect the input; no line may match.
+- A pipeline waits forever: a command may be waiting for stdin. Press `Ctrl-C`, then test each stage alone.
+- Streams still seem mixed: send them to separate files before combining them.

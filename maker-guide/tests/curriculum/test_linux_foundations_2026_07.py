@@ -1276,15 +1276,15 @@ def test_s3_combined_stream_pipeline_succeeds_with_pipefail(
 
 
 def test_open_concept_index_preserves_authored_skill_ownership() -> None:
-    """The complete index keeps S3 core, enrichment, and later regex visibly distinct."""
+    """The topic index keeps stream basics, process extensions, and regex distinct."""
     concept_index = _content_text(f"content/{COURSE_ID}/concepts/README.md")
 
-    assert concept_index.index("(text-search.md)") < concept_index.index("### Go Deeper After S03")
-    assert concept_index.index("### Go Deeper After S03") < concept_index.index("(signal.md)")
+    assert concept_index.index("(text-search.md)") < concept_index.index("### More About Processes")
+    assert concept_index.index("### More About Processes") < concept_index.index("(signal.md)")
     assert (
         concept_index.index("## Automation")
         < concept_index.index("(automation-timers.md)")
-        < concept_index.index("## S10 ")
+        < concept_index.index("## File Investigation")
         < concept_index.index("(regular-expression.md)")
     )
 
@@ -2031,7 +2031,7 @@ def test_curriculum_content_uses_current_course_hosts_and_day_language() -> None
     assert "TheGuide" not in all_content_text
     assert "lf2607.kolamayermakers.org" in all_content_text
     assert "https://lf2607.kolamayermakers.org/git/" in all_content_text
-    assert "https://lf2607.kolamayermakers.org/irc/" in all_content_text
+    assert "https://lf2607.kolamayermakers.org/irc/" not in all_content_text
     assert "git.kolamayermakers.org" not in all_content_text
     assert "irc.kolamayermakers.org" not in all_content_text
     assert "lf2607.kolamayermakers.org/~username" in all_content_text
@@ -2042,7 +2042,7 @@ def test_curriculum_content_uses_current_course_hosts_and_day_language() -> None
     assert "cat >> ~/.ssh/authorized_keys" in all_content_text
     assert "chmod 700 ~/.ssh" in all_content_text
     assert "current objective or quest" not in all_content_text
-    assert "current session objective" in all_content_text
+    assert "current assigned task" in all_content_text
 
 
 def test_webring_uses_the_deployed_course_group() -> None:
@@ -2063,8 +2063,6 @@ def test_curriculum_content_keeps_quests_optional_and_internals_hidden() -> None
     build_helper = "/usr/local/bin/maker-guide-build-personal-website"
     assert build_helper in all_content_text
     all_content_text = all_content_text.replace(build_helper, "")
-    assert "maker-guide-build-personal-website" in all_content_text
-    all_content_text = all_content_text.replace("maker-guide-build-personal-website", "")
 
     for forbidden_phrase in (
         "Python catalog",

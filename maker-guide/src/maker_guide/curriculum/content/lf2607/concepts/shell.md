@@ -2,12 +2,13 @@
 
 ## Core Idea
 
-A shell is a command interpreter. It reads a line of text, expands shell syntax, starts programs, connects streams, and reports success or failure. Bash is the shell used for this course.
+A shell is a command interpreter. It reads text, expands shell syntax, starts programs, connects streams, and reports success or failure. These examples use Bash.
 
 ## Command Anatomy
 
 ```bash
-grep -n ssh /etc/services > ~/playground/matches.txt 2>/dev/null
+work=$(mktemp -d)
+grep -n ssh /etc/services > "$work/matches.txt" 2> "$work/errors.txt"
 ```
 
 - `grep` is the command name.
@@ -15,7 +16,7 @@ grep -n ssh /etc/services > ~/playground/matches.txt 2>/dev/null
 - `ssh` and `/etc/services` are arguments.
 - `>` redirects stdout.
 - `2>` redirects stderr.
-- The shell expands `~` before `grep` starts.
+- The shell expands `$work` before `grep` starts.
 
 ## What The Shell Does Before A Program Runs
 
@@ -35,7 +36,7 @@ printf '%s\n' $name
 printf '%s\n' "$name"
 ```
 
-Unquoted variables can split into multiple words. Quoted variables preserve one value. This is why scripts in the course use `"$1"`, `"$HOME"`, and `"$name"`.
+Unquoted variables can split into multiple words and expand filename patterns. Quoted variables preserve one argument.
 
 ## Interactive Shell Versus Script
 

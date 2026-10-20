@@ -6,7 +6,7 @@ User services let your account run supervised processes without root access.
 
 ## Practice Alone
 
-Use your classroom login. This independent example serves only a generated test page, not an existing website. Check the user manager and candidate loopback port first:
+Use a normal login on a Linux system with systemd user services and Caddy installed. This independent example serves its own test page, not an existing website. Check the user manager and candidate loopback port first:
 
 ```bash
 command -v caddy systemctl journalctl curl ss
@@ -15,6 +15,8 @@ ss -H -ltn 'sport = :18080'
 ```
 
 Stop if a tool or the user manager is unavailable; ask the machine administrator rather than using `sudo`. Port `18080` is an example, not a reserved assignment. If `ss` lists a listener, choose another unused unprivileged port and replace `18080` in every example below. Do not stop or kill another user's process. A free-port observation is not a reservation: if startup later reports `Address already in use`, inspect again.
+
+For your own Ubuntu machine, [Continue at Home](../guides/continue-at-home.md) covers package installation and the user-manager prerequisite. Check `command -v caddy`; if it is not `/usr/bin/caddy`, use the actual executable path in the unit below.
 
 Create a new demo directory. If `~/sample-web` already exists, inspect and preserve it rather than overwriting its files; continue only with a new directory or one you have confirmed is disposable.
 

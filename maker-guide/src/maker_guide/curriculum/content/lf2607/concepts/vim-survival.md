@@ -11,8 +11,9 @@ The most important fact: vim has modes. In normal mode, keys are commands. In in
 Open a scratch file, press `i`, type text, press Esc, type `:wq`, and verify with `cat`.
 
 ```bash
-vim ~/playground/vim-note.txt
-cat ~/playground/vim-note.txt
+work=$(mktemp -d)
+vim "$work/vim-note.txt"
+cat "$work/vim-note.txt"
 ```
 
 Minimum survival keys:
@@ -26,7 +27,7 @@ Minimum survival keys:
 
 - If typing letters does not insert text, press `i`.
 - If commands appear in the file, press Esc, then undo with `u` or quit with `:q!`.
-- If you only need the course editor, use `micro`; vim survival is for systems that open vim unexpectedly.
+- Use `micro` if you prefer a modeless editor; these shortcuts also help when another program opens Vim unexpectedly.
 
 ## Done When
 

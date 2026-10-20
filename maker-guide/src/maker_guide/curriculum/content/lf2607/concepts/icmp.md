@@ -8,7 +8,7 @@ ICMP means Internet Control Message Protocol. It carries network diagnostic and 
 
 ```bash
 ping -c 3 1.1.1.1
-ping -c 3 lf2607.kolamayermakers.org
+ping -c 3 example.org
 ```
 
 `ping` sends ICMP echo requests and reports replies, packet loss, and round-trip time.

@@ -3,7 +3,8 @@
 ## Use
 
 ```bash
-base64 -d encoded.txt
+printf 'hello\n' | base64
+printf 'aGVsbG8K\n' | base64 -d
 ```
 
 ## What It Does
@@ -14,7 +15,7 @@ Base64 turns arbitrary bytes into printable ASCII characters. It is useful for t
 
 ## Practice
 
-Use `-d` to decode when a puzzle gives base64-looking data.
+The first command produces `aGVsbG8K`; the second decodes it to `hello` and a newline. `-d` means decode.
 
 ## Watch Out
 

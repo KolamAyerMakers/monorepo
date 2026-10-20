@@ -1,12 +1,17 @@
 # Concept: Shell Basics
 
-Skill: shell-basics
+At a Bash prompt, enter a command, press Enter, and read its result before continuing. Do not copy the prompt symbol itself.
 
-The shell is a text conversation with the operating system.
+```bash
+pwd
+printf 'hello\n'
+ls /no/such/path
+printf 'exit status: %s\n' "$?"
+```
 
-You type a command. The machine prints output. Read the output before typing the next command.
+The first command reports your current directory; the next prints `hello`. The missing path produces an error, and the immediately following `$?` reports its nonzero exit status. Any command in between would replace that status.
 
-The fastest beginners are not the ones who type fastest. They are the ones who read errors carefully.
+No new prompt may mean a running command is waiting for input. `Ctrl-C` interrupts it. A continuation prompt such as `>` may mean an unfinished quote or command; cancel and check the line rather than typing unrelated commands into it.
 
 ## Go Deeper
 

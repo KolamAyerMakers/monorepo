@@ -12,7 +12,7 @@ jobs
 
 ## Practice
 
-Run it after stopping a command with `Ctrl-Z`.
+Run `sleep 60`, press `Ctrl-Z`, then run `jobs`. Expect a stopped job with a bracketed job number. Run `fg`, then press `Ctrl-C` to stop the sleep.
 
 ## Watch Out
 

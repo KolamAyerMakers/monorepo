@@ -4,9 +4,9 @@
 
 Linux is the operating-system kernel at the center of a family of systems built from that kernel, system tools, libraries, services, shells, and applications.
 
-## What You Are Using In This Course
+## Identify Your System
 
-You are using a shared Linux server. The exact distribution can be checked with:
+Run these in the Linux environment you are investigating, whether local or remote:
 
 ```bash
 cat /etc/os-release

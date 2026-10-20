@@ -7,9 +7,10 @@ Files contain bytes. Text files are bytes interpreted through an encoding. UTF-8
 ## Commands To Try
 
 ```bash
-printf 'makers\n' > ~/playground/encoding.txt
-file ~/playground/encoding.txt
-xxd ~/playground/encoding.txt
+work=$(mktemp -d)
+printf 'makers\n' > "$work/encoding.txt"
+file "$work/encoding.txt"
+xxd "$work/encoding.txt"
 ```
 
 `file` guesses the file type. `xxd` shows the bytes. The ASCII letters in `makers` appear as hexadecimal bytes `6d 61 6b 65 72 73`.
@@ -29,12 +30,12 @@ Unix text files usually end lines with one byte: line feed, shown as `0a` in hex
 
 ## Binary Inspection
 
-Use this first pass when a file is not obviously text:
+Use this first pass on the known system executable `/bin/ls`, or substitute the path you are investigating:
 
 ```bash
-file unknown
-strings unknown | less
-xxd unknown | head
+file /bin/ls
+strings /bin/ls | less
+xxd -l 64 /bin/ls
 ```
 
 `strings` extracts readable runs. `xxd` shows exact bytes. Neither replaces understanding the file format.

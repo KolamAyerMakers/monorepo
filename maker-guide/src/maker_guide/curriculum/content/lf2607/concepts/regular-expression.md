@@ -8,34 +8,41 @@ A regular expression is a pattern for matching text.
 
 ## First Patterns
 
+Use a scratch input containing both headings and ordinary lines:
+
+```bash
+work=$(mktemp -d)
+printf '# makers\nhello\nhttps://example.org\nhat\nloool\n' > "$work/words.txt"
+```
+
 Literal text:
 
 ```bash
-grep 'makers' ~/src/pages/index.md
+grep 'makers' "$work/words.txt"
 ```
 
 Line starts with `#`:
 
 ```bash
-grep '^#' ~/src/pages/index.md
+grep '^#' "$work/words.txt"
 ```
 
 Line ends with `.org`:
 
 ```bash
-grep '\.org$' ~/src/pages/index.md
+grep '\.org$' "$work/words.txt"
 ```
 
 Any character:
 
 ```bash
-grep 'h.t' words.txt
+grep 'h.t' "$work/words.txt"
 ```
 
 Zero or more of the previous thing:
 
 ```bash
-grep 'lo*l' words.txt
+grep 'lo*l' "$work/words.txt"
 ```
 
 ## Small Vocabulary
@@ -56,15 +63,15 @@ grep 'lo*l' words.txt
 Shell glob:
 
 ```bash
-ls *.md
+ls /etc/*.conf
 ```
 
-The shell expands `*.md` into matching filenames before `ls` runs.
+The shell expands `/etc/*.conf` into matching filenames before `ls` runs.
 
 Regular expression:
 
 ```bash
-grep '\.md$' file-list.txt
+printf 'page.md\npage.html\n' | grep '\.md$'
 ```
 
 `grep` receives the pattern and matches it against text lines.
@@ -73,17 +80,17 @@ grep '\.md$' file-list.txt
 
 Different tools use slightly different regex dialects.
 
-In this course:
+For the GNU tools on Ubuntu:
 
 - `grep 'pattern' file` uses basic regular expressions by default.
 - `grep -E 'pattern' file` uses extended regular expressions.
 - `sed 's/pattern/replacement/'` uses basic regular expressions by default.
 - Basic `sed` capture groups are written as `\( ... \)` and reused as `\1`.
 
-This is why the course sed example looks like this:
+For example, replace a Markdown heading with an HTML heading:
 
 ```bash
-sed 's/^# \(.*\)$/<h1>\1<\/h1>/'
+printf '# heading\n' | sed 's/^# \(.*\)$/<h1>\1<\/h1>/'
 ```
 
 ## Common Failures

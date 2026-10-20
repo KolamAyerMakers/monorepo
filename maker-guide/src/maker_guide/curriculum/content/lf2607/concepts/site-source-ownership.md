@@ -4,33 +4,22 @@
 
 Your site has source and output.
 
-- Source: Markdown and configuration under `~/src/`, especially `~/src/pages/`.
-- Output: generated HTML under `~/public_html/`.
+- Source: content, layouts, configuration, and build scripts.
+- Output: HTML and other files generated from that source.
 
 Edit source. Rebuild output. If output breaks, rebuild it. If source breaks, fix the source carefully.
 
-## Proof Commands
+## Trace one change
 
-```bash
-test -d ~/src/pages
-test -d ~/public_html
-build-website
-test -f ~/public_html/index.html
-```
+Use the complete setup from [First Site Build](first-site-build.md), which introduces source files and their builder. Change one heading in its Markdown source, rebuild successfully, then locate the heading in generated HTML and in an actual GET response.
 
-After rebuilding, compare one source file with one output file:
-
-```bash
-ls ~/src/pages/index.md ~/public_html/index.html
-```
-
-They are related, not identical. Markdown source is meant for humans. HTML output is meant for the browser.
+Markdown source is meant for editing; HTML output is meant for the browser. A filesystem name, generated filename, and URL path need not be identical.
 
 ## Common Failure
 
-- Editing `~/public_html/index.html` directly seems to work, then disappears after the next build.
-- Committing `~/public_html/` records generated output instead of source.
-- Forgetting `build-website` leaves the public page behind your source edits.
+- An edit made only to generated HTML disappears at the next build.
+- Committing output alone leaves out the content and instructions needed to rebuild it.
+- Forgetting to build leaves the served page behind your source edits.
 
 ## Done When
 

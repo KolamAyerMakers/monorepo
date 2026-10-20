@@ -15,7 +15,7 @@ Computers store bits. Humans write numbers in different bases to make those bits
 ```bash
 printf 'A' | xxd
 printf '%d\n' 0x41
-stat -c '%a %n' ~/playground 2>/dev/null || true
+stat -c '%a %n' /etc/passwd
 ```
 
 `0x41` is hexadecimal for decimal `65`, which is the ASCII byte for `A`. Permission mode `755` is octal: owner can read, write, execute; group and others can read and execute.

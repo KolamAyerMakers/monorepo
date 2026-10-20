@@ -3,7 +3,9 @@
 ## Use
 
 ```bash
-ls /etc/hostname /no/such/path >combined.txt 2>&1
+work=$(mktemp -d)
+ls /etc/hostname /no/such/path >"$work/combined.txt" 2>&1
+cat "$work/combined.txt"
 ```
 
 ## What It Does
@@ -13,13 +15,13 @@ ls /etc/hostname /no/such/path >combined.txt 2>&1
 ## Order Matters
 
 ```bash
-ls /etc/hostname /no/such/path >combined.log 2>&1
+ls /etc/hostname /no/such/path >"$work/combined.log" 2>&1
 ```
 
 This sends stdout to `combined.log`, then sends stderr there too.
 
 ```bash
-ls /etc/hostname /no/such/path 2>&1 >stdout.log
+ls /etc/hostname /no/such/path 2>&1 >"$work/stdout.log"
 ```
 
 This sends stderr to the old stdout first, then redirects stdout. The result is different.

@@ -13,7 +13,7 @@ Use it when you need the machine's idea of now. Use `date -u` when you need UTC.
 
 ## How To Read It
 
-The output includes a date, time, and timezone abbreviation. Logs, HTTP headers, cron, systemd timers, and git commits can use different timezone assumptions. For this course, course dates are local to `Asia/Singapore`.
+The output includes a date, time, and timezone abbreviation. Logs, HTTP headers, cron, systemd timers, and Git commits can use different timezone assumptions. `TZ=Asia/Singapore date` displays Singapore time for that one command without changing the system setting.
 
 GNU `date --debug +%F` prints an ISO date to stdout and an output-format diagnostic to stderr, then exits zero. stderr can carry diagnostics even when a command succeeds; the exit status reports success or failure.
 

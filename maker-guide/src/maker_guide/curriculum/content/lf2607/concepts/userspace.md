@@ -8,16 +8,15 @@ User space is where normal programs run: shells, editors, git, curl, Python, Cad
 
 User-space programs have less privilege than the kernel. They ask the kernel to open files, create processes, allocate memory, and use the network. The kernel enforces permissions and isolation.
 
-## Course Examples
+## Examples
 
 ```bash
 ps -u "$USER" -o pid,comm,args | head
-which bash
-which curl
-systemctl --user status site.service
+command -v bash
+command -v curl
 ```
 
-Your systemd user service is a user-space process managed by your user account. It is not a root-managed system service.
+Your shell and a systemd user service are user-space processes managed under your account. A root-managed system service is also user-space code: root privileges are not kernel space.
 
 ## User Space Boundaries
 
@@ -31,7 +30,7 @@ Your systemd user service is a user-space process managed by your user account. 
 - User space does not mean graphical desktop. Server commands are user-space programs too.
 - A user-space program can still be a server process.
 - A process can fail because user-space configuration is wrong even when the kernel is fine.
-- `sudo` changes privilege. It is not the normal path for this course.
+- `sudo` changes the process's account/privileges; it does not turn the program into kernel code.
 
 ## Proof Check
 

@@ -2,6 +2,8 @@
 
 ## Use
 
+In the [Git card's demo repository](git.md), edit `note.txt` after its first commit, then run:
+
 ```bash
 git diff
 ```

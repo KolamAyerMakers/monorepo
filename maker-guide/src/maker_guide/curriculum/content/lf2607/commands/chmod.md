@@ -3,7 +3,11 @@
 ## Use
 
 ```bash
-chmod u+x script.sh
+work=$(mktemp -d)
+printf '#!/bin/bash\nprintf "hello\\n"\n' > "$work/script.sh"
+ls -l "$work/script.sh"
+chmod u+x "$work/script.sh"
+"$work/script.sh"
 ```
 
 ## What It Does
@@ -13,9 +17,9 @@ chmod u+x script.sh
 ## Symbolic Modes
 
 ```bash
-chmod u+x script.sh
-chmod go-r private-notes.txt
-chmod a+r public.html
+chmod u+x "$work/script.sh"
+chmod go-r "$work/script.sh"
+chmod a+r "$work/script.sh"
 ```
 
 - `u`: user who owns the file.
@@ -27,14 +31,6 @@ chmod a+r public.html
 - `=`: set exactly.
 
 ## Executable Scripts
-
-After saving a Bash script such as `~/scripts/report.sh`:
-
-```bash
-cd ~/scripts
-chmod u+x report.sh
-./report.sh
-```
 
 `chmod u+x` adds execute permission for the user who owns the file. It does not fix a broken script, a missing shebang, or bad syntax.
 

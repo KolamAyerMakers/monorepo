@@ -3,9 +3,11 @@
 ## Use
 
 ```bash
-kill 12345
-kill -TERM 12345
-kill -KILL 12345
+sleep 300 &
+demo_pid=$!
+ps -p "$demo_pid" -o pid,user,comm,args
+kill -TERM "$demo_pid"
+wait "$demo_pid"
 ```
 
 ## What It Does
@@ -14,16 +16,13 @@ kill -KILL 12345
 
 ## Practice
 
-Use `ps` first so you know the exact process id and owner.
+The example starts a harmless `sleep`, captures its PID with `$!`, inspects it, and stops only that process. `wait` collects its result; a termination message and nonzero status are expected.
 
-```bash
-ps -u "$USER" -o pid,comm,args
-kill -TERM 12345
-```
+For any other process, inspect its exact PID and owner before acting. A PID printed earlier can be reused after that process exits.
 
 ## Watch Out
 
-Never guess process ids. `KILL` is a last resort because the process cannot clean up.
+Never guess process IDs. `kill -KILL PID` is a last resort because the process cannot clean up. For a managed service, use its service manager so the restart policy does not immediately start it again.
 
 ## Docs Pointers
 

@@ -2,7 +2,7 @@
 
 Quests are highly recommended reinforcement. Use them for extra practice or catch-up. Live sessions remain the primary course path.
 
-You can read any quest for independent practice and inspect the actual result. The bot's recorded reinforcement path is linear: `guide now` shows the current task, not an arbitrary quest selector, and there is no skip feature. If you want recorded progress, follow that task and run `guide now` before and after practical work; use `guide answer 'your answer'` when asked. See the dedicated [support guide](../guides/irc-support.md) and [scoring guide](../guides/scoring.md) for that optional workflow.
+You can read any quest for independent practice. For optional classroom progress, `guide now` shows and checks your current assigned task; `guide answer 'your answer'` supplies an explanation when requested. See [Platform Reference](../guides/platform-reference.md) and [Scoring](../guides/scoring.md). Always inspect the actual result yourself.
 
 ## S01 Reinforcement
 

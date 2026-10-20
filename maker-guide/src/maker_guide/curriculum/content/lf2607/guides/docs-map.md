@@ -1,112 +1,62 @@
-# Docs Navigation Guide
+# Find the Guide You Need
 
-The classroom docs are files. Learn to move through them the same way you move through your home directory.
+Start with your question, not a reading list.
 
-## Start Here
+| You want to… | Open |
+|---|---|
+| Repeat an exercise | That session's self-study guide |
+| Check syntax or an option | [Command cards](../commands/README.md) |
+| Understand why something works | [Concept cards](../concepts/README.md) |
+| Compare your reasoning | [Worked Answers](self-study-answers.md), after trying |
+| Practise after the server closes | [Continue at Home](continue-at-home.md) |
+| Find a classroom address or path | [Platform Reference](platform-reference.md) |
 
-```bash
-glow -p /docs/README.md
-```
+## Reading PDFs
 
-That page is the course map. Command cards, concept cards, and general guides are available from the start. Released session and quest links appear in `/docs/README.md` after mentors publish them.
+Keep the bundle's folders together so links between PDFs can work. Start with `guides/continue-at-home.pdf`; session guides are under `sessions/S01` through `sessions/S10`. Use your reader's search function for a command or exact error.
 
-## Read A Link
+The practice ZIP also contains searchable Markdown in `reading/`. Copy long commands from those files rather than retyping wrapped PDF lines.
 
-Markdown links look like this:
+## Reading in a terminal
 
-```markdown
-[SSH command card](../commands/ssh.md)
-```
-
-The part in parentheses is the file path. Open it with `glow -p`:
-
-```bash
-glow -p /docs/commands/ssh.md
-```
-
-If a link starts with `/docs`, it is an absolute path. You can open it from anywhere.
-
-## Move Through The Docs
-
-```bash
-cd /docs
-pwd
-ls
-```
-
-Useful places:
-
-- `/docs/README.md`: course map and released coursework.
-- `/docs/commands/README.md`: command card index.
-- `/docs/concepts/README.md`: concept card index.
-- `/docs/guides/`: platform, password, IRC, scoring, and docs navigation guides.
-
-Do not guess a session or quest path. Open `/docs/README.md`; released sessions and quests appear there.
-
-Open files with absolute `/docs` paths so the command works from anywhere:
-
-```bash
-glow -p /docs/concepts/shell.md
-```
-
-Go back to the course map:
-
-```bash
-glow -p /docs/README.md
-```
-
-## Find A File
-
-List every Markdown file:
-
-```bash
-find /docs -name '*.md' | sort
-```
-
-Find filenames that mention a topic:
-
-```bash
-find /docs -iname '*ssh*'
-```
-
-Search inside the docs:
-
-```bash
-grep -Rni 'ssh key' /docs
-```
-
-Read the matching file with `glow -p`.
-
-## Use Glow Without Getting Stuck
-
-- Scroll with the arrow keys, `Space`, and `b`.
-- Search inside the open file with `/`, then type the word and press `Enter`.
-- Jump to the next match with `n`.
-- Quit with `q`.
-
-If `glow -p` feels too fancy, use `less`:
+**In class**, the course map shows released material:
 
 ```bash
 less /docs/README.md
 ```
 
-Quit `less` with `q`.
+Choose your document root before using the relative paths below:
 
-## Before Asking For Help
+- Classroom: `cd /docs`
+- Home kit: `cd ~/linux-foundations-practice/reading`
 
-Do this first:
-
-1. Open the course map: `glow -p /docs/README.md`.
-2. If a session is listed there, open its guide from that link.
-3. Search the docs for the command, concept, or error text.
-4. Read one linked command card or concept card.
-5. Ask the guide or IRC with the command you ran, the file you read, and the exact error.
-
-Good help request:
-
-```text
-I read /docs/README.md and /docs/commands/ssh.md.
-I ran: ssh myhandle@lf2607.kolamayermakers.org
-The error is: Permission denied.
-What should I check next?
+```bash
+ls
+less commands/README.md
+less concepts/README.md
 ```
+
+In `less`, Space advances, `b` goes back, `/word` searches, `n` finds the next match, and `q` quits. Classroom `glow -p PATH` is an optional Markdown viewer; `less` needs no extra setup.
+
+## Follow a Markdown link
+
+```markdown
+[SSH](../commands/ssh.md)
+```
+
+The text in parentheses is the target. A relative link starts from **the document's directory**, not your shell's current directory. From the document root chosen above, open this example with `less commands/ssh.md`.
+
+An absolute path such as `/docs/commands/ssh.md` works from any classroom directory, but `/docs` does not exist automatically at home.
+
+## Find a topic
+
+From your document root:
+
+```bash
+find . -iname '*ssh*'
+grep -Rni 'ssh key' .
+```
+
+`find` searches filenames. `grep` searches file contents and reports matching paths and line numbers. Open a match with `less PATH`; replace `PATH` with the result you want.
+
+If the material does not answer your question, ask with your goal, command, exact error, and what you already checked. Remove passwords, tokens, private keys, and personal data.

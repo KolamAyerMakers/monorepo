@@ -12,7 +12,7 @@ Unix is the operating-system tradition behind Linux: files, processes, users, pe
 - Users and groups control ownership and permissions.
 - Manual pages are part of the system, not external homework.
 
-## Course Examples
+## Examples
 
 ```bash
 whoami
@@ -27,14 +27,14 @@ These commands show Unix ideas directly: identity, current directory, file metad
 
 ## Common Confusions
 
-- Unix is not one single current operating system in this course. It is a design lineage and vocabulary.
+- Unix names both an operating-system lineage and a certification; Linux is Unix-like, not the original Unix system.
 - Linux is Unix-like, not historically identical to original Unix.
 - "Everything is a file" is a useful simplification, not a literal rule for every kernel object.
 - Text streams are powerful, but structured data sometimes needs structured tools.
 
 ## Proof Check
 
-Pick one command from the course and explain which Unix idea it demonstrates: file, process, user, permission, text stream, or manual page.
+Pick one command above and explain which Unix idea it demonstrates: file, process, user, permission, text stream, or manual page.
 
 ## Docs Pointers
 

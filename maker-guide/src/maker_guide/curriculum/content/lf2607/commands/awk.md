@@ -41,7 +41,7 @@ awk -F: '{print "user=" $1 " shell=" $7}' /etc/passwd
 Print line numbers using awk's built-in `NR` variable:
 
 ```bash
-awk '{print NR ": " $0}' ~/src/pages/index.md
+awk '{print NR ": " $0}' /etc/os-release
 ```
 
 Print only lines where the third field is at least `1000`:
@@ -53,7 +53,7 @@ awk -F: '$3 >= 1000 {print $1}' /etc/passwd
 Count matching lines:
 
 ```bash
-awk '/ssh/ {count += 1} END {print count}' ~/.bash_history
+awk '/ssh/ {count += 1} END {print count+0}' /etc/services
 ```
 
 Sum numbers from the first field:
@@ -65,7 +65,7 @@ printf '1\n2\n3\n' | awk '{total += $1} END {print total}'
 Change output separator with `OFS`:
 
 ```bash
-awk 'BEGIN {OFS=","} {print $1, $2}' names.txt
+printf 'Ada Lovelace\nGrace Hopper\n' | awk 'BEGIN {OFS=","} {print $1, $2}'
 ```
 
 Use awk in a pipeline:

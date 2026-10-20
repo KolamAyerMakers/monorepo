@@ -1,79 +1,120 @@
-# S1 Self-Study Guide: First Contact
+# S1 — First Contact
 
-Session: S1
+Learn where your commands run, move between directories, and read files without changing them.
 
-## Study Path
+**At home:** prepare Ubuntu using [Continue at Home](../../guides/continue-at-home.md). Skip classroom registration and chat. Run the exercises in your Ubuntu terminal.
 
-1. Choose a username you can live with. It is your Unix username.
-2. On Windows, open Windows Terminal from Start. On macOS, open Terminal from Applications > Utilities.
-3. If your account does not exist, run `ssh new@lf2607.kolamayermakers.org`. If you do not have an SSH client, use the [browser registration page](https://lf2607.kolamayermakers.org/register/). The kiosk creates your account, prints your real SSH command, then disconnects.
-4. Reconnect with `ssh username@lf2607.kolamayermakers.org`. If you do not have an SSH client, use [browser SSH](https://lf2607.kolamayermakers.org/ssh/).
-5. Prove identity and machine state with `whoami`, `hostname`, `date`, and `uptime`.
-6. Join `#lf2607` at [the classroom IRC page](https://lf2607.kolamayermakers.org/irc/). Use `#kolamayermakers` for general chat.
-7. Learn the map: `/` is the filesystem root, `~` is your home, `.` is here, `..` is parent. Run `cd /docs` to visit your course-material playground. Read anything in it and follow what interests you.
-8. Read files with `cat`, `bat`, `less`, `head`, and `tail` before editing anything.
-9. Generate your starter page with `build-website` and inspect the static URL.
+## 1. Connect to the classroom
 
-## Mental Model
+Open Windows Terminal on Windows, or Terminal on Mac. These are on **your computer**.
 
-The shell is a text conversation with the operating system. A command has a name, arguments, output, and an exit result. Your prompt is not decoration: it tells you that you are logged in, where you are, and that the shell is waiting.
+For a new account:
 
-If you want the deeper distinction: the terminal is the text interface, SSH is the secure connection, and the shell is the program interpreting commands on the server.
+```bash
+ssh new@lf2607.kolamayermakers.org
+```
 
-## IRC
+Choose your username and follow registration. The connection closes after printing your personal SSH command. Use that command to reconnect:
 
-IRC is the shared class chat. Use `#lf2607` for help that other learners can learn from, including between sessions. Use `#kolamayermakers` for general chat.
+```bash
+ssh username@lf2607.kolamayermakers.org
+```
 
-Do not paste passwords, private keys, access tokens, or private account setup links into IRC.
+Replace `username` with yours. When entering a password, **nothing appears as you type**; type it and press Enter.
 
-## Expected Output Shapes
+On your first connection, SSH asks about the server's host key. Compare its fingerprint with one supplied by the instructor through a trusted channel before accepting. If SSH later warns that the key changed, stop and verify the change; do not delete the old key just to silence the warning.
+
+No SSH client? Use [browser registration](https://lf2607.kolamayermakers.org/register/) and [browser SSH](https://lf2607.kolamayermakers.org/ssh/).
+
+## 2. Find out where you are
+
+A **terminal** displays text. **SSH** connects you to another computer. The **shell** interprets commands there. After login, your commands run on the classroom server—not your laptop.
 
 ```bash
 whoami
-```
-
-Expected: your handle, one line.
-
-```bash
+hostname
+date
+uptime
 pwd
 ```
 
-Expected: an absolute path such as `/home/username`.
+Check your username, machine name, time, and current directory. `uptime` shows how long the machine has been running and its load averages. `pwd` prints an absolute path, such as `/home/username`.
+
+The prompt returns when the shell is ready for another command. Do not copy the prompt as part of a command.
+
+## 3. Move around
+
+| Path | Meaning |
+|---|---|
+| `/` | Filesystem root |
+| `~` | Your home directory |
+| `.` | Current directory |
+| `..` | Parent directory |
 
 ```bash
-ls -la ~
+cd ~
+pwd
+ls -la
+cd /etc
+pwd
+cd ..
+pwd
+cd ~
 ```
 
-Expected: permission columns, owner, group, size, date, and names. Ignore `.` and `..` when counting home entries.
+`cd` changes directory; `ls` lists entries. `-l` adds details, and `-a` includes names starting with `.`. In this listing, `.` and `..` are not extra personal files.
 
-## Troubleshooting
+## 4. Read before editing
 
-- `Permission denied`: check the username before the `@`, then retry slowly.
-- You landed in onboarding again: you connected as `new`; reconnect with the username you chose.
-- Host key prompt appears: read it. Type `yes` only when the host is `lf2607.kolamayermakers.org`.
-- Stuck in `less` or `man`: press `q`.
-- Command is running too long: press `Ctrl-C`.
-- You are lost or have a question: ask in `#lf2607`, including the command and error but no secrets.
+```bash
+cat /etc/os-release
+head -n 5 /etc/services
+tail -n 5 /etc/services
+less /etc/services
+```
 
-## Proof Checklist
+`cat` prints the file, `head` its beginning, and `tail` its end. In `less`, use Space to advance, `/ssh` to search, and `q` to quit. Press `Ctrl-C` to interrupt a running command.
 
-- `whoami` prints your handle.
-- `cat /etc/os-release` shows which Linux distribution this machine runs.
-- You can count home entries from `ls -la ~` without counting `.` and `..`.
-- You can explain `ls -S` from `man ls`.
-- You have run `head -n 5 /etc/services` and `tail -n 5 /etc/services`.
-- `~/public_html/index.html` exists after running `build-website`.
+Find an option rather than guessing it:
 
-## Docs Pointers
+```bash
+man ls
+```
 
-- Read [Docs Navigation Guide](../../guides/docs-map.md) before asking where a file is.
-- Run `man ssh`, then read the `SYNOPSIS` and authentication parts.
-- Run `man ls`, then search for `-S` with `/ -S` or by scanning options.
-- Run `tldr ssh`, `tldr ls`, and `tldr cat` for short reminders.
-- Read [Platform Reference](../../guides/platform-reference.md) before using public URLs.
-- Read [Linux](../../concepts/linux.md), [Unix](../../concepts/unix.md), [Server](../../concepts/server.md), and [Client](../../concepts/client.md) for the course vocabulary behind the first login.
-- Read [Path](../../concepts/path.md), [File](../../concepts/file.md), [Directory](../../concepts/directory.md), and [I/O](../../concepts/io.md) for the basic objects behind every command.
-- Read [Kernel](../../concepts/kernel.md), [User Space](../../concepts/userspace.md), [Syscall](../../concepts/syscall.md), [Filesystem](../../concepts/filesystem.md), [CPU](../../concepts/cpu.md), and [Memory](../../concepts/memory.md) only if you want the optional systems deep dive.
-- Read [Terminal](../../concepts/terminal.md) and [Shell](../../concepts/shell.md) to understand what is local, what is remote, and what interprets commands.
-- Read [Readline](../../concepts/readline.md) and drill the keystrokes until prompt editing stops feeling clumsy.
-- Read [Time Zones](../../concepts/time-zones.md) if timestamps or logs disagree with your local clock.
+Search for `-S` by typing `/-S`, then Enter. What does it sort by? Press `q` to return. If available, `tldr ls` gives shorter examples and `bat /etc/os-release` adds readable highlighting.
+
+## 5. Find your course and first page
+
+**Classroom shell:**
+
+```bash
+cd /docs
+ls
+less README.md
+build-website
+ls -l ~/public_html/index.html
+```
+
+Open `https://lf2607.kolamayermakers.org/~username/` in your laptop browser, replacing `username`. The build creates your starter source in `~/src` and publishes HTML in `~/public_html`.
+
+**At home:** use the home guide's build command and local preview instead. `/docs` and `build-website` are classroom tools, not standard Linux commands.
+
+When asking for help, include your command, exact error, and intended result. Never share passwords, private keys, or tokens.
+
+## Check yourself
+
+- Which computer runs `hostname` after SSH login?
+- Where does `cd ..` take you from `/etc`?
+- What is the difference between `cat`, `head`, and `less`?
+- What does `ls -S` sort by?
+
+[Compare your answers](../../guides/self-study-answers.md#s1-first-contact). For more detail: [Terminal](../../concepts/terminal.md), [Path](../../concepts/path.md), and [Reading Files](../../concepts/reading-files.md).
+
+## If you get stuck
+
+| Problem | Next step |
+|---|---|
+| SSH says `Permission denied` | Check the username before `@`; distinguish an account password from a key passphrase. |
+| Registration starts again | You connected as `new`; use your personal username. |
+| A file is missing | Run `pwd`, then list its parent directory. |
+| You are lost | `cd ~` returns home; `pwd` confirms it. |

@@ -19,7 +19,7 @@ This lists scheduled timers for your user account.
 
 ## Watch Out
 
-No listed timer means systemd does not know about it yet or it is disabled. Run `systemctl --user daemon-reload`, then `systemctl --user enable --now site-build.timer`.
+The default list shows active timers, not every installed timer. Use `systemctl --user list-timers --all` and `systemctl --user list-unit-files --type=timer` to distinguish inactive from missing units. For a runnable example, follow the [systemd timer card](systemd-timer.md); do not enable an unrelated timer merely because the list is empty.
 
 ## Docs Pointers
 

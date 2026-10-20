@@ -15,20 +15,20 @@ Quotes matter. `"$name"` preserves the value as one piece of text even when it c
 
 ## Practice Alone
 
-Assign a script argument to a descriptive name, then print it.
+Capture command output under a descriptive name, then print it:
 
 ```bash
-report_title="$1"
-printf '# %s\n' "$report_title"
+today=$(date +%F)
+printf 'Today: %s\n' "$today"
 ```
 
-Variables let one script reuse an input under a readable name. Exporting values to child processes is later exploration.
+`$(...)` captures stdout and removes trailing newlines. For inputs supplied to a script, see [script arguments](script-arguments.md); for values passed to child processes, see [environment variables](environment-variables.md).
 
 ## Watch Out
 
 - `name = value` is not assignment in the shell.
 - `$name` without quotes can split on spaces.
-- A variable becomes empty when the input it names is missing; later control flow can detect that case.
+- An unset variable normally expands to empty; `set -u` instead reports an error. A supplied empty value is still a value, so required inputs need explicit validation.
 
 ## Done When
 

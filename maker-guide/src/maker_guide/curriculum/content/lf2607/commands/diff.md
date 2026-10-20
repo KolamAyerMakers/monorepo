@@ -3,7 +3,10 @@
 ## Use
 
 ```bash
-diff -u old.txt new.txt
+work=$(mktemp -d)
+printf 'red\nblue\n' > "$work/old.txt"
+printf 'red\ngreen\n' > "$work/new.txt"
+diff -u "$work/old.txt" "$work/new.txt"
 ```
 
 ## What It Does
@@ -12,25 +15,13 @@ diff -u old.txt new.txt
 
 ## Use Unified Diff By Default
 
-```bash
-diff -u before.md after.md
-```
-
 Unified diff is the standard format used in patches and code review. It shows nearby context, removed lines with `-`, and added lines with `+`.
 
-## Course Example
-
-Compare source versions or generated output when debugging:
-
-```bash
-diff -u ~/src/pages/index.md ~/playground/index-copy.md
-```
-
-Do not start with HTML unless the bug is specifically in generated HTML. Source files are usually easier to read.
+The example removes `blue` and adds `green`. The `---` and `+++` lines identify the old and new files; they are not changes to the file contents.
 
 ## Watch Out
 
-No output usually means the inputs match.
+Exit status `0` means identical, `1` means different, and values above `1` mean an error. A difference is an expected result, not a broken command.
 
 ## Docs Pointers
 

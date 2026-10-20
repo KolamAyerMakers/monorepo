@@ -3,8 +3,10 @@
 Remove an empty directory.
 
 ```bash
-mkdir ~/playground/empty-directory
-rmdir ~/playground/empty-directory
+work=$(mktemp -d)
+mkdir "$work/empty-directory"
+rmdir "$work/empty-directory"
+ls -la "$work"
 ```
 
 If the directory contains files, `rmdir` refuses. That refusal is useful safety.

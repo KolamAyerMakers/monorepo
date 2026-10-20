@@ -105,20 +105,6 @@ Your recovery kit:
 
 <!-- end_slide -->
 
-# IRC
-
-IRC is the public classroom backchannel.
-
-Hands-on task: join IRC now at [the classroom IRC page](https://lf2607.kolamayermakers.org/irc/).
-
-Use `#lf2607` to ask for help during class or between sessions.
-
-Use `#kolamayermakers` for general chat.
-
-Do not paste passwords, private keys, or tokens.
-
-<!-- end_slide -->
-
 # The Filesystem
 
 ```text

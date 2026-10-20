@@ -82,12 +82,13 @@ Directories need `x` to be entered or traversed, so public web directories usual
 Use `ls -l` before and after `chmod` so the permission text becomes visible.
 
 ```bash
-touch ~/playground/permission-test.txt
-ls -l ~/playground/permission-test.txt
-chmod go-r ~/playground/permission-test.txt
-ls -l ~/playground/permission-test.txt
-chmod u+x ~/playground/permission-test.txt
-ls -l ~/playground/permission-test.txt
+work=$(mktemp -d)
+touch "$work/permission-test.txt"
+ls -l "$work/permission-test.txt"
+chmod go-r "$work/permission-test.txt"
+ls -l "$work/permission-test.txt"
+chmod u+x "$work/permission-test.txt"
+ls -l "$work/permission-test.txt"
 ```
 
 Do this only in scratch files you own.

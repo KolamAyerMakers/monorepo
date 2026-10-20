@@ -2,8 +2,10 @@
 
 ## Use
 
+Start with the disposable repository from the [Git card](git.md), which creates `note.txt`. Run these commands inside that repository.
+
 ```bash
-git add README.md
+git add note.txt
 ```
 
 ## What It Does

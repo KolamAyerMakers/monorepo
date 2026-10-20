@@ -4,13 +4,14 @@
 
 Quoting controls how Bash turns text into command arguments.
 
-Most shell bugs are not command bugs. They are argument bugs caused by word splitting, glob expansion, or variables expanding at the wrong time.
+Quoting prevents unwanted word splitting, glob expansion, and expansion at the wrong time.
 
 ## The Rule
 
 Quote variables by default:
 
 ```bash
+name='Ada Lovelace'
 printf '%s\n' "$name"
 ```
 
@@ -49,7 +50,7 @@ Backslash protects one character or creates escapes interpreted by a command.
 
 ```bash
 printf 'line one\nline two\n'
-grep '\.org$' urls.txt
+printf 'example.org\nexample.com\n' | grep '\.org$'
 ```
 
 In the `grep` example, `\.` means a literal dot in the regular expression.
@@ -67,13 +68,13 @@ printf 'today=%s\n' "$(date +%F)"
 Shell globs expand before the command runs:
 
 ```bash
-ls *.md
+ls /etc/*.conf
 ```
 
 Quote a glob when you want the receiving command to see the pattern literally:
 
 ```bash
-find ~/src -name '*.md'
+find /etc -maxdepth 1 -name '*.conf'
 ```
 
 ## Proof Check

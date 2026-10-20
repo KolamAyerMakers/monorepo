@@ -13,8 +13,8 @@ history | grep ssh
 
 ## Practice
 
-Pipe it to `grep` or save the last lines as evidence for a quest.
+Pipe it to `grep` to find a previous command. Read the whole command before reusing it.
 
 ## Watch Out
 
-History may include mistakes. Read it before publishing it.
+History can contain passwords, tokens, and private paths as well as mistakes. Do not publish the full history.

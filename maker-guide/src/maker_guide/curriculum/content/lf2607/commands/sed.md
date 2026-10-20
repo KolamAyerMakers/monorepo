@@ -33,13 +33,13 @@ printf 'https://example.org\n' | sed 's#https://#http://#'
 Delete blank lines:
 
 ```bash
-sed '/^$/d' notes.txt
+printf 'first\n\nsecond\n' | sed '/^$/d'
 ```
 
 Print only lines 1 through 5:
 
 ```bash
-sed -n '1,5p' notes.txt
+sed -n '1,5p' /etc/services
 ```
 
 ## Capture Example
@@ -60,12 +60,14 @@ printf '# heading\n' | sed 's/^# \(.*\)$/<h1>\1<\/h1>/'
 Use in-place editing only after testing without it:
 
 ```bash
-cp page.html page.html.backup
-sed 's/old/new/' page.html
-sed -i 's/old/new/' page.html
+work=$(mktemp -d)
+printf 'old page\n' > "$work/page.txt"
+sed 's/old/new/' "$work/page.txt"
+sed -i.backup 's/old/new/' "$work/page.txt"
+cat "$work/page.txt" "$work/page.txt.backup"
 ```
 
-`sed -i` changes the file. Test on stdout first.
+`sed -i.backup` changes the file and keeps the old content in a `.backup` file. Test on stdout first; never overwrite an important existing backup.
 
 ## Watch Out
 

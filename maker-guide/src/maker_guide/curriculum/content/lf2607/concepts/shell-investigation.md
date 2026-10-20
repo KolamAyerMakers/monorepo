@@ -4,7 +4,7 @@
 
 Shell investigation means using small commands to turn an unknown system problem into evidence.
 
-Bandit is not the concept. Bandit is practice. The transferable skill is evidence-driven investigation with files, permissions, encodings, search, and pipelines.
+Choose a command that answers one question, then use its result to choose the next.
 
 ## Loop
 
@@ -18,14 +18,16 @@ Bandit is not the concept. Bandit is practice. The transferable skill is evidenc
 ## Example Pattern
 
 ```bash
-file suspicious
-strings suspicious | less
-strings suspicious | grep -i password
+work=$(mktemp -d)
+printf 'header\0maker-note\0' > "$work/sample.bin"
+file "$work/sample.bin"
+xxd "$work/sample.bin"
+strings "$work/sample.bin"
 ```
 
 ## Watch Out
 
-Do not jump to random commands. Every command should answer one question.
+`xxd` exposes the `00` separator bytes; `strings` extracts readable runs but omits those separators. Neither command executes the file. Do not infer that a file is safe to run merely because it contains readable text.
 
 ## Docs Pointers
 

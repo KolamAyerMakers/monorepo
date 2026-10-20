@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-dig kolamayermakers.org
+dig example.org
 ```
 
 ## What It Does

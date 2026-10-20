@@ -12,7 +12,7 @@ id -u
 
 ## Practice
 
-Use it when computing your personal service port.
+Compare `id -u` with `whoami`: one prints a number, the other an account name.
 
 ## Watch Out
 

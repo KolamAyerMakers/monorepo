@@ -1,13 +1,11 @@
 # Concept: Manual Pages
 
-Skill: manual-pages
-
 Manual pages are built-in documentation.
 
 ```bash
 man ls
 ```
 
-Press `q` to quit. Search with `/` when the pager supports it.
+In the usual `less` pager, `/pattern` searches, `n` finds the next match, Space advances, and `q` quits. Try searching for `--all` in `man ls`.
 
-The manual is not cheating. It is the system telling you how it works.
+The number in a page name identifies its section: `man 1 passwd` describes the command, while `man 5 passwd` describes the file format. Bash builtins such as `cd` have help inside Bash: use `help cd`.

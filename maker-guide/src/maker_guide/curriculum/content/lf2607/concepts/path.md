@@ -8,7 +8,7 @@ A path is a text name that tells Linux how to find a file, directory, or special
 
 - Absolute path: starts at `/`, such as `/etc/os-release`.
 - Relative path: starts from the current directory, such as `pages/index.md`.
-- Home path: starts with `~`, such as `~/src/pages/index.md`.
+- Home path: starts with `~`, such as `~/notes.md`; Bash expands it to an absolute path.
 - Current directory: `.`.
 - File in the current directory: starts with `./`, such as `./report.sh`.
 - Parent directory: `..`.
@@ -38,15 +38,15 @@ The shell expands `~` before the command runs. The command receives the expanded
 
 ## Common Confusions
 
-- `~/src/pages/index.md` and `src/pages/index.md` are not the same unless your current directory is your home.
+- `~/notes.md` and `notes.md` name the same path only when your current directory is your home.
 - Paths are case-sensitive on normal Linux filesystems.
-- Spaces in paths need quoting, but this course avoids spaces in filenames.
+- Quote paths containing spaces: `"$HOME/my notes.md"`. Quoting `"~/my notes.md"` prevents Bash from expanding the tilde.
 - `./foo.sh` means `foo.sh` here. It is a path, not special script syntax.
 - A URL path and a filesystem path can look similar but belong to different systems.
 
 ## Proof Check
 
-Run `pwd`, then explain whether `src/pages/index.md` would point at your site source from that location.
+Run `cd /etc` and `pwd`, then compare `ls os-release` with `ls /etc/os-release`. Why do both work there, but only the second works from your home directory?
 
 ## Docs Pointers
 

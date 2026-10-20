@@ -1,31 +1,37 @@
-# Passwords
+# Passwords and Passphrases
 
-Use a passphrase: a few memorable words or a short sentence that only makes sense to you.
+Use a **different password for each account**. A password manager can generate and store strong passwords; for one you must remember, choose several randomly selected, unrelated words.
 
-Do not use any example from this document as your real password. The examples show the shape of a good passphrase, not a secret to reuse.
+Do not use an example from a guide as your real password. Length helps, but a familiar quotation, personal detail, or predictable pattern is still guessable.
 
-Good patterns:
+## Choose a classroom passphrase
 
-- `three unrelated words plus a private detail`
-- `a short sentence with one odd memory`
-- `place object action detail`
+The classroom requires **at least 18 characters** and checks for dictionary matches, account details, repeated characters, and simple sequences. It does not require a mixture of uppercase, lowercase, digits, and punctuation.
 
-Bad patterns:
+Aim for four or more unrelated words, long enough to pass the policy. Avoid:
 
-- your username, name, nickname, school, or project name
-- common passwords with small edits
-- keyboard walks like `qwerty` or `asdf`
-- one dictionary word with numbers on the end
-- anything copied from a document, chat message, or web page
+- Your name, username, school, birthday, or project name.
+- A common phrase or password with small edits.
+- Keyboard patterns, repeated characters, or one word with a number appended.
+- A secret already used on another account.
 
-The server checks new passwords with the system password-quality policy. It rejects short passwords, common words, dictionary matches, repeated patterns, and passwords derived from your account details.
+The installed policy makes the final decision; satisfying the length rule alone does not guarantee acceptance. At home, Ubuntu's policy may differ, but uniqueness and unpredictability still matter.
 
-Change your password with the normal Linux command:
+## Change your own password
+
+In the shell of the account you want to change:
 
 ```bash
+whoami
 passwd
 ```
 
-If `passwd` rejects your choice, read the message and make the passphrase longer or less predictable. Adding one more unrelated word is usually better than adding punctuation.
+Read each prompt: usually current password, new password, then confirmation. **Nothing appears while typing**. A rejection means the change was not accepted; read the reason and try a less predictable passphrase. Confirm the success message before leaving.
 
-Admin password helper scripts still exist for account recovery, but students should use `passwd` for ordinary password changes.
+During classroom SSH, this changes your **classroom account password**, not your laptop password or SSH key passphrase. Changing the account password also does not revoke existing authorized SSH keys.
+
+## If you cannot sign in
+
+Check the username and whether SSH is asking for the account password or a key passphrase. Use classroom browser recovery or contact the instructor if necessary. Do not send anyone the password, private key, or a private recovery link.
+
+For a lost or exposed SSH key, follow [SSH Keys](../concepts/ssh-keys.md#replace-a-lost-or-exposed-key); changing the account password alone is not enough.

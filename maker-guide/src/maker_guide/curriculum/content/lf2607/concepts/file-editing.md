@@ -15,9 +15,9 @@ The habit is simple:
 ## Practice Alone
 
 ```bash
-mkdir -p ~/playground
-micro ~/playground/editing-note.txt
-cat ~/playground/editing-note.txt
+work=$(mktemp -d)
+micro "$work/editing-note.txt"
+cat "$work/editing-note.txt"
 ```
 
 Make one small edit, save, quit, then verify from the shell. The shell verification matters because it proves the file changed on disk, not only inside the editor screen.
@@ -26,7 +26,7 @@ Make one small edit, save, quit, then verify from the shell. The shell verificat
 
 - Open the exact path you intend to edit.
 - Save before quitting.
-- If the file is generated output under `~/public_html/`, fix the source under `~/src/` instead.
+- If the file is generated output, fix its source and rebuild instead.
 
 ## Done When
 

@@ -9,7 +9,7 @@ A filesystem organizes persistent data into directories, files, metadata, and pe
 ```bash
 pwd
 ls -la
-stat ~/src/pages/index.md
+stat /etc/passwd
 find ~ -maxdepth 2 -type f
 ```
 
@@ -29,7 +29,7 @@ Paths are names. Files have content. Directories contain names. Metadata include
 `ls -l` gives a compact view. `stat` gives a detailed view.
 
 ```bash
-stat ~/src/pages/index.md
+stat /etc/passwd
 ```
 
 Look for file type, size, owner, group, permissions, and timestamps.
@@ -42,17 +42,17 @@ Some filesystem paths are not ordinary disk files. `/proc` exposes process and k
 
 - A directory is not just a visual folder; it maps names to entries.
 - Deleting a filename is not the same mental model as erasing every byte immediately.
-- `~/src/pages/index.md` and `~/public_html/index.html` are different files with different roles.
+- A source file and the generated output derived from it are different files.
 - Editing generated output is fragile; edit source and rebuild.
 
 ## Proof Check
 
-Run `stat ~/src/pages/index.md` and identify owner, permissions, size, and modification time.
+Run `stat /etc/passwd` and identify owner, permissions, size, and modification time.
 
 ## Docs Pointers
 
 - Run `man hier`, `man stat`, `man find`, and `man 7 inode`.
 - Read [Filesystem Navigation](filesystem-navigation.md) for beginner movement commands.
-- Read [Path](path.md), [File](file.md), and [Directory](directory.md) for the objects you manipulate every session.
+- Read [Path](path.md), [File](file.md), and [Directory](directory.md) for the objects you manipulate.
 - Read [Permissions](permissions.md) and [Number Bases: Decimal, Hexadecimal, Octal](number-bases.md) for permission metadata.
 - Read [Devices And `/dev`](devices.md) for special filesystem paths under `/dev`.

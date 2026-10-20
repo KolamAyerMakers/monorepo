@@ -1,5 +1,7 @@
 # set
 
+These options affect the current shell. Put them in a script rather than enabling them casually in an interactive terminal; an expected failure could otherwise end that shell.
+
 ## Use
 
 ```bash
@@ -10,7 +12,7 @@ set -u
 
 `set` changes shell options for the current shell or script. Different options react to different problems.
 
-## Course Options
+## Common Options
 
 Reject expansion of an unset variable or positional parameter:
 

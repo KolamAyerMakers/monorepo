@@ -2,37 +2,29 @@
 
 ## Core Idea
 
-Your first public page proves the full source-to-output loop works.
+A build converts source files into deliverable output. Serving and inspecting that output is a separate step.
 
 ```text
-Markdown source -> build-website -> generated HTML -> HTTPS URL
+Markdown source -> build -> generated HTML -> HTTP server -> browser
 ```
 
-## Course URL
+## Choose the setup
 
-Your first public page uses this shape:
+- **At home:** [Continue at Home](../guides/continue-at-home.md) supplies the Astro starter, Node installation, build command, and loopback preview.
+- **In class:** [build-website](../commands/build-website.md) initializes the platform project; [Platform Reference](../guides/platform-reference.md) gives its addresses.
 
-```text
-https://lf2607.kolamayermakers.org/~username/
-```
+Complete one setup before trying to inspect its output. The classroom helper is not a Linux command available everywhere.
 
 ## What To Verify
 
-- Source exists under `~/src/pages`.
-- `build-website` finishes without an error.
-- Generated HTML exists under `~/public_html`.
-- The HTTPS URL returns your page.
+- You know which source file you edited.
+- The setup's build command finishes successfully.
+- The generated HTML contains the change.
+- An actual GET response and the browser show that same change.
 
-## Proof Commands
+## Diagnose the missing stage
 
-```bash
-test -d ~/src/pages
-build-website
-test -f ~/public_html/index.html
-curl -I https://lf2607.kolamayermakers.org/~username/
-```
-
-Replace `username` with your course username in the URL. A `200` status means the web server returned the page path successfully.
+A build error is not a network error. A generated file does not prove the server can reach it. HTTP `200` does not prove the body is the page you intended. Compare the source, output, response body, and browser instead of repeating the build blindly.
 
 ## Docs Pointers
 
