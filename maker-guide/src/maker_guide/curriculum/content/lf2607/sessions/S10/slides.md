@@ -20,7 +20,7 @@ The course ends. Your learning does not.
 
 # Linux Is Your Workshop
 
-Programming. Data. Networks. Games. Electronics. AI.
+Programming. Data. Networks. Electronics. Robotics. Home automation. AI.
 
 You do not need to become a Linux specialist.
 
@@ -28,7 +28,9 @@ Linux gives you tools to explore all of these.
 
 <!-- end_slide -->
 
-# What Would You Enjoy Running?
+# Start A Homelab
+
+Your own small collection of services, built to use and understand.
 
 | Idea | First useful result |
 |---|---|
@@ -39,23 +41,13 @@ Linux gives you tools to explore all of these.
 | Home automation | Read a sensor or control a lamp |
 | Photo library | Browse a small collection of your own photos |
 
-**Pick one, not all six.**
-
-<!-- end_slide -->
-
-# Start A Homelab
-
-Your own small collection of services, built to use and understand.
-
-Start with **Jellyfin**: watch your own videos on another device.
-
-Install one service. Make it work on your home network. Use it.
-
-**The next thing you want to improve becomes your next lesson.**
+**Pick one. Run it locally. Use it.**
 
 <!-- end_slide -->
 
 # Let It Grow One Step At A Time
+
+For example, a Jellyfin media server:
 
 1. Jellyfin plays one video.
 2. Another device can watch it.
@@ -67,14 +59,12 @@ Keep it local at first. Learn secure access before exposing services online.
 
 <!-- end_slide -->
 
-# Other Paths From The Same Foundation
+# Build Beyond The Terminal
 
-- **Data:** make a report about a game, sport, or subject you follow.
-- **Programming:** improve your Bash skills, then learn Python.
-- **Your desktop:** build a shortcut or workflow that fits you.
-- **Security:** investigate puzzles on a training platform.
-
-Choose something you want to use, understand, or show someone.
+- **A robot** that detects obstacles and steers around them.
+- **A plant monitor** that records soil moisture and alerts you when it's dry.
+- **A camera** that recognises birds visiting your balcony.
+- **A local AI assistant** that searches your own notes and manuals.
 
 <!-- end_slide -->
 
@@ -186,8 +176,9 @@ Understanding a suggestion also means knowing its risks.
 
 - Understand changes before approving them, especially with `sudo`.
 - Keep passwords, tokens, and private data out of prompts.
-- Test on your own equipment. Keep a way back.
-- Check security settings against official documentation.
+- Use Git to save working versions and review the diff.
+- Try risky system changes in a VM first.
+- Don't disable the firewall or bypass HTTPS certificate checks just to make an error disappear.
 
 **Working is not always the same as correct or safe.**
 
