@@ -61,46 +61,38 @@ Keep it local at first. Learn secure access before exposing services online.
 
 # Build Beyond The Terminal
 
-- **A robot** that detects obstacles and steers around them.
+- **A robot** that maps a room and finds its way around furniture.
 - **A plant monitor** that records soil moisture and alerts you when it's dry.
 - **A camera** that recognises birds visiting your balcony.
 - **A local AI assistant** that searches your own notes and manuals.
+- **A time-lapse camera** that captures a plant growing over several weeks.
+- **A neighbourhood sensor station** that maps temperature, noise, or air quality.
+- **An interactive artwork** that changes its lights or sound when someone approaches.
 
 <!-- end_slide -->
 
-# Small, Working, Then Better
+# Start With What You Already Have
 
-**Build → use → understand → improve → repeat.**
+| What you have | What to do |
+|---|---|
+| Your main computer | Run Linux in a VM without replacing your normal OS |
+| A spare laptop or desktop | Install Linux and use it as your home server |
 
-One working service beats ten unfinished installations.
+No spare computer? Start in a VM. Consider a used mini PC only when you need a separate server.
 
-A small project you can explain is worth more than a large one you cannot.
+Before choosing a home server:
 
-When it breaks, you have a new question to investigate.
+- **Power and noise:** check idle power use and fan noise if it will run all day.
+- **RAM and storage:** check what your chosen service actually needs.
+- **Networking:** prefer Ethernet for a fixed server.
 
-<!-- end_slide -->
-
-# A Playground Of Your Own
-
-- **One computer:** experiment in a VM.
-- **An old PC:** give it a new job as your server.
-- **A Raspberry Pi:** a small machine for services and hardware projects.
-
-You probably already have what you need. No need to buy new equipment to start.
+**Try one service before buying any hardware.**
 
 <!-- end_slide -->
 
-# Your Next Linux: Ubuntu
+# Ubuntu, On The Computer You Already Have
 
-We learned on Debian. Ubuntu builds on Debian.
-
-Familiar commands and packages, with a desktop ready to use.
-
-**Start with Ubuntu LTS. You can explore other choices later.**
-
-<!-- end_slide -->
-
-# Keep Your Current Computer
+**Ubuntu LTS** builds on Debian: familiar commands and packages, with long-term support.
 
 **WSL2:** use Linux tools inside Windows.
 
@@ -110,12 +102,10 @@ Familiar commands and packages, with a desktop ready to use.
 |---|---|
 | Windows: terminal work | Ubuntu with WSL2 |
 | Windows: Linux desktop | Ubuntu VM with VirtualBox |
-| Mac: terminal work | Open Terminal—nothing to install |
+| Mac: Unix command practice | Open Terminal—nothing to install |
 | Mac: Linux system | Ubuntu VM with UTM |
 
-macOS is Unix, not Linux. Many commands are familiar; some options differ.
-
-Use a VM when you want a complete Linux environment.
+macOS is Unix, not Linux. Its terminal supports many familiar commands; use an Ubuntu VM for Linux-specific tools and services.
 
 <!-- end_slide -->
 
@@ -181,18 +171,6 @@ Understanding a suggestion also means knowing its risks.
 - Don't disable the firewall or bypass HTTPS certificate checks just to make an error disappear.
 
 **Working is not always the same as correct or safe.**
-
-<!-- end_slide -->
-
-# Shape Your Linux With AI: Omarchy
-
-Make your computer fit the way you work.
-
-Omarchy combines a keyboard-driven desktop with integrated AI tools.
-
-**Change one thing. Test it. Know how to undo it.**
-
-An adventurous option, not a requirement. Try a supported VM setup first.
 
 <!-- end_slide -->
 
