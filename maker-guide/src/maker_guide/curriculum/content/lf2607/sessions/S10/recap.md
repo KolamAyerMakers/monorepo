@@ -10,13 +10,13 @@ Files, commands, scripts, processes, services, logs, and APIs are tools for expl
 
 ## Investigate Instead Of Guessing
 
-State the goal. Read the error. Form a hypothesis. Test one thing. Observe. Repeat.
+In S8, you set up your web server, then investigated the faults introduced by `guide`: inspect the systemd service status, read the logs, form a hypothesis, repair the cause, and check the page again. Use that same method on unfamiliar problems: state the goal, observe, form a hypothesis, test one thing, and compare the result.
 
 Documentation, AI, and other people can help you understand unfamiliar things. Give them context and the exact observation; verify suggestions, protect secrets, and keep a way to undo changes. Persist with the problem, not with the same failed command.
 
 ## Make Your Own Workshop
 
-Ubuntu LTS is a practical continuation from our Debian classroom. Use WSL2 on Windows for terminal/development work, or a full VM on Windows or Mac. A spare PC or Raspberry Pi can become a dedicated playground. Omarchy is an optional keyboard-driven, AI-integrated path for adventurous learners.
+Ubuntu LTS is a practical continuation from our Debian classroom. Use WSL2 on Windows for terminal/development work, or a full VM on Windows or Mac. Reuse a spare PC for a home server; consider a used mini PC only when you need a separate machine.
 
 Check hardware compatibility and image architecture; back up before disk installation. You do not need to replace your only working operating system.
 
@@ -30,7 +30,7 @@ A data report, a Python tool, or a personalized desktop can be an equally good b
 
 *At the Prompt* collects five Julia Evans zines. Pick a page that interests you, predict what an example does, try it, and change something. The course PDFs and official project docs remain useful references; you do not need a huge reading backlog.
 
-The classroom server will close when the cloud credits run out; there is no confirmed date. After graduation, the follow-up email will provide your scripts, useful playground files, and course PDFs. Purchased zine PDFs are not part of that email.
+The classroom server will close when the cloud credits run out; there is no confirmed date. After graduation, the follow-up email will provide two archives: your personal work tarball (the existing `~/scripts`, `~/src`, and `~/playground` folders, without `node_modules`) and the course PDFs, including the home setup guide. Keep your own copies; reinstall project dependencies when needed. Purchased zine PDFs are not part of that email.
 
 Use [the S10 starting guide](self-study.md) for setup links, project ideas, and help-seeking examples.
 

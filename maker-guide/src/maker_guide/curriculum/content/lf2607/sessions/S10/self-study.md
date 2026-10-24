@@ -4,7 +4,12 @@ Choose one environment, one small project, and one useful resource. This is not 
 
 ## Keep your work
 
-The classroom server will close when cloud credits run out; no date is confirmed. The planned follow-up email includes your useful scripts/files and course PDFs. Keep your own copies once received.
+The classroom server will close when cloud credits run out; no date is confirmed. After graduation, the planned follow-up email includes two archives:
+
+- Your personal work tarball: the existing `~/scripts`, `~/src`, and `~/playground` folders, without `node_modules`. Reinstall project dependencies when needed.
+- The course PDFs: session guides, reference cards, and the home setup guide.
+
+Keep your own copies once received. You can continue without the classroom server.
 
 The self-study pack contains the guides, home setup, worked answers, and a ZIP of practice files. It does not contain passwords, class tokens, or purchased Julia Evans PDFs. Your printed *At the Prompt* anthology remains your reading companion.
 

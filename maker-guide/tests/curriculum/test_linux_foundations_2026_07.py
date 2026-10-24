@@ -880,7 +880,7 @@ def test_catalog_exposes_july_18_session_schedule() -> None:
         ("S7", datetime(2026, 9, 19, 9, tzinfo=UTC)),
         ("S8", datetime(2026, 9, 26, 9, tzinfo=UTC)),
         ("S9", datetime(2026, 10, 10, 9, tzinfo=UTC)),
-        ("S10", datetime(2026, 10, 24, 9, tzinfo=UTC)),
+        ("S10", datetime(2026, 10, 24, 5, tzinfo=UTC)),
     ]
 
 

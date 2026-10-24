@@ -6,6 +6,10 @@ Session: S10
 
 The course ends. Your learning does not.
 
+**Today:** ideas for what comes next, then an open Q&A—ask anything.
+
+**3pm:** graduation ceremony. Your families are welcome.
+
 <!-- end_slide -->
 
 # You Have A Foundation
@@ -30,7 +34,7 @@ Linux gives you tools to explore all of these.
 
 # Start A Homelab
 
-Your own small collection of services, built to use and understand.
+One option: your own small collection of services, built to use and understand.
 
 | Idea | First useful result |
 |---|---|
@@ -61,6 +65,8 @@ Keep it local at first. Learn secure access before exposing services online.
 
 # Build Beyond The Terminal
 
+A homelab is just one option. Your next project could look very different:
+
 - **A robot** that maps a room and finds its way around furniture.
 - **A plant monitor** that records soil moisture and alerts you when it's dry.
 - **A camera** that recognises birds visiting your balcony.
@@ -75,10 +81,10 @@ Keep it local at first. Learn secure access before exposing services online.
 
 | What you have | What to do |
 |---|---|
-| Your main computer | Run Linux in a VM without replacing your normal OS |
-| A spare laptop or desktop | Install Linux and use it as your home server |
+| Your main computer | Keep your OS; add a Linux environment |
+| A spare laptop or desktop | Back up its files, then install Linux |
 
-No spare computer? Start in a VM. Consider a used mini PC only when you need a separate server.
+Consider a used mini PC only when you need a separate server.
 
 Before choosing a home server:
 
@@ -102,34 +108,43 @@ Before choosing a home server:
 |---|---|
 | Windows: terminal work | Ubuntu with WSL2 |
 | Windows: Linux desktop | Ubuntu VM with VirtualBox |
-| Mac: Unix command practice | Open Terminal—nothing to install |
 | Mac: Linux system | Ubuntu VM with UTM |
 
-macOS is Unix, not Linux. Its terminal supports many familiar commands; use an Ubuntu VM for Linux-specific tools and services.
+On a Mac, Terminal already supports many familiar Unix commands. macOS is not Linux; use an Ubuntu VM for Linux-specific tools and services.
 
 <!-- end_slide -->
 
 # Investigate, Don't Guess
 
-1. What did I want to happen?
-2. What actually happened? Read the error.
-3. What could explain it?
-4. Test one thing. Observe the result.
+Remember S8? You set up your web server. Then `guide` broke it, and you investigated.
 
-**Each attempt should teach you something.**
+1. **Goal:** get your page working correctly again.
+2. **Observe:** inspect the service status, logs, and page response.
+3. **Hypothesis:** explain what could cause that failure.
+4. **Test:** repair one cause, check the page again, and compare the result.
+
+You used `systemctl`, `journalctl`, and HTTP requests—not guesswork.
+
+**You have already practised this. Use the same method on unfamiliar problems.**
 
 <!-- end_slide -->
 
 # Documentation Answers Specific Questions
 
+**S8 question: how can I read only the recent messages for my service?**
+
 ```bash
-ls --help
-man ls
+journalctl --help
+man journalctl
 ```
 
-Find the option you need. Read its example. Try it.
+Look up `--unit` (`-u`) and `--since` to understand the command you used:
 
-You do not need to read the whole manual first.
+```bash
+journalctl --user -u site.service --since "5 minutes ago"
+```
+
+**Start with your question, not the whole manual.**
 
 <!-- end_slide -->
 
@@ -151,6 +166,8 @@ When you do not know what to look for, AI can help you begin.
 - **Search assistant:** discover tools, concepts, and documentation. Verify what you find.
 - **Tutor:** ask how it works, why it failed, and what the fix changes.
 - **Practice partner:** try a small variation and explain the result yourself.
+
+For example: "Here is my service's error. Explain it and suggest one test before proposing a fix."
 
 **Get the result. Keep the knowledge.**
 
@@ -176,12 +193,14 @@ Understanding a suggestion also means knowing its risks.
 
 # Keep Learning With People
 
-Learning is not only about getting answers. Build and discover things together.
+AI is one source of help. People bring experience, feedback, and new ideas.
 
 - Keep in touch with someone from this class.
 - Meet to build something or investigate a problem.
 - Show someone what you discovered. Help them try it.
 - Visit a local makerspace or an in-person meetup.
+
+**When asking for help:** share your goal, the exact error, and what you already tried.
 
 **You can learn independently without learning alone.**
 
@@ -193,15 +212,22 @@ Learning is not only about getting answers. Build and discover things together.
 - Before stopping, write down what you want to try next.
 - Missed a week? Start again. It is not a race.
 
+Choose a project you would enjoy using. Start with one small result.
+
 **Small, regular experiments build your skills.**
 
 <!-- end_slide -->
 
 # After The Course
 
-The classroom server will close when our cloud credits run out.
+The classroom server will close when our cloud credits run out. No date is confirmed.
 
-After graduation, we will email your scripts, useful playground files, and course PDFs.
+After graduation, we will email you **two archives**:
+
+- **Your work:** a personal tarball of your existing `~/scripts`, `~/src`, and `~/playground` folders.
+- **Course PDFs:** session guides, reference cards, and the home setup guide.
+
+**Save your own copies. You can keep learning without the classroom server.**
 
 <!-- end_slide -->
 
@@ -214,3 +240,7 @@ There is always another approach, another explanation, another person to ask.
 Thank you for learning with us.
 
 **🎉 Congratulations. This is a beginning.**
+
+**Now: open Q&A—ask anything you like.**
+
+**At 3pm: graduation ceremony. Your families are welcome to join us.**

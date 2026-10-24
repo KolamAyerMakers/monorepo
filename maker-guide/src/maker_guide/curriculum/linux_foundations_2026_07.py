@@ -1983,7 +1983,7 @@ LINUX_FOUNDATIONS_2026_07 = Course(
             id="S10",
             title="This Is Just The Beginning",
             date=date(2026, 10, 24),
-            starts_at=datetime(2026, 10, 24, 9, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 24, 5, tzinfo=UTC),
             introduced_commands=("man",),
             enrichment_commands=("file", "strings", "xxd", "base64", "tar", "gzip", "bzip2"),
             introduced_skills=("shell-investigation",),
