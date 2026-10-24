@@ -67,6 +67,10 @@ pre-commit:
       glob: "infra/ops/**/*"
       run: python3 infra/ops/test_normalize_forgejo_git_credentials.py
 
+    ops.export-student-work:
+      glob: "infra/ops/**/*"
+      run: python3 infra/ops/test_export_student_work.py
+
     website.build:
       glob: "website/**/*"
       run: pnpm --dir website build
